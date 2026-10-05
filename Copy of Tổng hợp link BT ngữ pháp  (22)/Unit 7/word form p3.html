@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Form Quiz - Ms MS Chí Nên</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0f7ff;
+            background-image: radial-gradient(#8854C0 0.5px, transparent 0.5px), radial-gradient(#8854C0 0.5px, #f0f7ff 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+
+        .gamify-card {
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 10px 0 0 #e2e8f0;
+            transition: transform 0.2s;
+        }
+
+        .btn-3d {
+            position: relative;
+            transition: all 0.1s;
+            border-radius: 20px;
+            box-shadow: 0 6px 0 0 #d1d5db;
+        }
+
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 0 #d1d5db;
+        }
+
+        .btn-option {
+            background: white;
+            border: 2px solid #e2e8f0;
+            text-align: left;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #4b5563;
+        }
+
+        .btn-option:hover {
+            background-color: #f3f4f6;
+            transform: scale(1.02);
+        }
+
+        .correct-opt {
+            background-color: #00D26A !important;
+            border-color: #00b35a !important;
+            color: white !important;
+            box-shadow: 0 6px 0 0 #00944a !important;
+        }
+
+        .wrong-opt {
+            background-color: #FF4757 !important;
+            border-color: #e63946 !important;
+            color: white !important;
+            box-shadow: 0 6px 0 0 #cc3946 !important;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .explanation-box {
+            background: #fff9db;
+            border-left: 8px solid #fcc419;
+            border-radius: 15px;
+            display: none;
+        }
+
+        #progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+
+        .glossary-table th, .glossary-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+        }
+        
+        .glossary-table th {
+            background-color: #8854C0;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <!-- Header -->
+    <div class="w-full max-w-2xl text-center mb-6">
+        <p class="text-[#8854C0] font-extrabold text-sm uppercase tracking-widest">Giáo viên tạo: Ms MS Chí Nên</p>
+        <h1 class="text-3xl font-black text-gray-800 mt-1">SIÊU THỬ THÁCH WORD FORM</h1>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="w-full max-w-xl bg-gray-200 h-4 rounded-full mb-8 shadow-inner overflow-hidden">
+        <div id="progress-bar-inner" class="bg-[#00C9A7] h-full" style="width: 0%"></div>
+    </div>
+
+    <!-- Quiz Container -->
+    <div id="quiz-container" class="w-full max-w-2xl">
+        <!-- Question Card -->
+        <div id="question-card" class="gamify-card p-8 mb-6 relative">
+            <div id="q-number" class="absolute -top-4 -left-4 bg-[#8854C0] text-white px-4 py-2 rounded-xl font-bold text-lg shadow-lg">
+                Câu 1
+            </div>
+            
+            <p id="question-text" class="text-xl font-bold text-gray-700 leading-relaxed mb-8 pt-4">
+                Loading...
+            </p>
+
+            <div id="options-grid" class="grid grid-cols-1 gap-4">
+                <!-- Options will be injected here -->
+            </div>
+
+            <!-- Explanation Area -->
+            <div id="explanation" class="explanation-box p-5 mt-8 animate-fade-in">
+                <h4 class="font-black text-yellow-700 mb-2">💡 CÔ MS Chí Nên GIẢI THÍCH:</h4>
+                <div id="explanation-content" class="text-gray-700 leading-relaxed text-sm space-y-3">
+                    <!-- Content -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex justify-between items-center gap-4">
+            <button id="next-btn" class="hidden w-full py-4 bg-[#00C9A7] text-white font-black text-xl rounded-2xl btn-3d shadow-[#009e83] hover:brightness-110">
+                TIẾP THEO ➜
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Modal -->
+    <div id="summary-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white rounded-[40px] p-10 max-w-md w-full text-center shadow-2xl">
+            <h2 class="text-4xl font-black text-[#8854C0] mb-4">HOÀN THÀNH!</h2>
+            <p class="text-lg text-gray-600 mb-6">Bạn đã rất nỗ lực trong bài test của cô MS Chí Nên!</p>
+            <div class="text-6xl font-black text-[#00C9A7] mb-6" id="final-score">0/32</div>
+            <div id="praise-msg" class="text-xl font-bold text-gray-700 italic mb-8"></div>
+            <button onclick="location.reload()" class="w-full py-4 bg-[#8854C0] text-white font-black text-xl rounded-2xl btn-3d shadow-[#6d3fa1]">
+                LÀM LẠI TỪ ĐẦU
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Effects -->
+    <audio id="snd-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="snd-wrong" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+
+    <script>
+        const quizData = [
+    {
+      "question": "One of the causes of global warming is ________. Humans are cutting down so many trees. (FOREST)",
+      "options": ["forest", "forestry", "deforestation", "afforestation"],
+      "correct": "deforestation",
+      "explanation": {
+        "translate": "Một trong những nguyên nhân gây nóng lên toàn cầu là nạn phá rừng. Con người đang chặt hạ rất nhiều cây cối.",
+        "analysis": "A. forest (n): rừng; B. forestry (n): lâm nghiệp; C. deforestation (n): nạn phá rừng; D. afforestation (n): sự trồng rừng.",
+        "whyCorrect": "Hành động 'cutting down trees' (chặt cây) là biểu hiện của 'deforestation'. Đây là nguyên nhân gây biến đổi khí hậu.",
+        "whyOthers": "Forestry là ngành lâm nghiệp, Afforestation là việc trồng rừng mới (ngược nghĩa), còn Forest chỉ là khu rừng đơn thuần."
+      }
+    },
+    {
+      "question": "You can't use this library card anymore until you have ________ it. (NEW)",
+      "options": ["new", "news", "renewed", "newly"],
+      "correct": "renewed",
+      "explanation": {
+        "translate": "Bạn không thể sử dụng thẻ thư viện này nữa cho đến khi bạn gia hạn nó.",
+        "analysis": "A. new (adj): mới; B. news (n): tin tức; C. renewed (v-ed): gia hạn/làm mới; D. newly (adv): mới đây.",
+        "whyCorrect": "Sau 'have' cần một V3/ed để tạo thì hiện tại hoàn thành. 'Renew' có nghĩa là làm lại thẻ mới/gia hạn.",
+        "whyOthers": "New là tính từ, News là danh từ tin tức, Newly là trạng từ - đều không phù hợp ngữ pháp và ngữ nghĩa."
+      }
+    },
+    {
+      "question": "I first became ________ in skateboarding at the age of seven. (INTEREST)",
+      "options": ["interest", "interesting", "interested", "interestingly"],
+      "correct": "interested",
+      "explanation": {
+        "translate": "Tôi bắt đầu thấy hứng thú với trượt ván khi tôi 7 tuổi.",
+        "analysis": "A. interest (n/v): sự quan tâm; B. interesting (adj): thú vị (tính chất); C. interested (adj): quan tâm (cảm xúc); D. interestingly (adv): thật thú vị là.",
+        "whyCorrect": "Cấu trúc 'become + adj'. Ta dùng tính từ đuôi -ed (interested) để chỉ cảm xúc của người đi với giới từ 'in'.",
+        "whyOthers": "Interesting chỉ dùng cho vật hoặc tính chất của ai đó gây ra cho người khác."
+      }
+    },
+    {
+      "question": "Are you going to watch one of Michael Jackson's ________? (PERFORM)",
+      "options": ["perform", "performance", "performances", "performer"],
+      "correct": "performances",
+      "explanation": {
+        "translate": "Bạn có định xem một trong những màn trình diễn của Michael Jackson không?",
+        "analysis": "A. perform (v): biểu diễn; B. performance (n): màn trình diễn (số ít); C. performances (n): màn trình diễn (số nhiều); D. performer (n): người biểu diễn.",
+        "whyCorrect": "Sau cấu trúc 'one of' phải là danh từ số nhiều. Michael Jackson nổi tiếng với các màn trình diễn.",
+        "whyOthers": "Performance số ít là sai ngữ pháp sau 'one of'. Performer là người biểu diễn, không hợp nghĩa."
+      }
+    },
+    {
+      "question": "Mr. Graham was ________ to find 46 ancient gold coins inside the pot. (amazement)",
+      "options": ["amaze", "amazing", "amazed", "amazement"],
+      "correct": "amazed",
+      "explanation": {
+        "translate": "Ông Graham đã rất kinh ngạc khi tìm thấy 46 đồng tiền vàng cổ trong chiếc bình.",
+        "analysis": "A. amaze (v): làm ngạc nhiên; B. amazing (adj): tuyệt vời/gây kinh ngạc; C. amazed (adj): ngạc nhiên (cảm xúc); D. amazement (n): sự ngạc nhiên.",
+        "whyCorrect": "Ông Graham là người, diễn tả cảm xúc bị/được làm cho ngạc nhiên nên dùng đuôi -ed.",
+        "whyOthers": "Amazing dùng để mô tả tính chất của vật/sự việc (ví dụ: An amazing finding)."
+      }
+    },
+    {
+      "question": "Jack eats apples in ________ to pears and watermelons. (PREFER)",
+      "options": ["prefer", "preference", "preferential", "preferably"],
+      "correct": "preference",
+      "explanation": {
+        "translate": "Jack ăn táo vì ưu tiên hơn lê và dưa hấu.",
+        "analysis": "A. prefer (v): thích hơn; B. preference (n): sự ưu tiên; C. preferential (adj): ưu đãi; D. preferably (adv): tốt nhất là.",
+        "whyCorrect": "Cấu trúc cố định: 'In preference to something' (Thích cái gì hơn cái gì).",
+        "whyOthers": "Sau giới từ 'in' ta cần một danh từ (preference)."
+      }
+    },
+    {
+      "question": "Basketball ________ will find our new trainers comfortable and efficient. (PLAY)",
+      "options": ["play", "player", "players", "playful"],
+      "correct": "players",
+      "explanation": {
+        "translate": "Những cầu thủ bóng rổ sẽ thấy đôi giày thể thao mới của chúng tôi thoải mái và hiệu quả.",
+        "analysis": "A. play (v): chơi; B. player (n): người chơi; C. players (n): các cầu thủ; D. playful (adj): ham chơi.",
+        "whyCorrect": "Cần danh từ chỉ người làm chủ ngữ. Vì động từ 'find' không chia số ít và mang nghĩa chung nên dùng số nhiều (players).",
+        "whyOthers": "Player số ít cần có mạo từ 'A/The' đứng trước."
+      }
+    },
+    {
+      "question": "Tickets are cheap but buses are slow and ________. (COMFORT)",
+      "options": ["comfort", "comfortable", "uncomfortable", "comfortably"],
+      "correct": "uncomfortable",
+      "explanation": {
+        "translate": "Vé thì rẻ nhưng xe buýt thì chậm và không thoải mái.",
+        "analysis": "A. comfort (n): sự thoải mái; B. comfortable (adj): thoải mái; C. uncomfortable (adj): không thoải mái; D. comfortably (adv): một cách thoải mái.",
+        "whyCorrect": "Dựa vào nghĩa câu: có từ 'but' (nhưng) và 'slow' (chậm) mang nghĩa tiêu cực -> chọn 'uncomfortable'.",
+        "whyOthers": "Comfortable mang nghĩa tích cực, trái ngược với ngữ cảnh của câu."
+      }
+    },
+    {
+      "question": "She's going to hospital for a ________ check-up. (MEDICINE)",
+      "options": ["medicine", "medical", "medically", "medic"],
+      "correct": "medical",
+      "explanation": {
+        "translate": "Cô ấy đang đến bệnh viện để kiểm tra y tế.",
+        "analysis": "A. medicine (n): thuốc/y học; B. medical (adj): thuộc về y tế; C. medically (adv): về mặt y khoa; D. medic (n): người làm trong ngành y.",
+        "whyCorrect": "Trước danh từ 'check-up' cần một tính từ để bổ nghĩa. 'Medical check-up' là cụm từ khám sức khỏe.",
+        "whyOthers": "Medicine là danh từ không đứng trước check-up trong trường hợp này."
+      }
+    },
+    {
+      "question": "Jana: My brother can play the guitar well... I find him really ________. (AMAZE)",
+      "options": ["amaze", "amazement", "amazed", "amazing"],
+      "correct": "amazing",
+      "explanation": {
+        "translate": "Jana: Anh trai mình chơi guitar giỏi lắm... Mình thấy anh ấy thực sự tuyệt vời.",
+        "analysis": "A. amaze (v): gây ngạc nhiên; B. amazement (n): sự kinh ngạc; C. amazed (adj): ngạc nhiên (cảm xúc); D. amazing (adj): tuyệt vời (tính chất).",
+        "whyCorrect": "Cấu trúc 'find someone + adj'. Ở đây Jana mô tả đặc điểm/tài năng của anh trai gây ấn tượng cho cô ấy -> dùng đuôi -ing.",
+        "whyOthers": "Amazed dùng khi chính người anh trai cảm thấy ngạc nhiên về cái gì đó."
+      }
+    },
+    {
+      "question": "Our club depends on ________ donations from members. (VOLUNTEER)",
+      "options": ["volunteer", "voluntary", "voluntarily", "volunteers"],
+      "correct": "voluntary",
+      "explanation": {
+        "translate": "Câu lạc bộ của chúng tôi phụ thuộc vào các khoản quyên góp tự nguyện từ các thành viên.",
+        "analysis": "A. volunteer (n/v): tình nguyện viên; B. voluntary (adj): tự nguyện; C. voluntarily (adv): một cách tự nguyện; D. volunteers (n): các tình nguyện viên.",
+        "whyCorrect": "Trước danh từ 'donations' cần một tính từ để mô tả tính chất của khoản quyên góp.",
+        "whyOthers": "Volunteer donations cũng đôi khi dùng được nhưng 'voluntary' là tính từ chuẩn nhất để chỉ tính tự nguyện."
+      }
+    },
+    {
+      "question": "You should eat a lot of fruit. It helps to keep you ________. (HEALTH)",
+      "options": ["health", "healthy", "unhealthy", "healthily"],
+      "correct": "healthy",
+      "explanation": {
+        "translate": "Bạn nên ăn nhiều trái cây. Nó giúp giữ cho bạn khỏe mạnh.",
+        "analysis": "A. health (n): sức khỏe; B. healthy (adj): khỏe mạnh; C. unhealthy (adj): không khỏe mạnh; D. healthily (adv): một cách lành mạnh.",
+        "whyCorrect": "Cấu trúc 'keep + someone + adj' (giữ cho ai đó như thế nào). Ăn trái cây là thói quen tốt -> healthy.",
+        "whyOthers": "Unhealthy là không tốt cho sức khỏe, ngược nghĩa hoàn toàn."
+      }
+    },
+    {
+      "question": "'What's your ________ color?' 'Green.' (favor)",
+      "options": ["favor", "favorite", "favorable", "favorably"],
+      "correct": "favorite",
+      "explanation": {
+        "translate": "'Màu sắc yêu thích của bạn là gì?' 'Màu xanh lá.'",
+        "analysis": "A. favor (n): sự ủng hộ; B. favorite (adj): yêu thích; C. favorable (adj): thuận lợi; D. favorably (adv): một cách thuận lợi.",
+        "whyCorrect": "Tính từ 'favorite' đứng trước danh từ 'color' để hỏi về sở thích cá nhân.",
+        "whyOthers": "Favorable mang nghĩa là có ích/thuận lợi cho một mục đích nào đó."
+      }
+    },
+    {
+      "question": "I like traveling by motorbike because it's a great way to get around Ho Chi Minh city ________. (QUICK)",
+      "options": ["quick", "quickly", "quickness", "quicken"],
+      "correct": "quickly",
+      "explanation": {
+        "translate": "Tôi thích đi lại bằng xe máy vì đó là một cách tuyệt vời để di chuyển quanh TP.HCM một cách nhanh chóng.",
+        "analysis": "A. quick (adj): nhanh; B. quickly (adv): một cách nhanh chóng; C. quickness (n): sự nhanh nhẹn; D. quicken (v): làm nhanh lên.",
+        "whyCorrect": "Cần một trạng từ (adv) để bổ nghĩa cho hành động 'get around' (đi lại).",
+        "whyOthers": "Quick là tính từ chỉ dùng trước danh từ hoặc sau to be."
+      }
+    },
+    {
+      "question": "The Internet can be a fantastic place... but you should be ________ about unknown people online. (care)",
+      "options": ["care", "careful", "careless", "carefully"],
+      "correct": "careful",
+      "explanation": {
+        "translate": "Internet có thể là một nơi tuyệt vời... nhưng bạn nên cẩn thận về những người lạ trên mạng.",
+        "analysis": "A. care (v/n): quan tâm; B. careful (adj): cẩn thận; C. careless (adj): bất cẩn; D. carefully (adv): một cách cẩn thận.",
+        "whyCorrect": "Sau 'be' cần tính từ. Dựa vào cảnh báo 'unknown people' (người lạ) -> cần phải cẩn thận.",
+        "whyOthers": "Careless mang nghĩa tiêu cực (cẩu thả/bất cẩn), không phù hợp lời khuyên."
+      }
+    },
+    {
+      "question": "Do you have any ________ in studying English? (DIFFICULT)",
+      "options": ["difficult", "difficulty", "difficulties", "difficultly"],
+      "correct": "difficulty",
+      "explanation": {
+        "translate": "Bạn có gặp khó khăn gì trong việc học tiếng Anh không?",
+        "analysis": "A. difficult (adj): khó; B. difficulty (n): sự khó khăn; C. difficulties (n): những khó khăn; D. difficultly (adv): một cách khó khăn.",
+        "whyCorrect": "Cấu trúc 'Have difficulty (in) doing something'. Sau 'any' dùng danh từ.",
+        "whyOthers": "Difficult là tính từ, không đứng sau 'any' nếu không có danh từ theo sau."
+      }
+    },
+    {
+      "question": "Dr. Jane Goodall is famous for her ________ work to protect chimpanzees. (IMPRESS)",
+      "options": ["impress", "impressive", "impression", "impressed"],
+      "correct": "impressive",
+      "explanation": {
+        "translate": "Tiến sĩ Jane Goodall nổi tiếng vì công việc đầy ấn tượng của bà nhằm bảo vệ loài tinh tinh.",
+        "analysis": "A. impress (v): gây ấn tượng; B. impressive (adj): đầy ấn tượng; C. impression (n): sự ấn tượng; D. impressed (adj): bị ấn tượng.",
+        "whyCorrect": "Trước danh từ 'work' cần tính từ 'impressive' để mô tả tính chất của công việc đó.",
+        "whyOthers": "Impressed chỉ dùng cho người khi họ cảm thấy bị ấn tượng bởi cái gì."
+      }
+    },
+    {
+      "question": "I loved the ________ this night. (perform)",
+      "options": ["perform", "performer", "performance", "performing"],
+      "correct": "performance",
+      "explanation": {
+        "translate": "Tôi rất thích buổi biểu diễn tối nay.",
+        "analysis": "A. perform (v): biểu diễn; B. performer (n): người biểu diễn; C. performance (n): buổi biểu diễn; D. performing (v-ing): việc biểu diễn.",
+        "whyCorrect": "Sau mạo từ 'the' cần một danh từ chỉ sự việc/hành động biểu diễn.",
+        "whyOthers": "Performer là danh từ chỉ người, nếu dùng phải có số ít/nhiều cụ thể và nghĩa không khớp bằng 'buổi biểu diễn'."
+      }
+    },
+    {
+      "question": "It's bad for young kids to see ________ on TV. (violent)",
+      "options": ["violent", "violence", "violently", "violate"],
+      "correct": "violence",
+      "explanation": {
+        "translate": "Thật tồi tệ khi trẻ nhỏ xem cảnh bạo lực trên TV.",
+        "analysis": "A. violent (adj): hung dữ/bạo lực; B. violence (n): sự bạo lực; C. violently (adv): một cách bạo lực; D. violate (v): vi phạm.",
+        "whyCorrect": "Sau động từ 'see' ta cần một danh từ đóng vai trò tân ngữ (seeing something).",
+        "whyOthers": "Violent là tính từ, chỉ dùng để mô tả tính chất của danh từ (ví dụ: violent movies)."
+      }
+    },
+    {
+      "question": "Joey's hobby is building models. He has a big ________ of wooden model boats. (COLLECT)",
+      "options": ["collect", "collection", "collector", "collective"],
+      "correct": "collection",
+      "explanation": {
+        "translate": "Sở thích của Joey là lắp ráp mô hình. Cậu ấy có một bộ sưu tập thuyền gỗ mô hình lớn.",
+        "analysis": "A. collect (v): thu thập; B. collection (n): bộ sưu tập; C. collector (n): nhà sưu tầm; D. collective (adj): tập thể.",
+        "whyCorrect": "Cụm danh từ 'A big collection of something' (Một bộ sưu tập lớn về cái gì).",
+        "whyOthers": "Collector là người sưu tầm, không phù hợp khi đứng trước 'of wooden boats'."
+      }
+    },
+    {
+      "question": "________ for community events makes our lives more meaningful. (VOLUNTEER)",
+      "options": ["Volunteer", "Voluntary", "Volunteering", "Voluntarily"],
+      "correct": "Volunteering",
+      "explanation": {
+        "translate": "Làm tình nguyện cho các sự kiện cộng đồng khiến cuộc sống chúng ta ý nghĩa hơn.",
+        "analysis": "A. Volunteer (n/v): tình nguyện viên; B. Voluntary (adj): tự nguyện; C. Volunteering (gerund): việc làm tình nguyện; D. Voluntarily (adv): một cách tự nguyện.",
+        "whyCorrect": "Đầu câu cần một danh động từ (V-ing) đóng vai trò làm chủ ngữ cho động từ 'makes'.",
+        "whyOthers": "Volunteer (động từ nguyên mẫu) không thể làm chủ ngữ trực tiếp trong cấu trúc này."
+      }
+    },
+    {
+      "question": "Most children enjoy eating ________ chicken and French fries. (fry)",
+      "options": ["fry", "fried", "frying", "fries"],
+      "correct": "fried",
+      "explanation": {
+        "translate": "Hầu hết trẻ em thích ăn gà rán và khoai tây chiên.",
+        "analysis": "A. fry (v): chiên/rán; B. fried (adj): được rán; C. frying (v-ing): việc đang rán; D. fries (n): khoai tây chiên.",
+        "whyCorrect": "Cần một phân từ (past participle) đóng vai trò tính từ để chỉ trạng thái của con gà: được rán (fried chicken).",
+        "whyOthers": "Frying chicken là con gà đang thực hiện hành động rán (vô lý)."
+      }
+    },
+    {
+      "question": "The weather in Vietnam is completely ________ from the weather in London. (differ)",
+      "options": ["differ", "difference", "different", "differently"],
+      "correct": "different",
+      "explanation": {
+        "translate": "Thời tiết ở Việt Nam hoàn toàn khác so với thời tiết ở London.",
+        "analysis": "A. differ (v): khác nhau; B. difference (n): sự khác biệt; C. different (adj): khác biệt; D. differently (adv): một cách khác biệt.",
+        "whyCorrect": "Sau động từ to be 'is' và trạng từ 'completely' cần một tính từ. Cấu trúc: 'be different from'.",
+        "whyOthers": "Difference là danh từ, không đi trực tiếp sau trạng từ trong cấu trúc này."
+      }
+    },
+    {
+      "question": "Fizzy drinks such as soda or Coke are very ________. They contain a large amount of sugar. (HEALTH)",
+      "options": ["health", "healthy", "unhealthy", "healthily"],
+      "correct": "unhealthy",
+      "explanation": {
+        "translate": "Đồ uống có ga như soda hay Coke rất có hại cho sức khỏe. Chúng chứa một lượng đường lớn.",
+        "analysis": "A. health (n): sức khỏe; B. healthy (adj): khỏe mạnh; C. unhealthy (adj): có hại/không khỏe mạnh; D. healthily (adv): một cách lành mạnh.",
+        "whyCorrect": "Dựa vào câu sau 'contain a large amount of sugar' (chứa nhiều đường) -> đây là điều xấu cho sức khỏe.",
+        "whyOthers": "Healthy là tốt cho sức khỏe, ngược nghĩa ngữ cảnh."
+      }
+    },
+    {
+      "question": "The team has many talented ________. (play)",
+      "options": ["play", "player", "players", "playful"],
+      "correct": "players",
+      "explanation": {
+        "translate": "Đội bóng có rất nhiều cầu thủ tài năng.",
+        "analysis": "A. play (v): chơi; B. player (n): cầu thủ; C. players (n): các cầu thủ; D. playful (adj): ham chơi.",
+        "whyCorrect": "Sau 'many' (nhiều) bắt buộc phải là danh từ số nhiều đếm được.",
+        "whyOthers": "Player là danh từ số ít, không đi với 'many'."
+      }
+    },
+    {
+      "question": "Ba is a famous stamp ________. (collect)",
+      "options": ["collect", "collection", "collector", "collective"],
+      "correct": "collector",
+      "explanation": {
+        "translate": "Ba là một nhà sưu tầm tem nổi tiếng.",
+        "analysis": "A. collect (v): thu thập; B. collection (n): bộ sưu tập; C. collector (n): người sưu tầm; D. collective (adj): tập thể.",
+        "whyCorrect": "Sau cụm 'famous stamp' cần một danh từ chỉ người (chủ ngữ là Ba).",
+        "whyOthers": "Ba không thể là 'một bộ sưu tập' (collection) được."
+      }
+    },
+    {
+      "question": "Mike couldn't sleep last night. Today he was really tired, so he fell ________ in math class. (SLEEP)",
+      "options": ["sleep", "asleep", "sleepy", "sleeping"],
+      "correct": "asleep",
+      "explanation": {
+        "translate": "Mike không ngủ được tối qua. Hôm nay cậu ấy rất mệt, nên cậu ấy đã ngủ gật trong giờ toán.",
+        "analysis": "A. sleep (v/n): ngủ; B. asleep (adj): trạng thái đang ngủ; C. sleepy (adj): buồn ngủ; D. sleeping (v-ing): việc đang ngủ.",
+        "whyCorrect": "Cấu trúc cố định 'fall asleep' (chìm vào giấc ngủ/ngủ gật).",
+        "whyOthers": "Fall sleepy là sai cấu trúc, ta chỉ dùng 'feel sleepy' (cảm thấy buồn ngủ)."
+      }
+    },
+    {
+      "question": "Thomas Edison is one of the greatest ________ in history (invent)",
+      "options": ["invent", "inventor", "inventors", "invention"],
+      "correct": "inventors",
+      "explanation": {
+        "translate": "Thomas Edison là một trong những nhà phát minh vĩ đại nhất trong lịch sử.",
+        "analysis": "A. invent (v): phát minh; B. inventor (n): nhà phát minh; C. inventors (n): các nhà phát minh; D. invention (n): sự phát minh.",
+        "whyCorrect": "Sau 'one of the + so sánh nhất' phải là danh từ số nhiều chỉ người.",
+        "whyOthers": "Invention là sự phát minh (vật), không thể là 'vĩ đại nhất' khi nói về con người Edison."
+      }
+    },
+    {
+      "question": "There are some basic internet ________ tips that you need to follow whenever you go online. (SAFE)",
+      "options": ["safe", "safety", "safely", "save"],
+      "correct": "safety",
+      "explanation": {
+        "translate": "Có một số mẹo an toàn internet cơ bản mà bạn cần tuân thủ bất cứ khi nào lên mạng.",
+        "analysis": "A. safe (adj): an toàn; B. safety (n): sự an toàn; C. safely (adv): một cách an toàn; D. save (v): cứu/lưu.",
+        "whyCorrect": "Dùng danh từ 'safety' đứng trước danh từ 'tips' để tạo danh từ ghép (Safety tips - mẹo an toàn).",
+        "whyOthers": "Safe tips ít dùng hơn cụm danh từ chuẩn 'safety tips' trong văn phong học thuật."
+      }
+    },
+    {
+      "question": "He feels very tired after two continuous nights of ________. (sleep)",
+      "options": ["sleep", "sleepy", "sleepless", "sleeplessness"],
+      "correct": "sleeplessness",
+      "explanation": {
+        "translate": "Anh ấy cảm thấy rất mệt mỏi sau hai đêm mất ngủ liên tiếp.",
+        "analysis": "A. sleep (n/v): giấc ngủ; B. sleepy (adj): buồn ngủ; C. sleepless (adj): không ngủ được; D. sleeplessness (n): sự mất ngủ.",
+        "whyCorrect": "Sau giới từ 'of' cần một danh từ. 'Nights of sleeplessness' là những đêm bị chứng mất ngủ hành hạ.",
+        "whyOthers": "Nights of sleep là đêm ngủ được, không gây ra mệt mỏi."
+      }
+    },
+    {
+      "question": "Fillip starts playing sports and he has got so much more ________. (ENERGETIC)",
+      "options": ["energetic", "energy", "energize", "energetically"],
+      "correct": "energy",
+      "explanation": {
+        "translate": "Fillip bắt đầu chơi thể thao và anh ấy đã có thêm nhiều năng lượng hơn.",
+        "analysis": "A. energetic (adj): đầy năng lượng; B. energy (n): năng lượng; C. energize (v): tiếp năng lượng; D. energetically (adv): một cách hăng hái.",
+        "whyCorrect": "Sau 'much more' chúng ta cần một danh từ không đếm được (energy) để chỉ lượng năng lượng có được.",
+        "whyOthers": "Energetic là tính từ, nếu dùng thì không có 'so much' ở trước trong trường hợp này."
+      }
+    },
+    {
+      "question": "All the ________ in last night's ballet performed perfectly. (DANCE)",
+      "options": ["dance", "dancer", "dancers", "dancing"],
+      "correct": "dancers",
+      "explanation": {
+        "translate": "Tất cả các vũ công trong buổi biểu diễn ba lê tối qua đã trình diễn một cách hoàn hảo.",
+        "analysis": "A. dance (v/n): nhảy/điệu nhảy; B. dancer (n): vũ công; C. dancers (n): các vũ công; D. dancing (n): việc nhảy múa.",
+        "whyCorrect": "Sau 'All the' cần danh từ số nhiều chỉ người (vì thực hiện hành động 'performed').",
+        "whyOthers": "Dancer số ít là sai ngữ pháp sau 'All the'."
+      }
+    }
+];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        // Shuffle questions
+        const shuffledQuiz = quizData.sort(() => Math.random() - 0.5);
+
+        const qText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const qNum = document.getElementById('q-number');
+        const nextBtn = document.getElementById('next-btn');
+        const expBox = document.getElementById('explanation');
+        const expContent = document.getElementById('explanation-content');
+        const progressBar = document.getElementById('progress-bar-inner');
+        const sndCorrect = document.getElementById('snd-correct');
+        const sndWrong = document.getElementById('snd-wrong');
+
+        function loadQuestion() {
+            isAnswered = false;
+            const q = shuffledQuiz[currentQuestion];
+            qNum.innerText = `Câu ${currentQuestion + 1}`;
+            qText.innerHTML = q.question.replace('________', '<span class="text-[#8854C0] border-b-4 border-dashed border-[#8854C0] px-4">?</span>');
+            
+            optionsGrid.innerHTML = '';
+            expBox.style.display = 'none';
+            nextBtn.classList.add('hidden');
+
+            // Shuffle options for each question
+            const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-3d btn-option';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt, btn);
+                optionsGrid.appendChild(btn);
+            });
+
+            progressBar.style.width = `${(currentQuestion / shuffledQuiz.length) * 100}%`;
+        }
+
+        function checkAnswer(selected, btn) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const q = shuffledQuiz[currentQuestion];
+            const allBtns = optionsGrid.querySelectorAll('button');
+
+            if (selected === q.correct) {
+                score++;
+                btn.classList.add('correct-opt');
+                sndCorrect.play();
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#8854C0', '#00C9A7', '#FFD700']
+                });
+            } else {
+                btn.classList.add('wrong-opt');
+                document.getElementById('question-card').classList.add('shake');
+                setTimeout(() => document.getElementById('question-card').classList.remove('shake'), 500);
+                sndWrong.play();
+                
+                // Show correct one
+                allBtns.forEach(b => {
+                    if (b.innerText === q.correct) b.classList.add('correct-opt');
+                });
+            }
+
+            showExplanation(q);
+            nextBtn.classList.remove('hidden');
+        }
+
+        function showExplanation(q) {
+            expBox.style.display = 'block';
+            expContent.innerHTML = `
+                <p>🌟 <b>Dịch câu:</b> ${q.explanation.translate}</p>
+                <p>🔍 <b>Phân tích 4 đáp án:</b><br>${q.explanation.analysis.split(';').join('<br>')}</p>
+                <p>✅ <b>Tại sao chọn?</b> ${q.explanation.whyCorrect}</p>
+                <p>❌ <b>Tại sao các từ kia sai?</b> ${q.explanation.whyOthers}</p>
+                <p class="font-bold text-[#8854C0] mt-2">👉 Đáp án đúng: ${q.correct.toUpperCase()}</p>
+            `;
+        }
+
+        nextBtn.onclick = () => {
+            currentQuestion++;
+            if (currentQuestion < shuffledQuiz.length) {
+                loadQuestion();
+            } else {
+                showSummary();
+            }
+        };
+
+        function showSummary() {
+            document.getElementById('summary-modal').classList.remove('hidden');
+            document.getElementById('final-score').innerText = `${score}/${shuffledQuiz.length}`;
+            
+            const praise = document.getElementById('praise-msg');
+            const percent = (score / shuffledQuiz.length) * 100;
+            
+            if (percent >= 90) praise.innerText = "Tuyệt vời! Bạn là thiên tài Word Form của cô MS Chí Nên! 🏆";
+            else if (percent >= 70) praise.innerText = "Rất tốt! Bạn nắm vững kiến thức rồi đó! ✨";
+            else if (percent >= 50) praise.innerText = "Khá lắm! Cố gắng luyện tập thêm một chút nữa nhé! 💪";
+            else praise.innerText = "Đừng nản lòng! Hãy xem kỹ phần giải thích của cô để tiến bộ hơn! ❤️";
+        }
+
+        // Initialize
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>

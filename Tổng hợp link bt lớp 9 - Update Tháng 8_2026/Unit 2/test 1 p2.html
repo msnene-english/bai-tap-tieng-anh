@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Test - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* === BASE SETTINGS & GAMIFICATION BACKGROUND === */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.7);
+            --correct-color: #4cd137;
+            --incorrect-color: #e84118;
+            --primary-font: 'Nunito', sans-serif;
+            --heading-font: 'Quicksand', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--primary-font);
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #2d3436;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Emojis SVG Background */
+        .floating-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .emoji {
+            position: absolute;
+            font-size: 3rem;
+            animation: floatEmoji 20s infinite linear;
+            opacity: 0.3;
+        }
+        @keyframes floatEmoji {
+            0% { transform: translateY(110vh) rotate(0deg); }
+            100% { transform: translateY(-10vh) rotate(360deg); }
+        }
+
+        /* === STICKY NOTIFICATION === */
+        .sticky-note {
+            position: fixed;
+            top: 10px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 234, 167, 0.9);
+            backdrop-filter: blur(10px);
+            border: 2px solid #fdcb6e;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: max-content;
+            max-width: 90%;
+            line-height: 1.4;
+        }
+
+        /* === LAYOUT SPLIT SCREEN === */
+        .header-title {
+            position: fixed;
+            bottom: 10px; left: 20px;
+            font-family: var(--heading-font);
+            font-size: 1rem;
+            font-weight: 700;
+            color: #636e72;
+            z-index: 10;
+            background: rgba(255,255,255,0.6);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 60px);
+            margin-top: 60px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .left-panel, .right-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 100px; /* Space for scrolling */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.8) transparent;
+        }
+
+        .left-panel::-webkit-scrollbar, .right-panel::-webkit-scrollbar { width: 8px; }
+        .left-panel::-webkit-scrollbar-thumb, .right-panel::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 10px;
+        }
+
+        /* === GLASSMORPHISM CARDS === */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        /* === READING CONTENT STYLING === */
+        .passage-title {
+            font-family: var(--heading-font);
+            color: #2d3436;
+            border-bottom: 2px dashed rgba(0,0,0,0.2);
+            padding-bottom: 10px;
+        }
+        .paragraph {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        .btn-translate {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-family: var(--primary-font);
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-translate:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4); }
+        .translation-box {
+            display: none;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 15px;
+            border-left: 4px solid #6c5ce7;
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #2d3436;
+        }
+
+        /* === GLOSSARY === */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .glossary-table th { background: rgba(108, 92, 231, 0.2); font-family: var(--heading-font); }
+        .g-word { font-weight: bold; color: #6c5ce7; }
+        .g-type { font-style: italic; color: #e17055; font-size: 0.9em; }
+
+        /* === QUIZ UI (RIGHT PANEL) === */
+        .question-num {
+            font-family: var(--heading-font);
+            font-size: 1.2rem;
+            color: #0984e3;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .option-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid transparent;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-family: var(--primary-font);
+            font-weight: 600;
+            color: #2d3436;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            text-align: center;
+            white-space: normal; /* Không bao giờ cắt ngang chữ */
+            word-wrap: break-word;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            border-color: #74b9ff;
+        }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+        
+        /* Gamification Status */
+        .option-btn.correct {
+            background: var(--correct-color);
+            color: white;
+            border-color: #44bd32;
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(76, 209, 55, 0.5);
+        }
+        .option-btn.incorrect {
+            background: var(--incorrect-color);
+            color: white;
+            border-color: #c23616;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .shake { animation: shake 0.5s ease-in-out; }
+
+        /* === EXPLANATION FORMATTING (TUYỆT ĐỐI TUÂN THỦ) === */
+        .explanation-box {
+            display: none;
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px dashed #a29bfe;
+            line-height: 1.6;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .explanation-box ul { padding-left: 20px; }
+        .explanation-box li { margin-bottom: 10px; }
+        
+        /* Tags bắt buộc */
+        .p-word { background: #dfe6e9; padding: 2px 8px; border-radius: 6px; font-weight: bold; color: #000; font-family: monospace; }
+        .p-phonetic { color: #8e44ad; font-style: italic; margin: 0 5px; }
+        .p-mean { background: #ffeaa7; padding: 2px 6px; border-radius: 6px; font-weight: 600; color: #d35400; }
+        .p-grammar { background: #81ecec; padding: 2px 8px; border-radius: 6px; font-weight: bold; color: #00cec9; border: 1px solid #00cec9; }
+        .hl-green { color: #27ae60; font-weight: 800; text-transform: uppercase; }
+        .hl-red { color: #c0392b; font-weight: 800; text-transform: uppercase; }
+
+        /* === SUBMIT BUTTON & MODAL === */
+        .btn-submit {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #00b894, #55efc4);
+            color: white;
+            text-align: center;
+            font-size: 1.5rem;
+            font-family: var(--heading-font);
+            font-weight: 800;
+            padding: 20px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 184, 148, 0.4);
+            transition: all 0.3s;
+            margin-top: 30px;
+        }
+        .btn-submit:hover { transform: scale(1.02); }
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 30px;
+            text-align: center; width: 400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-content input {
+            width: 80%; padding: 15px; border-radius: 10px;
+            border: 2px solid #dfe6e9; font-size: 1.2rem;
+            text-align: center; margin-bottom: 20px;
+            outline: none; font-family: var(--primary-font);
+        }
+        .modal-content input:focus { border-color: #74b9ff; }
+        .gif-result { width: 100%; border-radius: 15px; margin: 15px 0; max-height: 200px; object-fit: cover;}
+        
+        /* Start Overlay để lấy quyền phát âm thanh */
+        #start-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(255,255,255,0.95); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .btn-start {
+            font-size: 2rem; padding: 20px 50px; border-radius: 50px;
+            background: #ff7675; color: white; border: none; font-family: var(--heading-font);
+            font-weight: 800; cursor: pointer; box-shadow: 0 10px 20px rgba(255, 118, 117, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.05);} 100% {transform: scale(1);} }
+    </style>
+</head>
+<body>
+
+    <div id="start-overlay">
+        <h1 style="font-family: 'Quicksand'; color: #2d3436; text-align: center; margin-bottom: 30px;">Chào mừng con đến với bài luyện Đọc Hiểu!</h1>
+        <button class="btn-start" onclick="startTest()">BẮT ĐẦU LÀM BÀI 🚀</button>
+    </div>
+
+    <audio id="audio-welcome" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_7wcKV5pKUrQYWyi7XgktJM.mp3"></audio>
+    <audio id="audio-wrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Am_thanh_meme_Oi_doi_oi_huan_hoa_hong-www_tiengdong_com.mp3"></audio>
+
+    <div class="floating-bg" id="floating-bg"></div>
+
+    <div class="header-title">Giáo viên tạo: Ms MS Chí Nên</div>
+
+    <div class="sticky-note">
+        <span>🚨 <strong>Lưu ý quan trọng:</strong> Tự giác tra cứu từ mới để hiểu rõ nội dung từng câu hỏi. Không được lười suy nghĩ mà chọn bừa. Nhớ nghe phát âm mẫu, đọc kỹ giải thích chi tiết khi chọn sai và ghi chép cấu trúc vào vở. Học hiểu bản chất mới giỏi lên được! 🧠✨</span>
+    </div>
+
+    <div class="container">
+        <div class="left-panel">
+            
+            <div class="glass-card">
+                <h2 class="passage-title">Part I: Cloze Test (Điền từ vào chỗ trống)</h2>
+                
+                <div class="paragraph">
+                    Vienna has been voted "the most liveable city in the world" several years in a row. It is a (32) ______ example of what a good quality of life can mean in the modern world. The reasons for this are the unique mix of eco-friendly (33) ______ and numerous green spaces.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t1-1')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t1-1">
+                    Viên đã được bình chọn là "thành phố đáng sống nhất trên thế giới" trong vài năm liền. Nó là một ví dụ (32) ______ về ý nghĩa của chất lượng cuộc sống tốt trong thế giới hiện đại. Lý do cho điều này là sự kết hợp độc đáo giữa (33) ______ thân thiện với môi trường và vô số không gian xanh.
+                </div>
+
+                <div class="paragraph">
+                    In Vienna, public transport is an environmentally friendly and reliable means of getting to (34) ______ corners of the city, and at very reasonable prices. An annual pass costs just €1 per day. Local Wiener Linien train services run throughout the day, and once daytime business is done, night buses run every weeknight to ensure that everyone gets home (35) ______.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t1-2')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t1-2">
+                    Ở Viên, giao thông công cộng là một phương tiện thân thiện với môi trường và đáng tin cậy để đi đến (34) ______ các góc của thành phố, với mức giá rất hợp lý. Một vé năm chỉ tốn 1 euro mỗi ngày. Dịch vụ tàu hỏa địa phương Wiener Linien chạy suốt cả ngày, và một khi công việc ban ngày kết thúc, xe buýt đêm chạy mỗi đêm trong tuần để đảm bảo mọi người về nhà (35) ______.
+                </div>
+
+                <div class="paragraph">
+                    Besides, almost half of the city of Vienna is (36) ______ of green spaces. The many parks on the Ringstrasse, as well as the Prater park, provide opportunities to enjoy green spaces right in the heart of the city. And with part of the Vienna woods also on its outskirts, the capital has its own biosphere reserve, which is home (37) ______ various endangered species.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t1-3')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t1-3">
+                    Bên cạnh đó, gần một nửa thành phố Viên được (36) ______ bởi các không gian xanh. Nhiều công viên trên đường Ringstrasse, cũng như công viên Prater, cung cấp cơ hội tận hưởng không gian xanh ngay giữa lòng thành phố. Và với một phần của rừng Viên nằm ở vùng ngoại ô, thủ đô này có khu dự trữ sinh quyển của riêng mình, là nơi cư trú (37) ______ nhiều loài có nguy cơ tuyệt chủng khác nhau.
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h2 class="passage-title">Part II: Reading Comprehension (Đọc Hiểu)</h2>
+                
+                <div class="paragraph">
+                    <strong>How does the life of a young person living in a city compare with that of young people living in the countryside?</strong>
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t2-0')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t2-0">
+                    Cuộc sống của một người trẻ sống ở thành phố so với cuộc sống của những người trẻ sống ở nông thôn thì như thế nào?
+                </div>
+
+                <div class="paragraph">
+                    <strong>Liam Murphy, 17, Birmingham</strong><br>
+                    Birmingham's really <strong>built up</strong>; there's a lot of different people and cultures. I love how you can just jump on a bus in two minutes and meet up with friends. Everything's really close. For teenagers, there's always something to do. There are cinemas in the centre. I'm not into sports, but there are many leisure centres, gyms and martial arts places around if that's what you're interested in. At weekends, I go out with friends. We go into town, go to the cinema, and get something to eat.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t2-1')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t2-1">
+                    <strong>Liam Murphy, 17 tuổi, Birmingham</strong><br>
+                    Birmingham thực sự rất <strong>sầm uất/đô thị hóa</strong>; có rất nhiều người và nền văn hóa khác nhau. Tôi thích cách bạn có thể nhảy lên xe buýt chỉ trong hai phút và gặp gỡ bạn bè. Mọi thứ đều rất gần. Đối với thanh thiếu niên, luôn có thứ gì đó để làm. Có các rạp chiếu phim ở trung tâm. Tôi không thích thể thao lắm, nhưng có nhiều trung tâm giải trí, phòng tập thể dục và nơi tập võ xung quanh nếu đó là điều bạn quan tâm. Cuối tuần, tôi ra ngoài với bạn bè. Chúng tôi vào trung tâm thị trấn, đi xem phim, và kiếm chút gì đó để ăn.
+                </div>
+
+                <div class="paragraph">
+                    <strong>Amie Hibbert, 18, Somerset</strong><br>
+                    I like the fact that there is a lot of greenery and grass everywhere. I also like the fact that there are a lot of different social groups, but most of the time we all get along. However, there isn't much to do around the area. There are a few venues where music gigs and events are held, but <strong>these</strong> aren't very often. I think that there should be more entertaining things to do. At weekends, I usually go shopping or head to the beach.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t2-2')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t2-2">
+                    <strong>Amie Hibbert, 18 tuổi, Somerset</strong><br>
+                    Tôi thích việc có rất nhiều cây cối và bãi cỏ ở khắp nơi. Tôi cũng thích việc có nhiều nhóm xã hội khác nhau, nhưng hầu hết thời gian chúng tôi đều hòa thuận. Tuy nhiên, không có nhiều thứ để làm quanh khu vực này. Có một vài địa điểm nơi tổ chức các buổi biểu diễn âm nhạc và sự kiện, nhưng <strong>những thứ này</strong> không diễn ra thường xuyên. Tôi nghĩ rằng nên có nhiều hoạt động giải trí hơn. Vào cuối tuần, tôi thường đi mua sắm hoặc đi tới bãi biển.
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h2 class="passage-title">📚 Glossary (Từ vựng học thuật B1-C2)</h2>
+                <table class="glossary-table">
+                    <tr><th>Word</th><th>Meaning (Nghĩa tiếng Việt)</th></tr>
+                    <tr><td><span class="g-word">liveable</span> <span class="g-type">(adj)</span></td><td>đáng sống</td></tr>
+                    <tr><td><span class="g-word">eco-friendly</span> <span class="g-type">(adj)</span></td><td>thân thiện với môi trường</td></tr>
+                    <tr><td><span class="g-word">reliable</span> <span class="g-type">(adj)</span></td><td>đáng tin cậy, có thể dựa vào</td></tr>
+                    <tr><td><span class="g-word">remote</span> <span class="g-type">(adj)</span></td><td>xa xôi, hẻo lánh</td></tr>
+                    <tr><td><span class="g-word">outskirts</span> <span class="g-type">(n)</span></td><td>vùng ngoại ô</td></tr>
+                    <tr><td><span class="g-word">biosphere reserve</span> <span class="g-type">(n)</span></td><td>khu dự trữ sinh quyển</td></tr>
+                    <tr><td><span class="g-word">endangered species</span> <span class="g-type">(n)</span></td><td>các loài động/thực vật có nguy cơ tuyệt chủng</td></tr>
+                    <tr><td><span class="g-word">built up</span> <span class="g-type">(adj)</span></td><td>được xây dựng sầm uất, đô thị hóa mạnh</td></tr>
+                    <tr><td><span class="g-word">venue</span> <span class="g-type">(n)</span></td><td>địa điểm (tổ chức sự kiện, hòa nhạc...)</td></tr>
+                    <tr><td><span class="g-word">get along</span> <span class="g-type">(phrasal verb)</span></td><td>hòa thuận, có mối quan hệ tốt</td></tr>
+                </table>
+            </div>
+
+        </div> <div class="right-panel" id="quiz-container">
+            </div>
+
+    </div>
+
+    <div class="modal-overlay" id="score-modal">
+        <div class="modal-content" id="modal-content">
+            <h2 style="font-family: 'Quicksand'; color: #0984e3; font-size: 2rem; margin-bottom: 10px;">🎯 KẾT QUẢ BÀI LÀM</h2>
+            <img id="result-gif" class="gif-result" src="" alt="Result Meme">
+            <h3 id="student-name-display" style="color: #2d3436;"></h3>
+            <div style="font-size: 3rem; font-weight: 800; color: #d63031; margin: 10px 0;" id="raw-score"></div>
+            <div style="font-size: 1.5rem; font-weight: bold; background: #ffeaa7; padding: 10px; border-radius: 10px; color: #d35400; display: inline-block; margin-bottom: 20px;" id="scale-score"></div>
+            <p id="teacher-comment" style="font-size: 1.2rem; font-weight: 600; font-style: italic;"></p>
+            <button class="btn-translate" onclick="location.reload()" style="margin-top: 20px;">Làm lại bài 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // === GENERATE FLOATING EMOJIS ===
+        const emojis = ['🏙️', '🌳', '🚌', '🚴', '🌍', '🎧', '🍿'];
+        const bg = document.getElementById('floating-bg');
+        for(let i = 0; i < 15; i++) {
+            let el = document.createElement('div');
+            el.className = 'emoji';
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (Math.random() * 15 + 15) + 's';
+            el.style.animationDelay = Math.random() * 10 + 's';
+            el.style.fontSize = (Math.random() * 2 + 2) + 'rem';
+            bg.appendChild(el);
+        }
+
+        // === START & AUDIO LOGIC ===
+        const audioWelcome = document.getElementById('audio-welcome');
+        const audioWrong = document.getElementById('audio-wrong');
+        
+        // Tạo Web Audio API cho tiếng Ting (luôn hoạt động ổn định không cần file ngoài)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Nốt A5
+            osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.5);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function startTest() {
+            document.getElementById('start-overlay').style.display = 'none';
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            audioWelcome.play().catch(e => console.log("Audio play prevented:", e));
+        }
+
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        // === DATA CÂU HỎI & GIẢI THÍCH (TUÂN THỦ 100% CẤU TRÚC THẺ) ===
+        const quizData = [
+            {
+                num: 32,
+                question: "It is a (32) ______ example of what a good quality of life can mean in the modern world.",
+                options: ["liveable", "lively", "living", "lifeless"],
+                correct: "living",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Nó là một ví dụ (32) ______ về ý nghĩa của chất lượng cuộc sống tốt trong thế giới hiện đại.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>liveable ➔ Dịch: <span class='p-mean'><span class='p-word'>adj</span>: đáng sống</span></li>
+                        <li>lively ➔ Dịch: <span class='p-mean'><span class='p-word'>adj</span>: sống động, năng động</span></li>
+                        <li>living ➔ Dịch: <span class='p-mean'><span class='p-word'>adj</span>: đang sống, thực tế (hiện hữu)</span></li>
+                        <li>lifeless ➔ Dịch: <span class='p-mean'><span class='p-word'>adj</span>: vô hồn, thiếu sức sống</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>living</strong>. Ta có cụm Collocation cố định <span class='p-grammar'>a living example</span> mang nghĩa là <span class='p-mean'>một ví dụ sống động, minh chứng thực tế</span>. Ý tác giả muốn nói thành phố Viên là minh chứng thực tế đang hiện hữu cho chất lượng cuộc sống.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Từ <span class='p-word'>liveable</span> thường bổ nghĩa cho nơi chốn (a liveable city), không dùng cho "example". Từ <span class='p-word'>lively</span> diễn tả sự nhộn nhịp, năng nổ của người/địa điểm. <span class='p-word'>lifeless</span> sai hoàn toàn về nghĩa do mang tính tiêu cực.</li>
+                    </ul>
+                `
+            },
+            {
+                num: 33,
+                question: "The reasons for this are the unique mix of eco-friendly (33) ______ and numerous green spaces.",
+                options: ["hygiene", "security", "service", "transportation"],
+                correct: "transportation",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Lý do cho điều này là sự kết hợp độc đáo giữa (33) ______ thân thiện với môi trường và vô số không gian xanh.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>hygiene ➔ Dịch: <span class='p-mean'><span class='p-word'>n</span>: vệ sinh</span></li>
+                        <li>security ➔ Dịch: <span class='p-mean'><span class='p-word'>n</span>: an ninh</span></li>
+                        <li>service ➔ Dịch: <span class='p-mean'><span class='p-word'>n</span>: dịch vụ</span></li>
+                        <li>transportation ➔ Dịch: <span class='p-mean'><span class='p-word'>n</span>: giao thông vận tải</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>transportation</strong>. Đọc ngay câu tiếp theo ở đoạn 2: <span class='p-mean'>"In Vienna, public transport is an environmentally friendly..."</span>. Đoạn văn đang nói về hệ thống xe buýt, tàu hỏa. Do đó cụm <span class='p-grammar'>eco-friendly transportation</span> (<span class='p-mean'>giao thông thân thiện môi trường</span>) là hoàn toàn khớp ngữ cảnh.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Các từ <span class='p-word'>hygiene</span>, <span class='p-word'>security</span>, <span class='p-word'>service</span> mặc dù là danh từ hợp ngữ pháp, nhưng trong bài văn không hề đề cập đến các khía cạnh an ninh hay vệ sinh. Dựa vào mạch văn (context clues), chúng là bẫy từ vựng sai ngữ cảnh.</li>
+                    </ul>
+                `
+            },
+            {
+                num: 34,
+                question: "...getting to (34) ______ corners of the city, and at very reasonable prices.",
+                options: ["the most remote even", "even the most remote", "the even most remote", "even most remote"],
+                correct: "even the most remote",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> ...để đi đến (34) ______ các góc của thành phố, với mức giá rất hợp lý.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>the most remote even ➔ Dịch: <span class='p-mean'>sai trật tự từ</span></li>
+                        <li>even the most remote ➔ Dịch: <span class='p-mean'>thậm chí (đến) cả những nơi xa xôi nhất</span></li>
+                        <li>the even most remote ➔ Dịch: <span class='p-mean'>sai trật tự từ</span></li>
+                        <li>even most remote ➔ Dịch: <span class='p-mean'>thiếu mạo từ xác định "the"</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>even the most remote</strong>. Theo ngữ pháp, phó từ <span class='p-word'>even</span> (thậm chí) phải đứng trước cụm danh từ để nhấn mạnh. Cấu trúc so sánh nhất chuẩn là <span class='p-grammar'>the + adj-est/most adj + Noun</span>. Ghép lại ta có <span class='p-grammar'>even + the most remote + corners</span>.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Các đáp án còn lại sai hoàn toàn về cấu trúc trật tự từ trong tiếng Anh. Đặc biệt đáp án "even most remote" thiếu đi mạo từ bắt buộc <span class='p-word'>the</span> trong câu so sánh nhất.</li>
+                    </ul>
+                `
+            },
+            {
+                num: 35,
+                question: "...night buses run every weeknight to ensure that everyone gets home (35) ______.",
+                options: ["safely", "publicly", "secretly", "carelessly"],
+                correct: "safely",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> ...xe buýt đêm chạy mỗi đêm trong tuần để đảm bảo mọi người về nhà (35) ______.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>safely ➔ Dịch: <span class='p-mean'><span class='p-word'>adv</span>: một cách an toàn</span></li>
+                        <li>publicly ➔ Dịch: <span class='p-mean'><span class='p-word'>adv</span>: một cách công khai</span></li>
+                        <li>secretly ➔ Dịch: <span class='p-mean'><span class='p-word'>adv</span>: một cách bí mật</span></li>
+                        <li>carelessly ➔ Dịch: <span class='p-mean'><span class='p-word'>adv</span>: một cách bất cẩn</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>safely</strong>. Ta sử dụng trạng từ bổ nghĩa cho động từ "get". Cụm <span class='p-grammar'>get home safely</span> mang nghĩa là <span class='p-mean'>về đến nhà an toàn</span>. Đây là mục đích chính của việc chính quyền cung cấp xe buýt chạy ban đêm.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Các trạng từ còn lại hoàn toàn vô lý về mặt ý nghĩa logic trong hoàn cảnh này. Không ai cần đi xe buýt về nhà một cách "bí mật" (<span class='p-word'>secretly</span>) hay "bất cẩn" (<span class='p-word'>carelessly</span>).</li>
+                    </ul>
+                `
+            },
+            {
+                num: 36,
+                question: "Besides, almost half of the city of Vienna is (36) ______ of green spaces.",
+                options: ["made up", "ran out", "taken care", "got rid"],
+                correct: "made up",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Bên cạnh đó, gần một nửa thành phố Viên được (36) ______ bởi các không gian xanh.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>made up ➔ Dịch: <span class='p-mean'><span class='p-word'>phrasal verb</span>: tạo thành, cấu thành</span></li>
+                        <li>ran out ➔ Dịch: <span class='p-mean'><span class='p-word'>phrasal verb</span>: cạn kiệt, hết</span></li>
+                        <li>taken care ➔ Dịch: <span class='p-mean'><span class='p-word'>phrasal verb</span>: chăm sóc (phải đi với of)</span></li>
+                        <li>got rid ➔ Dịch: <span class='p-mean'><span class='p-word'>phrasal verb</span>: loại bỏ (phải đi với of)</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>made up</strong>. Cấu trúc bị động <span class='p-grammar'>be made up of something</span> có nghĩa là <span class='p-mean'>được tạo thành bởi, được bao phủ bởi cái gì</span>. Ý câu là một nửa diện tích thành phố là không gian xanh.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> <span class='p-word'>run out of</span> (chủ động) nghĩa là cạn kiệt, sai nghĩa. <span class='p-word'>take care of</span> (chăm sóc) nếu dùng bị động phải là "is taken care of by...", chứ không dùng với việc diện tích được cấu thành. <span class='p-word'>get rid of</span> (loại bỏ) sai hoàn toàn về logic.</li>
+                    </ul>
+                `
+            },
+            {
+                num: 37,
+                question: "...the capital has its own biosphere reserve, which is home (37) ______ various endangered species.",
+                options: ["for", "with", "about", "to"],
+                correct: "to",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> ...thủ đô này có khu dự trữ sinh quyển của riêng mình, là nơi cư trú (37) ______ nhiều loài có nguy cơ tuyệt chủng khác nhau.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>for ➔ Dịch: <span class='p-mean'>cho</span></li>
+                        <li>with ➔ Dịch: <span class='p-mean'>với</span></li>
+                        <li>about ➔ Dịch: <span class='p-mean'>về</span></li>
+                        <li>to ➔ Dịch: <span class='p-mean'>đến / giới từ đi kèm cố định</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>to</strong>. Trong tiếng Anh, ta có cấu trúc thành ngữ cố định (Idiom/Collocation): <span class='p-grammar'>be home to somebody/something</span> có nghĩa là <span class='p-mean'>là nơi cư trú, là quê hương của ai/cái gì</span>.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Nếu dịch Word-by-Word (word by word) từ tiếng Việt, nhiều học sinh sẽ chọn "for" (nơi ở CHO các loài). Tuy nhiên, đây là bẫy ngữ pháp. Trong cụm từ này, người bản xứ BẮT BUỘC dùng giới từ <span class='p-word'>to</span>.</li>
+                    </ul>
+                `
+            },
+            {
+                num: 38,
+                question: "The word “built up” in paragraph 2 means ______.",
+                options: ["surrounded by trees", "located far from everything", "crowded with buildings", "stuck in lots of traffic"],
+                correct: "crowded with buildings",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Cụm từ “built up” ở đoạn 2 có nghĩa là ______.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>surrounded by trees ➔ Dịch: <span class='p-mean'>được bao quanh bởi cây cối</span></li>
+                        <li>located far from everything ➔ Dịch: <span class='p-mean'>nằm cách xa mọi thứ</span></li>
+                        <li>crowded with buildings ➔ Dịch: <span class='p-mean'>đông đúc với nhiều tòa nhà</span></li>
+                        <li>stuck in lots of traffic ➔ Dịch: <span class='p-mean'>bị kẹt trong nhiều phương tiện giao thông</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>crowded with buildings</strong>. Tính từ <span class='p-word'>built-up</span> <span class='p-phonetic'>/ˌbɪlt ˈʌp/</span> được dùng để miêu tả một khu vực <span class='p-mean'>có rất nhiều tòa nhà, nhà cửa san sát nhau (khu vực đô thị hóa)</span>. Trong bài, bạn Liam nói ở Birmingham mọi thứ đều gần nhau, rạp chiếu phim, trung tâm mua sắm nằm san sát, chứng tỏ nó rất đông đúc công trình xây dựng.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Nơi được bao quanh bởi cây cối (<span class='p-word'>trees</span>) là vùng quê Somerset của bạn Amie. Các đáp án xa xôi (<span class='p-word'>far</span>) hoặc kẹt xe (<span class='p-word'>traffic</span>) không thể hiện đúng định nghĩa của từ "built up" liên quan tới việc "xây dựng".</li>
+                    </ul>
+                `
+            },
+            {
+                num: 39,
+                question: "According to Liam, teenagers in Birmingham can ______.",
+                options: ["jump on a bus", "attend music gigs", "go to the cinema", "meet different people"],
+                correct: "go to the cinema",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Theo Liam, thanh thiếu niên ở Birmingham có thể ______.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>jump on a bus ➔ Dịch: <span class='p-mean'>nhảy lên xe buýt (bất cứ ai, không riêng teen)</span></li>
+                        <li>attend music gigs ➔ Dịch: <span class='p-mean'>tham dự các buổi biểu diễn âm nhạc (ý của Amie)</span></li>
+                        <li>go to the cinema ➔ Dịch: <span class='p-mean'>đi đến rạp chiếu phim</span></li>
+                        <li>meet different people ➔ Dịch: <span class='p-mean'>gặp gỡ những người khác nhau</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>go to the cinema</strong>. Dẫn chứng trong bài ở đoạn của Liam: <span class='p-mean'>"For teenagers, there's always something to do. There are cinemas in the centre."</span> (Đối với thanh thiếu niên, luôn có thứ để làm. Có các rạp chiếu phim ở trung tâm). Liam đang gắn trực tiếp rạp chiếu phim với đối tượng thanh thiếu niên (teenagers).</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> "Nhảy lên xe" và "gặp gỡ người khác nhau" là mô tả chung về Birmingham, không dùng từ khóa "teenagers". Việc "tham gia biểu diễn âm nhạc" (<span class='p-word'>music gigs</span>) xuất hiện ở đoạn văn của bạn gái Amie sống ở Somerset, không phải ở Birmingham.</li>
+                    </ul>
+                `
+            },
+            {
+                num: 40,
+                question: "What does Amie like about living in Somerset?",
+                options: ["Everything is close", "There are a lot of trees", "Many musical events are held", "People don't talk to each other."],
+                correct: "There are a lot of trees",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Amie thích điều gì về việc sống ở Somerset?</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>Everything is close ➔ Dịch: <span class='p-mean'>Mọi thứ đều gần nhau (Ý của Liam)</span></li>
+                        <li>There are a lot of trees ➔ Dịch: <span class='p-mean'>Có rất nhiều cây cối</span></li>
+                        <li>Many musical events are held ➔ Dịch: <span class='p-mean'>Nhiều sự kiện âm nhạc được tổ chức</span></li>
+                        <li>People don't talk to each other. ➔ Dịch: <span class='p-mean'>Mọi người không nói chuyện với nhau.</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>There are a lot of trees</strong>. Dẫn chứng ngay câu đầu tiên của đoạn Amie: <span class='p-mean'>"I like the fact that there is a lot of greenery and grass everywhere."</span> Từ khóa <span class='p-word'>greenery</span> (cây cỏ xanh tươi) đồng nghĩa với việc có nhiều cây (<span class='p-word'>trees</span>).</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> "Mọi thứ gần nhau" là mô tả thành phố của Liam. Cô ấy than phiền rằng các sự kiện âm nhạc diễn ra KHÔNG thường xuyên (<span class='p-word'>aren't very often</span>), do đó đáp án "nhiều sự kiện" là sai sự thật. Mọi người ở đây hòa thuận (<span class='p-word'>get along</span>), nên việc không nói chuyện với nhau là sai.</li>
+                    </ul>
+                `
+            },
+            {
+                num: 41,
+                question: "What is one disadvantage of living in the countryside?",
+                options: [
+                    "There aren't many entertainment options around the area.",
+                    "People live in different social groups and don't get along.",
+                    "People can only go shopping or head to the beach.",
+                    "There are fewer houses and more grass everywhere."
+                ],
+                correct: "There aren't many entertainment options around the area.",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Một bất lợi của việc sống ở vùng nông thôn là gì?</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>There aren't many entertainment options around the area. ➔ Dịch: <span class='p-mean'>Không có nhiều lựa chọn giải trí xung quanh khu vực.</span></li>
+                        <li>People live in different social groups and don't get along. ➔ Dịch: <span class='p-mean'>Mọi người không hòa thuận.</span></li>
+                        <li>People can only go shopping or head to the beach. ➔ Dịch: <span class='p-mean'>Mọi người chỉ có thể đi mua sắm hoặc ra biển.</span></li>
+                        <li>There are fewer houses and more grass everywhere. ➔ Dịch: <span class='p-mean'>Có ít nhà cửa và nhiều cỏ ở khắp mọi nơi (Đây là điểm bạn ấy thích, không phải bất lợi).</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>There aren't many entertainment options around the area.</strong>. Dẫn chứng đoạn Amie (người sống ở quê): <span class='p-mean'>"However, there isn't much to do around the area... I think that there should be more entertaining things to do."</span> (Tuy nhiên, không có nhiều thứ để làm quanh đây... Tôi nghĩ nên có thêm nhiều hoạt động giải trí).</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Đoạn văn ghi rõ mọi người hòa thuận (<span class='p-word'>we all get along</span>). Đáp án "chỉ có thể đi mua sắm" chứa từ <span class='p-word'>only</span> (chỉ) quá tuyệt đối, cô ấy thường đi chứ không phải "chỉ" có vậy. Việc nhiều cỏ là điều Amie <span class='p-word'>like</span> (thích), nên không phải là bất lợi (<span class='p-word'>disadvantage</span>).</li>
+                    </ul>
+                `
+            },
+            {
+                num: 42,
+                question: "The word “these” in paragraph 3 refers to ______.",
+                options: ["venues", "social groups", "entertaining things", "music gigs and events"],
+                correct: "music gigs and events",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Từ “these” ở đoạn 3 ám chỉ điều gì?</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>venues ➔ Dịch: <span class='p-mean'>các địa điểm</span></li>
+                        <li>social groups ➔ Dịch: <span class='p-mean'>các nhóm xã hội</span></li>
+                        <li>entertaining things ➔ Dịch: <span class='p-mean'>những thứ giải trí</span></li>
+                        <li>music gigs and events ➔ Dịch: <span class='p-mean'>các buổi biểu diễn nhạc và sự kiện</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>music gigs and events</strong>. Đọc câu ngay trước đó: <span class='p-mean'>"There are a few venues where music gigs and events are held, but these aren't very often."</span> (Có một vài địa điểm nơi CÁC BUỔI BIỂU DIỄN VÀ SỰ KIỆN được tổ chức, nhưng CHÚNG không thường xuyên lắm). Từ "chúng" ở đây ám chỉ chính các sự kiện đó.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Địa điểm (<span class='p-word'>venues</span>) là nơi tổ chức, nó cố định một chỗ, không thể miêu tả bằng tính từ diễn ra "thường xuyên" (often) được, chỉ có sự kiện mới dùng "often". Các nhóm xã hội nằm ở câu quá xa không liên quan.</li>
+                    </ul>
+                `
+            },
+            {
+                num: 43,
+                question: "Which of the following is NOT true according to the passage?",
+                options: [
+                    "At weekends, both Liam and Amie like meeting up with friends.",
+                    "Liam isn't very fond of going to gyms or martial arts places.",
+                    "You can find people from many different cultures in Birmingham.",
+                    "Amie wishes that her town could have more fun things to do."
+                ],
+                correct: "At weekends, both Liam and Amie like meeting up with friends.",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Điều nào sau đây là KHÔNG đúng theo đoạn văn?</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>At weekends, both Liam and Amie like meeting up with friends. ➔ Dịch: <span class='p-mean'>Vào cuối tuần, CẢ Liam và Amie đều thích gặp gỡ bạn bè.</span></li>
+                        <li>Liam isn't very fond of going to gyms or martial arts places. ➔ Dịch: <span class='p-mean'>Liam không thích đến phòng gym hay chỗ tập võ lắm.</span></li>
+                        <li>You can find people from many different cultures in Birmingham. ➔ Dịch: <span class='p-mean'>Bạn có thể tìm thấy người từ nhiều văn hóa ở Birmingham.</span></li>
+                        <li>Amie wishes that her town could have more fun things to do. ➔ Dịch: <span class='p-mean'>Amie ước thị trấn của cô có nhiều trò vui hơn.</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Câu sai (và là đáp án ta cần chọn) là <strong>At weekends, both Liam and Amie like meeting up with friends.</strong>. Trong bài, Liam có nói "At weekends, I go out with friends". Tuy nhiên, Amie nói: <span class='p-mean'>"At weekends, I usually go shopping or head to the beach."</span> Amie KHÔNG hề nhắc đến việc gặp gỡ bạn bè vào cuối tuần. Do đó chữ "both" (cả hai) làm câu này trở nên sai sự thật.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Ba đáp án kia ĐỀU ĐÚNG với nội dung bài (nên không được chọn). Liam nói "I'm not into sports" (Tôi không mê thể thao -> không thích tập gym). Birmingham có "a lot of different cultures". Amie nói "there should be more entertaining things to do" (ước có nhiều trò vui hơn).</li>
+                    </ul>
+                `
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = {};
+        const totalQuestions = quizData.length;
+
+        // Xáo trộn mảng (Fisher-Yates)
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Tạo UI Câu hỏi
+        const quizContainer = document.getElementById('quiz-container');
+        quizData.forEach((item, index) => {
+            const qCard = document.createElement('div');
+            qCard.className = 'glass-card';
+            
+            // Xáo trộn đáp án
+            let shuffledOptions = shuffle([...item.options]);
+            
+            let optionsHTML = shuffledOptions.map(opt => {
+                const isCorrect = (opt === item.correct);
+                return `<button class="option-btn" data-correct="${isCorrect}" onclick="handleAnswer(this, ${item.num})">${opt}</button>`;
+            }).join('');
+
+            qCard.innerHTML = `
+                <div class="question-num">Question ${item.num}</div>
+                <div class="question-text">${item.question}</div>
+                <div class="options-grid" id="grid-${item.num}">
+                    ${optionsHTML}
+                </div>
+                <div class="explanation-box" id="exp-${item.num}">
+                    ${item.explanation}
+                </div>
+            `;
+            quizContainer.appendChild(qCard);
+        });
+
+        // Nút nộp bài
+        const submitBtn = document.createElement('button');
+        submitBtn.className = 'btn-submit';
+        submitBtn.innerText = '🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ';
+        submitBtn.onclick = showResultModal;
+        quizContainer.appendChild(submitBtn);
+
+        // Logic Xử lý khi click đáp án
+        function handleAnswer(btnElement, questionNum) {
+            if (answeredQuestions[questionNum]) return; // Chỉ cho phép trả lời 1 lần
+            
+            const isCorrect = btnElement.getAttribute('data-correct') === 'true';
+            const grid = document.getElementById(`grid-${questionNum}`);
+            const buttons = grid.querySelectorAll('.option-btn');
+            
+            // Khóa tất cả các nút trong câu này
+            buttons.forEach(b => b.disabled = true);
+            answeredQuestions[questionNum] = true;
+
+            if (isCorrect) {
+                btnElement.classList.add('correct');
+                score++;
+                playDing();
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } else {
+                btnElement.classList.add('incorrect');
+                btnElement.classList.add('shake');
+                audioWrong.currentTime = 0;
+                audioWrong.play().catch(e => {});
+                // Tìm nút đúng để highlight cho học sinh học
+                buttons.forEach(b => {
+                    if (b.getAttribute('data-correct') === 'true') {
+                        b.classList.add('correct');
+                        b.style.boxShadow = "0 0 20px #f1c40f"; // Nổi bật đáp án đúng
+                    }
+                });
+            }
+
+            // Hiện giải thích
+            document.getElementById(`exp-${questionNum}`).style.display = 'block';
+        }
+
+        function showResultModal() {
+            let studentName = prompt("Mời siêu nhân nhập Họ Tên của mình để nộp bài nhé:");
+            if (!studentName || studentName.trim() === "") {
+                alert("Con phải nhập tên thì cô mới lưu điểm được nha!");
+                return;
+            }
+
+            const rawScoreText = `${score} / ${totalQuestions}`;
+            const scale10 = ((score / totalQuestions) * 10).toFixed(2);
+            
+            document.getElementById('student-name-display').innerText = `Học sinh: ${studentName}`;
+            document.getElementById('raw-score').innerText = rawScoreText;
+            document.getElementById('scale-score').innerText = `Điểm quy đổi: ${scale10} / 10`;
+
+            let gifUrl = "";
+            let comment = "";
+
+            if (score === totalQuestions) {
+                gifUrl = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; // Minion cheering
+                comment = "🏆 Quá đỉnh!! Con chính là thiên tài tiếng Anh! Ms MS Chí Nên vô cùng tự hào!";
+            } else if (score >= (totalQuestions * 0.6)) {
+                gifUrl = "https://media.giphy.com/media/3oz8xAFtcoSTARGVD2/giphy.gif"; // High five
+                comment = "👏 Rất tốt! Khả năng đọc hiểu của con đang tiến bộ rất nhanh. Cố lên chút nữa là đạt điểm tuyệt đối nhé!";
+            } else {
+                gifUrl = "https://media.giphy.com/media/L95W4wv8nnb9K/giphy.gif"; // Crying
+                comment = "💪 Đừng nản lòng nhé! Hãy đọc lại thật kỹ phần GIẢI THÍCH CHI TIẾT bên dưới mỗi câu để rút kinh nghiệm. Lần sau chắc chắn con sẽ làm tốt hơn!";
+            }
+
+            document.getElementById('result-gif').src = gifUrl;
+            document.getElementById('teacher-comment').innerText = comment;
+            document.getElementById('score-modal').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

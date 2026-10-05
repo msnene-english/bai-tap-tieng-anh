@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Quiz - Ms MS Chí Nên</title>
+    <!-- Google Fonts: Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Confetti JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0f4f8;
+            background-image: radial-gradient(#8854C0 1px, transparent 1px), radial-gradient(#00C9A7 1px, transparent 1px);
+            background-position: 0 0, 25px 25px;
+            background-size: 50px 50px;
+        }
+
+        /* 3D Button Styles */
+        .btn-option {
+            transition: all 0.1s;
+            border-bottom: 5px solid #d1d5db; /* Default shadow color */
+            transform: translateY(0);
+        }
+
+        .btn-option:active {
+            transform: translateY(4px);
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        .btn-option:hover:not(:disabled) {
+            transform: translateY(-2px);
+            filter: brightness(105%);
+        }
+
+        /* Correct State */
+        .btn-correct {
+            background-color: #00D26A !important;
+            border-color: #00B359 !important; /* Darker green border */
+            color: white !important;
+            border-bottom: 5px solid #009e4f !important;
+        }
+
+        /* Wrong State */
+        .btn-wrong {
+            background-color: #FF4757 !important;
+            border-color: #FF2E40 !important;
+            color: white !important;
+            border-bottom: 5px solid #cc3946 !important;
+        }
+
+        /* Shake Animation */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-5deg); }
+            50% { transform: translateX(5px) rotate(5deg); }
+            75% { transform: translateX(-5px) rotate(-5deg); }
+            100% { transform: translateX(0); }
+        }
+
+        .shake-animation {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8854C0; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6c429c; 
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none; /* Hidden by default */
+            animation: slideDown 0.4s ease-out forwards;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .glossary-table th, .glossary-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <!-- Header -->
+    <header class="bg-white shadow-lg sticky top-0 z-50 border-b-4 border-[#8854C0]">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-[#8854C0] text-white p-2 rounded-xl shadow-md">
+                    <i class="fa-solid fa-graduation-cap text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-extrabold text-[#8854C0]">Ms MS Chí Nên</h1>
+                    <p class="text-sm font-semibold text-[#00C9A7]">Trắc nghiệm: Đại từ & Tính từ sở hữu</p>
+                </div>
+            </div>
+            <div class="bg-[#f3f4f6] px-4 py-2 rounded-full font-bold text-gray-700 shadow-inner flex items-center gap-2">
+                <i class="fa-solid fa-star text-yellow-400"></i>
+                <span id="score-display">0/30</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="quiz-container" class="max-w-3xl mx-auto px-4 py-8 space-y-8">
+        <!-- Questions will be injected here by JS -->
+    </main>
+
+    <!-- Floating Action Button for Result -->
+    <div class="fixed bottom-6 right-6 z-40">
+        <button onclick="showFinalResult()" class="bg-[#00C9A7] hover:bg-[#00a88d] text-white font-bold py-3 px-6 rounded-full shadow-lg transform transition hover:scale-105 border-b-4 border-[#008f78] flex items-center gap-2">
+            <i class="fa-solid fa-flag-checkered"></i> Nộp bài & Xem điểm
+        </button>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl transform scale-100 transition-transform">
+            <div class="mb-4">
+                <img src="https://cdn-icons-png.flaticon.com/512/742/742751.png" alt="Trophy" class="w-24 h-24 mx-auto animate-bounce">
+            </div>
+            <h2 class="text-3xl font-extrabold text-[#8854C0] mb-2">Kết quả của bạn</h2>
+            <p class="text-gray-600 mb-6 text-lg" id="final-message">Bạn đã làm rất tốt!</p>
+            
+            <div class="flex justify-center items-center gap-4 mb-8">
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 font-bold uppercase">Câu đúng</p>
+                    <p class="text-4xl font-black text-[#00D26A]" id="final-score">0</p>
+                </div>
+                <div class="h-12 w-1 bg-gray-200 rounded"></div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 font-bold uppercase">Tổng câu</p>
+                    <p class="text-4xl font-black text-gray-700">30</p>
+                </div>
+            </div>
+
+            <button onclick="closeModal()" class="w-full bg-[#8854C0] hover:bg-[#6c429c] text-white font-bold py-3 px-6 rounded-xl shadow-md border-b-4 border-[#5a3286] transition">
+                Xem lại bài làm
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Elements (Base64 for single file requirement) -->
+    <!-- Sound: Ding (Correct) -->
+    <audio id="sound-correct" src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"></audio>
+    
+    <!-- Sound: Wrong (Buzz/Funny) -->
+    <audio id="sound-wrong" src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"></audio>
+
+
+    <script>
+        // === DỮ LIỆU BÀI TẬP (Từ 31 đến 60) ===
+        // Toàn vẹn dữ liệu từ yêu cầu
+        const quizData = [
+            {
+                "id": 31,
+                "question": "My house is __________ to the hospital.",
+                "options": [
+                    { "text": "A. close", "isCorrect": true, "rationale": "Dịch nghĩa: Nhà tôi ở **gần** bệnh viện.<br><br>Phân tích:<br>- close to (adj): gần với (cấu trúc cố định).<br>- near (prep/adj/adv): gần (thường không đi với 'to' ngay phía sau khi chỉ vị trí, VD: near the hospital).<br>- opposite (prep): đối diện.<br>- across (prep): bên kia (thường đi với 'from').<br><br>Giải thích: Vì có giới từ 'to' đi sau, ta dùng 'close'." },
+                    { "text": "B. near", "isCorrect": false, "rationale": "Sai. 'Near' không đi với 'to' (trừ trường hợp so sánh 'nearer to')." },
+                    { "text": "C. opposite", "isCorrect": false, "rationale": "Sai. 'Opposite' không đi với 'to'." },
+                    { "text": "D. Across", "isCorrect": false, "rationale": "Sai. Phải là 'across from'." }
+                ]
+            },
+            {
+                "id": 32,
+                "question": "We come __________ Viet Nam.",
+                "options": [
+                    { "text": "A. in", "isCorrect": false, "rationale": "Sai." },
+                    { "text": "B. above", "isCorrect": false, "rationale": "Sai nghĩa (bên trên)." },
+                    { "text": "C. from", "isCorrect": true, "rationale": "Dịch nghĩa: Chúng tôi đến **từ** Việt Nam.<br><br>Phân tích:<br>- Cấu trúc: come from (đến từ đâu/quê quán ở đâu).<br><br>Giải thích: Giới từ chỉ nguồn gốc là 'from'." },
+                    { "text": "D. below", "isCorrect": false, "rationale": "Sai nghĩa (bên dưới)." }
+                ]
+            },
+            {
+                "id": 33,
+                "question": "This car is _________.",
+                "options": [
+                    { "text": "A. his", "isCorrect": true, "rationale": "Dịch nghĩa: Chiếc xe hơi này là **của anh ấy**.<br><br>Phân tích:<br>- his (Possessive Pronoun): cái của anh ấy.<br>- him (Object): tân ngữ.<br>- he (Subject): chủ ngữ.<br>- himself (Reflexive): chính anh ấy.<br><br>Giải thích: Vị trí sau động từ 'is' cần một Đại từ sở hữu (để thay thế cho 'his car'). Lưu ý: 'His' vừa là tính từ sở hữu vừa là đại từ sở hữu." },
+                    { "text": "B. him", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "C. he", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "D. himself", "isCorrect": false, "rationale": "Sai nghĩa." }
+                ]
+            },
+            {
+                "id": 34,
+                "question": "These are the children’s shoes. They’re _________.",
+                "options": [
+                    { "text": "A. their", "isCorrect": false, "rationale": "Thiếu danh từ đi kèm." },
+                    { "text": "B. they", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "C. theirs", "isCorrect": true, "rationale": "Dịch nghĩa: Đây là giày của bọn trẻ. Chúng là **của họ/chúng**.<br><br>Phân tích:<br>- their (Tính từ sở hữu): cần danh từ theo sau (their shoes).<br>- theirs (Đại từ sở hữu): đứng một mình (= their shoes).<br>- they (Chủ ngữ).<br>- them (Tân ngữ).<br><br>Giải thích: Cần đại từ sở hữu đứng cuối câu để thay thế cho cụm 'the children's shoes'." },
+                    { "text": "D. them", "isCorrect": false, "rationale": "Sai loại từ." }
+                ]
+            },
+            {
+                "id": 35,
+                "question": "Look at _________!",
+                "options": [
+                    { "text": "A. my", "isCorrect": false, "rationale": "Thiếu danh từ." },
+                    { "text": "B. I", "isCorrect": false, "rationale": "Chỉ đứng làm chủ ngữ." },
+                    { "text": "C. me", "isCorrect": true, "rationale": "Dịch nghĩa: Hãy nhìn **tôi** này!<br><br>Phân tích:<br>- my (Tính từ sở hữu): cần danh từ.<br>- I (Chủ ngữ).<br>- me (Tân ngữ).<br>- mine (Đại từ sở hữu).<br><br>Giải thích: Sau giới từ 'at' và động từ 'look', ta cần một Tân ngữ (Object Pronoun)." },
+                    { "text": "D. mine", "isCorrect": false, "rationale": "Sai nghĩa (nhìn cái của tôi?)." }
+                ]
+            },
+            {
+                "id": 36,
+                "question": "_________ brother is tall.",
+                "options": [
+                    { "text": "A. His", "isCorrect": true, "rationale": "Dịch nghĩa: Anh trai **của cậu ấy** thì cao.<br><br>Phân tích:<br>- His + Noun: Của anh ấy.<br><br>Giải thích: Trước danh từ 'brother', ta cần một Tính từ sở hữu để chỉ sự sở hữu." },
+                    { "text": "B. Him", "isCorrect": false, "rationale": "Là tân ngữ." },
+                    { "text": "C. Himself", "isCorrect": false, "rationale": "Là đại từ phản thân." },
+                    { "text": "D. He", "isCorrect": false, "rationale": "Là chủ ngữ." }
+                ]
+            },
+            {
+                "id": 37,
+                "question": "I waited for _________ yesterday but you didn’t come.",
+                "options": [
+                    { "text": "A. your", "isCorrect": false, "rationale": "Thiếu danh từ." },
+                    { "text": "B. you", "isCorrect": true, "rationale": "Dịch nghĩa: Tôi đã đợi **bạn** ngày hôm qua nhưng bạn không đến.<br><br>Phân tích:<br>- you (Tân ngữ): bạn.<br>- your (Tính từ sở hữu): của bạn.<br>- yours (Đại từ sở hữu): cái của bạn.<br><br>Giải thích: Sau giới từ 'for', ta cần một Tân ngữ chỉ người." },
+                    { "text": "C. yourself", "isCorrect": false, "rationale": "Sai nghĩa." },
+                    { "text": "D. yours", "isCorrect": false, "rationale": "Sai nghĩa." }
+                ]
+            },
+            {
+                "id": 38,
+                "question": "These are _________ pencils.",
+                "options": [
+                    { "text": "A. ours", "isCorrect": false, "rationale": "Không đứng trước danh từ." },
+                    { "text": "B. we", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "C. us", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "D. our", "isCorrect": true, "rationale": "Dịch nghĩa: Đây là những cây bút chì **của chúng tôi**.<br><br>Phân tích:<br>- our + Noun: của chúng tôi (Tính từ sở hữu).<br>- ours (Đại từ sở hữu): cái của chúng tôi (không đi kèm danh từ).<br>- we (Chủ ngữ).<br>- us (Tân ngữ).<br><br>Giải thích: Trước danh từ 'pencils', cần Tính từ sở hữu." }
+                ]
+            },
+            {
+                "id": 39,
+                "question": "This letter is for _________.",
+                "options": [
+                    { "text": "A. she", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "B. hers", "isCorrect": false, "rationale": "Sai nghĩa (cho cái của cô ấy?)." },
+                    { "text": "C. her", "isCorrect": true, "rationale": "Dịch nghĩa: Lá thư này dành cho **cô ấy**.<br><br>Phân tích:<br>- her (Tân ngữ): cô ấy.<br>- she (Chủ ngữ).<br>- hers (Đại từ sở hữu).<br><br>Giải thích: Sau giới từ 'for', cần Tân ngữ." },
+                    { "text": "D. herself", "isCorrect": false, "rationale": "Sai nghĩa." }
+                ]
+            },
+            {
+                "id": 40,
+                "question": "Tina is _________ sister.",
+                "options": [
+                    { "text": "A. my", "isCorrect": true, "rationale": "Dịch nghĩa: Tina là chị gái **của tôi**.<br><br>Phân tích:<br>- my + Noun: của tôi (Tính từ sở hữu).<br><br>Giải thích: Trước danh từ 'sister', cần tính từ sở hữu." },
+                    { "text": "B. mine", "isCorrect": false, "rationale": "Không đứng trước danh từ." },
+                    { "text": "C. I", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "D. me", "isCorrect": false, "rationale": "Sai loại từ." }
+                ]
+            },
+            {
+                "id": 41,
+                "question": "_________ went to the cinema yesterday.",
+                "options": [
+                    { "text": "A. Her", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "B. Hers", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "C. She", "isCorrect": true, "rationale": "Dịch nghĩa: **Cô ấy** đã đi xem phim ngày hôm qua.<br><br>Phân tích:<br>- She (Chủ ngữ): Cô ấy.<br>- Her (Tân ngữ/Tính từ sở hữu).<br>- Hers (Đại từ sở hữu).<br><br>Giải thích: Đứng đầu câu làm chủ ngữ cho động từ 'went', cần Đại từ nhân xưng chủ ngữ (Subject Pronoun)." },
+                    { "text": "D. Herself", "isCorrect": false, "rationale": "Sai loại từ." }
+                ]
+            },
+            {
+                "id": 42,
+                "question": "_________ didn’t do the homework.",
+                "options": [
+                    { "text": "A. Yourself", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "B. You", "isCorrect": true, "rationale": "Dịch nghĩa: **Bạn** đã không làm bài tập về nhà.<br><br>Phân tích:<br>- You (Chủ ngữ): Bạn.<br>- Your (Tính từ sở hữu).<br>- Yours (Đại từ sở hữu).<br>- Yourself (Đại từ phản thân).<br><br>Giải thích: Cần chủ ngữ đứng đầu câu." },
+                    { "text": "C. Your", "isCorrect": false, "rationale": "Thiếu danh từ." },
+                    { "text": "D. Yours", "isCorrect": false, "rationale": "Sai loại từ." }
+                ]
+            },
+            {
+                "id": 43,
+                "question": "This is John’s book. It is _________ book.",
+                "options": [
+                    { "text": "A. he", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "B. his", "isCorrect": true, "rationale": "Dịch nghĩa: Đây là sách của John. Nó là sách **của anh ấy**.<br><br>Phân tích:<br>- his + Noun: của anh ấy (Tính từ sở hữu).<br><br>Giải thích: Trước danh từ 'book', cần tính từ sở hữu." },
+                    { "text": "C. him", "isCorrect": false, "rationale": "Sai loại từ." },
+                    { "text": "D. himself", "isCorrect": false, "rationale": "Sai loại từ." }
+                ]
+            },
+            {
+                "id": 44,
+                "question": "Whose bag is this? - It’s _________.",
+                "options": [
+                    { "text": "A. I", "isCorrect": false, "rationale": "Sai." },
+                    { "text": "B. mine", "isCorrect": true, "rationale": "Dịch nghĩa: Cái túi này của ai? - Nó là **của tôi**.<br><br>Phân tích:<br>- mine (Đại từ sở hữu) = my bag.<br><br>Giải thích: Cần đại từ sở hữu đứng một mình để thay thế cho 'my bag', tránh lặp từ." },
+                    { "text": "C. my", "isCorrect": false, "rationale": "Thiếu danh từ (my bag)." },
+                    { "text": "D. me", "isCorrect": false, "rationale": "Sai nghĩa (Nó là tôi?)." }
+                ]
+            },
+            {
+                "id": 45,
+                "question": "Whose jeans are these? - They’re _________.",
+                "options": [
+                    { "text": "A. his", "isCorrect": true, "rationale": "Dịch nghĩa: Những chiếc quần jeans này của ai? - Chúng là **của anh ấy**.<br><br>Phân tích:<br>- his (Đại từ sở hữu) = his jeans.<br><br>Giải thích: Tương tự câu trên, 'his' ở đây đóng vai trò đại từ sở hữu." },
+                    { "text": "B. himself", "isCorrect": false, "rationale": "Sai." },
+                    { "text": "C. he", "isCorrect": false, "rationale": "Sai." },
+                    { "text": "D. him", "isCorrect": false, "rationale": "Sai." }
+                ]
+            },
+            {
+                "id": 46,
+                "question": "Our car is bigger than _________.",
+                "options": [
+                    { "text": "A. they", "isCorrect": false, "rationale": "Sai (xe to hơn họ?)." },
+                    { "text": "B. theirs", "isCorrect": true, "rationale": "Dịch nghĩa: Xe của chúng tôi to hơn **(xe) của họ**.<br><br>Phân tích:<br>- theirs (Đại từ sở hữu) = their car.<br><br>Giải thích: So sánh xe với xe. 'Theirs' thay thế cho 'their car'." },
+                    { "text": "C. them", "isCorrect": false, "rationale": "Sai (xe to hơn họ?)." },
+                    { "text": "D. their", "isCorrect": false, "rationale": "Thiếu danh từ." }
+                ]
+            },
+            {
+                "id": 47,
+                "question": "Whose dictionary is this? - It’s _________.",
+                "options": [
+                    { "text": "A. her", "isCorrect": false, "rationale": "Thiếu danh từ." },
+                    { "text": "B. she", "isCorrect": false, "rationale": "Sai." },
+                    { "text": "C. hers", "isCorrect": true, "rationale": "Dịch nghĩa: Cuốn từ điển này của ai? - Nó là **của cô ấy**.<br><br>Phân tích:<br>- hers (Đại từ sở hữu) = her dictionary.<br><br>Giải thích: Cần đại từ sở hữu đứng một mình." },
+                    { "text": "D. herself", "isCorrect": false, "rationale": "Sai." }
+                ]
+            },
+            {
+                "id": 48,
+                "question": "Junko has eaten her lunch already, but I’m saving _________ until later.",
+                "options": [
+                    { "text": "A. hers", "isCorrect": false, "rationale": "Sai nghĩa (tôi ăn của cô ấy?)." },
+                    { "text": "B. her", "isCorrect": false, "rationale": "Sai." },
+                    { "text": "C. my", "isCorrect": false, "rationale": "Thiếu danh từ." },
+                    { "text": "D. mine", "isCorrect": true, "rationale": "Dịch nghĩa: Junko đã ăn bữa trưa của cô ấy rồi, nhưng tôi đang để dành **bữa trưa của tôi** đến lát nữa.<br><br>Phân tích:<br>- mine (Đại từ sở hữu) = my lunch.<br><br>Giải thích: Để tránh lặp lại từ 'lunch', ta dùng 'mine'." }
+                ]
+            },
+            {
+                "id": 49,
+                "question": "We gave them _________ telephone number, and they gave us _________.",
+                "options": [
+                    { "text": "A. ours, their", "isCorrect": false, "rationale": "Sai cả hai." },
+                    { "text": "B. our, their", "isCorrect": false, "rationale": "Sai vế sau." },
+                    { "text": "C. ours, theirs", "isCorrect": false, "rationale": "Sai vế đầu." },
+                    { "text": "D. our, theirs", "isCorrect": true, "rationale": "Dịch nghĩa: Chúng tôi đưa họ số điện thoại **của chúng tôi**, và họ đưa chúng tôi **(số) của họ**.<br><br>Giải thích:<br>1. Chỗ trống 1: Đứng trước danh từ 'telephone number' -> Tính từ sở hữu 'our'.<br>2. Chỗ trống 2: Đứng cuối câu, không có danh từ đi kèm, thay thế cho 'their number' -> Đại từ sở hữu 'theirs'." }
+                ]
+            },
+            {
+                "id": 50,
+                "question": "_________ computer is a Mac, but _________ is a PC.",
+                "options": [
+                    { "text": "A. Your, mine", "isCorrect": true, "rationale": "Dịch nghĩa: Máy tính **của bạn** là Mac, nhưng **(máy) của tôi** là PC.<br><br>Giải thích:<br>1. Chỗ trống 1: Trước 'computer' -> Tính từ sở hữu 'Your'.<br>2. Chỗ trống 2: Làm chủ ngữ, không có danh từ -> Đại từ sở hữu 'mine'." },
+                    { "text": "B. Yours, mine", "isCorrect": false, "rationale": "Sai vế đầu." },
+                    { "text": "C. Your, my", "isCorrect": false, "rationale": "Sai vế sau (my phải có Noun)." },
+                    { "text": "D. Yours, my", "isCorrect": false, "rationale": "Sai cả hai." }
+                ]
+            },
+            {
+                "id": 51,
+                "question": "You can’t have any chocolate! It’s _________!",
+                "options": [
+                    { "text": "A. your", "isCorrect": false, "rationale": "Thiếu danh từ." },
+                    { "text": "B. its", "isCorrect": false, "rationale": "Sai nghĩa." },
+                    { "text": "C. her", "isCorrect": false, "rationale": "Thiếu danh từ (nếu là hers thì đúng ngữ pháp nhưng sai ngữ cảnh 'tôi nói với bạn')." },
+                    { "text": "D. mine", "isCorrect": true, "rationale": "Dịch nghĩa: Bạn không được ăn miếng sô cô la nào đâu! Nó là **của tôi**!<br><br>Giải thích: Cần đại từ sở hữu đứng cuối câu để khẳng định chủ quyền." }
+                ]
+            },
+            {
+                "id": 52,
+                "question": "Was _________ grammar book expensive?",
+                "options": [
+                    { "text": "A. your", "isCorrect": true, "rationale": "Dịch nghĩa: Cuốn sách ngữ pháp **của bạn** có đắt không?<br><br>Giải thích: Trước danh từ 'grammar book' cần Tính từ sở hữu." },
+                    { "text": "B. yours", "isCorrect": false, "rationale": "Không đứng trước danh từ." },
+                    { "text": "C. your’s", "isCorrect": false, "rationale": "Sai chính tả (không có từ này)." },
+                    { "text": "D. you", "isCorrect": false, "rationale": "Sai loại từ." }
+                ]
+            },
+            {
+                "id": 53,
+                "question": "_____ pencil is broken. Can I borrow _________?",
+                "options": [
+                    { "text": "A. Mine, yours", "isCorrect": false, "rationale": "Sai vế đầu." },
+                    { "text": "B. Your, mine", "isCorrect": false, "rationale": "Sai ngữ cảnh (Bút bạn gãy sao mượn của tôi được?)." },
+                    { "text": "C. My, yours", "isCorrect": true, "rationale": "Dịch nghĩa: Bút chì **của tôi** bị gãy rồi. Tôi có thể mượn **cái của bạn** không?<br><br>Giải thích:<br>1. Trước 'pencil' -> Tính từ sở hữu 'My'.<br>2. Cuối câu, thay cho 'your pencil' -> Đại từ sở hữu 'yours'." },
+                    { "text": "D. Yours, mine", "isCorrect": false, "rationale": "Sai vế đầu." }
+                ]
+            },
+            {
+                "id": 54,
+                "question": "Jody has lost _________ book.",
+                "options": [
+                    { "text": "A. mine", "isCorrect": false, "rationale": "Sai nghĩa." },
+                    { "text": "B. her", "isCorrect": true, "rationale": "Dịch nghĩa: Jody đã làm mất sách **của cô ấy**.<br><br>Giải thích: Trước danh từ 'book' cần Tính từ sở hữu." },
+                    { "text": "C. hers", "isCorrect": false, "rationale": "Không đứng trước danh từ." },
+                    { "text": "D. theirs", "isCorrect": false, "rationale": "Không đứng trước danh từ." }
+                ]
+            },
+            {
+                "id": 55,
+                "question": "This bird has broken _____ wing.",
+                "options": [
+                    { "text": "A. it’s", "isCorrect": false, "rationale": "Sai (It is)." },
+                    { "text": "B. its’", "isCorrect": false, "rationale": "Sai chính tả." },
+                    { "text": "C. hers", "isCorrect": false, "rationale": "Sai (dùng cho người nữ)." },
+                    { "text": "D. its", "isCorrect": true, "rationale": "Dịch nghĩa: Con chim này đã bị gãy cánh **của nó**.<br><br>Phân tích:<br>- its (Tính từ sở hữu): của nó.<br>- it's (viết tắt): nó là (it is).<br>- its' (sai chính tả, không có từ này).<br><br>Giải thích: Cần tính từ sở hữu cho vật/động vật." }
+                ]
+            },
+            {
+                "id": 56,
+                "question": "My telephone is out of order, but _________ is working.",
+                "options": [
+                    { "text": "A. your", "isCorrect": false, "rationale": "Thiếu danh từ (phải là Yours)." },
+                    { "text": "B. our", "isCorrect": false, "rationale": "Thiếu danh từ (phải là Ours)." },
+                    { "text": "C. his", "isCorrect": true, "rationale": "Dịch nghĩa: Điện thoại của tôi bị hỏng, nhưng **(điện thoại) của anh ấy** đang hoạt động.<br><br>Phân tích:<br>- his (Đại từ sở hữu) = his telephone.<br>- your/our/their (Tính từ sở hữu): cần danh từ phía sau.<br><br>Giải thích: Vị trí này làm chủ ngữ cho 'is working', cần Đại từ sở hữu. Trong 4 đáp án, chỉ có 'his' vừa là tính từ vừa là đại từ sở hữu." },
+                    { "text": "D. their", "isCorrect": false, "rationale": "Thiếu danh từ (phải là Theirs)." }
+                ]
+            },
+            {
+                "id": 57,
+                "question": "These grammar books are different. _________ has 278 pages, but _________ has only 275 pages.",
+                "options": [
+                    { "text": "A. Yours, mine", "isCorrect": true, "rationale": "Dịch nghĩa: Những cuốn sách ngữ pháp này khác nhau. **Cuốn của bạn** có 278 trang, nhưng **cuốn của tôi** chỉ có 275 trang.<br><br>Giải thích: Cả hai chỗ trống đều đóng vai trò chủ ngữ và thay thế cho 'Your book' và 'My book', nên cần Đại từ sở hữu." },
+                    { "text": "B. Your, my", "isCorrect": false, "rationale": "Thiếu danh từ." },
+                    { "text": "C. Yours, my", "isCorrect": false, "rationale": "Vế sau thiếu danh từ." },
+                    { "text": "D. Your, mine", "isCorrect": false, "rationale": "Vế đầu thiếu danh từ." }
+                ]
+            },
+            {
+                "id": 58,
+                "question": "Do you like smartphones that will be able to charge __________ battery automatically?",
+                "options": [
+                    { "text": "A. our", "isCorrect": false, "rationale": "Sai ngôi." },
+                    { "text": "B. its", "isCorrect": false, "rationale": "Sai (dùng cho số ít)." },
+                    { "text": "C. their", "isCorrect": true, "rationale": "Dịch nghĩa: Bạn có thích những chiếc điện thoại thông minh có khả năng tự sạc pin **của chúng** không?<br><br>Giải thích: Chủ ngữ sở hữu là 'smartphones' (số nhiều) -> Tính từ sở hữu là 'their'." },
+                    { "text": "D. your", "isCorrect": false, "rationale": "Sai ngôi." }
+                ]
+            },
+            {
+                "id": 59,
+                "question": "We will wear a tiny device to catch __________ thoughts and send them to other people.",
+                "options": [
+                    { "text": "A. our", "isCorrect": true, "rationale": "Dịch nghĩa: Chúng ta sẽ đeo một thiết bị nhỏ để bắt được suy nghĩ **của chúng ta** và gửi chúng cho người khác.<br><br>Giải thích: Chủ ngữ là 'We' -> Tính từ sở hữu tương ứng là 'our'." },
+                    { "text": "B. its", "isCorrect": false, "rationale": "Sai ngôi." },
+                    { "text": "C. their", "isCorrect": false, "rationale": "Sai ngôi." },
+                    { "text": "D. your", "isCorrect": false, "rationale": "Sai ngôi." }
+                ]
+            },
+            {
+                "id": 60,
+                "question": "A social robot can send a text message to __________ owner to remind them of dinner time in the future.",
+                "options": [
+                    { "text": "A. I", "isCorrect": false, "rationale": "Sai." },
+                    { "text": "B. they", "isCorrect": false, "rationale": "Sai." },
+                    { "text": "C. its", "isCorrect": true, "rationale": "Dịch nghĩa: Một robot xã hội có thể gửi tin nhắn cho chủ nhân **của nó** để nhắc nhở họ về giờ ăn tối trong tương lai.<br><br>Giải thích: Chủ ngữ sở hữu là 'A social robot' (số ít, vật) -> Tính từ sở hữu là 'its'." },
+                    { "text": "D. it", "isCorrect": false, "rationale": "Sai loại từ (It là đại từ nhân xưng)." }
+                ]
+            }
+        ];
+
+        // === LOGIC XỬ LÝ ===
+        let score = 0;
+        const totalQuestions = quizData.length;
+        const soundCorrect = document.getElementById("sound-correct");
+        const soundWrong = document.getElementById("sound-wrong");
+
+        // Hàm render câu hỏi
+        function renderQuiz() {
+            const container = document.getElementById("quiz-container");
+            container.innerHTML = ""; // Clear existing
+
+            quizData.forEach((q, index) => {
+                // Tạo thẻ Card
+                const card = document.createElement("div");
+                card.className = "bg-white rounded-3xl shadow-[0_8px_0_rgba(0,0,0,0.1)] p-6 md:p-8 border-2 border-gray-100 relative overflow-hidden";
+                card.id = `card-${index}`;
+
+                // Số thứ tự câu hỏi
+                const questionNumber = document.createElement("div");
+                questionNumber.className = "absolute top-0 left-0 bg-[#8854C0] text-white font-bold py-1 px-4 rounded-br-2xl text-sm";
+                questionNumber.innerText = `Câu ${q.id}`;
+                card.appendChild(questionNumber);
+
+                // Nội dung câu hỏi
+                const questionText = document.createElement("h3");
+                questionText.className = "text-xl font-bold text-gray-800 mt-4 mb-6 leading-relaxed";
+                questionText.innerText = q.question;
+                card.appendChild(questionText);
+
+                // Grid đáp án
+                const optionsGrid = document.createElement("div");
+                optionsGrid.className = "grid grid-cols-1 md:grid-cols-2 gap-4";
+
+                q.options.forEach((opt, optIndex) => {
+                    const btn = document.createElement("button");
+                    btn.className = "btn-option w-full bg-white border-2 border-gray-200 rounded-xl p-4 text-left font-semibold text-gray-700 hover:bg-gray-50 focus:outline-none";
+                    btn.innerText = opt.text;
+                    btn.onclick = () => checkAnswer(index, optIndex, btn, q.options);
+                    btn.id = `q${index}-opt${optIndex}`;
+                    optionsGrid.appendChild(btn);
+                });
+                card.appendChild(optionsGrid);
+
+                // Khu vực giải thích (ẩn ban đầu)
+                const explanationDiv = document.createElement("div");
+                explanationDiv.id = `explanation-${index}`;
+                explanationDiv.className = "explanation-box mt-6 bg-[#f0f9ff] border-l-4 border-[#00C9A7] p-5 rounded-r-xl";
+                
+                // Lấy rationale từ đáp án đúng
+                const correctOption = q.options.find(o => o.isCorrect);
+                let explanationContent = correctOption ? correctOption.rationale : "Chưa có giải thích.";
+                
+                // Format lại nội dung giải thích cho đẹp
+                explanationContent = explanationContent
+                    .replace(/Dịch nghĩa:/g, '<div class="font-bold text-[#8854C0] mb-1"><i class="fa-solid fa-language mr-2"></i>Dịch câu hỏi:</div>')
+                    .replace(/Phân tích:/g, '<div class="font-bold text-[#8854C0] mt-3 mb-1"><i class="fa-solid fa-magnifying-glass mr-2"></i>Phân tích đáp án:</div>')
+                    .replace(/Giải thích:/g, '<div class="font-bold text-[#8854C0] mt-3 mb-1"><i class="fa-solid fa-check-circle mr-2"></i>Tại sao chọn đáp án này?</div>')
+                    .replace(/\n/g, '<br>');
+
+                explanationDiv.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="mt-1 min-w-[30px]">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3429/3429402.png" alt="Teacher" class="w-8 h-8 rounded-full border border-[#8854C0]">
+                        </div>
+                        <div class="text-gray-700 text-base leading-relaxed">
+                            <h4 class="font-bold text-[#00C9A7] mb-2 uppercase text-sm tracking-wide">Ms MS Chí Nên giải thích chi tiết:</h4>
+                            ${explanationContent}
+                        </div>
+                    </div>
+                `;
+                card.appendChild(explanationDiv);
+
+                container.appendChild(card);
+            });
+        }
+
+        // Hàm kiểm tra đáp án
+        function checkAnswer(questionIndex, selectedOptIndex, btnElement, options) {
+            // Ngăn chặn chọn lại nếu đã trả lời
+            if (btnElement.parentElement.getAttribute("data-answered") === "true") return;
+            
+            // Đánh dấu đã trả lời
+            btnElement.parentElement.setAttribute("data-answered", "true");
+
+            const isCorrect = options[selectedOptIndex].isCorrect;
+            
+            if (isCorrect) {
+                // Xử lý ĐÚNG
+                btnElement.classList.add("btn-correct");
+                btnElement.innerHTML += ' <i class="fa-solid fa-check ml-2"></i>';
+                
+                // Âm thanh & Hiệu ứng
+                soundCorrect.currentTime = 0;
+                soundCorrect.play();
+                triggerConfetti(btnElement);
+                
+                score++;
+                updateScoreDisplay();
+            } else {
+                // Xử lý SAI
+                btnElement.classList.add("btn-wrong", "shake-animation");
+                btnElement.innerHTML += ' <i class="fa-solid fa-xmark ml-2"></i>';
+                
+                // Âm thanh
+                soundWrong.currentTime = 0;
+                soundWrong.play();
+
+                // Highlight đáp án đúng
+                const correctIndex = options.findIndex(o => o.isCorrect);
+                const correctBtn = document.getElementById(`q${questionIndex}-opt${correctIndex}`);
+                if (correctBtn) {
+                    correctBtn.classList.add("ring-4", "ring-[#00D26A]", "ring-opacity-50");
+                }
+            }
+
+            // Disable tất cả các nút trong câu này
+            const allBtns = btnElement.parentElement.querySelectorAll("button");
+            allBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add("opacity-70", "cursor-not-allowed");
+                // Giữ opacity 100 cho nút được chọn và nút đúng
+                if (btn === btnElement || (isCorrect === false && options[Array.from(allBtns).indexOf(btn)].isCorrect)) {
+                    btn.classList.remove("opacity-70");
+                }
+            });
+
+            // Hiện giải thích
+            const expBox = document.getElementById(`explanation-${questionIndex}`);
+            expBox.style.display = "block";
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById("score-display").innerText = `${score}/${totalQuestions}`;
+        }
+
+        function triggerConfetti(element) {
+            const rect = element.getBoundingClientRect();
+            // Confetti bắn từ vị trí nút bấm
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { 
+                    y: (rect.top + rect.height / 2) / window.innerHeight,
+                    x: (rect.left + rect.width / 2) / window.innerWidth
+                },
+                colors: ['#8854C0', '#00C9A7', '#FFD700']
+            });
+        }
+
+        function showFinalResult() {
+            const modal = document.getElementById("result-modal");
+            const finalScoreEl = document.getElementById("final-score");
+            const finalMsgEl = document.getElementById("final-message");
+            
+            finalScoreEl.innerText = score;
+            
+            // Lời nhắn dựa trên điểm số
+            const percentage = (score / totalQuestions) * 100;
+            if (percentage === 100) {
+                finalMsgEl.innerText = "Tuyệt vời! Bạn là thiên tài ngữ pháp! 🌟";
+                confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+            } else if (percentage >= 80) {
+                finalMsgEl.innerText = "Làm rất tốt! Chỉ sai một chút xíu thôi. 💪";
+            } else if (percentage >= 50) {
+                finalMsgEl.innerText = "Cố gắng lên! Hãy xem kỹ phần giải thích nhé. 📚";
+            } else {
+                finalMsgEl.innerText = "Đừng nản lòng! Làm lại để giỏi hơn nào. 🔥";
+            }
+
+            modal.classList.remove("hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("result-modal").classList.add("hidden");
+            // Cuộn lên đầu trang
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Khởi chạy khi load trang
+        window.onload = renderQuiz;
+
+    </script>
+</body>
+</html>

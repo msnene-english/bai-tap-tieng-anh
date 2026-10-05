@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive English Test - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff9a9e;
+            --secondary: #fecfef;
+            --tertiary: #a18cd1;
+            --quaternary: #fbc2eb;
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --text-dark: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--tertiary), var(--quaternary));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Floating Background - Làm mờ và nhỏ đi để không che chữ */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.8;
+        }
+
+        /* Sticky Reminder - Thu nhỏ dạng Pill và thêm hiệu ứng chữ chạy */
+        #sticky-reminder {
+            position: fixed;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 234, 112, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid #f1c40f;
+            border-radius: 30px;
+            padding: 4px 20px;
+            z-index: 1000;
+            width: 90%;
+            max-width: 700px;
+            overflow: hidden; /* Ẩn phần chữ bị tràn */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .scroll-text {
+            display: inline-block;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #d35400;
+            animation: scroll-left 25s linear infinite;
+        }
+
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-150%); }
+        }
+
+        /* Header - Đẩy lề trên xuống để không bị Sticky che */
+        header {
+            text-align: center;
+            padding: 45px 10px 10px 10px;
+            z-index: 10;
+        }
+        header h1 {
+            font-size: 1.3rem;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        header p {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #fff;
+            background: rgba(0,0,0,0.2);
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-top: 5px;
+        }
+
+        /* Split Screen Layout */
+        .split-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 0 20px 20px 20px;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Custom Scrollbar for Panels */
+        .panel::-webkit-scrollbar { width: 6px; }
+        .panel::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        /* Reading Section Styles */
+        .passage-title {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: #d63031;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .paragraph-container {
+            margin-bottom: 15px;
+            background: rgba(255,255,255,0.6);
+            padding: 12px;
+            border-radius: 10px;
+        }
+        .text-en {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            color: #2d3436;
+            font-weight: 600;
+        }
+        .text-vi {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #0984e3;
+            display: none;
+            border-top: 1px dashed #0984e3;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        .btn-translate {
+            background: #fff;
+            border: 2px solid #a29bfe;
+            color: #6c5ce7;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-translate:hover {
+            background: #a29bfe;
+            color: #fff;
+        }
+
+        /* Glossary Table */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 10px;
+            overflow: hidden;
+            font-size: 0.95rem;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .glossary-table th {
+            background: #ff7675;
+            color: white;
+            font-weight: 800;
+        }
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        /* Exercise Section Styles */
+        .question-block {
+            background: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: 0.3s;
+        }
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #2c3e50;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        .option-btn {
+            background: #fff;
+            border: 2px solid #dfe6e9;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #2d3436;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: #74b9ff;
+            background: #e9f2ff;
+            transform: translateY(-2px);
+        }
+        .option-btn.correct {
+            background: #55efc4;
+            border-color: #00b894;
+            color: #2d3436;
+        }
+        .option-btn.wrong {
+            background: #ff7675;
+            border-color: #d63031;
+            color: white;
+            animation: shake 0.4s;
+        }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #333;
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .p-word { color: #0056b3; font-weight: bold; }
+        .p-mean { color: #cc4a33; font-weight: bold; }
+        .p-grammar { text-decoration: underline; text-decoration-color: red; font-weight: bold; }
+        .hl-green { color: #28a745; font-weight: bold; }
+        .hl-red { color: #8b0000; text-decoration: line-through; font-weight: bold; }
+
+        /* Submit Button */
+        .submit-container {
+            text-align: center;
+            padding: 10px;
+            z-index: 10;
+        }
+        #submit-btn {
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(232, 67, 147, 0.3);
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+        #submit-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Overlays */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .start-box {
+            background: white; padding: 30px; border-radius: 15px; text-align: center; max-width: 350px;
+        }
+        .start-box h2 { color: #d63031; margin-bottom: 15px; font-size: 1.5rem;}
+        .start-box button {
+            background: #0984e3; color: white; border: none; padding: 10px 25px;
+            font-size: 1.1rem; border-radius: 8px; cursor: pointer; font-weight: bold;
+        }
+
+        #result-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 9999;
+        }
+        .result-box {
+            background: linear-gradient(135deg, #ffffff, #f1f2f6); padding: 30px; border-radius: 20px;
+            text-align: center; max-width: 450px; width: 90%; box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+        }
+        .result-box h2 { font-size: 1.6rem; color: #2d3436; margin-bottom: 5px; }
+        .result-box .score { font-size: 3rem; font-weight: 900; color: #00b894; margin: 10px 0; }
+        .result-box .scale-score { font-size: 1.3rem; color: #d63031; font-weight: bold; margin-bottom: 15px;}
+        .result-box img { max-width: 100%; border-radius: 10px; margin-bottom: 15px; height: 200px; object-fit: cover;}
+        
+        #student-name-prompt {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 9998;
+        }
+        .prompt-box { background: white; padding: 25px; border-radius: 15px; text-align: center; }
+        .prompt-box input { width: 100%; padding: 10px; margin: 15px 0; border: 2px solid #dfe6e9; border-radius: 8px; font-size: 1.1rem; text-align: center; }
+        .prompt-box button { background: #00b894; color: white; border: none; padding: 10px 25px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9000; }
+
+        @media (max-width: 768px) {
+            .split-container { flex-direction: column; overflow-y: auto; padding-top: 10px;}
+            .panel { overflow-y: visible; }
+            body { height: auto; overflow: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="intro-audio" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_7wcKV5pKUrQYWyi7XgktJM.mp3"></audio>
+    <audio id="wrong-audio" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3"></audio>
+
+    <div id="start-overlay">
+        <div class="start-box">
+            <h2>Chào mừng các con!</h2>
+            <p style="margin-bottom: 15px; font-size: 1rem; color: #2d3436;">Hãy chuẩn bị sẵn sàng. Nhớ bật âm thanh thiết bị nhé!</p>
+            <button onclick="startTest()">BẮT ĐẦU LÀM BÀI 🚀</button>
+        </div>
+    </div>
+
+    <div id="sticky-reminder">
+        <div class="scroll-text">
+            ⚠️ LƯU Ý TỪ CÔ MS Chí Nên: Tự giác tra cứu từ mới bằng Google Dịch/AI. Tuyệt đối không chọn bừa. Chỉ có ĐỌC KỸ GIẢI THÍCH + GHI CHÉP vào vở mới giúp con thực sự giỏi lên! ⚠️
+        </div>
+    </div>
+
+    <svg class="bg-pattern" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+        <text x="10%" y="20%" font-size="30" opacity="0.15">🧘‍♀️</text>
+        <text x="80%" y="15%" font-size="35" opacity="0.15">🥦</text>
+        <text x="20%" y="80%" font-size="35" opacity="0.15">📱</text>
+        <text x="75%" y="85%" font-size="40" opacity="0.15">💬</text>
+        <text x="50%" y="50%" font-size="45" opacity="0.1">🏃‍♂️</text>
+        <text x="90%" y="50%" font-size="30" opacity="0.15">❤️</text>
+    </svg>
+
+    <header>
+        <h1>BÀI TẬP ĐỌC HIỂU TỔNG HỢP (READING)</h1>
+        <p>Giáo viên tạo: Ms MS Chí Nên</p>
+    </header>
+
+    <div class="split-container">
+        <div class="panel left-panel">
+            <h2 class="passage-title">Reading 1: How to stay healthy</h2>
+            
+            <div class="paragraph-container">
+                <div class="text-en">There are things any person can do to stay healthy. As a teenager, there are some things you should pay special attention to.</div>
+                <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                <div class="text-vi">Có những điều bất cứ ai cũng có thể làm để giữ sức khỏe. Là một thiếu niên, có một số điều bạn nên đặc biệt chú ý.</div>
+            </div>
+
+            <div class="paragraph-container">
+                <div class="text-en"><b>Physical health: Taking care of your body</b><br>
+                Exercise regularly. Teens should be physically (1)______ at least 60 minutes of every day.<br>
+                Eat a healthy (2)______. Healthy eating is an important part of your growth and development. Eat plenty of fruits and vegetables, whole grains, a variety of protein foods, and (3)______ dairy products. Avoid junk foods such as soda pop, fast food, and chips.</div>
+                <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                <div class="text-vi"><b>Sức khỏe thể chất: Chăm sóc cơ thể của bạn</b><br>
+                Tập thể dục thường xuyên. Thanh thiếu niên nên hoạt động thể chất ít nhất 60 phút mỗi ngày.<br>
+                Ăn một chế độ ăn uống lành mạnh. Ăn uống lành mạnh là một phần quan trọng trong sự trưởng thành và phát triển của bạn. Ăn nhiều trái cây và rau quả, ngũ cốc nguyên hạt, nhiều loại thực phẩm giàu protein và các sản phẩm từ sữa ít béo. Tránh đồ ăn vặt như nước ngọt, thức ăn nhanh và khoai tây chiên.</div>
+            </div>
+
+            <div class="paragraph-container">
+                <div class="text-en">Get enough sleep. Most teens need between 9 and 9 ½ hours of sleep every night. Many average only 7 hours. Sleep has a strong effect on your ability to (4)______ and do well at school.</div>
+                <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                <div class="text-vi">Ngủ đủ giấc. Hầu hết thanh thiếu niên cần ngủ từ 9 đến 9,5 tiếng mỗi đêm. Nhiều người trung bình chỉ ngủ 7 tiếng. Giấc ngủ có ảnh hưởng mạnh mẽ đến khả năng tập trung và học tập tốt ở trường của bạn.</div>
+            </div>
+
+            <div class="paragraph-container">
+                <div class="text-en"><b>Mental health: Taking care of your mind</b><br>
+                Learn ways to manage stress. You can't avoid stress, so you need to learn healthy coping skills. This will help you stay calm and be able to function in (5)______ situations.</div>
+                <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                <div class="text-vi"><b>Sức khỏe tinh thần: Chăm sóc tâm trí của bạn</b><br>
+                Học cách quản lý căng thẳng. Bạn không thể tránh khỏi căng thẳng, vì vậy bạn cần học các kỹ năng đối phó lành mạnh. Điều này sẽ giúp bạn giữ bình tĩnh và có khả năng hoạt động trong những tình huống căng thẳng.</div>
+            </div>
+
+            <div class="paragraph-container">
+                <div class="text-en">Study and do your (6)______ in school. There is a strong link between health and academic success.<br>
+                Develop a good (7)______ between school, work, and social life.<br>
+                Don't try to take on too much. Limit your activities to the most important ones and give those 100%. (8)______ yourself can lead to stress, frustration, or exhaustion.</div>
+                <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                <div class="text-vi">Học tập và làm hết sức mình ở trường. Có một mối liên hệ chặt chẽ giữa sức khỏe và thành công trong học tập.<br>
+                Phát triển sự cân bằng tốt giữa trường học, công việc và đời sống xã hội.<br>
+                Đừng cố gánh vác quá nhiều. Giới hạn các hoạt động của bạn vào những hoạt động quan trọng nhất và dành 100% cho chúng. Việc làm bản thân quá sức có thể dẫn đến căng thẳng, thất vọng hoặc kiệt sức.</div>
+            </div>
+
+            <table class="glossary-table">
+                <tr><th>Từ vựng (B1-C2)</th><th>Loại từ</th><th>Nghĩa Tiếng Việt</th></tr>
+                <tr><td>Concentrate</td><td>verb</td><td>Tập trung</td></tr>
+                <tr><td>Overextend</td><td>verb</td><td>Làm quá sức, gánh vác quá mức</td></tr>
+                <tr><td>Exhaustion</td><td>noun</td><td>Sự kiệt sức</td></tr>
+                <tr><td>Frustration</td><td>noun</td><td>Sự thất vọng, nản lòng</td></tr>
+                <tr><td>Coping skill</td><td>noun phrase</td><td>Kỹ năng đối phó (với khó khăn)</td></tr>
+                <tr><td>Academic success</td><td>noun phrase</td><td>Thành công trong học tập</td></tr>
+                <tr><td>Dairy product</td><td>noun phrase</td><td>Sản phẩm làm từ sữa</td></tr>
+                <tr><td>Function</td><td>verb</td><td>Hoạt động, thực hiện chức năng</td></tr>
+            </table>
+
+            <hr style="border: 2px dashed #b2bec3; margin: 30px 0;">
+
+            <h2 class="passage-title">Reading 2: Teens & Social Media</h2>
+
+            <div class="paragraph-container">
+                <div class="text-en">Some experts worry that teens are more anxious and have lower self-esteem because of social media and texting. There are key differences to socializing online. Teens miss out on things like body language and facial expressions. This can lead to misunderstandings and hurt feelings. It can also make talking in person feel more intimidating.</div>
+                <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                <div class="text-vi">Một số chuyên gia lo ngại rằng thanh thiếu niên lo lắng hơn và có lòng tự trọng thấp hơn do mạng xã hội và nhắn tin. Có những điểm khác biệt chính khi giao tiếp trực tuyến. Thanh thiếu niên bỏ lỡ những thứ như ngôn ngữ cơ thể và nét mặt. Điều này có thể dẫn đến sự hiểu lầm và tổn thương tình cảm. Nó cũng có thể khiến việc nói chuyện trực tiếp cảm thấy đáng sợ hơn.</div>
+            </div>
+
+            <div class="paragraph-container">
+                <div class="text-en">It is also common for teens to feel bad about themselves when they see everyone online looking perfect. Teens often try to compensate by sharing pictures that make them look perfect, too. Then, when their social media identity doesn't match how they actually feel, they can end up feeling worse.</div>
+                <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                <div class="text-vi">Việc thanh thiếu niên cảm thấy tồi tệ về bản thân khi thấy mọi người trên mạng trông hoàn hảo cũng rất phổ biến. Thanh thiếu niên thường cố gắng bù đắp bằng cách chia sẻ những bức ảnh khiến họ trông cũng hoàn hảo. Sau đó, khi bản sắc trên mạng xã hội của họ không khớp với cảm giác thực sự của họ, cuối cùng họ có thể cảm thấy tồi tệ hơn.</div>
+            </div>
+
+            <div class="paragraph-container">
+                <div class="text-en">Parents can help by setting a good example of how to use tech. Try to give kids your full attention when you are with them, and establish tech-free zones in the house and tech-free hours when no one is on their phones. To help build self-esteem, get kids involved in something they're interested in. When kids learn to feel good about what they can do instead of how they look and what they own, they're happier.</div>
+                <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                <div class="text-vi">Phụ huynh có thể giúp đỡ bằng cách làm gương tốt về cách sử dụng công nghệ. Cố gắng dành cho trẻ sự chú ý trọn vẹn khi bạn ở cùng chúng, và thiết lập các khu vực không công nghệ trong nhà và những giờ không công nghệ khi không ai cầm điện thoại. Để giúp xây dựng lòng tự tôn, hãy thu hút trẻ tham gia vào điều gì đó mà chúng quan tâm. Khi trẻ học được cách cảm thấy hài lòng về những gì chúng có thể làm thay vì vẻ ngoài và những gì chúng sở hữu, chúng sẽ hạnh phúc hơn.</div>
+            </div>
+
+            <table class="glossary-table">
+                <tr><th>Từ vựng (B1-C2)</th><th>Loại từ</th><th>Nghĩa Tiếng Việt</th></tr>
+                <tr><td>Anxious</td><td>adj</td><td>Lo âu, băn khoăn</td></tr>
+                <tr><td>Self-esteem</td><td>noun</td><td>Lòng tự tôn, sự tự tin vào bản thân</td></tr>
+                <tr><td>Compensate</td><td>verb</td><td>Đền bù, bù đắp</td></tr>
+                <tr><td>Intimidating</td><td>adj</td><td>Đáng sợ, làm chùn bước</td></tr>
+                <tr><td>End up</td><td>phrasal verb</td><td>Cuối cùng thì (trở nên như thế nào)</td></tr>
+                <tr><td>Miss out</td><td>phrasal verb</td><td>Bỏ lỡ (một điều gì đó tốt đẹp)</td></tr>
+                <tr><td>Establish</td><td>verb</td><td>Thiết lập, thành lập</td></tr>
+                <tr><td>Misunderstanding</td><td>noun</td><td>Sự hiểu lầm</td></tr>
+                <tr><td>Identity</td><td>noun</td><td>Danh tính, bản sắc</td></tr>
+                <tr><td>Involve</td><td>verb</td><td>Làm liên lụy, thu hút vào</td></tr>
+            </table>
+        </div>
+
+        <div class="panel right-panel" id="quiz-container">
+        </div>
+    </div>
+
+    <div class="submit-container">
+        <button id="submit-btn" onclick="promptSubmit()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+    </div>
+
+    <div id="student-name-prompt">
+        <div class="prompt-box">
+            <h2>Nhập tên của con để nộp bài nhé!</h2>
+            <input type="text" id="student-name" placeholder="Ví dụ: Bảo Ngọc lớp 9">
+            <button onclick="calculateScore()">XÁC NHẬN NỘP BÀI</button>
+        </div>
+    </div>
+
+    <div id="result-modal">
+        <div class="result-box">
+            <h2 id="result-name">Chúc mừng con!</h2>
+            <div class="score" id="result-score">0/23</div>
+            <div class="scale-score" id="result-scale">0 / 10 Điểm</div>
+            <img id="result-gif" src="" alt="Result Meme">
+            <p id="result-comment" style="font-size: 1.1rem; font-weight: bold; color: #6c5ce7;"></p>
+            <button onclick="location.reload()" style="margin-top:15px; padding: 10px 20px; background: #2d3436; color: white; border: none; border-radius: 8px; cursor: pointer;">Làm lại từ đầu</button>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playCorrectSound() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        const wrongAudio = document.getElementById('wrong-audio');
+        function playWrongSound() {
+            wrongAudio.currentTime = 0;
+            wrongAudio.play();
+        }
+
+        function startTest() {
+            document.getElementById('start-overlay').style.display = 'none';
+            const intro = document.getElementById('intro-audio');
+            intro.play();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function toggleTranslate(btn) {
+            const viText = btn.nextElementSibling;
+            if (viText.style.display === 'block') {
+                viText.style.display = 'none';
+                btn.innerHTML = 'Mở dịch đoạn này 🌟';
+            } else {
+                viText.style.display = 'block';
+                btn.innerHTML = 'Ẩn dịch 🙈';
+            }
+        }
+
+        const quizData = [
+            {
+                qText: "Câu 1: Select the best answer (Gap 1)",
+                options: [
+                    { text: "active", isCorrect: true },
+                    { text: "action", isCorrect: false },
+                    { text: "actively", isCorrect: false },
+                    { text: "act", isCorrect: false }
+                ],
+                explanation: `Dịch câu hỏi: Chọn đáp án đúng nhất cho ô trống số 1.<br>
+                Phân tích:<br>
+                - active (<span class='p-word'>adj</span> - <span class='p-mean'>năng động</span>) ✅ Đúng. Cần tính từ sau trạng từ bổ nghĩa cho động từ 'be'.<br>
+                - action (<span class='p-word'>n</span> - <span class='p-mean'>hành động</span>) ❌ Sai từ loại.<br>
+                - actively (<span class='p-word'>adv</span> - <span class='p-mean'>một cách tích cực</span>) ❌ Sai.<br>
+                - act (<span class='p-word'>v</span>) ❌ Sai.<br>
+                <span class='p-grammar'>Cấu trúc: be + adv + adj</span>.<br>
+                🔍 Dẫn chứng: "Teens should be physically (1) active at least 60 minutes..."<br>
+                👉 Dịch: "Thanh thiếu niên nên <span class='hl-green'>hoạt động thể chất</span> ít nhất 60 phút mỗi ngày."`
+            },
+            {
+                qText: "Câu 2: Select the best answer (Gap 2)",
+                options: [
+                    { text: "diet", isCorrect: true },
+                    { text: "meal", isCorrect: false },
+                    { text: "food", isCorrect: false },
+                    { text: "dish", isCorrect: false }
+                ],
+                explanation: `Dịch câu hỏi: Chọn đáp án đúng nhất cho ô trống số 2.<br>
+                Phân tích:<br>
+                - diet (<span class='p-word'>n</span> - <span class='p-mean'>chế độ ăn uống</span>) ✅ Đúng.<br>
+                - meal (<span class='p-word'>n</span> - <span class='p-mean'>bữa ăn</span>) ❌ Sai.<br>
+                - food (<span class='p-word'>n</span> - <span class='p-mean'>thức ăn</span>) ❌ Sai vì không dùng a healthy food trong trường hợp bao quát.<br>
+                - dish (<span class='p-word'>n</span> - <span class='p-mean'>món ăn</span>) ❌ Sai.<br>
+                🔍 Dẫn chứng: "Eat a healthy (2) diet."<br>
+                👉 Dịch: "Ăn một <span class='hl-green'>chế độ ăn uống</span> lành mạnh."`
+            },
+            {
+                qText: "Câu 3: Select the best answer (Gap 3)",
+                options: [
+                    { text: "low-fat", isCorrect: true },
+                    { text: "high-fat", isCorrect: false },
+                    { text: "no-fat", isCorrect: false },
+                    { text: "full-fat", isCorrect: false }
+                ],
+                explanation: `Dịch câu hỏi: Chọn đáp án đúng nhất cho ô trống số 3.<br>
+                Phân tích:<br>
+                - low-fat (<span class='p-word'>adj</span> - <span class='p-mean'>ít béo</span>) ✅ Đúng. Khuyên dùng các sản phẩm sữa tốt cho sức khỏe.<br>
+                - high-fat ❌ Sai vì <span class='hl-red'>không tốt cho sức khỏe</span>.<br>
+                - no-fat, full-fat ❌ Sai.<br>
+                🔍 Dẫn chứng: "...and (3) low-fat dairy products."<br>
+                👉 Dịch: "...và các sản phẩm sữa <span class='hl-green'>ít béo</span>."`
+            },
+            {
+                qText: "Câu 4: Select the best answer (Gap 4)",
+                options: [
+                    { text: "concentrate", isCorrect: true },
+                    { text: "ignore", isCorrect: false },
+                    { text: "forget", isCorrect: false },
+                    { text: "distract", isCorrect: false }
+                ],
+                explanation: `Dịch câu hỏi: Chọn đáp án đúng nhất cho ô trống số 4.<br>
+                Phân tích:<br>
+                - concentrate (<span class='p-word'>v</span> - <span class='p-mean'>tập trung</span>) ✅ Đúng.<br>
+                - ignore (<span class='p-word'>v</span> - <span class='p-mean'>phớt lờ</span>) ❌ Sai.<br>
+                - forget (<span class='p-word'>v</span> - <span class='p-mean'>quên</span>) ❌ Sai.<br>
+                - distract (<span class='p-word'>v</span> - <span class='p-mean'>sao nhãng</span>) ❌ Sai.<br>
+                <span class='p-grammar'>Cấu trúc: ability to do something (Khả năng làm gì)</span>.<br>
+                🔍 Dẫn chứng: "Sleep has a strong effect on your ability to (4) concentrate..."<br>
+                👉 Dịch: "Giấc ngủ ảnh hưởng mạnh đến khả năng <span class='hl-green'>tập trung</span>..."`
+            },
+            {
+                qText: "Câu 5: Select the best answer (Gap 5)",
+                options: [
+                    { text: "stressful", isCorrect: true },
+                    { text: "stressed", isCorrect: false },
+                    { text: "stressing", isCorrect: false },
+                    { text: "stress", isCorrect: false }
+                ],
+                explanation: `Dịch câu hỏi: Chọn đáp án đúng nhất cho ô trống số 5.<br>
+                Phân tích:<br>
+                - stressful (<span class='p-word'>adj</span> - <span class='p-mean'>gây căng thẳng</span>) ✅ Đúng. Miêu tả tính chất của tình huống.<br>
+                - stressed (<span class='p-word'>adj</span>) ❌ Sai vì đuôi -ed dùng cho <span class='hl-red'>cảm xúc con người</span>.<br>
+                - stressing, stress ❌ Sai từ loại.<br>
+                🔍 Dẫn chứng: "...function in (5) stressful situations."<br>
+                👉 Dịch: "...hoạt động trong những tình huống <span class='hl-green'>gây căng thẳng</span>."`
+            },
+            {
+                qText: "Câu 6: Select the best answer (Gap 6)",
+                options: [
+                    { text: "best", isCorrect: true },
+                    { text: "good", isCorrect: false },
+                    { text: "better", isCorrect: false },
+                    { text: "worst", isCorrect: false }
+                ],
+                explanation: `Dịch câu hỏi: Chọn đáp án đúng nhất cho ô trống số 6.<br>
+                Phân tích:<br>
+                - best (<span class='p-word'>n</span>) ✅ Đúng.<br>
+                - good, better, worst ❌ Sai.<br>
+                <span class='p-grammar'>Thành ngữ cố định: do one's best (cố gắng hết sức mình)</span>.<br>
+                🔍 Dẫn chứng: "Study and do your (6) best in school."<br>
+                👉 Dịch: "Học tập và <span class='hl-green'>làm hết sức mình</span> ở trường."`
+            },
+            {
+                qText: "Câu 7: Select the best answer (Gap 7)",
+                options: [
+                    { text: "balance", isCorrect: true },
+                    { text: "balanced", isCorrect: false },
+                    { text: "balancing", isCorrect: false },
+                    { text: "balances", isCorrect: false }
+                ],
+                explanation: `Dịch câu hỏi: Chọn đáp án đúng nhất cho ô trống số 7.<br>
+                Phân tích:<br>
+                - balance (<span class='p-word'>n</span> - <span class='p-mean'>sự cân bằng</span>) ✅ Đúng.<br>
+                - balanced (<span class='p-word'>adj</span>) ❌ Sai từ loại.<br>
+                - balancing, balances ❌ Sai.<br>
+                🔍 Dẫn chứng: "Develop a good (7) balance between school, work, and social life."<br>
+                👉 Dịch: "Phát triển <span class='hl-green'>sự cân bằng</span> tốt giữa trường học, công việc..."`
+            },
+            {
+                qText: "Câu 8: Select the best answer (Gap 8)",
+                options: [
+                    { text: "Overextending", isCorrect: true },
+                    { text: "Overeating", isCorrect: false },
+                    { text: "Oversleeping", isCorrect: false },
+                    { text: "Overthinking", isCorrect: false }
+                ],
+                explanation: `Dịch câu hỏi: Chọn đáp án đúng nhất cho ô trống số 8.<br>
+                Phân tích:<br>
+                - Overextending (<span class='p-word'>v-ing</span> - <span class='p-mean'>Làm quá sức</span>) ✅ Đúng. Đóng vai trò V-ing làm Chủ ngữ.<br>
+                - Overeating (Ăn quá nhiều) ❌ Không liên quan.<br>
+                - Oversleeping, Overthinking ❌ Không liên quan.<br>
+                🔍 Dẫn chứng: "Don't try to take on too much... (8) Overextending yourself can lead to stress..."<br>
+                👉 Dịch: "...Việc <span class='hl-green'>làm bản thân quá sức</span> có thể dẫn đến căng thẳng..."`
+            },
+            {
+                qText: "Câu 9: Find the word/phrase that means: 'provide something good or useful in place of something'",
+                options: [
+                    { text: "compensate", isCorrect: true },
+                    { text: "intimidating", isCorrect: false },
+                    { text: "establish", isCorrect: false },
+                    { text: "involve", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Tìm từ có nghĩa "cung cấp cái gì đó tốt thay thế/bù đắp".<br>
+                - compensate (<span class='p-word'>v</span> - <span class='p-mean'>bù đắp</span>) ✅ Đúng.<br>
+                - intimidating, establish, involve ❌ Sai nghĩa.<br>
+                🔍 Dẫn chứng: "Teens often try to compensate by sharing pictures..."<br>
+                👉 Dịch: "Thanh thiếu niên thường cố gắng <span class='hl-green'>bù đắp</span> bằng cách chia sẻ ảnh..."`
+            },
+            {
+                qText: "Câu 10: Find the word/phrase that means: 'become eventually'",
+                options: [
+                    { text: "end up", isCorrect: true },
+                    { text: "miss out", isCorrect: false },
+                    { text: "compensate", isCorrect: false },
+                    { text: "involve", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Tìm từ có nghĩa "cuối cùng trở nên".<br>
+                - end up (<span class='p-word'>phrasal verb</span>) ✅ Đúng.<br>
+                - miss out ❌ Sai nghĩa.<br>
+                🔍 Dẫn chứng: "...they can end up feeling worse."<br>
+                👉 Dịch: "...họ <span class='hl-green'>cuối cùng trở nên</span> cảm thấy tồi tệ hơn."`
+            },
+            {
+                qText: "Câu 11: Find the word/phrase that means: 'belief and confidence in your own ability and value'",
+                options: [
+                    { text: "self-esteem", isCorrect: true },
+                    { text: "identity", isCorrect: false },
+                    { text: "misunderstanding", isCorrect: false },
+                    { text: "anxious", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Tìm từ có nghĩa "sự tự tin vào giá trị bản thân".<br>
+                - self-esteem (<span class='p-word'>n</span> - <span class='p-mean'>lòng tự tôn</span>) ✅ Đúng.<br>
+                - identity (<span class='p-word'>n</span> - <span class='p-mean'>danh tính</span>) ❌ Sai.<br>
+                🔍 Dẫn chứng: "To help build self-esteem..."<br>
+                👉 Dịch: "Để giúp xây dựng <span class='hl-green'>lòng tự tôn</span>..."`
+            },
+            {
+                qText: "Câu 12: Find the word/phrase that means: 'taking part in'",
+                options: [
+                    { text: "involved", isCorrect: true },
+                    { text: "established", isCorrect: false },
+                    { text: "intimidating", isCorrect: false },
+                    { text: "anxious", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Tìm từ có nghĩa "tham gia vào".<br>
+                - involved (<span class='p-word'>adj/v3</span> - <span class='p-mean'>tham gia, liên quan</span>) ✅ Đúng.<br>
+                - established ❌ Sai.<br>
+                🔍 Dẫn chứng: "...get kids involved in something..."<br>
+                👉 Dịch: "...thu hút trẻ <span class='hl-green'>tham gia vào</span> điều gì đó..."`
+            },
+            {
+                qText: "Câu 13: Find the word/phrase that means: 'fail to benefit from something useful or fun'",
+                options: [
+                    { text: "miss out", isCorrect: true },
+                    { text: "end up", isCorrect: false },
+                    { text: "compensate", isCorrect: false },
+                    { text: "intimidating", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Tìm từ có nghĩa "thất bại trong việc hưởng lợi/bỏ lỡ".<br>
+                - miss out (<span class='p-word'>phrasal verb</span> - <span class='p-mean'>bỏ lỡ</span>) ✅ Đúng.<br>
+                - end up ❌ Sai.<br>
+                🔍 Dẫn chứng: "Teens miss out on things like body language..."<br>
+                👉 Dịch: "Thanh thiếu niên <span class='hl-green'>bỏ lỡ</span> ngôn ngữ cơ thể..."`
+            },
+            {
+                qText: "Câu 14: Find the word/phrase that means: 'frightening in a way that makes a person feel less confident'",
+                options: [
+                    { text: "intimidating", isCorrect: true },
+                    { text: "anxious", isCorrect: false },
+                    { text: "stressful", isCorrect: false },
+                    { text: "perfect", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Tìm từ có nghĩa "đáng sợ làm kém tự tin".<br>
+                - intimidating (<span class='p-word'>adj</span> - <span class='p-mean'>đáng sợ, làm chùn bước</span>) ✅ Đúng.<br>
+                - anxious ❌ Sai.<br>
+                🔍 Dẫn chứng: "It can also make talking in person feel more intimidating."<br>
+                👉 Dịch: "Nó khiến nói chuyện trực tiếp cảm thấy <span class='hl-green'>đáng sợ hơn</span>."`
+            },
+            {
+                qText: "Câu 15: True (T) or False (F)? Experts worry that the social media and text messages are promoting teens' anxiety and lowering their self-esteem.",
+                options: [
+                    { text: "True (T)", isCorrect: true },
+                    { text: "False (F)", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Chuyên gia lo mạng xã hội và tin nhắn thúc đẩy lo lắng và giảm lòng tự trọng ở thiếu niên.<br>
+                Phân tích: ✅ Đúng. Khớp hoàn toàn câu đầu bài đọc.<br>
+                🔍 Dẫn chứng: "...teens are more anxious and have lower self-esteem because of social media and texting."<br>
+                👉 Dịch: "...thiếu niên lo lắng hơn và có <span class='hl-green'>lòng tự trọng thấp hơn do mạng xã hội và nhắn tin</span>."`
+            },
+            {
+                qText: "Câu 16: True (T) or False (F)? Body language and facial expressions can cause misunderstandings and hurt feelings.",
+                options: [
+                    { text: "True (T)", isCorrect: false },
+                    { text: "False (F)", isCorrect: true }
+                ],
+                explanation: `Dịch câu: Ngôn ngữ cơ thể và nét mặt có thể gây hiểu lầm.<br>
+                Phân tích: ❌ Sai (False). Bài đọc nói việc <span class='hl-red'>BỎ LỠ (miss out)</span> ngôn ngữ cơ thể mới gây hiểu lầm.<br>
+                🔍 Dẫn chứng: "Teens miss out on things like body language... This can lead to misunderstandings..."<br>
+                👉 Dịch: "Thanh thiếu niên <span class='hl-green'>bỏ lỡ</span> ngôn ngữ cơ thể... Điều này gây hiểu lầm..."`
+            },
+            {
+                qText: "Câu 17: True (T) or False (F)? Social media has positive impacts on face-to-face communication skills.",
+                options: [
+                    { text: "True (T)", isCorrect: false },
+                    { text: "False (F)", isCorrect: true }
+                ],
+                explanation: `Dịch câu: Mạng xã hội có tác động tích cực đến giao tiếp trực tiếp.<br>
+                Phân tích: ❌ Sai (False). Nó khiến giao tiếp trực tiếp đáng sợ hơn (intimidating).<br>
+                🔍 Dẫn chứng: "It can also make talking in person feel more intimidating."<br>
+                👉 Dịch: "Nó cũng khiến <span class='hl-green'>nói chuyện trực tiếp đáng sợ hơn</span>."`
+            },
+            {
+                qText: "Câu 18: True (T) or False (F)? Teenagers tend to compare themselves to the people they see online.",
+                options: [
+                    { text: "True (T)", isCorrect: true },
+                    { text: "False (F)", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Thanh thiếu niên có xu hướng so sánh bản thân với người trên mạng.<br>
+                Phân tích: ✅ Đúng (True). Các em cảm thấy tồi tệ khi thấy người khác hoàn hảo.<br>
+                🔍 Dẫn chứng: "It is also common for teens to feel bad about themselves when they see everyone online looking perfect."<br>
+                👉 Dịch: "Việc <span class='hl-green'>cảm thấy tồi tệ khi thấy mọi người trên mạng hoàn hảo</span> rất phổ biến."`
+            },
+            {
+                qText: "Câu 19: True (T) or False (F)? Parents can help by setting limits on where and when devices are allowed in the home.",
+                options: [
+                    { text: "True (T)", isCorrect: true },
+                    { text: "False (F)", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Cha mẹ giúp đỡ bằng cách đặt giới hạn địa điểm và thời gian thiết bị ở nhà.<br>
+                Phân tích: ✅ Đúng (True). Tương đương với "tech-free zones" và "tech-free hours".<br>
+                🔍 Dẫn chứng: "...establish tech-free zones in the house and tech-free hours..."<br>
+                👉 Dịch: "...thiết lập <span class='hl-green'>khu vực không công nghệ và giờ không công nghệ</span>..."`
+            },
+            {
+                qText: "Câu 20: True (T) or False (F)? Teenagers are happier when they feel confident about their physical appearance.",
+                options: [
+                    { text: "True (T)", isCorrect: false },
+                    { text: "False (F)", isCorrect: true }
+                ],
+                explanation: `Dịch câu: Thanh thiếu niên hạnh phúc hơn khi tự tin về ngoại hình.<br>
+                Phân tích: ❌ Sai (False). Trẻ hạnh phúc hơn khi tự tin về <span class='hl-red'>NHỮNG GÌ CHÚNG CÓ THỂ LÀM</span> thay vì bề ngoài.<br>
+                🔍 Dẫn chứng: "When kids learn to feel good about what they can do instead of how they look... they're happier."<br>
+                👉 Dịch: "Khi trẻ tự hào về <span class='hl-green'>những gì chúng làm được THAY VÌ vẻ ngoài</span>... chúng sẽ hạnh phúc hơn."`
+            },
+            {
+                qText: "Câu 21: According to the passage, what causes anxiety and low self-esteem in teenagers?",
+                options: [
+                    { text: "Social media and texting.", isCorrect: true },
+                    { text: "Playing physical sports.", isCorrect: false },
+                    { text: "Reading too many books.", isCorrect: false },
+                    { text: "Talking face-to-face with friends.", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Theo đoạn văn, điều gì gây ra lo lắng và lòng tự trọng thấp ở thiếu niên?<br>
+                Phân tích:<br>
+                - Social media and texting. ✅ Đúng.<br>
+                🔍 Dẫn chứng: "...teens are more anxious and have lower self-esteem because of social media and texting."<br>
+                👉 Dịch: "...lo lắng hơn và lòng tự trọng thấp hơn <span class='hl-green'>do mạng xã hội và nhắn tin</span>."`
+            },
+            {
+                qText: "Câu 22: Can social media be harmful to teens' mental health?",
+                options: [
+                    { text: "Yes, it can.", isCorrect: true },
+                    { text: "No, it can't.", isCorrect: false },
+                    { text: "It is always completely safe.", isCorrect: false },
+                    { text: "Only for adults, not for teens.", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Mạng xã hội có thể gây hại cho sức khỏe tâm thần thiếu niên không?<br>
+                Phân tích:<br>
+                - Yes, it can. ✅ Đúng. Toàn bộ bài đọc liệt kê các tác hại.<br>
+                🔍 Dẫn chứng: Toàn bộ bài đọc nói về anxiety, low self-esteem...<br>
+                👉 Dịch: "Có, <span class='hl-green'>nó có thể gây hại</span>."`
+            },
+            {
+                qText: "Câu 23: What can parents do to help boost their teens' self-esteem?",
+                options: [
+                    { text: "Parents should get teens involved in something they're interested in.", isCorrect: true },
+                    { text: "Parents should buy them more modern smartphones.", isCorrect: false },
+                    { text: "Parents should let them use social media all day.", isCorrect: false },
+                    { text: "Parents should ignore their feelings.", isCorrect: false }
+                ],
+                explanation: `Dịch câu: Cha mẹ có thể làm gì để nâng cao lòng tự tôn của con?<br>
+                Phân tích:<br>
+                - Parents should get teens involved in something they're interested in. ✅ Đúng.<br>
+                🔍 Dẫn chứng: "To help build self-esteem, get kids involved in something they're interested in."<br>
+                👉 Dịch: "Để xây dựng lòng tự tôn, <span class='hl-green'>hãy thu hút trẻ tham gia vào điều gì đó mà chúng quan tâm</span>."`
+            }
+        ];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        let answeredCount = 0;
+        let score = 0;
+        const totalQuestions = quizData.length;
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+
+            quizData.forEach((q, index) => {
+                let shuffledOptions = [...q.options];
+                shuffleArray(shuffledOptions);
+
+                let html = `
+                <div class="question-block" id="qblock-${index}">
+                    <div class="question-text">${q.qText}</div>
+                    <div class="options-grid">
+                        ${shuffledOptions.map((opt) => `
+                            <button class="option-btn" 
+                                    onclick="checkAnswer(this, ${index}, ${opt.isCorrect})">
+                                ${opt.text}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div class="explanation-box" id="exp-${index}">
+                        ${q.explanation}
+                    </div>
+                </div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function checkAnswer(btn, qIndex, isCorrect) {
+            const block = document.getElementById(`qblock-${qIndex}`);
+            const buttons = block.querySelectorAll('.option-btn');
+            
+            buttons.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playCorrectSound();
+                fireConfetti(btn);
+                score++;
+            } else {
+                btn.classList.add('wrong');
+                playWrongSound();
+                buttons.forEach(b => {
+                    const correctText = quizData[qIndex].options.find(o => o.isCorrect).text;
+                    if (b.innerText.trim() === correctText.trim()) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+            document.getElementById(`exp-${qIndex}`).style.display = 'block';
+            answeredCount++;
+        }
+
+        function promptSubmit() {
+            if (answeredCount < totalQuestions) {
+                alert(`Con mới làm ${answeredCount}/${totalQuestions} câu. Hãy hoàn thành hết trước khi nộp bài nhé!`);
+                return;
+            }
+            document.getElementById('student-name-prompt').style.display = 'flex';
+        }
+
+        function calculateScore() {
+            const name = document.getElementById('student-name').value.trim();
+            if (!name) {
+                alert('Con chưa nhập tên kìa!');
+                return;
+            }
+            document.getElementById('student-name-prompt').style.display = 'none';
+            
+            const scale10 = ((score / totalQuestions) * 10).toFixed(2);
+            document.getElementById('result-name').innerText = `Kết quả của: ${name}`;
+            document.getElementById('result-score').innerText = `${score} / ${totalQuestions}`;
+            document.getElementById('result-scale').innerText = `Quy đổi: ${scale10} / 10 Điểm`;
+            
+            const gifEl = document.getElementById('result-gif');
+            const commentEl = document.getElementById('result-comment');
+            
+            let percentage = score / totalQuestions;
+            if (percentage === 1) {
+                gifEl.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; 
+                commentEl.innerText = "Lời phê của Cô MS Chí Nên: THIÊN TÀI LÀ ĐÂY! Không sai câu nào luôn. Quá đỉnh! 🌟🔥";
+            } else if (percentage >= 0.6) {
+                gifEl.src = "https://media.giphy.com/media/3o72FcJmLzIdYJiyKY/giphy.gif"; 
+                commentEl.innerText = "Lời phê của Cô MS Chí Nên: Rất tốt con yêu! Cố gắng phân tích kỹ hơn chút nữa là đạt điểm tuyệt đối nhé! 👏✨";
+            } else {
+                gifEl.src = "https://media.giphy.com/media/l3vR4CdLInXOhr3CU/giphy.gif"; 
+                commentEl.innerText = "Lời phê của Cô MS Chí Nên: Ôi chao! Phải đọc kỹ giải thích và ghi chép từ vựng vào vở ngay cho cô. Cố lên con nhé! 💪💦";
+            }
+            document.getElementById('result-modal').style.display = 'flex';
+        }
+
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+
+        function fireConfetti(btnElement) {
+            const rect = btnElement.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            
+            for (let i = 0; i < 40; i++) {
+                particles.push({
+                    x: x, y: y,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * -10 - 2,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    life: 1
+                });
+            }
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.fill();
+                p.x += p.dx;
+                p.y += p.dy;
+                p.dy += 0.3; 
+                p.life -= 0.02;
+            }
+            particles = particles.filter(p => p.life > 0);
+            requestAnimationFrame(animateConfetti);
+        }
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        renderQuiz();
+        animateConfetti();
+    </script>
+</body>
+</html>

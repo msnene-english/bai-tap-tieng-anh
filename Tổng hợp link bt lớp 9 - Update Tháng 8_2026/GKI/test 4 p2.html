@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified English Quiz - Ms MS Chí Nên</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --primary-color: #6c5ce7;
+            --success-color: #00b894;
+            --error-color: #d63031;
+            --text-main: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #fbc2eb, #a6c1ee, #ffecd2, #fcb69f);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Floating Pattern Background */
+        .svg-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.5;
+            animation: floatEmoji 20s linear infinite alternate;
+        }
+
+        @keyframes floatEmoji {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 10;
+        }
+        
+        header h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a4a4a;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Split Screen Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            overflow-y: auto;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        .panel::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.7);
+            border-radius: 10px;
+        }
+
+        /* Reading Passage Styles */
+        .passage-title {
+            font-size: 22px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        }
+
+        .paragraph-box {
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 17px;
+            background: rgba(255,255,255,0.4);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: all 0.3s;
+        }
+
+        .paragraph-box:hover {
+            background: rgba(255,255,255,0.5);
+        }
+
+        .translate-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .translate-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .vietnamese-text {
+            display: none;
+            margin-top: 10px;
+            color: #2c3e50;
+            font-style: italic;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 10px;
+            background: rgba(255,255,255,0.5);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        /* Glossary Table */
+        .glossary-title {
+            margin-top: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.6);
+            text-align: left;
+        }
+        .glossary-table th {
+            background: rgba(108, 92, 231, 0.2);
+            font-weight: bold;
+        }
+
+        /* Question Styles */
+        .question-card {
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.7);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2d3436;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: rgba(255,255,255,0.8);
+            border: 2px solid rgba(255,255,255,0.9);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-weight: 500;
+            color: #34495e;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #ffffff;
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+        }
+
+        .option-btn.correct {
+            background: var(--success-color) !important;
+            color: white !important;
+            border-color: var(--success-color) !important;
+            box-shadow: 0 0 15px rgba(0, 184, 148, 0.5);
+        }
+
+        .option-btn.incorrect {
+            background: var(--error-color) !important;
+            color: white !important;
+            border-color: var(--error-color) !important;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.85;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        /* Explanations */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+            font-size: 15px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Detailed styling for explanations */
+        .p-word { background: #e0f2fe; color: #0284c7; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .p-phonetic { color: #64748b; font-style: italic; }
+        .p-mean { background: #fef08a; color: #a16207; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .p-grammar { background: #fce7f3; color: #be185d; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px dashed #be185d; }
+        .hl-green { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 5px; }
+        .hl-red { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 5px; }
+        
+        .exp-section { margin-bottom: 10px; }
+        .exp-options-list { list-style-type: none; padding-left: 10px; margin: 10px 0; }
+        .exp-options-list li { margin-bottom: 5px; padding-left: 15px; position: relative; }
+        .exp-options-list li::before { content: "•"; position: absolute; left: 0; color: var(--primary-color); font-weight: bold;}
+
+        /* Submit Area */
+        .submit-area {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #ff7675, #d63031);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(214, 48, 49, 0.4);
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(214, 48, 49, 0.6);
+        }
+
+        /* Modal / Popup */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 2px solid #a29bfe;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .modal-input:focus {
+            border-color: #6c5ce7;
+        }
+
+        .confirm-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+
+        .confirm-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Result Card */
+        .result-card {
+            display: none;
+            text-align: center;
+        }
+        
+        .score-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .score-scale {
+            font-size: 20px;
+            color: #e17055;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .feedback-msg {
+            font-size: 18px;
+            color: #2d3436;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .result-gif {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <svg class="svg-bg" xmlns="http://www.w3.org/2000/svg">
+        <text x="10%" y="20%" font-size="50" opacity="0.4">🏺</text>
+        <text x="85%" y="15%" font-size="45" opacity="0.4">🏙️</text>
+        <text x="15%" y="80%" font-size="55" opacity="0.4">🏃</text>
+        <text x="75%" y="85%" font-size="45" opacity="0.4">♻️</text>
+        <text x="50%" y="60%" font-size="40" opacity="0.3">🏛️</text>
+        <text x="40%" y="10%" font-size="45" opacity="0.3">🧠</text>
+    </svg>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>
+        <h2>Giáo viên tạo: Ms MS Chí Nên</h2>
+    </header>
+
+    <div class="main-container">
+        <div class="panel left-panel">
+            
+            <h2 class="passage-title">PASSAGE 1: BAT TRANG MUSEUM ON GOOGLE ARTS & CULTURE</h2>
+            
+            <div class="paragraph-box">
+                (19) _____ 2021, the Vietnam National Authority of Tourism has collaborated with Google Arts & Culture to showcase Vietnamese wonders, culture, and art. Notable projects include “Wonders of Vietnam”, featuring Trang An landscape complex and Son Doong cave system; and “Vibrant Vietnam”, highlighting (20) _____ themes from across the country.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1" class="vietnamese-text">(19) _____ năm 2021, Cục Du lịch Quốc gia Việt Nam đã hợp tác với Google Arts & Culture để giới thiệu các kỳ quan, văn hóa và nghệ thuật của Việt Nam. Các dự án đáng chú ý bao gồm “Kỳ quan Việt Nam”, giới thiệu quần thể danh thắng Tràng An và hệ thống hang Sơn Đoòng; và “Việt Nam Rực rỡ”, làm nổi bật các chủ đề (20) _____ từ khắp nơi trên cả nước.</div>
+            </div>
+
+            <div class="paragraph-box">
+                On July 10, Bat Trang Museum joined Google Arts & Culture to become (21) _____ private museum in Vietnam to appear on Google’s digitalised art platform. High-quality images of over 30 artefacts created by late artisan Vu Thang during his nearly (22) _____ in traditional pottery are featured on the platform. Notable among these is a collection of landscape vases depicting three regions, a pair of dragon-embossed vases commemorating 1,000 years of Thang Long-Hanoi, and a ceramic shoe that gained (23) _____ in the Bat Trang Ceramic Shoe exhibition.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2" class="vietnamese-text">Vào ngày 10 tháng 7, Bảo tàng Bát Tràng đã tham gia Google Arts & Culture để trở thành bảo tàng tư nhân (21) _____ tại Việt Nam xuất hiện trên nền tảng nghệ thuật số hóa của Google. Hình ảnh chất lượng cao của hơn 30 hiện vật do cố nghệ nhân Vũ Thắng tạo ra trong (22) _____ của ông với nghề gốm truyền thống được giới thiệu trên nền tảng này. Đáng chú ý trong số này là bộ sưu tập bình phong cảnh miêu tả ba miền, một cặp bình chạm nổi hình rồng kỷ niệm 1.000 năm Thăng Long-Hà Nội, và một chiếc giày gốm đã thu hút (23) _____ trong triển lãm Giày gốm Bát Tràng.</div>
+            </div>
+
+            <div class="paragraph-box">
+                Additionally, Bat Trang Museum presents cultural stories about the 700-year-old pottery village and (24) _____ people in Vietnamese and English on Google Arts & Culture.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans3" class="vietnamese-text">Ngoài ra, Bảo tàng Bát Tràng còn trình bày những câu chuyện văn hóa về làng gốm 700 năm tuổi và những con người của (24) _____ bằng cả tiếng Việt và tiếng Anh trên Google Arts & Culture.</div>
+            </div>
+
+            <h3 class="glossary-title">📚 Glossary - Passage 1</h3>
+            <table class="glossary-table">
+                <tr><th>Word</th><th>POS</th><th>Vietnamese Meaning</th></tr>
+                <tr><td>Collaborate</td><td>v</td><td>Hợp tác, cộng tác</td></tr>
+                <tr><td>Showcase</td><td>v</td><td>Trưng bày, giới thiệu</td></tr>
+                <tr><td>Notable</td><td>adj</td><td>Đáng chú ý, nổi bật</td></tr>
+                <tr><td>Landscape</td><td>n</td><td>Phong cảnh, cảnh quan</td></tr>
+                <tr><td>Digitalised</td><td>adj</td><td>Được số hóa</td></tr>
+                <tr><td>Artefact</td><td>n</td><td>Hiện vật, đồ tạo tác</td></tr>
+                <tr><td>Artisan</td><td>n</td><td>Nghệ nhân, thợ thủ công</td></tr>
+                <tr><td>Depict</td><td>v</td><td>Miêu tả, khắc họa</td></tr>
+                <tr><td>Embossed</td><td>adj</td><td>Được chạm nổi, in nổi</td></tr>
+                <tr><td>Commemorate</td><td>v</td><td>Kỷ niệm, tưởng nhớ</td></tr>
+            </table>
+
+            <hr style="border: 1px dashed rgba(255,255,255,0.7); margin: 40px 0;">
+
+            <h2 class="passage-title">PASSAGE 2: THE SUSTAINABLE CITY OF THE FUTURE</h2>
+            
+            <div class="paragraph-box">
+                The city of the future will be sustainable. Sustainability is key in the development of any smart city, and it’s related to other challenges:
+                <br>
+                <strong>• Waste management:</strong> Smart cities need to face different problems related to waste management, such as overfilled trash bins, unoptimised truck routes, or the need to separate mixed materials for recycling. Smart waste management can help solve these kinds of issues. Sensors attached to trash bins can measure fill level, send an automatic alert if it reaches the limit, and optimise trucks’ collection routes.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans4')">Mở dịch đoạn này 🌟</button>
+                <div id="trans4" class="vietnamese-text">Thành phố của tương lai sẽ là một thành phố bền vững. Tính bền vững là chìa khóa trong sự phát triển của bất kỳ thành phố thông minh nào, và nó liên quan đến những thách thức khác:<br>
+                <strong>• Quản lý rác thải:</strong> Các thành phố thông minh cần đối mặt với các vấn đề khác nhau liên quan đến quản lý rác thải, chẳng hạn như thùng rác quá đầy, lộ trình xe tải không được tối ưu hóa, hoặc nhu cầu phân loại các vật liệu hỗn hợp để tái chế. Quản lý rác thải thông minh có thể giúp giải quyết các loại vấn đề này. Các cảm biến gắn vào thùng rác có thể đo mức độ đầy, gửi cảnh báo tự động nếu nó đạt đến giới hạn, và tối ưu hóa lộ trình thu gom của xe tải.</div>
+            </div>
+
+            <div class="paragraph-box">
+                <strong>• Energy:</strong> “The city of the future will definitely be energy-efficient. It might even produce energy instead of consuming it. The main challenge is convincing companies and governments to invest more in this area,” said Daniyar Tanatov’s, Partner Account Manager at Spaceti. Cities can produce more energy than they consume by using turbines, solar panels or even solar walls – buildings with solar panels built into their exterior walls.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans5')">Mở dịch đoạn này 🌟</button>
+                <div id="trans5" class="vietnamese-text"><strong>• Năng lượng:</strong> "Thành phố của tương lai chắc chắn sẽ tiết kiệm năng lượng. Nó thậm chí có thể sản xuất năng lượng thay vì tiêu thụ nó. Thách thức chính là thuyết phục các công ty và chính phủ đầu tư nhiều hơn vào lĩnh vực này," Daniyar Tanatov, Giám đốc Quản lý Đối tác tại Spaceti cho biết. Các thành phố có thể sản xuất nhiều năng lượng hơn mức họ tiêu thụ bằng cách sử dụng tua-bin, tấm pin mặt trời hoặc thậm chí là các bức tường năng lượng mặt trời – những tòa nhà có tấm pin mặt trời được tích hợp vào các bức tường bên ngoài của chúng.</div>
+            </div>
+
+            <div class="paragraph-box">
+                <strong>• Working hours:</strong> Unexpected, maybe? Current working hours vastly exceed what we could consider sustainable. Fewer working hours would mean less commuting, fewer products manufactured, and fewer resources used. Technologies such as artificial intelligence could help make the future of work sustainable.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans6')">Mở dịch đoạn này 🌟</button>
+                <div id="trans6" class="vietnamese-text"><strong>• Giờ làm việc:</strong> Có lẽ là điều không ngờ tới? Số giờ làm việc hiện tại vượt quá rất nhiều so với những gì chúng ta có thể coi là bền vững. Giờ làm việc ít hơn sẽ đồng nghĩa với việc đi lại ít hơn, ít sản phẩm được sản xuất hơn, và ít tài nguyên được sử dụng hơn. Các công nghệ như trí tuệ nhân tạo có thể giúp làm cho tương lai của công việc trở nên bền vững.</div>
+            </div>
+
+            <h3 class="glossary-title">📚 Glossary - Passage 2</h3>
+            <table class="glossary-table">
+                <tr><th>Word</th><th>POS</th><th>Vietnamese Meaning</th></tr>
+                <tr><td>Sustainable</td><td>adj</td><td>Bền vững</td></tr>
+                <tr><td>Overfilled</td><td>adj</td><td>Được nhét quá đầy</td></tr>
+                <tr><td>Unoptimised</td><td>adj</td><td>Không được tối ưu hóa</td></tr>
+                <tr><td>Sensor</td><td>n</td><td>Cảm biến</td></tr>
+                <tr><td>Alert</td><td>n</td><td>Sự cảnh báo, báo động</td></tr>
+                <tr><td>Energy-efficient</td><td>adj</td><td>Tiết kiệm năng lượng</td></tr>
+                <tr><td>Consume</td><td>v</td><td>Tiêu thụ</td></tr>
+                <tr><td>Exterior</td><td>adj</td><td>Bên ngoài, ngoại thất</td></tr>
+                <tr><td>Exceed</td><td>v</td><td>Vượt quá</td></tr>
+                <tr><td>Manufacture</td><td>v</td><td>Sản xuất, chế tạo</td></tr>
+            </table>
+
+            <hr style="border: 1px dashed rgba(255,255,255,0.7); margin: 40px 0;">
+
+            <h2 class="passage-title">PASSAGE 3: TEENS & EXERCISE</h2>
+            
+            <div class="paragraph-box">
+                Why is exercise so important for teenagers? The answer is in how it shapes both body and mind. (33) _____. It helps maintain a healthy weight and improves sleep. These factors are critical as teens grow and develop during their formative years.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans7')">Mở dịch đoạn này 🌟</button>
+                <div id="trans7" class="vietnamese-text">Tại sao tập thể dục lại quan trọng đối với thanh thiếu niên? Câu trả lời nằm ở cách nó định hình cả cơ thể và tâm trí. (33) _____. Nó giúp duy trì cân nặng khỏe mạnh và cải thiện giấc ngủ. Những yếu tố này rất quan trọng khi thanh thiếu niên lớn lên và phát triển trong những năm tháng hình thành nhân cách của họ.</div>
+            </div>
+
+            <div class="paragraph-box">
+                (34) _____. It releases stress-busting endorphins and lowers the body's production of stress hormones. It improves thinking and memory skills, (35) _____. Exercise also reduces the risk of depression, and helps teens feel more energetic and have a positive outlook on life.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans8')">Mở dịch đoạn này 🌟</button>
+                <div id="trans8" class="vietnamese-text">(34) _____. Nó giải phóng endorphin giúp đánh bay căng thẳng và làm giảm sự sản xuất các hormone căng thẳng của cơ thể. Nó cải thiện kỹ năng tư duy và trí nhớ, (35) _____. Tập thể dục cũng làm giảm nguy cơ trầm cảm, và giúp thanh thiếu niên cảm thấy tràn đầy năng lượng hơn cũng như có cái nhìn tích cực về cuộc sống.</div>
+            </div>
+
+            <div class="paragraph-box">
+                Last but not least, regular exercise establishes a healthy habit that sets the foundation for a lifetime of fitness. (36) _____.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans9')">Mở dịch đoạn này 🌟</button>
+                <div id="trans9" class="vietnamese-text">Cuối cùng nhưng không kém phần quan trọng, tập thể dục thường xuyên thiết lập một thói quen lành mạnh, tạo nền tảng cho sự rèn luyện sức khỏe suốt đời. (36) _____.</div>
+            </div>
+
+            <h3 class="glossary-title">📚 Glossary - Passage 3</h3>
+            <table class="glossary-table">
+                <tr><th>Word</th><th>POS</th><th>Vietnamese Meaning</th></tr>
+                <tr><td>Shape</td><td>v</td><td>Định hình, tạo hình</td></tr>
+                <tr><td>Maintain</td><td>v</td><td>Duy trì, giữ gìn</td></tr>
+                <tr><td>Critical</td><td>adj</td><td>Rất quan trọng, thiết yếu</td></tr>
+                <tr><td>Formative</td><td>adj</td><td>Thuộc về sự hình thành, phát triển</td></tr>
+                <tr><td>Release</td><td>v</td><td>Giải phóng, tiết ra</td></tr>
+                <tr><td>Depression</td><td>n</td><td>Bệnh trầm cảm</td></tr>
+                <tr><td>Energetic</td><td>adj</td><td>Tràn đầy năng lượng</td></tr>
+                <tr><td>Outlook</td><td>n</td><td>Quan điểm, cách nhìn</td></tr>
+                <tr><td>Establish</td><td>v</td><td>Thiết lập, củng cố</td></tr>
+                <tr><td>Foundation</td><td>n</td><td>Nền tảng, nền móng</td></tr>
+            </table>
+
+        </div>
+
+        <div class="panel right-panel" id="questions-container">
+            <div class="submit-area">
+                <button class="submit-btn" onclick="showSubmitPopup()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="submit-modal">
+        <div class="modal-content" id="modal-input-section">
+            <h2>Nhập tên của con để nộp bài nhé! 🌟</h2>
+            <input type="text" id="student-name" class="modal-input" placeholder="VD: Bảo Ngọc, Minh Hải...">
+            <button class="confirm-btn" onclick="calculateScore()">Nộp bài ngay!</button>
+        </div>
+        
+        <div class="modal-content result-card" id="modal-result-section">
+            <h2 id="result-name">Chúc mừng con!</h2>
+            <div class="score-display" id="result-score">0/16</div>
+            <div class="score-scale" id="result-scale">0.00 / 10 Điểm</div>
+            <div class="feedback-msg" id="result-feedback">Ms MS Chí Nên rất tự hào về con!</div>
+            <img src="" id="result-gif" class="result-gif" alt="Result GIF">
+            <br><br>
+            <button class="confirm-btn" onclick="closeModal()">Xem lại đáp án chi tiết</button>
+        </div>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); 
+            gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playBuzzer() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            const colors = ['#6c5ce7', '#00b894', '#fdcb6e', '#e17055', '#d63031', '#0984e3'];
+            
+            for(let i = 0; i < 100; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 100,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * -10 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach((p, index) => {
+                    p.x += p.dx;
+                    p.y += p.dy;
+                    p.dy += 0.2; 
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    
+                    if (p.y > canvas.height) {
+                        particles.splice(index, 1);
+                    }
+                });
+            }
+            animate();
+            
+            setTimeout(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }, 3000);
+        }
+
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        const questionsData = [
+            // PASSAGE 1 (VI)
+            {
+                id: 19,
+                text: "Câu 19: Select the best answer.",
+                options: [
+                    { text: "In", correct: false },
+                    { text: "Since", correct: true },
+                    { text: "For", correct: false },
+                    { text: "During", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>In ➔ Dịch: <span class='p-mean'>Trong (đi với năm/tháng)</span></li>
+                            <li>Since ➔ Dịch: <span class='p-mean'>Kể từ (mốc thời gian)</span></li>
+                            <li>For ➔ Dịch: <span class='p-mean'>Khoảng (đi với khoảng thời gian)</span></li>
+                            <li>During ➔ Dịch: <span class='p-mean'>Trong suốt (một thời kỳ)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>Since</strong>. Hãy nhìn vào động từ chính trong câu: <span class='p-grammar'>has collaborated</span> (hiện tại hoàn thành). Cấu trúc kinh điển của thì hiện tại hoàn thành khi đi với một mốc thời gian trong quá khứ ("2021") bắt buộc phải dùng giới từ <span class='p-word'>Since</span> (Kể từ năm 2021).
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Giới từ <span class='p-word'>In</span> hoặc <span class='p-word'>During</span> chỉ dùng khi động từ chia ở thì Quá khứ đơn (ví dụ: collaborated in 2021). Giới từ <span class='p-word'>For</span> phải đi kèm với một khoảng thời gian (ví dụ: for 3 years).
+                    </div>`
+            },
+            {
+                id: 20,
+                text: "Câu 20: Select the best answer.",
+                options: [
+                    { text: "culture", correct: false },
+                    { text: "culturally", correct: false },
+                    { text: "cultural", correct: true },
+                    { text: "cultured", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>culture ➔ Dịch: <span class='p-mean'>văn hóa (n)</span></li>
+                            <li>culturally ➔ Dịch: <span class='p-mean'>về mặt văn hóa (adv)</span></li>
+                            <li>cultural ➔ Dịch: <span class='p-mean'>thuộc về văn hóa (adj)</span></li>
+                            <li>cultured ➔ Dịch: <span class='p-mean'>có học thức, có văn hóa (adj - dùng cho người)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>cultural</strong>. Phía sau chỗ trống là danh từ <span class='p-word'>themes</span> (các chủ đề). Theo quy tắc ngữ pháp cơ bản, ta cần một <span class='p-grammar'>Tính từ (Adjective)</span> đứng trước để bổ nghĩa cho danh từ đó. "Cultural themes" mang nghĩa là "các chủ đề văn hóa".
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>culture</span> là danh từ, <span class='p-word'>culturally</span> là trạng từ không thể đứng trước danh từ. <span class='p-word'>cultured</span> cũng là tính từ nhưng thường chỉ dùng để miêu tả một người có sự giáo dục, hiểu biết văn hóa cao, không dùng cho "chủ đề".
+                    </div>`
+            },
+            {
+                id: 21,
+                text: "Câu 21: Select the best answer.",
+                options: [
+                    { text: "the first", correct: true },
+                    { text: "a first", correct: false },
+                    { text: "the best", correct: false },
+                    { text: "best", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>the first ➔ Dịch: <span class='p-mean'>đầu tiên (có mạo từ the)</span></li>
+                            <li>a first ➔ Dịch: <span class='p-mean'>một đầu tiên (sai ngữ pháp)</span></li>
+                            <li>the best ➔ Dịch: <span class='p-mean'>tốt nhất</span></li>
+                            <li>best ➔ Dịch: <span class='p-mean'>tốt nhất (thiếu mạo từ the)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>the first</strong>. Trong ngữ cảnh này: "Bảo tàng Bát Tràng trở thành bảo tàng tư nhân <span class='p-mean'>đầu tiên</span> tại Việt Nam...". Theo quy tắc ngữ pháp, các số thứ tự (ordinal numbers) như first, second, third... luôn bắt buộc phải đi kèm với mạo từ xác định <span class='p-grammar'>the</span>.
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>a first</span> sai ngữ pháp cơ bản. <span class='p-word'>the best</span> không phù hợp về ý nghĩa lịch sử của sự kiện (đây là bảo tàng "đầu tiên" được đưa lên Google, không ai đi so sánh "tốt nhất" ở đây cả).
+                    </div>`
+            },
+            {
+                id: 22,
+                text: "Câu 22: Select the best answer.",
+                options: [
+                    { text: "50-years career", correct: false },
+                    { text: "a career of 50 years", correct: false },
+                    { text: "50-year career", correct: true },
+                    { text: "career in 50 years", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>50-years career ➔ Dịch: <span class='p-mean'>sai ngữ pháp (danh từ ghép không có 's')</span></li>
+                            <li>a career of 50 years ➔ Dịch: <span class='p-mean'>một sự nghiệp 50 năm</span></li>
+                            <li>50-year career ➔ Dịch: <span class='p-mean'>sự nghiệp 50 năm (cụm danh từ đúng chuẩn)</span></li>
+                            <li>career in 50 years ➔ Dịch: <span class='p-mean'>sự nghiệp trong 50 năm</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>50-year career</strong>. Ngữ cảnh: "...during his nearly ______ in traditional pottery". Ở đây ta cần một cụm danh từ. Cấu trúc <span class='p-grammar'>Số đếm - Danh từ số ít</span> tạo thành một Tính từ ghép (Compound adjective). Cụm "50-year" đóng vai trò như một tính từ bổ nghĩa cho "career". 
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>50-years career</span> sai luật tính từ ghép (chữ "years" không được thêm "s"). <span class='p-word'>a career of 50 years</span> bị thừa mạo từ "a" vì trước khoảng trống đã có tính từ sở hữu "his" (không thể nói "his nearly a career"). <span class='p-word'>career in 50 years</span> sai giới từ.
+                    </div>`
+            },
+            {
+                id: 23,
+                text: "Câu 23: Select the best answer.",
+                options: [
+                    { text: "attraction", correct: false },
+                    { text: "ambition", correct: false },
+                    { text: "preservation", correct: false },
+                    { text: "attention", correct: true }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>attraction ➔ Dịch: <span class='p-mean'>sự thu hút, điểm hấp dẫn (n)</span></li>
+                            <li>ambition ➔ Dịch: <span class='p-mean'>tham vọng (n)</span></li>
+                            <li>preservation ➔ Dịch: <span class='p-mean'>sự bảo tồn (n)</span></li>
+                            <li>attention ➔ Dịch: <span class='p-mean'>sự chú ý (n)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>attention</strong>. Câu có cụm từ "a ceramic shoe that gained ______". Trong tiếng Anh, chúng ta có một <span class='p-grammar'>Collocation</span> vô cùng phổ biến là <span class='p-word'>gain/draw/attract attention</span>, nghĩa là "thu hút sự chú ý". Chiếc giày gốm này đã thu hút được sự chú ý lớn tại triển lãm.
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Không dùng "gained attraction" (thu hút sự thu hút - lặp nghĩa không tự nhiên). Các từ <span class='p-word'>ambition</span> (tham vọng) và <span class='p-word'>preservation</span> (sự bảo tồn) hoàn toàn sai lệch ngữ cảnh.
+                    </div>`
+            },
+            {
+                id: 24,
+                text: "Câu 24: Select the best answer.",
+                options: [
+                    { text: "their", correct: false },
+                    { text: "its", correct: true },
+                    { text: "your", correct: false },
+                    { text: "our", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>their ➔ Dịch: <span class='p-mean'>của họ / của chúng (tính từ sở hữu số nhiều)</span></li>
+                            <li>its ➔ Dịch: <span class='p-mean'>của nó (tính từ sở hữu số ít)</span></li>
+                            <li>your ➔ Dịch: <span class='p-mean'>của bạn</span></li>
+                            <li>our ➔ Dịch: <span class='p-mean'>của chúng ta</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>its</strong>. Câu có nội dung: "Bảo tàng trình bày những câu chuyện văn hóa về làng gốm 700 năm tuổi và những con người của ______". Chữ cần điền ở đây thay thế cho <span class='p-word'>pottery village</span> (ngôi làng gốm). Vì "ngôi làng" là một danh từ số ít, chỉ vật, nên ta bắt buộc phải dùng tính từ sở hữu số ít <span class='p-grammar'>its</span> (những con người của nó/của làng).
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>their</span> sai vì nó dùng cho danh từ số nhiều. <span class='p-word'>your</span> và <span class='p-word'>our</span> hoàn toàn không hợp logic câu chuyện.
+                    </div>`
+            },
+            
+            // PASSAGE 2 (VIII)
+            {
+                id: 27,
+                text: "Câu 27: What is the main idea of the passage?",
+                options: [
+                    { text: "Future cities will have to rely on artificial intelligence.", correct: false },
+                    { text: "Cities of the future will use technology to deal with their challenges.", correct: true },
+                    { text: "In the future, cities will have too many challenges to be sustainable.", correct: false },
+                    { text: "Smarts cities are investing in clean sources of energy.", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> What is the main idea of the passage?</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Ý chính của đoạn văn là gì?</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>Future cities will have to rely on artificial intelligence. ➔ Dịch: <span class='p-mean'>Các thành phố tương lai sẽ phải dựa vào trí tuệ nhân tạo.</span></li>
+                            <li>Cities of the future will use technology to deal with their challenges. ➔ Dịch: <span class='p-mean'>Các thành phố tương lai sẽ sử dụng công nghệ để giải quyết những thách thức của chúng.</span></li>
+                            <li>In the future, cities will have too many challenges to be sustainable. ➔ Dịch: <span class='p-mean'>Trong tương lai, các thành phố sẽ có quá nhiều thách thức để có thể bền vững.</span></li>
+                            <li>Smarts cities are investing in clean sources of energy. ➔ Dịch: <span class='p-mean'>Các thành phố thông minh đang đầu tư vào các nguồn năng lượng sạch.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>Cities of the future will use technology to deal with their challenges.</strong>. Xuyên suốt cả bài, tác giả liệt kê 3 lĩnh vực (Quản lý rác thải, Năng lượng, Giờ làm việc) - đây chính là các "thách thức". Ở mỗi phần, bài đọc đều đưa ra giải pháp bằng "công nghệ" (như Cảm biến thông minh, Tấm pin năng lượng, Trí tuệ nhân tạo). Bao quát toàn bài, đây là đáp án trọn vẹn nhất.
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Đáp án AI hay năng lượng sạch chỉ là những ý phụ (chi tiết nhỏ) nằm trong từng đoạn, không bao quát cả bài. Việc có "quá nhiều thách thức nên không thể bền vững" là một câu suy diễn sai lệch hoàn toàn tinh thần bài đọc.
+                    </div>`
+            },
+            {
+                id: 28,
+                text: "Câu 28: Which of the following is the benefit of smart waste management?",
+                options: [
+                    { text: "It can tell when the garbage truck arrives.", correct: false },
+                    { text: "It helps you mix materials for recycling.", correct: false },
+                    { text: "It can notify you if your trash bin is full.", correct: true },
+                    { text: "It has sensors to measure your food waste.", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Which of the following is the benefit of smart waste management?</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Điều nào sau đây là lợi ích của quản lý rác thải thông minh?</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>It can tell when the garbage truck arrives. ➔ Dịch: <span class='p-mean'>Nó có thể báo khi nào xe chở rác đến.</span></li>
+                            <li>It helps you mix materials for recycling. ➔ Dịch: <span class='p-mean'>Nó giúp bạn trộn các vật liệu để tái chế.</span></li>
+                            <li>It can notify you if your trash bin is full. ➔ Dịch: <span class='p-mean'>Nó có thể thông báo cho bạn nếu thùng rác của bạn đã đầy.</span></li>
+                            <li>It has sensors to measure your food waste. ➔ Dịch: <span class='p-mean'>Nó có cảm biến để đo lường lượng rác thải thực phẩm của bạn.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>It can notify you if your trash bin is full.</strong>. Dẫn chứng nằm rõ ràng ở dòng cuối đoạn Waste management: "Sensors attached to trash bins can measure fill level, <span class='p-word'>send an automatic alert if it reaches the limit</span>" (gửi báo động tự động nếu nó chạm đến giới hạn = báo thùng rác đầy).
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Bài đọc không hề nói nó báo "khi nào xe đến" hay đo riêng "rác thải thực phẩm". Bẫy từ vựng ở từ "mix materials" - bài nói về vấn đề CẦN PHẢI tách các vật liệu hỗn hợp ra (separate mixed materials), chứ không phải chức năng của nó là đi "trộn" lại.
+                    </div>`
+            },
+            {
+                id: 29,
+                text: "Câu 29: The word \"it\" in paragraph 2 refers to _____.",
+                options: [
+                    { text: "trash bin", correct: false },
+                    { text: "sensor", correct: false },
+                    { text: "an automatic alert", correct: false },
+                    { text: "fill level", correct: true }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> The word "it" in paragraph 2 refers to _____.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Từ "it" (nó) trong đoạn 2 nhắc tới _____.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>trash bin ➔ Dịch: <span class='p-mean'>thùng rác</span></li>
+                            <li>sensor ➔ Dịch: <span class='p-mean'>cảm biến</span></li>
+                            <li>an automatic alert ➔ Dịch: <span class='p-mean'>một cảnh báo tự động</span></li>
+                            <li>fill level ➔ Dịch: <span class='p-mean'>mức độ đầy (của thùng rác)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>fill level</strong>. Đọc kỹ câu gốc: "Sensors attached to trash bins can measure <span class='p-word'>fill level</span>, send an automatic alert if <span class='p-word'>it</span> reaches the limit". (Đo MỨC ĐỘ ĐẦY, gửi cảnh báo nếu NÓ đạt giới hạn). Thứ gì "đạt giới hạn"? Chính là cái "mức độ đầy" đó. 
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> "Thùng rác" hay "cảm biến" không phải là chủ thể của động từ "chạm đến mức giới hạn (reaches the limit)" một cách logic bằng "mức độ đầy". Alert (cảnh báo) lại càng sai vì nó nằm ở vế sau.
+                    </div>`
+            },
+            {
+                id: 30,
+                text: "Câu 30: According to the passage, solar walls _____.",
+                options: [
+                    { text: "will be built inside and outside of a building", correct: false },
+                    { text: "can produce energy by using turbines and solar panels", correct: false },
+                    { text: "will be the main challenge for the city of the future", correct: false },
+                    { text: "are solar panels attached to the outside of a building", correct: true }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> According to the passage, solar walls _____.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Theo đoạn văn, những bức tường năng lượng mặt trời (solar walls) _____.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>will be built inside and outside of a building ➔ Dịch: <span class='p-mean'>sẽ được xây cả bên trong và bên ngoài của một tòa nhà.</span></li>
+                            <li>can produce energy by using turbines and solar panels ➔ Dịch: <span class='p-mean'>có thể tạo năng lượng bằng cách sử dụng tua-bin và pin mặt trời.</span></li>
+                            <li>will be the main challenge for the city of the future ➔ Dịch: <span class='p-mean'>sẽ là thách thức chính cho thành phố tương lai.</span></li>
+                            <li>are solar panels attached to the outside of a building ➔ Dịch: <span class='p-mean'>là những tấm pin mặt trời được gắn ở bên ngoài của một tòa nhà.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>are solar panels attached to the outside of a building</strong>. Dẫn chứng nằm ở cuối đoạn Energy: "...solar walls – buildings with solar panels built into their <span class='p-word'>exterior walls</span>". Từ <span class='p-word'>exterior</span> đồng nghĩa hoàn toàn với <span class='p-word'>outside</span> (bên ngoài).
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Không có việc xây bên trong (inside). Tường mặt trời không dùng tua-bin (turbines là một loại công cụ sản xuất điện khác liệt kê độc lập). Thách thức chính là thuyết phục các chính phủ đầu tư, chứ bản thân solar walls không phải là thách thức.
+                    </div>`
+            },
+            {
+                id: 31,
+                text: "Câu 31: The word \"exceed\" in paragraph 4 is opposite in meaning to _____.",
+                options: [
+                    { text: "cut down on", correct: false },
+                    { text: "keep up with", correct: false },
+                    { text: "fall short of", correct: true },
+                    { text: "get on with", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> The word "exceed" in paragraph 4 is opposite in meaning to _____.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Từ "exceed" ở đoạn 4 có ý nghĩa TRÁI NGƯỢC với từ _____.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>cut down on ➔ Dịch: <span class='p-mean'>cắt giảm (phrasal verb)</span></li>
+                            <li>keep up with ➔ Dịch: <span class='p-mean'>theo kịp, bắt kịp (phrasal verb)</span></li>
+                            <li>fall short of ➔ Dịch: <span class='p-mean'>không đạt tới, thiếu hụt (phrasal verb)</span></li>
+                            <li>get on with ➔ Dịch: <span class='p-mean'>hòa thuận, tiếp tục làm gì (phrasal verb)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>fall short of</strong>. Từ <span class='p-word'>exceed</span> /ɪkˈsiːd/ có nghĩa là vượt quá (số lượng, giới hạn). Đề bài yêu cầu tìm từ TRÁI NGHĨA (<span class='p-grammar'>opposite</span>). Do đó, trái ngược với "vượt mức" chính là "thiếu hụt, không đạt được mức mong đợi" - tức là cụm từ <span class='p-word'>fall short of</span>.
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Các cụm động từ (Phrasal Verbs) còn lại hoàn toàn sai nghĩa, thường được đưa vào làm bẫy cho học sinh yếu từ vựng.
+                    </div>`
+            },
+            {
+                id: 32,
+                text: "Câu 32: Which of the following is true according to the passage?",
+                options: [
+                    { text: "Future cities could produce more energy than they consume.", correct: true },
+                    { text: "It’s easy to get companies and governments to invest in clean energy.", correct: false },
+                    { text: "Fewer working hours could lead to more resources used for transport.", correct: false },
+                    { text: "The current trucks’ collection routes are already good enough.", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Which of the following is true according to the passage?</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Điều nào sau đây là ĐÚNG theo đoạn văn?</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>Future cities could produce more energy than they consume. ➔ Dịch: <span class='p-mean'>Các thành phố tương lai có thể sản xuất nhiều năng lượng hơn mức chúng tiêu thụ.</span></li>
+                            <li>It’s easy to get companies and governments to invest in clean energy. ➔ Dịch: <span class='p-mean'>Rất dễ dàng để khiến các công ty và chính phủ đầu tư vào năng lượng sạch.</span></li>
+                            <li>Fewer working hours could lead to more resources used for transport. ➔ Dịch: <span class='p-mean'>Giờ làm việc ít hơn có thể dẫn đến nhiều tài nguyên bị sử dụng cho giao thông hơn.</span></li>
+                            <li>The current trucks’ collection routes are already good enough. ➔ Dịch: <span class='p-mean'>Lộ trình thu gom của xe tải hiện tại đã đủ tốt rồi.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>Future cities could produce more energy than they consume.</strong>. Dẫn chứng rõ ràng ở câu cuối của đoạn Energy: "Cities can produce more energy than they consume by using turbines, solar panels...".
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Việc kêu gọi chính phủ đầu tư là một "thách thức chính" (main challenge) chứ không hề "easy" (dễ dàng). Giờ làm việc ít hơn sẽ dẫn đến dùng ÍT tài nguyên hơn (fewer resources used), chứ không phải nhiều hơn. Lộ trình xe tải hiện tại đang gặp vấn đề "không được tối ưu" (unoptimised) chứ không hề "đủ tốt".
+                    </div>`
+            },
+
+            // PASSAGE 3 (IX)
+            {
+                id: 33,
+                text: "Câu 33: Select the best answer.",
+                options: [
+                    { text: "which help in school and social situations.", correct: false },
+                    { text: "For teens, exercise builds endurance, bone and muscle strength, and aerobic fitness.", correct: true },
+                    { text: "Research shows that active children and teens become healthy, active adults.", correct: false },
+                    { text: "Exercise helps teens' mental health, as well.", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn câu thích hợp nhất điền vào chỗ trống.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>which help in school and social situations. ➔ Dịch: <span class='p-mean'>những điều giúp ích trong học tập và các tình huống xã hội.</span></li>
+                            <li>For teens, exercise builds endurance, bone and muscle strength, and aerobic fitness. ➔ Dịch: <span class='p-mean'>Đối với thanh thiếu niên, tập thể dục xây dựng sức bền, sức mạnh xương cơ và thể lực nhịp điệu.</span></li>
+                            <li>Research shows that active children and teens become healthy, active adults. ➔ Dịch: <span class='p-mean'>Nghiên cứu chỉ ra rằng trẻ em năng động sẽ trở thành người lớn khỏe mạnh.</span></li>
+                            <li>Exercise helps teens' mental health, as well. ➔ Dịch: <span class='p-mean'>Tập thể dục cũng giúp cho sức khỏe tinh thần của thanh thiếu niên nữa.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>For teens, exercise builds endurance, bone and muscle strength...</strong>. Chú ý vào câu chốt đầu đoạn: "The answer is in how it shapes both <span class='p-word'>body</span> and mind". Đoạn 1 đang tập trung nói về những lợi ích lên THỂ CHẤT (thân thể). Việc duy trì cân nặng khỏe mạnh, cải thiện giấc ngủ... đi liền với lợi ích xây dựng sức mạnh cơ bắp và xương khớp ở đáp án B.
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Câu A bị lẻ tẻ vì bắt đầu bằng đại từ quan hệ "which", không thể đứng thành câu độc lập. Câu C nói về tầm nhìn người lớn, không phù hợp ở giữa đoạn đang liệt kê lợi ích tuổi teen. Câu D là lợi ích Tinh thần, thuộc về đoạn 2.
+                    </div>`
+            },
+            {
+                id: 34,
+                text: "Câu 34: Select the best answer.",
+                options: [
+                    { text: "which help in school and social situations.", correct: false },
+                    { text: "For teens, exercise builds endurance, bone and muscle strength, and aerobic fitness.", correct: false },
+                    { text: "Research shows that active children and teens become healthy, active adults.", correct: false },
+                    { text: "Exercise helps teens' mental health, as well.", correct: true }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn câu thích hợp nhất điền vào chỗ trống.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>which help in school and social situations. ➔ Dịch: <span class='p-mean'>những điều giúp ích trong học tập và các tình huống xã hội.</span></li>
+                            <li>For teens, exercise builds endurance, bone and muscle strength, and aerobic fitness. ➔ Dịch: <span class='p-mean'>...xây dựng sức bền, sức mạnh xương cơ...</span></li>
+                            <li>Research shows that active children and teens become healthy, active adults. ➔ Dịch: <span class='p-mean'>...trẻ em năng động sẽ trở thành người lớn khỏe mạnh.</span></li>
+                            <li>Exercise helps teens' mental health, as well. ➔ Dịch: <span class='p-mean'>Tập thể dục cũng giúp cho sức khỏe tinh thần của thanh thiếu niên nữa.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>Exercise helps teens' mental health, as well.</strong>. Chỗ trống nằm ở đầu đoạn 2. Các câu tiếp theo trong đoạn 2 đề cập đến: "đánh bay căng thẳng", "giảm hoocmon căng thẳng", "cải thiện tư duy trí nhớ", "giảm nguy cơ trầm cảm". Tất cả những liệt kê này hoàn toàn là về <span class='p-word'>mental health</span> (Sức khỏe Tinh thần). Do đó câu D đóng vai trò là câu chủ đề dẫn dắt hoàn hảo.
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Rõ ràng đoạn 2 không nói gì về Thể lực thể chất (đáp án B) hay nghiên cứu về người trưởng thành trong tương lai (đáp án C).
+                    </div>`
+            },
+            {
+                id: 35,
+                text: "Câu 35: Select the best answer.",
+                options: [
+                    { text: "which help in school and social situations.", correct: true },
+                    { text: "For teens, exercise builds endurance, bone and muscle strength, and aerobic fitness.", correct: false },
+                    { text: "Research shows that active children and teens become healthy, active adults.", correct: false },
+                    { text: "Exercise helps teens' mental health, as well.", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn câu thích hợp nhất điền vào chỗ trống.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>which help in school and social situations. ➔ Dịch: <span class='p-mean'>những điều giúp ích trong học tập và các tình huống xã hội.</span></li>
+                            <li>For teens, exercise builds endurance, bone and muscle strength, and aerobic fitness. ➔ Dịch: <span class='p-mean'>...xây dựng sức bền, sức mạnh xương cơ...</span></li>
+                            <li>Research shows that active children and teens become healthy, active adults. ➔ Dịch: <span class='p-mean'>...trẻ em năng động sẽ trở thành người lớn khỏe mạnh.</span></li>
+                            <li>Exercise helps teens' mental health, as well. ➔ Dịch: <span class='p-mean'>Tập thể dục cũng giúp cho sức khỏe tinh thần của thanh thiếu niên nữa.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>which help in school and social situations.</strong>. Câu phía trước là: "It improves thinking and memory skills, (Nó cải thiện các kỹ năng tư duy và trí nhớ,)". Từ <span class='p-grammar'>which</span> đóng vai trò là mệnh đề quan hệ bổ nghĩa trực tiếp cho cụm "thinking and memory skills" đứng ngay trước dấu phẩy. Tư duy và trí nhớ tốt sẽ giúp ích trong "việc học ở trường" và "giao tiếp xã hội".
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Các đáp án khác là các câu độc lập hoàn toàn, không thể nối liền với vế câu đằng trước bằng một dấu phẩy theo cách này (sẽ tạo ra lỗi Run-on sentence trong tiếng Anh).
+                    </div>`
+            },
+            {
+                id: 36,
+                text: "Câu 36: Select the best answer.",
+                options: [
+                    { text: "which help in school and social situations.", correct: false },
+                    { text: "For teens, exercise builds endurance, bone and muscle strength, and aerobic fitness.", correct: false },
+                    { text: "Research shows that active children and teens become healthy, active adults.", correct: true },
+                    { text: "Exercise helps teens' mental health, as well.", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn câu thích hợp nhất điền vào chỗ trống.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>which help in school and social situations. ➔ Dịch: <span class='p-mean'>những điều giúp ích trong học tập và các tình huống xã hội.</span></li>
+                            <li>For teens, exercise builds endurance, bone and muscle strength, and aerobic fitness. ➔ Dịch: <span class='p-mean'>...xây dựng sức bền, sức mạnh xương cơ...</span></li>
+                            <li>Research shows that active children and teens become healthy, active adults. ➔ Dịch: <span class='p-mean'>Nghiên cứu chỉ ra rằng trẻ em năng động sẽ trở thành người lớn khỏe mạnh.</span></li>
+                            <li>Exercise helps teens' mental health, as well. ➔ Dịch: <span class='p-mean'>Tập thể dục cũng giúp cho sức khỏe tinh thần của thanh thiếu niên nữa.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>Research shows that active children and teens become healthy, active adults.</strong>. Vị trí trống nằm ở đoạn kết luận (Last but not least...). Câu liền trước đang nói về "thiết lập nền tảng cho sự rèn luyện suốt đời" (lifetime of fitness). Vậy nên câu chốt mang tính tầm nhìn về tương lai dài hạn (những đứa trẻ năng động sẽ trở thành người trưởng thành khỏe mạnh) là sự kết nối hoàn mỹ.
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> 3 đáp án còn lại đã được dùng ở các vị trí logic và chuẩn xác hơn trước đó, và không có đáp án nào mang ý nghĩa mở ra kết quả của "tương lai trưởng thành" như đáp án C.
+                    </div>`
+            }
+        ];
+
+        let currentScore = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = questionsData.length;
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            
+            questionsData.forEach((q, index) => {
+                let shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+                
+                let html = `
+                    <div class="question-card" id="q-card-${q.id}">
+                        <div class="question-text">${q.text}</div>
+                        <div class="options-grid" id="options-${q.id}">
+                `;
+
+                shuffledOptions.forEach(opt => {
+                    html += `<button class="option-btn" onclick="checkAnswer(this, ${q.id}, ${opt.correct})">${opt.text}</button>`;
+                });
+
+                html += `
+                        </div>
+                        <div class="explanation-box" id="exp-${q.id}">
+                            ${q.explanation}
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function checkAnswer(btn, qId, isCorrect) {
+            const optionsContainer = document.getElementById(`options-${qId}`);
+            const allBtns = optionsContainer.querySelectorAll('.option-btn');
+            
+            allBtns.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playDing();
+                fireConfetti();
+                currentScore++;
+            } else {
+                btn.classList.add('incorrect');
+                playBuzzer();
+                allBtns.forEach(b => {
+                    const qData = questionsData.find(x => x.id === qId);
+                    const originalCorrectText = qData.options.find(o => o.correct).text;
+                    if (b.innerText === originalCorrectText) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            document.getElementById(`exp-${qId}`).style.display = 'block';
+            answeredQuestions++;
+        }
+
+        function showSubmitPopup() {
+            if (answeredQuestions < totalQuestions) {
+                alert("Con chưa hoàn thành hết các câu hỏi. Hãy làm đầy đủ để có điểm chuẩn nhất nhé!");
+                return;
+            }
+            document.getElementById('submit-modal').style.display = 'flex';
+        }
+
+        function calculateScore() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            if (!nameInput) {
+                alert("Con hãy nhập tên của mình vào nhé!");
+                return;
+            }
+
+            document.getElementById('modal-input-section').style.display = 'none';
+            const resultSection = document.getElementById('modal-result-section');
+            resultSection.style.display = 'block';
+
+            document.getElementById('result-name').innerText = `Chúc mừng ${nameInput}!`;
+            document.getElementById('result-score').innerText = `${currentScore} / ${totalQuestions}`;
+            
+            const scale10 = (currentScore / totalQuestions) * 10;
+            document.getElementById('result-scale').innerText = `${scale10.toFixed(2)} / 10 Điểm`;
+
+            let feedback = "";
+            let gifUrl = "";
+            const percentage = currentScore / totalQuestions;
+
+            if (percentage === 1) {
+                feedback = "Thiên tài xuất hiện! Cô MS Chí Nên quá đỗi tự hào về con! Đỉnh của chóp! 🏆";
+                gifUrl = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif";
+            } else if (percentage >= 0.6) {
+                feedback = "Rất xuất sắc! Con đã nắm chắc bài học, hãy tiếp tục phát huy nhé! 🌟";
+                gifUrl = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"; 
+            } else {
+                feedback = "Kết quả này chưa phản ánh đúng khả năng của con. Hãy xem lại phần giải thích chi tiết và cố gắng hơn nhé! ❤️";
+                gifUrl = "https://media.giphy.com/media/OPU6wzx8KTlQA/giphy.gif"; 
+            }
+
+            document.getElementById('result-feedback').innerText = feedback;
+            document.getElementById('result-gif').src = gifUrl;
+        }
+
+        function closeModal() {
+            document.getElementById('submit-modal').style.display = 'none';
+        }
+
+        window.onload = renderQuestions;
+    </script>
+</body>
+</html>

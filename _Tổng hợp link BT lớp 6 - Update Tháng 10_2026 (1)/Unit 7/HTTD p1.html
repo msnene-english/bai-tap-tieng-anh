@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luyện tập HTTD - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #8854C0;
+            --secondary-color: #00C9A7;
+            --correct-color: #00D26A;
+            --wrong-color: #FF4757;
+            --bg-color: #f0f4f8;
+            --text-color: #2d3436;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#8854c0 0.5px, transparent 0.5px), radial-gradient(#8854c0 0.5px, #f0f4f8 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .teacher-name {
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin: 0;
+            text-shadow: 2px 2px 0px white;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 600px;
+            perspective: 1000px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.1);
+            border: 4px solid #fff;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 3px solid #e0e0e0;
+            padding: 15px 20px;
+            border-radius: 18px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 5px 0 #e0e0e0;
+            text-align: left;
+            position: relative;
+            outline: none;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            border-color: var(--primary-color);
+            background-color: #f9f7ff;
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #e0e0e0;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct-color) !important;
+            border-color: #00b35a !important;
+            color: white !important;
+            box-shadow: 0 5px 0 #00b35a !important;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-color) !important;
+            border-color: #e63946 !important;
+            color: white !important;
+            box-shadow: 0 5px 0 #e63946 !important;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: #fff8e1;
+            border-radius: 15px;
+            border-left: 6px solid #ffca28;
+            display: none;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .explanation-box h4 {
+            margin: 0 0 10px 0;
+            color: #f57c00;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .explanation-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .next-btn {
+            margin-top: 20px;
+            width: 100%;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 15px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #00a88b;
+            display: none;
+        }
+
+        .next-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #00a88b;
+        }
+
+        /* Shake animation for wrong answer */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .shake { animation: shake 0.3s ease-in-out 2; }
+
+        /* Final Result Popup */
+        #result-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .result-card {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: popUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popUp {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 auto 20px;
+            border: 8px solid #f0f0f0;
+        }
+
+        .comment {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .restart-btn {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Q29 & Q30 Special Styles */
+        .sale-sign {
+            background: #ff4757;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: 900;
+            border: 3px dashed white;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+
+        .phone-msg {
+            background: #e1ffc7;
+            padding: 10px 15px;
+            border-radius: 15px;
+            position: relative;
+            margin: 10px 0;
+            border: 1px solid #c5e1a5;
+            align-self: flex-start;
+            max-width: 80%;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="teacher-name">Giáo viên: Ms MS Chí Nên</div>
+        <h1>✨ Thì Hiện Tại Tiếp Diễn ✨</h1>
+    </header>
+
+    <div class="quiz-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="card" id="quizCard">
+            <div id="questionContainer">
+                <div class="question-text" id="questionText">Đang tải câu hỏi...</div>
+                <div class="options-grid" id="optionsGrid"></div>
+            </div>
+
+            <div class="explanation-box" id="explanationBox">
+                <h4><span id="explIcon">💡</span> Cô MS Chí Nên giải thích:</h4>
+                <div class="explanation-content" id="explanationText"></div>
+            </div>
+
+            <button class="next-btn" id="nextBtn" onclick="nextQuestion()">CÂU TIẾP THEO ➜</button>
+        </div>
+    </div>
+
+    <div id="result-overlay">
+        <div class="result-card">
+            <div class="score-circle" id="finalScore">0/30</div>
+            <div class="comment" id="finalComment">Tuyệt vời!</div>
+            <p id="finalStats"></p>
+            <button class="restart-btn" onclick="location.reload()">LÀM LẠI BÀI</button>
+        </div>
+    </div>
+
+    <!-- Audio Effects -->
+    <audio id="sndCorrect" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="sndWrong" src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"></audio>
+
+    <script>
+        const quizData = [
+            {
+                q: "Look! The bus __________.",
+                options: ["come", "is coming", "coming", "are coming"],
+                correct: 1,
+                analyze: [
+                    "come (v): đến (nguyên thể)",
+                    "is coming (v): đang đến (HTTD số ít)",
+                    "coming (v-ing): đang đến (thiếu tobe)",
+                    "are coming (v): đang đến (HTTD số nhiều)"
+                ],
+                translation: "Nhìn kìa! Xe buýt đang đến.",
+                whyCorrect: "Dấu hiệu 'Look!' (Nhìn kìa!) báo hiệu hành động đang xảy ra ngay lúc nói. Chủ ngữ 'The bus' là danh từ số ít nên ta dùng 'is + V-ing'.",
+                whyWrong: "Loại A vì là hiện tại đơn. Loại C vì thiếu động từ 'be'. Loại D vì 'are' chỉ dùng cho số nhiều."
+            },
+            {
+                q: "My friends __________ football in the playground now.",
+                options: ["is playing", "are playing", "play", "plays"],
+                correct: 1,
+                analyze: [
+                    "is playing (v): đang chơi (số ít)",
+                    "are playing (v): đang chơi (số nhiều)",
+                    "play (v): chơi (nguyên thể)",
+                    "plays (v): chơi (số ít)"
+                ],
+                translation: "Các bạn của tớ đang chơi bóng đá ở sân chơi bây giờ.",
+                whyCorrect: "Dấu hiệu 'now' (bây giờ) yêu cầu thì HTTD. Chủ ngữ 'My friends' có đuôi -s là số nhiều, nên đi với 'are + playing'.",
+                whyWrong: "Loại A vì dùng 'is' cho số nhiều là sai. Loại C và D là thì hiện tại đơn."
+            },
+            {
+                q: "We __________ our school uniforms today.",
+                options: ["aren't wearing", "isn't wearing", "don't wear", "not wearing"],
+                correct: 0,
+                analyze: [
+                    "aren't wearing (v): không đang mặc (số nhiều)",
+                    "isn't wearing (v): không đang mặc (số ít)",
+                    "don't wear (v): không mặc (hiện tại đơn)",
+                    "not wearing: thiếu động từ tobe"
+                ],
+                translation: "Hôm nay chúng tớ không mặc đồng phục trường.",
+                whyCorrect: "Dấu hiệu 'today' trong câu này nhấn mạnh một sự việc tạm thời khác với thường ngày. Chủ ngữ 'We' (chúng tôi) đi với 'are not' viết tắt là 'aren't'.",
+                whyWrong: "Loại B vì 'isn't' dùng cho số ít. Loại C là hiện tại đơn chỉ thói quen lâu dài. Loại D thiếu 'are'."
+            },
+            {
+                q: "Be quiet! The baby __________.",
+                options: ["sleeps", "is sleeping", "are sleeping", "sleeping"],
+                correct: 1,
+                analyze: [
+                    "sleeps (v): ngủ (số ít)",
+                    "is sleeping (v): đang ngủ (số ít)",
+                    "are sleeping (v): đang ngủ (số nhiều)",
+                    "sleeping: thiếu tobe"
+                ],
+                translation: "Trật tự nào! Em bé đang ngủ.",
+                whyCorrect: "Mệnh lệnh 'Be quiet!' cho biết hành động đang diễn ra. 'The baby' là 1 em bé (số ít) nên chọn 'is sleeping'.",
+                whyWrong: "A là hiện tại đơn. C sai sự hòa hợp chủ vị. D thiếu 'is'."
+            },
+            {
+                q: "__________ you __________ your homework right now?",
+                options: ["Do / do", "Are / do", "Are / doing", "Is / doing"],
+                correct: 2,
+                analyze: [
+                    "Do / do: Trợ động từ hiện tại đơn",
+                    "Are / do: Sai cấu trúc (Are không đi với V nguyên thể)",
+                    "Are / doing: Đang làm (HTTD nghi vấn)",
+                    "Is / doing: Sai tobe với chủ ngữ 'you'"
+                ],
+                translation: "Bạn đang làm bài tập về nhà ngay bây giờ phải không?",
+                whyCorrect: "Dấu hiệu 'right now'. Câu hỏi HTTD có dạng: Am/Is/Are + S + V-ing? Chủ ngữ 'you' luôn đi với 'Are'.",
+                whyWrong: "A dùng sai thì. B sai cấu trúc ngữ pháp. D sai 'is' cho 'you'."
+            },
+            {
+                q: "Nam and Ba __________ lunch in the canteen at the moment.",
+                options: ["is having", "are having", "having", "are haveing"],
+                correct: 1,
+                analyze: [
+                    "is having (v): đang ăn (số ít)",
+                    "are having (v): đang ăn (số nhiều)",
+                    "having: thiếu tobe",
+                    "are haveing: sai chính tả"
+                ],
+                translation: "Nam và Ba đang ăn trưa ở căng tin lúc này.",
+                whyCorrect: "Chủ ngữ 'Nam and Ba' là 2 người (số nhiều) nên dùng 'are having'. Lưu ý 'have' bỏ 'e' thêm 'ing'.",
+                whyWrong: "D sai chính tả nghiêm trọng, quy tắc là bỏ 'e' rồi mới thêm 'ing'."
+            },
+            {
+                q: "What __________ she __________?",
+                options: ["is / cooking", "are / cooking", "does / cook", "is / cook"],
+                correct: 0,
+                analyze: [
+                    "is / cooking: đang nấu (số ít)",
+                    "are / cooking: đang nấu (số nhiều)",
+                    "does / cook: hiện tại đơn",
+                    "is / cook: sai cấu trúc"
+                ],
+                translation: "Cô ấy đang nấu món gì vậy?",
+                whyCorrect: "Cấu trúc câu hỏi Wh-word: Wh- + is + she + V-ing? Phù hợp để hỏi về hành động đang làm.",
+                whyWrong: "B sai tobe. C hỏi về sự thật hiển nhiên. D thiếu 'ing'."
+            },
+            {
+                q: "I __________ a book. I __________ to music.",
+                options: ["am not reading / listening", "am not reading / am listening", "don't read / am listening", "not reading / listening"],
+                correct: 1,
+                analyze: [
+                    "am not reading / listening: vế sau thiếu tobe",
+                    "am not reading / am listening: đúng cấu trúc",
+                    "don't read / am listening: sai thì vế đầu",
+                    "not reading / listening: thiếu tobe cả 2 vế"
+                ],
+                translation: "Tớ đang không đọc sách. Tớ đang nghe nhạc.",
+                whyCorrect: "Cả hai vế đều diễn tả trạng thái đang xảy ra với chủ ngữ 'I' nên cần 'am (not) + V-ing'.",
+                whyWrong: "Các phương án khác đều thiếu thành phần quan trọng của thì tiếp diễn."
+            },
+            {
+                q: "My sister is in her room. She __________ a letter.",
+                options: ["writes", "writing", "is writting", "is writing"],
+                correct: 3,
+                analyze: [
+                    "writes (v): viết (số ít)",
+                    "writing: thiếu tobe",
+                    "is writting: sai chính tả",
+                    "is writing: đang viết"
+                ],
+                translation: "Chị tớ đang ở trong phòng. Chị ấy đang viết một lá thư.",
+                whyCorrect: "Ngữ cảnh 'is in her room' ngụ ý chị ấy đang thực hiện hành động đó ngay bây giờ. Write -> writing (bỏ e).",
+                whyWrong: "C bị bẫy gấp đôi phụ âm 't' là sai, 'write' chỉ có 1 chữ 't' nên không gấp đôi."
+            },
+            {
+                q: "Where are the students? - They __________ in the library.",
+                options: ["reading", "is reading", "are reading", "read"],
+                correct: 2,
+                analyze: [
+                    "reading: thiếu tobe",
+                    "is reading: sai tobe",
+                    "are reading: đang đọc",
+                    "read: hiện tại đơn"
+                ],
+                translation: "Các bạn học sinh đâu rồi? - Họ đang đọc sách trong thư viện.",
+                whyCorrect: "Câu hỏi 'Where are...' đang tìm người ở thời điểm hiện tại, nên câu trả lời dùng HTTD. 'They' đi với 'are'.",
+                whyWrong: "A, B, D sai về mặt ngữ pháp và sự hòa hợp chủ vị."
+            },
+            {
+                q: "Keep silent! The teacher __________.",
+                options: ["is talkking", "talking", "is talking", "are talking"],
+                correct: 2,
+                analyze: [
+                    "is talkking: sai chính tả",
+                    "talking: thiếu tobe",
+                    "is talking: đang nói",
+                    "are talking: sai tobe"
+                ],
+                translation: "Giữ yên lặng nào! Giáo viên đang nói.",
+                whyCorrect: "Mệnh lệnh 'Keep silent!' là dấu hiệu. 'The teacher' số ít đi với 'is talking'.",
+                whyWrong: "A sai chính tả vì 'talk' kết thúc bằng 2 phụ âm 'lk' nên không gấp đôi chữ 'k'."
+            },
+            {
+                q: "Is he playing badminton? - No, __________.",
+                options: ["he is", "he isn't", "he not", "he doesn't"],
+                correct: 1,
+                analyze: [
+                    "he is: vâng đúng vậy",
+                    "he isn't: không phải",
+                    "he not: sai cấu trúc",
+                    "he doesn't: sai trợ động từ"
+                ],
+                translation: "Anh ấy đang chơi cầu lông phải không? - Không, không phải.",
+                whyCorrect: "Câu trả lời ngắn cho câu hỏi 'Is he...?' là 'Yes, he is' hoặc 'No, he isn't'.",
+                whyWrong: "D là trợ động từ của hiện tại đơn, không dùng cho câu hỏi với 'is'."
+            },
+            {
+                q: "They __________ in the pool right now.",
+                options: ["are swiming", "are swimming", "is swimming", "swimming"],
+                correct: 1,
+                analyze: [
+                    "are swiming: sai chính tả",
+                    "are swimming: đang bơi",
+                    "is swimming: sai tobe",
+                    "swimming: thiếu tobe"
+                ],
+                translation: "Họ đang bơi trong bể bơi ngay lúc này.",
+                whyCorrect: "Động từ 'swim' có quy tắc: 1 âm tiết, kết thúc bằng 1 nguyên âm + 1 phụ âm -> gấp đôi phụ âm cuối 'm' thành 'swimming'.",
+                whyWrong: "A sai chính tả vì thiếu một chữ 'm'. C sai tobe cho chủ ngữ 'They'."
+            },
+            {
+                q: "__________ Lan and Mai __________ to school by bike?",
+                options: ["Is / going", "Do / go", "Are / going", "Are / go"],
+                correct: 2,
+                analyze: [
+                    "Is / going: sai tobe",
+                    "Do / go: hiện tại đơn",
+                    "Are / going: đang đi",
+                    "Are / go: thiếu -ing"
+                ],
+                translation: "Lan và Mai đang đi xe đạp đến trường phải không?",
+                whyCorrect: "Chủ ngữ là 2 người (số nhiều) nên dùng 'Are'. Động từ phải thêm -ing.",
+                whyWrong: "B hỏi về thói quen, không phù hợp ngữ cảnh bài tập này. D thiếu 'ing'."
+            },
+            {
+                q: "Listen! Someone __________ the piano.",
+                options: ["is playing", "are playing", "play", "plays"],
+                correct: 0,
+                analyze: [
+                    "is playing: đang chơi (số ít)",
+                    "are playing: đang chơi (số nhiều)",
+                    "play: nguyên thể",
+                    "plays: số ít"
+                ],
+                translation: "Nghe kìa! Ai đó đang chơi đàn piano.",
+                whyCorrect: "Dấu hiệu 'Listen!'. Đại từ bất định 'Someone' luôn được coi là ngôi thứ 3 số ít (giống He/She/It) nên dùng 'is'.",
+                whyWrong: "B sai vì 'Someone' không đi với 'are'. C, D sai thì."
+            },
+            {
+                q: "My father is in the garden. He __________ flowers.",
+                options: ["planting", "is planting", "plants", "are planting"],
+                correct: 1,
+                analyze: [
+                    "planting: thiếu tobe",
+                    "is planting: đang trồng",
+                    "plants: hiện tại đơn",
+                    "are planting: sai tobe"
+                ],
+                translation: "Bố tớ đang ở ngoài vườn. Ông ấy đang trồng hoa.",
+                whyCorrect: "Câu đầu tiên giới thiệu vị trí hiện tại của bố, suy ra hành động trồng hoa đang diễn ra.",
+                whyWrong: "Bố là 'He' nên phải có 'is' đi kèm 'planting'."
+            },
+            {
+                q: "At present, they __________ a new project.",
+                options: ["do", "doing", "are doing", "is doing"],
+                correct: 2,
+                analyze: [
+                    "do: làm",
+                    "doing: thiếu tobe",
+                    "are doing: đang làm (số nhiều)",
+                    "is doing: đang làm (số ít)"
+                ],
+                translation: "Hiện tại, họ đang thực hiện một dự án mới.",
+                whyCorrect: "Cụm 'At present' = 'Now'. Chủ ngữ 'They' đi với 'are doing'.",
+                whyWrong: "A, B, D sai về thì hoặc sự hòa hợp chủ vị."
+            },
+            {
+                q: "Who __________ she __________ to?",
+                options: ["is / talk", "are / talking", "does / talk", "is / talking"],
+                correct: 3,
+                analyze: [
+                    "is / talk: thiếu -ing",
+                    "are / talking: sai tobe",
+                    "does / talk: hiện tại đơn",
+                    "is / talking: đang nói chuyện"
+                ],
+                translation: "Cô ấy đang nói chuyện với ai thế?",
+                whyCorrect: "Cấu trúc Wh- + is + she + V-ing? dùng để hỏi về hành động đang thực hiện.",
+                whyWrong: "B dùng 'are' cho 'she' là sai. C không phù hợp ngữ cảnh tiếp diễn."
+            },
+            {
+                q: "Look at the cat! It __________ the mouse.",
+                options: ["chasing", "is chaseing", "is chasing", "are chasing"],
+                correct: 2,
+                analyze: [
+                    "chasing: thiếu tobe",
+                    "is chaseing: sai chính tả",
+                    "is chasing: đang đuổi theo",
+                    "are chasing: sai tobe"
+                ],
+                translation: "Nhìn con mèo kìa! Nó đang đuổi bắt con chuột.",
+                whyCorrect: "Hành động 'Look at...' hướng sự chú ý vào việc đang diễn ra. Chase -> chasing (bỏ e).",
+                whyWrong: "B sai chính tả vì chưa bỏ 'e' trước khi thêm 'ing'. D sai tobe cho 'It'."
+            },
+            {
+                q: "My brother __________ TV right now. He is doing his homework.",
+                options: ["isn't watching", "is watching", "not watching", "doesn't watch"],
+                correct: 0,
+                analyze: [
+                    "isn't watching: không đang xem",
+                    "is watching: đang xem",
+                    "not watching: thiếu tobe",
+                    "doesn't watch: hiện tại đơn"
+                ],
+                translation: "Em trai tớ không đang xem TV bây giờ. Em ấy đang làm bài tập về nhà.",
+                whyCorrect: "Vế sau khẳng định đang làm bài tập, nên vế đầu phải phủ định hành động xem TV. 'My brother' số ít dùng 'isn't'.",
+                whyWrong: "B sai về mặt logic ngữ nghĩa của câu."
+            },
+            {
+                q: "What __________ you __________?",
+                options: ["are / study", "are / studying", "do / study", "is / studying"],
+                correct: 1,
+                analyze: [
+                    "are / study: thiếu -ing",
+                    "are / studying: đang học",
+                    "do / study: hiện tại đơn",
+                    "is / studying: sai tobe"
+                ],
+                translation: "Bạn đang học gì vậy?",
+                whyCorrect: "Câu hỏi về hành động hiện tại với 'you' phải dùng 'are' và 'V-ing'.",
+                whyWrong: "C hỏi về thói quen học tập chung chung. D sai tobe cho 'you'."
+            },
+            {
+                q: "They __________ (not work) in the office at the moment.",
+                options: ["isn't working", "aren't working", "not working", "don't working"],
+                correct: 1,
+                analyze: [
+                    "isn't working: sai tobe",
+                    "aren't working: không đang làm việc",
+                    "not working: thiếu tobe",
+                    "don't working: sai cấu trúc"
+                ],
+                translation: "Họ không đang làm việc tại văn phòng vào lúc này.",
+                whyCorrect: "Dấu hiệu 'at the moment'. Phủ định số nhiều: S + are not (aren't) + V-ing.",
+                whyWrong: "D sai vì 'don't' không bao giờ đi kèm trực tiếp với V-ing."
+            },
+            {
+                q: "Is your mother cooking dinner? - __________.",
+                options: ["Yes, she does.", "Yes, she is.", "Yes, she cooking.", "No, she is."],
+                correct: 1,
+                analyze: [
+                    "Yes, she does: sai trợ từ",
+                    "Yes, she is: vâng, đúng vậy",
+                    "Yes, she cooking: thiếu tobe",
+                    "No, she is: mâu thuẫn No/is"
+                ],
+                translation: "Mẹ bạn đang nấu bữa tối hả? - Vâng, đúng rồi.",
+                whyCorrect: "Trả lời ngắn cho câu hỏi 'Is + S...?' là 'Yes, S + is'.",
+                whyWrong: "A là câu trả lời của thì hiện tại đơn."
+            },
+            {
+                q: "The children __________ in the park.",
+                options: ["is skipping", "are skiping", "are skipping", "skipping"],
+                correct: 2,
+                analyze: [
+                    "is skipping: sai tobe",
+                    "are skiping: sai chính tả",
+                    "are skipping: đang nhảy dây",
+                    "skipping: thiếu tobe"
+                ],
+                translation: "Bọn trẻ đang nhảy dây ở công viên.",
+                whyCorrect: "Children là số nhiều. Skip -> skipping (gấp đôi phụ âm cuối 'p' vì là từ 1 âm tiết có cấu trúc Phụ-Nguyên-Phụ).",
+                whyWrong: "B sai chính tả do thiếu một chữ 'p'. A sai tobe."
+            },
+            {
+                q: "Hurry up! The train __________.",
+                options: ["leave", "is leaving", "is leavving", "are leaving"],
+                correct: 1,
+                analyze: [
+                    "leave: rời đi",
+                    "is leaving: đang rời đi",
+                    "is leavving: sai chính tả",
+                    "are leaving: sai tobe"
+                ],
+                translation: "Nhanh lên! Tàu đang rời bánh rồi.",
+                whyCorrect: "Hurry up! cho thấy sự khẩn cấp của hành động đang diễn ra. Leave -> leaving (bỏ e).",
+                whyWrong: "C sai chính tả do gấp đôi 'v' vô lý. D sai tobe cho 'The train'."
+            },
+            {
+                q: "We __________ English class right now.",
+                options: ["are having", "is having", "having", "are haveing"],
+                correct: 0,
+                analyze: [
+                    "are having: đang có/học",
+                    "is having: sai tobe",
+                    "having: thiếu tobe",
+                    "are haveing: sai chính tả"
+                ],
+                translation: "Chúng tôi đang có tiết học Tiếng Anh ngay bây giờ.",
+                whyCorrect: "Right now yêu cầu HTTD. We + are + having.",
+                whyWrong: "Have kết thúc bằng 'e' nên phải bỏ 'e' rồi mới thêm 'ing'."
+            },
+            {
+                q: "Where __________ your father __________?",
+                options: ["is / working", "are / working", "does / work", "is / work"],
+                correct: 0,
+                analyze: [
+                    "is / working: đang làm việc",
+                    "are / working: sai tobe",
+                    "does / work: hiện tại đơn",
+                    "is / work: thiếu -ing"
+                ],
+                translation: "Bố bạn đang làm việc ở đâu vậy?",
+                whyCorrect: "Câu hỏi về vị trí làm việc tạm thời hoặc đang diễn ra. Your father (số ít) dùng 'is'.",
+                whyWrong: "B sai tobe. C hỏi về nghề nghiệp/nơi làm cố định, nhưng HTTD vẫn là ưu tiên trong bài này."
+            },
+            {
+                q: "I __________ to music, I’m doing my homework.",
+                options: ["am not listening", "not listening", "don't listen", "am listening"],
+                correct: 0,
+                analyze: [
+                    "am not listening: không đang nghe",
+                    "not listening: thiếu tobe",
+                    "don't listen: hiện tại đơn",
+                    "am listening: đang nghe"
+                ],
+                translation: "Tớ không đang nghe nhạc đâu, tớ đang làm bài tập về nhà mà.",
+                whyCorrect: "Ngữ cảnh đang làm bài tập cho thấy người nói đang phủ nhận việc nghe nhạc.",
+                whyWrong: "D sai về nghĩa logic trong câu."
+            },
+            {
+                q: "Look! The dog __________ in the garden.",
+                options: ["runing", "is running", "are running", "running"],
+                correct: 1,
+                analyze: [
+                    "runing: sai chính tả",
+                    "is running: đang chạy",
+                    "are running: sai tobe",
+                    "running: thiếu tobe"
+                ],
+                translation: "Nhìn kìa! Con chó đang chạy trong vườn.",
+                whyCorrect: "Run -> running (gấp đôi phụ âm cuối 'n'). The dog (số ít) dùng 'is'.",
+                whyWrong: "A sai chính tả vì từ 'run' phải gấp đôi 'n'."
+            },
+            {
+                q: "What __________ those students __________?",
+                options: ["is / doing", "are / doing", "do / do", "are / do"],
+                correct: 1,
+                analyze: [
+                    "is / doing: sai tobe",
+                    "are / doing: đang làm",
+                    "do / do: hiện tại đơn",
+                    "are / do: thiếu -ing"
+                ],
+                translation: "Những học sinh kia đang làm gì vậy?",
+                whyCorrect: "Those students (những học sinh kia) là số nhiều nên dùng 'are' và 'V-ing'.",
+                whyWrong: "A sai tobe. D sai cấu trúc câu tiếp diễn."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let canAnswer = true;
+
+        const questionText = document.getElementById('questionText');
+        const optionsGrid = document.getElementById('optionsGrid');
+        const explanationBox = document.getElementById('explanationBox');
+        const explanationText = document.getElementById('explanationText');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressFill = document.getElementById('progressFill');
+        const sndCorrect = document.getElementById('sndCorrect');
+        const sndWrong = document.getElementById('sndWrong');
+
+        function loadQuestion() {
+            canAnswer = true;
+            nextBtn.style.display = 'none';
+            explanationBox.style.display = 'none';
+            
+            const qData = quizData[currentQuestion];
+            
+            // Special styling for last few if needed
+            let displayQ = qData.q;
+            if (currentQuestion === 28) {
+                displayQ = `<div class="sale-sign">SALE OFF 50%</div>` + displayQ;
+            } else if (currentQuestion === 29) {
+                displayQ = `<div class="phone-msg">Where are you?</div>` + displayQ;
+            }
+
+            questionText.innerHTML = `Câu ${currentQuestion + 1}: ${displayQ}`;
+            optionsGrid.innerHTML = '';
+            
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = String.fromCharCode(65 + index) + '. ' + opt;
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsGrid.appendChild(btn);
+            });
+
+            progressFill.style.width = `${(currentQuestion / quizData.length) * 100}%`;
+        }
+
+        function checkAnswer(idx, btn) {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            const qData = quizData[currentQuestion];
+            const isCorrect = idx === qData.correct;
+
+            if (isCorrect) {
+                score++;
+                btn.classList.add('correct');
+                sndCorrect.currentTime = 0;
+                sndCorrect.play();
+                triggerConfetti();
+            } else {
+                btn.classList.add('wrong');
+                optionsGrid.children[qData.correct].classList.add('correct');
+                document.getElementById('quizCard').classList.add('shake');
+                setTimeout(() => document.getElementById('quizCard').classList.remove('shake'), 500);
+                sndWrong.currentTime = 0;
+                sndWrong.play();
+            }
+
+            showExplanation(qData, isCorrect);
+            nextBtn.style.display = 'block';
+        }
+
+        function showExplanation(data, isCorrect) {
+            explanationBox.style.display = 'block';
+            document.getElementById('explIcon').innerText = isCorrect ? '🎉' : '💡';
+            
+            let html = `
+                <p><strong>1. Phân tích 4 đáp án:</strong><br>
+                ${data.analyze.map(item => '• ' + item).join('<br>')}
+                </p>
+                <p><strong>2. Dịch nghĩa câu:</strong><br>
+                <em>"${data.translation}"</em></p>
+                <p><strong>3. Tại sao chọn ${String.fromCharCode(65 + data.correct)}?</strong><br>
+                ${data.whyCorrect}</p>
+                <p><strong>4. Tại sao loại các phương án kia?</strong><br>
+                ${data.whyWrong}</p>
+            `;
+            explanationText.innerHTML = html;
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                showFinalResult();
+            }
+        }
+
+        function triggerConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#8854C0', '#00C9A7', '#FFD700']
+            });
+        }
+
+        function showFinalResult() {
+            document.getElementById('result-overlay').style.display = 'flex';
+            document.getElementById('finalScore').innerText = `${score}/${quizData.length}`;
+            
+            let comment = "";
+            const percent = (score / quizData.length) * 100;
+            if (percent === 100) comment = "XUẤT SẮC! Em là thiên tài HTTD!";
+            else if (percent >= 80) comment = "GIỎI QUÁ! Cô MS Chí Nên rất tự hào về em!";
+            else if (percent >= 50) comment = "CỐ GẮNG LÊN! Em sắp làm chủ được rồi!";
+            else comment = "ĐỪNG BUỒN! Hãy làm lại để nhớ kỹ hơn nhé!";
+            
+            document.getElementById('finalComment').innerText = comment;
+            document.getElementById('finalStats').innerText = `Em đã hoàn thành bài thi của Ms MS Chí Nên với tỷ lệ đúng ${Math.round(percent)}%.`;
+        }
+
+        // Start Quiz
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>

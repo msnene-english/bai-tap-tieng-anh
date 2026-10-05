@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>Bài Test: Vẻ Đẹp Làng Quê & Chuyến Đi Kỷ Niệm</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* CSS VARIABLES & THEME */
+        :root {
+            --primary: #FF9A9E;
+            --secondary: #FECFEF;
+            --accent: #A18CD1;
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.7);
+            --text-dark: #2d3436;
+            --btn-hover: rgba(255, 255, 255, 0.8);
+            --correct: #2ecc71;
+            --incorrect: #e74c3c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Quicksand', sans-serif; }
+
+        body {
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* FLOATING PATTERN SVG BACKGROUND */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><text x="20" y="40" font-size="30" opacity="0.15">🌾</text><text x="120" y="100" font-size="30" opacity="0.15">🚲</text><text x="40" y="160" font-size="30" opacity="0.15">🏺</text><text x="150" y="180" font-size="30" opacity="0.15">🐃</text></svg>');
+            background-repeat: repeat;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* START OVERLAY */
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10000;
+        }
+        #btn-start {
+            padding: 20px 40px; font-size: 28px; border-radius: 50px; cursor: pointer;
+            background: linear-gradient(45deg, #ff9a9e, #fecfef); border: none; font-weight: 900;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3); transition: transform 0.2s;
+        }
+        #btn-start:hover { transform: scale(1.1); }
+
+        /* HEADER & STICKY NOTE */
+        header {
+            position: absolute; top: 10px; left: 20px; z-index: 100;
+            font-size: 14px; font-weight: 700; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .sticky-note {
+            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 700px; padding: 15px 25px;
+            background: rgba(255, 234, 167, 0.85); backdrop-filter: blur(12px);
+            border: 2px solid #fdcb6e; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            z-index: 999; text-align: center; font-size: 15px; font-weight: 700; color: #d35400;
+            animation: floatNote 3s ease-in-out infinite;
+        }
+        @keyframes floatNote {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, -5px); }
+        }
+
+        /* LAYOUT SPLIT SCREEN */
+        .main-layout {
+            display: flex; height: calc(100vh - 80px); margin-top: 80px; gap: 20px; padding: 0 20px 20px 20px;
+        }
+
+        .pane {
+            flex: 1; overflow-y: auto; border-radius: 20px; padding: 25px;
+            background: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+        }
+        
+        /* Custom Scrollbar */
+        .pane::-webkit-scrollbar { width: 10px; }
+        .pane::-webkit-scrollbar-track { background: transparent; }
+        .pane::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        /* READING PANE STYLES */
+        .passage { margin-bottom: 40px; background: rgba(255,255,255,0.5); padding: 20px; border-radius: 15px; }
+        .passage h2 { color: #8e44ad; margin-bottom: 15px; font-size: 22px; }
+        .passage p { font-size: 18px; line-height: 1.8; margin-bottom: 15px; font-weight: 500; }
+        .gap { display: inline-block; min-width: 60px; border-bottom: 2px dashed #e74c3c; text-align: center; font-weight: bold; color: #e74c3c; }
+        
+        .btn-translate {
+            background: #ffeaa7; border: 2px solid #fdcb6e; padding: 8px 15px; border-radius: 10px;
+            cursor: pointer; font-weight: bold; color: #d35400; margin-bottom: 10px; transition: 0.2s;
+        }
+        .btn-translate:hover { background: #fdcb6e; }
+        .translation-box {
+            display: none; background: rgba(255,255,255,0.7); padding: 15px; border-left: 5px solid #00b894;
+            border-radius: 8px; font-style: italic; margin-bottom: 15px; font-size: 16px; color: #2d3436;
+        }
+
+        /* GLOSSARY TABLE */
+        .glossary { width: 100%; border-collapse: collapse; margin-top: 15px; border-radius: 10px; overflow: hidden; }
+        .glossary th, .glossary td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.1); font-size: 15px; }
+        .glossary th { background: #81ecec; color: #008080; }
+        .glossary tr:nth-child(even) { background: rgba(255,255,255,0.3); }
+
+        /* EXERCISE PANE STYLES */
+        .question-card {
+            background: rgba(255,255,255,0.6); border-radius: 15px; padding: 20px; margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--glass-border);
+        }
+        .q-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: #2c3e50; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn-option {
+            background: #fff; border: 2px solid #bdc3c7; border-radius: 12px; padding: 15px; font-size: 16px;
+            font-weight: 700; cursor: pointer; transition: all 0.2s; color: #34495e;
+            box-shadow: 0 4px 0 #bdc3c7;
+        }
+        .btn-option:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #bdc3c7; border-color: #a18cd1; }
+        .btn-option:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+        
+        .btn-option.correct { background: var(--correct); border-color: #27ae60; color: white; box-shadow: 0 4px 0 #27ae60; }
+        .btn-option.wrong { background: var(--incorrect); border-color: #c0392b; color: white; box-shadow: 0 4px 0 #c0392b; }
+        
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+        .shake { animation: shake 0.3s; }
+
+        /* EXPLANATION BOX (MASTER STANDARD) */
+        .explanation {
+            display: none; margin-top: 20px; background: #fffdf2; padding: 20px; border-radius: 12px;
+            border-left: 6px solid #f39c12; font-size: 16px; line-height: 1.6;
+        }
+        .explanation h4 { color: #e67e22; margin-bottom: 10px; text-transform: uppercase; }
+        
+        /* SPECIFIC SPANS FOR EXPLANATION */
+        .p-word { color: #0984e3; font-weight: 900; background: rgba(9, 132, 227, 0.1); padding: 0 4px; border-radius: 4px; }
+        .p-mean { color: #d35400; font-weight: 700; }
+        .p-grammar { color: #c0392b; text-decoration: underline; font-weight: bold; }
+        .hl-green { color: #27ae60; font-weight: 900; }
+        .hl-red { color: #c0392b; text-decoration: line-through; font-weight: bold; }
+        .quote-box { background: rgba(236, 240, 241, 0.8); padding: 10px; border-left: 4px solid #34495e; margin: 10px 0; font-style: italic; }
+
+        /* SUBMIT BUTTON & MODAL */
+        #btn-submit {
+            display: block; width: 100%; padding: 20px; margin-top: 30px; font-size: 20px; font-weight: 900;
+            background: linear-gradient(135deg, #6dd5ed, #2193b0); color: white; border: none; border-radius: 15px;
+            cursor: pointer; box-shadow: 0 8px 0 #1e7d96; transition: 0.2s; text-transform: uppercase;
+        }
+        #btn-submit:active { transform: translateY(8px); box-shadow: 0 0 0 transparent; }
+
+        #result-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 20000;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 20px; text-align: center; max-width: 500px; width: 90%;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+        }
+        .modal-content h2 { font-size: 32px; color: #8e44ad; margin-bottom: 20px; }
+        .score-display { font-size: 45px; font-weight: 900; color: #e74c3c; margin: 15px 0; }
+        .score-scale { font-size: 24px; color: #27ae60; font-weight: bold; margin-bottom: 20px;}
+        .teacher-comment { font-size: 18px; font-style: italic; color: #34495e; margin-bottom: 20px; padding: 15px; background: #f1c40f20; border-radius: 10px;}
+        .meme-gif { max-width: 100%; border-radius: 15px; margin-bottom: 20px; }
+        #student-name-input {
+            width: 100%; padding: 15px; font-size: 18px; border: 2px solid #bdc3c7; border-radius: 10px; margin-bottom: 20px; text-align: center;
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1 style="color: white; font-size: 40px; margin-bottom: 30px; text-align: center; text-shadow: 2px 2px 5px #000;">NHIỆM VỤ TIẾNG ANH ĐẶC BIỆT</h1>
+        <button id="btn-start">🚀 BẮT ĐẦU VÀO LỚP HỌC</button>
+    </div>
+
+    <header>Giáo viên tạo: Ms MS Chí Nên</header>
+
+    <div class="sticky-note">
+        🔔 <b>LƯU Ý CỰC QUAN TRỌNG:</b> Kéo câu làm tới đâu, đọc kỹ bài tới đó!<br>
+        Tự giác tra cứu từ vựng bằng Google Dịch/Từ điển Cambridge để hiểu rõ từng câu, KHÔNG ĐƯỢC CHỌN BỪA.<br>
+        Đọc kỹ giải thích Master bên dưới và <b>ghi lại từ vựng/cấu trúc vào vở</b>. Học thật, làm thật mới giỏi lên được! 💪
+    </div>
+
+    <div class="main-layout">
+        <div class="pane" id="reading-pane">
+            
+            <div class="passage">
+                <h2>Exercise 18: Living in the Countryside</h2>
+                <p>Living in the countryside brings us many benefits. First of all, the <span class="gap">(1)</span> in the countryside is less polluted than in the city. You can enjoy fresh air, clean rivers, and <span class="gap">(2)</span> life there. Second, there are no traffic jams because the main <span class="gap">(3)</span> are bikes, electric motorbikes or walking. Besides, everything in the countryside is <span class="gap">(4)</span> and healthier than in the city. Farmers often grow clean vegetables in their <span class="gap">(5)</span>. They also <span class="gap">(6)</span> poultry and pigs for meat. It is great to live in the countryside.</p>
+                
+                <button class="btn-translate" onclick="toggleTranslation('trans1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1" class="translation-box">
+                    Sống ở nông thôn mang lại cho chúng ta nhiều lợi ích. Trước hết, môi trường ở nông thôn ít ô nhiễm hơn ở thành phố. Bạn có thể tận hưởng không khí trong lành, những dòng sông sạch và cuộc sống thanh bình ở đó. Thứ hai, không có tắc đường vì phương tiện chủ yếu là xe đạp, xe đạp điện hoặc đi bộ. Ngoài ra, mọi thứ ở nông thôn đều rẻ hơn và lành mạnh hơn so với thành phố. Nông dân thường trồng rau sạch trong vườn của họ. Họ cũng chăn nuôi gia cầm và lợn để lấy thịt. Thật tuyệt vời khi được sống ở nông thôn.
+                </div>
+
+                <table class="glossary">
+                    <tr><th>Từ vựng (Word)</th><th>Loại từ (POS)</th><th>Nghĩa (Meaning)</th></tr>
+                    <tr><td>Benefit</td><td>n</td><td>Lợi ích</td></tr>
+                    <tr><td>Polluted</td><td>adj</td><td>Bị ô nhiễm</td></tr>
+                    <tr><td>Peaceful</td><td>adj</td><td>Yên bình, thanh bình</td></tr>
+                    <tr><td>Traffic jam</td><td>n</td><td>Tắc nghẽn giao thông</td></tr>
+                    <tr><td>Vehicle</td><td>n</td><td>Phương tiện giao thông</td></tr>
+                    <tr><td>Poultry</td><td>n</td><td>Gia cầm (gà, vịt...)</td></tr>
+                </table>
+            </div>
+
+            <div class="passage">
+                <h2>Exercise 19: Traditional Village Life</h2>
+                <p>Viet Nam is famous for its countryside and traditional village life. In a Vietnamese village, people live <span class="gap">(7)</span> to nature and are more self-sufficient. They grow their own vegetables and raise their own animals. There are also <span class="gap">(8)</span> rice fields where farmers work hard to produce the staple food of the country. In the village, people are more connected to their community. They often help each other <span class="gap">(9)</span> tasks like farming, building homes, and cooking. There are also many festivals throughout the year where people come together to <span class="gap">(10)</span> and share food. Despite the many benefits of village life, there are also some <span class="gap">(11)</span>. Access to healthcare and education can be limited. Many young people also leave the village to find work in the city, which can lead to a decline in the population. <span class="gap">(12)</span>, many people continue to cherish and preserve this way of life.</p>
+                
+                <button class="btn-translate" onclick="toggleTranslation('trans2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2" class="translation-box">
+                    Việt Nam nổi tiếng với vùng nông thôn và cuộc sống làng quê truyền thống. Trong một ngôi làng Việt Nam, người dân sống gần gũi với thiên nhiên hơn và tự cung tự cấp nhiều hơn. Họ tự trồng rau và chăn nuôi động vật. Ngoài ra còn có nhiều cánh đồng lúa, nơi nông dân làm việc chăm chỉ để sản xuất lương thực chính yếu của đất nước. Trong làng, mọi người gắn kết chặt chẽ hơn với cộng đồng của họ. Họ thường giúp đỡ lẫn nhau với các công việc như làm ruộng, xây nhà và nấu ăn. Cũng có nhiều lễ hội trong suốt cả năm, nơi mọi người tụ tập để ăn mừng và chia sẻ đồ ăn. Mặc dù cuộc sống ở làng quê có nhiều lợi ích, nhưng cũng có một số thách thức. Việc tiếp cận chăm sóc sức khỏe và giáo dục có thể bị hạn chế. Nhiều người trẻ cũng rời làng lên thành phố tìm việc, điều này có thể dẫn đến sự sụt giảm dân số. Tuy nhiên, nhiều người vẫn tiếp tục trân trọng và bảo tồn lối sống này.
+                </div>
+
+                <table class="glossary">
+                    <tr><th>Từ vựng (Word)</th><th>Loại từ (POS)</th><th>Nghĩa (Meaning)</th></tr>
+                    <tr><td>Self-sufficient</td><td>adj</td><td>Tự cung tự cấp</td></tr>
+                    <tr><td>Staple</td><td>adj/n</td><td>Chính yếu, cơ bản (lương thực)</td></tr>
+                    <tr><td>Connected</td><td>adj</td><td>Được kết nối, gắn kết</td></tr>
+                    <tr><td>Decline</td><td>n/v</td><td>Sự sụt giảm, suy tàn</td></tr>
+                    <tr><td>Population</td><td>n</td><td>Dân số</td></tr>
+                    <tr><td>Cherish</td><td>v</td><td>Trân trọng, yêu thương</td></tr>
+                    <tr><td>Preserve</td><td>v</td><td>Bảo tồn, gìn giữ</td></tr>
+                </table>
+            </div>
+
+            <div class="passage">
+                <h2>Exercise: Long's Holiday</h2>
+                <p>Last summer, Long went <span class="gap">(13)</span> a holiday for two weeks to the island of Cat Ba. He <span class="gap">(14)</span> a hotel which had a wonderful swimming pool and beautiful views of the sea. It was in a village where the local people went fishing in the winter, and foreign visitors came in the summer. Long spent his first day on the beach, but on the second day he felt very ill. First, he was too hot, then he was too cold. He couldn't understand why he felt <span class="gap">(15)</span> that. So he went to see the local doctor, who was a very nice man, and <span class="gap">(16)</span> voice was so sweet. "Summer is a time when people often feel ill," the doctor said. "It's too hot for most of us! <span class="gap">(17)</span> this medicine, and stay out of the sun." Long took the doctor's <span class="gap">(18)</span> and stayed in his room for the rest of his holiday. He soon felt better. "What a cheap holiday!" he thought happily.</p>
+                
+                <button class="btn-translate" onclick="toggleTranslation('trans3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans3" class="translation-box">
+                    Mùa hè năm ngoái, Long đã đi nghỉ hai tuần tại đảo Cát Bà. Cậu ấy đã thuê/ở tại một khách sạn có hồ bơi tuyệt vời và tầm nhìn đẹp ra biển. Nó nằm trong một ngôi làng nơi người dân địa phương đi đánh cá vào mùa đông và du khách nước ngoài đến vào mùa hè. Long dành ngày đầu tiên trên bãi biển, nhưng sang ngày thứ hai cậu ấy cảm thấy rất ốm. Đầu tiên, cậu ấy thấy quá nóng, sau đó lại thấy quá lạnh. Cậu ấy không thể hiểu tại sao mình lại cảm thấy như vậy. Vì vậy, cậu ấy đã đến gặp bác sĩ địa phương, người là một người đàn ông rất tốt bụng và có giọng nói rất ngọt ngào. "Mùa hè là khoảng thời gian mọi người thường cảm thấy ốm," bác sĩ nói. "Trời quá nóng đối với hầu hết chúng ta! Hãy uống loại thuốc này, và tránh xa ánh nắng mặt trời." Long nghe theo lời khuyên của bác sĩ và ở trong phòng suốt phần còn lại của kỳ nghỉ. Cậu ấy sớm cảm thấy tốt hơn. "Thật là một kỳ nghỉ rẻ tiền!" cậu ấy vui vẻ nghĩ.
+                </div>
+            </div>
+
+            <div class="passage">
+                <h2>Exercise 20: Notice to All Students</h2>
+                <p>Dear students,<br><br>
+                <b>Notice to All Students: Bat Trang Pottery Trip</b><br>
+                We are happy to announce our upcoming trip to Bat Trang Pottery Village!<br>
+                Please be ready at the school gate <span class="gap">(19)</span> 7:30 AM this Saturday. Remember to bring a hat, water bottle, and snack. Wear comfortable clothes because you <span class="gap">(20)</span> your own pottery!<br>
+                This is a fun way to learn about Vietnamese <span class="gap">(21)</span> and practice English with friends. Don't be late!<br>
+                <span class="gap">(22)</span> you have any questions, ask your teacher.<br>
+                Thank you!</p>
+                
+                <button class="btn-translate" onclick="toggleTranslation('trans4')">Mở dịch đoạn này 🌟</button>
+                <div id="trans4" class="translation-box">
+                    Các em học sinh thân mến,<br>
+                    <b>Thông báo gửi toàn thể học sinh: Chuyến đi Gốm Bát Tràng</b><br>
+                    Chúng tôi rất vui mừng thông báo về chuyến đi sắp tới của chúng ta đến Làng Gốm Bát Tràng!<br>
+                    Vui lòng chuẩn bị sẵn sàng tại cổng trường lúc 7:30 sáng thứ Bảy tuần này. Nhớ mang theo mũ, bình nước và đồ ăn nhẹ. Hãy mặc quần áo thoải mái vì các em sẽ tự làm đồ gốm của riêng mình!<br>
+                    Đây là một cách thú vị để tìm hiểu về văn hóa Việt Nam và thực hành tiếng Anh với bạn bè. Đừng đến muộn nhé!<br>
+                    Nếu các em có bất kỳ câu hỏi nào, hãy hỏi giáo viên của mình.<br>
+                    Xin cảm ơn!
+                </div>
+
+                <table class="glossary">
+                    <tr><th>Từ vựng (Word)</th><th>Loại từ (POS)</th><th>Nghĩa (Meaning)</th></tr>
+                    <tr><td>Announce</td><td>v</td><td>Thông báo</td></tr>
+                    <tr><td>Upcoming</td><td>adj</td><td>Sắp tới</td></tr>
+                    <tr><td>Pottery</td><td>n</td><td>Đồ gốm, nghề làm gốm</td></tr>
+                    <tr><td>Comfortable</td><td>adj</td><td>Thoải mái</td></tr>
+                </table>
+            </div>
+
+        </div>
+
+        <div class="pane" id="quiz-pane">
+            <button id="btn-submit" onclick="submitQuiz()">🎯 Nộp bài tính điểm & Xem kết quả</button>
+        </div>
+    </div>
+
+    <div id="result-modal">
+        <div class="modal-content">
+            <h2>BÁO CÁO KẾT QUẢ</h2>
+            <input type="text" id="student-name-input" placeholder="👉 Nhập Tên của em vào đây..." required>
+            <div id="final-result-display" style="display:none;">
+                <img id="result-gif" class="meme-gif" src="" alt="Result Meme">
+                <h3 id="student-name-display" style="font-size: 24px; color: #2980b9;"></h3>
+                <div class="score-display">Điểm: <span id="score-text">0/22</span></div>
+                <div class="score-scale">Quy đổi: <span id="scale-10">0</span>/10 điểm</div>
+                <div class="teacher-comment" id="teacher-comment"></div>
+                <button onclick="location.reload()" style="padding: 10px 20px; font-weight: bold; background: #a18cd1; border:none; color:white; border-radius: 10px; cursor: pointer;">Làm lại bài</button>
+            </div>
+            <button id="btn-confirm-name" onclick="showFinalResult()" style="padding: 15px 30px; font-weight: bold; background: #27ae60; border:none; color:white; border-radius: 10px; cursor: pointer; width: 100%;">Xác nhận Nộp Bài</button>
+        </div>
+    </div>
+
+    <script>
+        // AUDIO ELEMENTS
+        const bgMusic = new Audio('https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/mission_impossible.mp3');
+        const correctSound = new Audio('https://www.myinstants.com/media/sounds/ding-sound-effect_2.mp3'); 
+        const incorrectSound = new Audio('https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3'); 
+
+        // INTRO OVERLAY LOGIC
+        document.getElementById('btn-start').addEventListener('click', () => {
+            document.getElementById('start-screen').style.display = 'none';
+            bgMusic.volume = 0.3;
+            bgMusic.play().catch(e => console.log("Audio play prevented by browser"));
+        });
+
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === "block") ? "none" : "block";
+        }
+
+        // --- QUESTION DATA ---
+        const quizData = [
+            {
+                qText: "Câu 1: Select the best answer",
+                options: ["environment", "pollution", "traffic", "factory"],
+                correct: "environment",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Trước hết, (1) ______ ở nông thôn ít bị ô nhiễm hơn ở thành phố.</p>
+                    <p>A. environment (<span class='p-word'>environment</span> - n - <span class='p-mean'>môi trường</span>): ✅ Đúng.</p>
+                    <p>B. pollution (<span class='p-word'>pollution</span> - n - <span class='p-mean'>sự ô nhiễm</span>): <span class='hl-red'>❌ Sai</span> vì không hợp logic (sự ô nhiễm... ít ô nhiễm hơn).</p>
+                    <p>C. traffic (<span class='p-word'>traffic</span> - n - <span class='p-mean'>giao thông</span>): <span class='hl-red'>❌ Sai</span> ngữ cảnh.</p>
+                    <p>D. factory (<span class='p-word'>factory</span> - n - <span class='p-mean'>nhà máy</span>): <span class='hl-red'>❌ Sai</span> ngữ cảnh.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "First of all, the <span class='hl-green'>environment</span> in the countryside is less polluted..." <br>👉 Dịch: Trước hết, <span class='hl-green'>môi trường</span> ở nông thôn ít bị ô nhiễm hơn...</div>
+                `
+            },
+            {
+                qText: "Câu 2: Select the best answer",
+                options: ["peaceful", "noisy", "crowded", "stressful"],
+                correct: "peaceful",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Bạn có thể tận hưởng không khí trong lành, những dòng sông sạch và cuộc sống (2) ______ ở đó.</p>
+                    <p>A. peaceful (<span class='p-word'>peaceful</span> - adj - <span class='p-mean'>thanh bình, yên ả</span>): ✅ Đúng.</p>
+                    <p>B. noisy (<span class='p-word'>noisy</span> - adj - <span class='p-mean'>ồn ào</span>): <span class='hl-red'>❌ Sai</span> vì trái ngược với đặc điểm nông thôn.</p>
+                    <p>C. crowded (<span class='p-word'>crowded</span> - adj - <span class='p-mean'>đông đúc</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. stressful (<span class='p-word'>stressful</span> - adj - <span class='p-mean'>căng thẳng</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "You can enjoy fresh air, clean rivers, and <span class='hl-green'>peaceful</span> life there." <br>👉 Dịch: ... và cuộc sống <span class='hl-green'>thanh bình</span> ở đó.</div>
+                `
+            },
+            {
+                qText: "Câu 3: Select the best answer",
+                options: ["vehicles", "animals", "machines", "tools"],
+                correct: "vehicles",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: ...bởi vì (3) _______ chính là xe đạp, xe máy điện hoặc đi bộ.</p>
+                    <p>A. vehicles (<span class='p-word'>vehicles</span> - n - <span class='p-mean'>phương tiện giao thông</span>): ✅ Đúng.</p>
+                    <p>B. animals (<span class='p-word'>animals</span> - n - <span class='p-mean'>động vật</span>): <span class='hl-red'>❌ Sai</span> vì xe đạp/xe điện không phải động vật.</p>
+                    <p>C. machines (<span class='p-word'>machines</span> - n - <span class='p-mean'>máy móc</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. tools (<span class='p-word'>tools</span> - n - <span class='p-mean'>công cụ</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "...because the main <span class='hl-green'>vehicles</span> are bikes..." <br>👉 Dịch: ...bởi vì <span class='hl-green'>phương tiện</span> chủ yếu là xe đạp...</div>
+                `
+            },
+            {
+                qText: "Câu 4: Select the best answer",
+                options: ["cheaper", "expensive", "harder", "worse"],
+                correct: "cheaper",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Ngoài ra, mọi thứ ở nông thôn đều (4) ______ và lành mạnh hơn so với thành phố.</p>
+                    <p>A. cheaper (<span class='p-word'>cheaper</span> - adj - <span class='p-mean'>rẻ hơn</span>): ✅ Đúng. <span class='p-grammar'>Cấu trúc so sánh hơn (Comparative)</span> đi song song với "healthier".</p>
+                    <p>B. expensive (<span class='p-word'>expensive</span> - adj - <span class='p-mean'>đắt đỏ</span>): <span class='hl-red'>❌ Sai</span> ngữ nghĩa.</p>
+                    <p>C. harder (<span class='p-word'>harder</span> - adj - <span class='p-mean'>khó khăn hơn/cứng hơn</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. worse (<span class='p-word'>worse</span> - adj - <span class='p-mean'>tệ hơn</span>): <span class='hl-red'>❌ Sai</span> ngữ nghĩa.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "...everything in the countryside is <span class='hl-green'>cheaper</span> and healthier..." <br>👉 Dịch: ...mọi thứ ở nông thôn đều <span class='hl-green'>rẻ hơn</span> và lành mạnh hơn...</div>
+                `
+            },
+            {
+                qText: "Câu 5: Select the best answer",
+                options: ["gardens", "streets", "factories", "cinemas"],
+                correct: "gardens",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Nông dân thường trồng rau sạch trong (5) ______ của họ.</p>
+                    <p>A. gardens (<span class='p-word'>gardens</span> - n - <span class='p-mean'>khu vườn</span>): ✅ Đúng.</p>
+                    <p>B. streets (<span class='p-word'>streets</span> - n - <span class='p-mean'>đường phố</span>): <span class='hl-red'>❌ Sai</span> (không ai trồng rau ngoài đường).</p>
+                    <p>C. factories (<span class='p-word'>factories</span> - n - <span class='p-mean'>nhà máy</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. cinemas (<span class='p-word'>cinemas</span> - n - <span class='p-mean'>rạp chiếu phim</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "Farmers often grow clean vegetables in their <span class='hl-green'>gardens</span>." <br>👉 Dịch: Nông dân thường trồng rau sạch trong <span class='hl-green'>vườn</span> của họ.</div>
+                `
+            },
+            {
+                qText: "Câu 6: Select the best answer",
+                options: ["raise", "rise", "grow", "plant"],
+                correct: "raise",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Họ cũng (6) ______ gia cầm và lợn để lấy thịt.</p>
+                    <p>A. raise (<span class='p-word'>raise</span> - v - <span class='p-mean'>chăn nuôi, nuôi dưỡng</span>): ✅ Đúng. Dùng cho động vật/con người.</p>
+                    <p>B. rise (<span class='p-word'>rise</span> - v - <span class='p-mean'>tăng lên, mọc lên</span>): <span class='hl-red'>❌ Sai</span> nội động từ không đi với tân ngữ.</p>
+                    <p>C. grow (<span class='p-word'>grow</span> - v - <span class='p-mean'>trồng trọt/phát triển</span>): <span class='hl-red'>❌ Sai</span> (grow thường dùng cho cây cối: grow vegetables).</p>
+                    <p>D. plant (<span class='p-word'>plant</span> - v - <span class='p-mean'>gieo trồng</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "They also <span class='hl-green'>raise</span> poultry and pigs for meat." <br>👉 Dịch: Họ cũng <span class='hl-green'>chăn nuôi</span> gia cầm...</div>
+                `
+            },
+            {
+                qText: "Câu 7: Select the best answer",
+                options: ["closer", "closest", "more close", "as close"],
+                correct: "closer",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Trong một ngôi làng VN, người dân sống (7) ______ với thiên nhiên hơn...</p>
+                    <p>A. closer (<span class='p-word'>closer</span> - adj/adv - <span class='p-mean'>gần gũi hơn</span>): ✅ Đúng. <span class='p-grammar'>So sánh hơn của tính/trạng từ ngắn "close" thêm "-er".</span> (So sánh ngầm với việc sống ở thành phố).</p>
+                    <p>B. closest (<span class='p-word'>closest</span> - adj - <span class='p-mean'>gần nhất</span>): <span class='hl-red'>❌ Sai</span> vì không có "the".</p>
+                    <p>C. more close: <span class='hl-red'>❌ Sai</span> ngữ pháp (close là từ ngắn không dùng more).</p>
+                    <p>D. as close: <span class='hl-red'>❌ Sai</span> vì thiếu vế "as" để tạo so sánh bằng.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "...people live <span class='hl-green'>closer</span> to nature and are more self-sufficient." <br>👉 Dịch: ...người dân sống <span class='hl-green'>gần gũi hơn</span> với thiên nhiên...</div>
+                `
+            },
+            {
+                qText: "Câu 8: Select the best answer",
+                options: ["many", "much", "little", "lots"],
+                correct: "many",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Ngoài ra còn có (8) _______ cánh đồng lúa nơi nông dân làm việc chăm chỉ...</p>
+                    <p>A. many (<span class='p-word'>many</span> - adj - <span class='p-mean'>nhiều</span>): ✅ Đúng. <span class='p-grammar'>"Rice fields" là danh từ đếm được số nhiều</span> nên dùng "many".</p>
+                    <p>B. much (<span class='p-word'>much</span> - adj - <span class='p-mean'>nhiều</span>): <span class='hl-red'>❌ Sai</span> vì much cộng danh từ KHÔNG đếm được.</p>
+                    <p>C. little (<span class='p-word'>little</span> - adj - <span class='p-mean'>ít</span>): <span class='hl-red'>❌ Sai</span> vì little cộng danh từ KHÔNG đếm được.</p>
+                    <p>D. lots: <span class='hl-red'>❌ Sai</span> vì thiếu "of" (phải là lots of).</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "There are also <span class='hl-green'>many</span> rice fields..." <br>👉 Dịch: Ngoài ra còn có <span class='hl-green'>nhiều</span> cánh đồng lúa...</div>
+                `
+            },
+            {
+                qText: "Câu 9: Select the best answer",
+                options: ["with", "on", "at", "by"],
+                correct: "with",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Họ thường giúp đỡ lẫn nhau (9) ______ các công việc như làm ruộng...</p>
+                    <p>A. with (<span class='p-word'>with</span> - prep - <span class='p-mean'>với</span>): ✅ Đúng. <span class='p-grammar'>Cấu trúc: help somebody WITH something</span> (Giúp ai việc gì).</p>
+                    <p>B. on: <span class='hl-red'>❌ Sai</span> giới từ.</p>
+                    <p>C. at: <span class='hl-red'>❌ Sai</span> giới từ.</p>
+                    <p>D. by: <span class='hl-red'>❌ Sai</span> giới từ.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "They often help each other <span class='hl-green'>with</span> tasks like farming..." <br>👉 Dịch: Họ thường giúp đỡ lẫn nhau <span class='hl-green'>với</span> các công việc...</div>
+                `
+            },
+            {
+                qText: "Câu 10: Select the best answer",
+                options: ["celebrate", "train", "surround", "combine"],
+                correct: "celebrate",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: ...nhiều lễ hội trong năm nơi mọi người tụ tập để (10) ______ và chia sẻ đồ ăn.</p>
+                    <p>A. celebrate (<span class='p-word'>celebrate</span> - v - <span class='p-mean'>ăn mừng, kỷ niệm</span>): ✅ Đúng.</p>
+                    <p>B. train (<span class='p-word'>train</span> - v - <span class='p-mean'>đào tạo/huấn luyện</span>): <span class='hl-red'>❌ Sai</span> ngữ nghĩa.</p>
+                    <p>C. surround (<span class='p-word'>surround</span> - v - <span class='p-mean'>bao quanh</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. combine (<span class='p-word'>combine</span> - v - <span class='p-mean'>kết hợp</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "...people come together to <span class='hl-green'>celebrate</span> and share food." <br>👉 Dịch: ...mọi người tụ tập để <span class='hl-green'>ăn mừng</span> và chia sẻ đồ ăn.</div>
+                `
+            },
+            {
+                qText: "Câu 11: Select the best answer",
+                options: ["challenges", "happiness", "advantages", "benefits"],
+                correct: "challenges",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Mặc dù có nhiều lợi ích..., nhưng cũng có một số (11) ______.</p>
+                    <p>A. challenges (<span class='p-word'>challenges</span> - n - <span class='p-mean'>thách thức, khó khăn</span>): ✅ Đúng. <span class='p-grammar'>"Despite" (Mặc dù) chỉ sự nhượng bộ, tương phản.</span> Vế trước nói về "benefits" (lợi ích - tích cực), vế sau phải là tiêu cực.</p>
+                    <p>B. happiness (<span class='p-word'>happiness</span> - n - <span class='p-mean'>hạnh phúc</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>C. advantages (<span class='p-word'>advantages</span> - n - <span class='p-mean'>thuận lợi</span>): <span class='hl-red'>❌ Sai</span> vì đồng nghĩa với benefits.</p>
+                    <p>D. benefits (<span class='p-word'>benefits</span> - n - <span class='p-mean'>lợi ích</span>): <span class='hl-red'>❌ Sai</span> (lặp từ).</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "...there are also some <span class='hl-green'>challenges</span>. Access to healthcare... can be limited." <br>👉 Dịch: ...cũng có một số <span class='hl-green'>thách thức</span>. Việc tiếp cận y tế... bị hạn chế.</div>
+                `
+            },
+            {
+                qText: "Câu 12: Select the best answer",
+                options: ["However", "Because", "Moreover", "Despite"],
+                correct: "However",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: (12) ______, nhiều người vẫn tiếp tục trân trọng và bảo tồn lối sống này.</p>
+                    <p>A. However (<span class='p-word'>However</span> - adv - <span class='p-mean'>Tuy nhiên</span>): ✅ Đúng. <span class='p-grammar'>Tuy nhiên + dấu phẩy (,).</span> Dùng để nối 2 câu mang ý nghĩa trái ngược (Trước đó nói về khó khăn/sụt giảm dân số -> Tuy nhiên người ta vẫn trân trọng).</p>
+                    <p>B. Because (<span class='p-word'>Because</span> - conj - <span class='p-mean'>Bởi vì</span>): <span class='hl-red'>❌ Sai</span> logic.</p>
+                    <p>C. Moreover (<span class='p-word'>Moreover</span> - adv - <span class='p-mean'>Hơn thế nữa</span>): <span class='hl-red'>❌ Sai</span> logic.</p>
+                    <p>D. Despite (<span class='p-word'>Despite</span> - prep - <span class='p-mean'>Mặc dù</span>): <span class='hl-red'>❌ Sai</span> ngữ pháp (Despite + V-ing/Noun, KHÔNG đứng một mình rồi phẩy luôn như vậy).</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "<span class='hl-green'>However</span>, many people continue to cherish..." <br>👉 Dịch: <span class='hl-green'>Tuy nhiên</span>, nhiều người vẫn tiếp tục trân trọng...</div>
+                `
+            },
+            {
+                qText: "Câu 13: Select the best answer",
+                options: ["on", "to", "for", "in"],
+                correct: "on",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Mùa hè năm ngoái, Long đã đi (13) _____ một kỳ nghỉ dài 2 tuần tới đảo Cát Bà.</p>
+                    <p>A. on (<span class='p-word'>on</span> - prep): ✅ Đúng. <span class='p-grammar'>Cấu trúc cố định: Go ON a holiday / Go ON a trip</span> (Đi nghỉ mát/Đi du lịch).</p>
+                    <p>B. to: <span class='hl-red'>❌ Sai</span> (Go to somewhere, không phải go to a holiday).</p>
+                    <p>C. for: <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. in: <span class='hl-red'>❌ Sai</span>.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "Long went <span class='hl-green'>on</span> a holiday for two weeks..." <br>👉 Dịch: Long đã đi <span class='hl-green'>nghỉ mát</span> hai tuần...</div>
+                `
+            },
+            {
+                qText: "Câu 14: Select the best answer",
+                options: ["rented", "lived", "hired", "stayed"],
+                correct: "rented",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Cậu ấy đã (14) ______ một khách sạn có hồ bơi tuyệt vời...</p>
+                    <p>A. rented (<span class='p-word'>rented</span> - v(ed) - <span class='p-mean'>đã thuê</span>): ✅ Đúng. "Rent a hotel/room" = thuê khách sạn/phòng. (Lưu ý: Nếu dùng "stayed" thì bắt buộc phải có giới từ "stayed AT/IN a hotel", trong đề bài không có giới từ nên rented là hợp lý nhất).</p>
+                    <p>B. lived (<span class='p-word'>lived</span> - v(ed) - <span class='p-mean'>đã sống</span>): <span class='hl-red'>❌ Sai</span> (không dùng cho kỳ nghỉ ngắn hạn, và phải là lived IN).</p>
+                    <p>C. hired (<span class='p-word'>hired</span> - v(ed) - <span class='p-mean'>đã thuê</span>): <span class='hl-red'>❌ Sai</span> (Hire thường dùng để thuê NGƯỜI, nhân viên, hoặc dịch vụ ngắn hạn, Rent dùng cho nhà cửa/khách sạn/đất đai).</p>
+                    <p>D. stayed (<span class='p-word'>stayed</span> - v(ed) - <span class='p-mean'>đã ở</span>): <span class='hl-red'>❌ Sai</span> vì thiếu giới từ IN hoặc AT.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "He <span class='hl-green'>rented</span> a hotel which had a wonderful swimming pool..." <br>👉 Dịch: Cậu ấy đã <span class='hl-green'>thuê</span> một khách sạn...</div>
+                `
+            },
+            {
+                qText: "Câu 15: Select the best answer",
+                options: ["like", "as", "so", "Ø (Không điền)"],
+                correct: "like",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Cậu ấy không thể hiểu tại sao cậu ấy lại cảm thấy (15) ______ thế.</p>
+                    <p>A. like (<span class='p-word'>like</span> - prep - <span class='p-mean'>như, giống như</span>): ✅ Đúng. <span class='p-grammar'>Cụm từ "feel like that"</span> = cảm thấy như vậy/như thế.</p>
+                    <p>B. as (<span class='p-word'>as</span> - conj - <span class='p-mean'>như là</span>): <span class='hl-red'>❌ Sai</span> cách dùng.</p>
+                    <p>C. so (<span class='p-word'>so</span> - adv - <span class='p-mean'>rất/vì vậy</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. Ø: <span class='hl-red'>❌ Sai</span> vì felt that = cảm nhận rằng (cần mệnh đề theo sau), trong khi "that" ở đây là đại từ chỉ định.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "He couldn't understand why he felt <span class='hl-green'>like</span> that." <br>👉 Dịch: Cậu ấy không thể hiểu tại sao mình lại cảm thấy <span class='hl-green'>như vậy</span>.</div>
+                `
+            },
+            {
+                qText: "Câu 16: Select the best answer",
+                options: ["whose", "spoke", "an", "who"],
+                correct: "whose",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: ...bác sĩ địa phương, người rất tốt bụng, và giọng nói CỦA (16) ______ thật ngọt ngào.</p>
+                    <p>A. whose (<span class='p-word'>whose</span> - pron - <span class='p-mean'>của người mà</span>): ✅ Đúng. <span class='p-grammar'>Đại từ quan hệ sở hữu.</span> "Whose voice" = giọng nói của ông ấy. Nó nối danh từ "voice" với người sở hữu là "doctor".</p>
+                    <p>B. spoke: <span class='hl-red'>❌ Sai</span> ngữ pháp.</p>
+                    <p>C. an: <span class='hl-red'>❌ Sai</span> ngữ pháp.</p>
+                    <p>D. who (<span class='p-word'>who</span> - pron - <span class='p-mean'>người mà</span>): <span class='hl-red'>❌ Sai</span> vì who đóng vai trò chủ ngữ/tân ngữ, không chỉ sở hữu.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "...and <span class='hl-green'>whose</span> voice was so sweet." <br>👉 Dịch: ...và giọng nói <span class='hl-green'>của người đó</span> rất ngọt ngào.</div>
+                `
+            },
+            {
+                qText: "Câu 17: Select the best answer",
+                options: ["Take", "Eat", "Drink", "Have"],
+                correct: "Take",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: "(17) ______ loại thuốc này, và tránh xa ánh nắng."</p>
+                    <p>A. Take (<span class='p-word'>Take</span> - v - <span class='p-mean'>Uống (thuốc)</span>): ✅ Đúng. <span class='p-grammar'>Collocation (Kết hợp từ cố định): Take medicine = Uống thuốc.</span> Người Anh/Mỹ không dùng drink/eat cho thuốc.</p>
+                    <p>B. Eat (<span class='p-word'>Eat</span> - v - <span class='p-mean'>Ăn</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>C. Drink (<span class='p-word'>Drink</span> - v - <span class='p-mean'>Uống (nước)</span>): <span class='hl-red'>❌ Sai</span> (không dùng với medicine).</p>
+                    <p>D. Have (<span class='p-word'>Have</span> - v - <span class='p-mean'>Có/Ăn</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "<span class='hl-green'>Take</span> this medicine, and stay out of the sun." <br>👉 Dịch: <span class='hl-green'>Hãy uống</span> thuốc này...</div>
+                `
+            },
+            {
+                qText: "Câu 18: Select the best answer",
+                options: ["advice", "chance", "opportunity", "advise"],
+                correct: "advice",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Long đã nghe theo (18) ______ của bác sĩ và ở trong phòng...</p>
+                    <p>A. advice (<span class='p-word'>advice</span> - n - <span class='p-mean'>lời khuyên</span>): ✅ Đúng. <span class='p-grammar'>Take one's advice = Nghe theo lời khuyên của ai.</span> (Chú ý đuôi -ce là danh từ).</p>
+                    <p>B. chance (<span class='p-word'>chance</span> - n - <span class='p-mean'>cơ hội</span>): <span class='hl-red'>❌ Sai</span> ngữ nghĩa.</p>
+                    <p>C. opportunity (<span class='p-word'>opportunity</span> - n - <span class='p-mean'>cơ hội</span>): <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. advise (<span class='p-word'>advise</span> - v - <span class='p-mean'>khuyên bảo</span>): <span class='hl-red'>❌ Sai</span> vì đây là Động từ (đuôi -se), sau sở hữu cách "doctor's" phải là Danh từ.</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "Long took the doctor's <span class='hl-green'>advice</span>..." <br>👉 Dịch: Long đã nghe theo <span class='hl-green'>lời khuyên</span> của bác sĩ...</div>
+                `
+            },
+            {
+                qText: "Câu 19: Select the best answer",
+                options: ["at", "on", "for", "in"],
+                correct: "at",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Vui lòng có mặt tại cổng trường (19) _____ 7:30 sáng Thứ Bảy.</p>
+                    <p>A. at (<span class='p-word'>at</span> - prep): ✅ Đúng. <span class='p-grammar'>Giới từ "at" dùng trước GIỜ cụ thể</span> (at 7:30 AM).</p>
+                    <p>B. on (<span class='p-word'>on</span> - prep): <span class='hl-red'>❌ Sai</span> (Dùng cho THỨ, vd: on Saturday).</p>
+                    <p>C. for: <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. in: <span class='hl-red'>❌ Sai</span> (Dùng cho THÁNG/NĂM/MÙA).</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "Please be ready at the school gate <span class='hl-green'>at</span> 7:30 AM..." <br>👉 Dịch: Vui lòng sẵn sàng... <span class='hl-green'>vào lúc</span> 7:30 sáng...</div>
+                `
+            },
+            {
+                qText: "Câu 20: Select the best answer",
+                options: ["will make", "made", "are making", "make"],
+                correct: "will make",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Hãy mặc quần áo thoải mái vì các em (20) ______ đồ gốm của riêng mình!</p>
+                    <p>A. will make (<span class='p-word'>will make</span> - v - <span class='p-mean'>sẽ làm</span>): ✅ Đúng. <span class='p-grammar'>Thì Tương Lai Đơn</span> vì chuyến đi này "sắp tới" (upcoming trip), việc làm gốm sẽ diễn ra trong tương lai.</p>
+                    <p>B. made (<span class='p-word'>made</span> - v(ed)): <span class='hl-red'>❌ Sai</span> (Quá khứ).</p>
+                    <p>C. are making: <span class='hl-red'>❌ Sai</span> (Hiện tại tiếp diễn - diễn tả việc đang xảy ra ngay lúc nói).</p>
+                    <p>D. make: <span class='hl-red'>❌ Sai</span> (Hiện tại đơn - thói quen).</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "...because you <span class='hl-green'>will make</span> your own pottery!" <br>👉 Dịch: ...bởi vì các em <span class='hl-green'>sẽ tự làm</span> đồ gốm!</div>
+                `
+            },
+            {
+                qText: "Câu 21: Select the best answer",
+                options: ["culture", "culturally", "cultural", "multicultural"],
+                correct: "culture",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: Đây là một cách thú vị để học về (21) ______ Việt Nam...</p>
+                    <p>A. culture (<span class='p-word'>culture</span> - n - <span class='p-mean'>văn hóa</span>): ✅ Đúng. <span class='p-grammar'>Sau tính từ "Vietnamese" cần một Danh từ</span> (Văn hóa Việt Nam).</p>
+                    <p>B. culturally (<span class='p-word'>culturally</span> - adv - <span class='p-mean'>về mặt văn hóa</span>): <span class='hl-red'>❌ Sai</span> (Trạng từ).</p>
+                    <p>C. cultural (<span class='p-word'>cultural</span> - adj - <span class='p-mean'>thuộc về văn hóa</span>): <span class='hl-red'>❌ Sai</span> (Tính từ, không đứng sau Vietnamese được vì thiếu danh từ gốc).</p>
+                    <p>D. multicultural: <span class='hl-red'>❌ Sai</span> (Tính từ - đa văn hóa).</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "...learn about Vietnamese <span class='hl-green'>culture</span>..." <br>👉 Dịch: ...tìm hiểu về <span class='hl-green'>văn hóa</span> Việt Nam...</div>
+                `
+            },
+            {
+                qText: "Câu 22: Select the best answer",
+                options: ["If", "When", "For", "Unless"],
+                correct: "If",
+                explanation: `
+                    <h4>GIẢI THÍCH CHI TIẾT:</h4>
+                    <p>Dịch câu hỏi: (22) ______ các em có bất kỳ câu hỏi nào, hãy hỏi giáo viên.</p>
+                    <p>A. If (<span class='p-word'>If</span> - conj - <span class='p-mean'>Nếu</span>): ✅ Đúng. <span class='p-grammar'>Câu điều kiện loại 1 (Mệnh lệnh)</span> chỉ một khả năng có thể xảy ra.</p>
+                    <p>B. When (<span class='p-word'>When</span> - conj - <span class='p-mean'>Khi</span>): <span class='hl-red'>❌ Sai</span> (Không hợp lý bằng If trong ngữ cảnh đề nghị giúp đỡ "any questions").</p>
+                    <p>C. For: <span class='hl-red'>❌ Sai</span>.</p>
+                    <p>D. Unless (<span class='p-word'>Unless</span> - conj - <span class='p-mean'>Trừ khi/Nếu không</span>): <span class='hl-red'>❌ Sai</span> nghĩa (Nếu không có câu hỏi thì hỏi giáo viên -> Vô lý).</p>
+                    <div class='quote-box'>🔍 Dẫn chứng: "<span class='hl-green'>If</span> you have any questions, ask your teacher." <br>👉 Dịch: <span class='hl-green'>Nếu</span> các em có câu hỏi...</div>
+                `
+            }
+        ];
+
+        // LOGIC KHỞI TẠO BÀI TẬP
+        const quizPane = document.getElementById("quiz-pane");
+        const submitBtn = document.getElementById("btn-submit");
+        let score = 0;
+        let answeredQuestions = new Set();
+
+        // Thuật toán xáo trộn (Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Render câu hỏi
+        quizData.forEach((q, index) => {
+            const card = document.createElement("div");
+            card.className = "question-card";
+            card.id = `q-card-${index}`;
+
+            const title = document.createElement("div");
+            title.className = "q-title";
+            title.textContent = q.qText;
+            card.appendChild(title);
+
+            const optionsGrid = document.createElement("div");
+            optionsGrid.className = "options-grid";
+
+            let shuffledOptions = shuffleArray([...q.options]);
+
+            shuffledOptions.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "btn-option";
+                btn.textContent = opt;
+                btn.onclick = () => handleAnswer(btn, opt, q.correct, index, card);
+                optionsGrid.appendChild(btn);
+            });
+
+            card.appendChild(optionsGrid);
+
+            const expDiv = document.createElement("div");
+            expDiv.className = "explanation";
+            expDiv.id = `exp-${index}`;
+            expDiv.innerHTML = q.explanation;
+            card.appendChild(expDiv);
+
+            quizPane.insertBefore(card, submitBtn);
+        });
+
+        // Xử lý khi chọn đáp án
+        function handleAnswer(btn, selected, correct, qIndex, card) {
+            if (answeredQuestions.has(qIndex)) return; 
+            answeredQuestions.add(qIndex);
+
+            const allBtns = card.querySelectorAll(".btn-option");
+            
+            if (selected === correct) {
+                // ĐÚNG
+                btn.classList.add("correct");
+                score++;
+                correctSound.currentTime = 0;
+                correctSound.play();
+                fireConfetti(btn);
+            } else {
+                // SAI
+                btn.classList.add("wrong", "shake");
+                incorrectSound.currentTime = 0;
+                incorrectSound.play();
+                
+                // Highlight đáp án đúng
+                allBtns.forEach(b => {
+                    if (b.textContent === correct) b.classList.add("correct");
+                });
+            }
+
+            // Disable all buttons in this card
+            allBtns.forEach(b => {
+                b.style.pointerEvents = "none";
+                if(b !== btn && b.textContent !== correct) b.style.opacity = "0.5";
+            });
+
+            // Hiện giải thích siêu chi tiết
+            document.getElementById(`exp-${qIndex}`).style.display = "block";
+        }
+
+        // Hiệu ứng pháo hoa tại nút bấm
+        function fireConfetti(element) {
+            const rect = element.getBoundingClientRect();
+            const x = (rect.left + rect.width / 2) / window.innerWidth;
+            const y = (rect.top + rect.height / 2) / window.innerHeight;
+            
+            confetti({
+                particleCount: 50, spread: 60, origin: { x: x, y: y }, colors: ['#2ecc71', '#f1c40f', '#e74c3c']
+            });
+        }
+
+        // NỘP BÀI TÍNH ĐIỂM
+        function submitQuiz() {
+            if (answeredQuestions.size < quizData.length) {
+                alert("⚠️ Em còn câu hỏi chưa làm kìa! Hãy hoàn thành hết trước khi nộp bài nhé.");
+                return;
+            }
+            document.getElementById("result-modal").style.display = "flex";
+        }
+
+        function showFinalResult() {
+            const nameInput = document.getElementById("student-name-input").value.trim();
+            if (!nameInput) {
+                alert("Em quên nhập Tên rồi kìa!");
+                return;
+            }
+
+            document.getElementById("student-name-input").style.display = "none";
+            document.getElementById("btn-confirm-name").style.display = "none";
+            document.getElementById("final-result-display").style.display = "block";
+
+            document.getElementById("student-name-display").textContent = "🏆 Học sinh: " + nameInput;
+            document.getElementById("score-text").textContent = `${score}/${quizData.length}`;
+            
+            // Tính điểm quy đổi hệ 10
+            const scale10 = ((score / quizData.length) * 10).toFixed(1);
+            document.getElementById("scale-10").textContent = scale10;
+
+            const percentage = score / quizData.length;
+            const gifEl = document.getElementById("result-gif");
+            const commentEl = document.getElementById("teacher-comment");
+
+            if (percentage === 1) {
+                gifEl.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; 
+                commentEl.innerHTML = "<b>Nhận xét của Ms MS Chí Nên:</b> Quá tuyệt vời! Đúng là thiên tài ngoại ngữ! Nhớ ghi chép cẩn thận các từ mới nhé! 🥰🎉";
+                confetti({ particleCount: 200, spread: 100, origin: { y: 0.3 } });
+            } else if (percentage >= 0.6) {
+                gifEl.src = "https://media.giphy.com/media/ytwDCy0RqT6G9gJgME/giphy.gif"; 
+                commentEl.innerHTML = "<b>Nhận xét của Ms MS Chí Nên:</b> Rất tốt! Em đã nắm bài khá vững. Hãy đọc lại giải thích những câu sai để rủt kinh nghiệm nha! 👍✨";
+            } else {
+                gifEl.src = "https://media.giphy.com/media/l41YkxvU8c7J7Bba0/giphy.gif"; 
+                commentEl.innerHTML = "<b>Nhận xét của Ms MS Chí Nên:</b> Ôi, bài này hơi khó nhằn đúng không? Đừng buồn, hãy đọc thật kỹ giải thích Master bên dưới và ghi chép lại nhé. Có công mài sắt có ngày nên kim! 💪💦";
+            }
+        }
+    </script>
+</body>
+</html>

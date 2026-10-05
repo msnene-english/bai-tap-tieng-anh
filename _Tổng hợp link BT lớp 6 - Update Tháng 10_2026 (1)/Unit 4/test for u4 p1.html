@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEST FOR UNIT 4 – Neighbourhood</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* =========================================================  RESET & VARS  */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg1:#0a0015;--bg2:#0d001f;--bg3:#00101a;
+  --neon1:#f72585;--neon2:#4cc9f0;--neon3:#f8961e;--neon4:#43e97b;
+  --card:rgba(15,10,40,.82);--card2:rgba(10,20,40,.85);
+  --text:#e8eaf6;--text2:#90a4c8;
+  --border:rgba(76,201,240,.22);
+  --correct:#43e97b;--wrong:#f72585;
+  --shadow:0 8px 36px rgba(0,0,0,.55);
+}
+body{
+  font-family:'Nunito',sans-serif;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+  background-size:300% 300%;
+  animation:bgPulse 12s ease infinite;
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  padding-top:58px;
+}
+@keyframes bgPulse{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+/* ---- STICKY REMINDER ---- */
+#reminder{
+  position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:linear-gradient(90deg,#0d0030,#001030,#0d0030);
+  border-bottom:2px solid var(--neon1);
+  box-shadow:0 2px 18px rgba(247,37,133,.35);
+  transition:max-height .35s ease;
+  overflow:hidden;
+  max-height:54px;
+}
+#reminder.expanded{max-height:200px;}
+#rem-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;cursor:pointer;
+  gap:10px;
+}
+#rem-title{
+  font-size:.82rem;font-weight:900;
+  background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  flex:1;
+}
+#rem-toggle{
+  background:rgba(247,37,133,.2);border:1.5px solid var(--neon1);border-radius:8px;
+  color:var(--neon1);font-size:.78rem;font-weight:800;padding:3px 9px;cursor:pointer;
+  flex-shrink:0;
+}
+#rem-body{
+  padding:0 14px 10px;
+  font-size:.8rem;color:var(--text2);line-height:1.6;
+}
+#rem-body span{color:var(--neon3);font-weight:800;}
+.rem-pulse{animation:remPulse 2s ease infinite;}
+@keyframes remPulse{0%,100%{border-color:var(--neon1)}50%{border-color:var(--neon2)}}
+
+/* ---- FLOAT OBJECTS ---- */
+.floats{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.fobj{position:absolute;animation:fUp linear infinite;opacity:.13;}
+@keyframes fUp{0%{transform:translateY(110vh) rotate(0deg)}100%{transform:translateY(-12vh) rotate(360deg)}}
+@keyframes fSide{0%{transform:translateX(-8vw) rotate(0deg)}50%{transform:translateX(8vw) rotate(180deg)}100%{transform:translateX(-8vw) rotate(360deg)}}
+.fobj.side{animation:fSide linear infinite;}
+
+/* ---- CONTAINER ---- */
+.container{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:14px 16px 80px;}
+
+/* ---- HEADER ---- */
+.quiz-header{
+  background:linear-gradient(135deg,rgba(20,0,60,.9),rgba(0,20,60,.9));
+  border-radius:20px;padding:16px 24px 14px;text-align:center;
+  margin-bottom:18px;
+  box-shadow:0 0 30px rgba(247,37,133,.3),0 0 60px rgba(76,201,240,.1);
+  border:1.5px solid rgba(247,37,133,.3);
+}
+.quiz-header h1{
+  font-size:1.25rem;font-weight:900;
+  background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:.5px;
+}
+.quiz-header p{font-size:.8rem;color:var(--text2);margin-top:4px;}
+
+/* ---- SCORE BAR ---- */
+.score-bar{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(10,0,30,.8);border-radius:50px;
+  padding:9px 20px;margin-bottom:20px;
+  box-shadow:var(--shadow);border:1.5px solid var(--border);
+  font-weight:800;font-size:.97rem;
+}
+.score-bar .sc{color:var(--neon3);}
+.progress-wrap{flex:1;height:11px;background:rgba(255,255,255,.08);border-radius:50px;overflow:hidden;}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--neon1),var(--neon2));border-radius:50px;transition:width .5s;}
+.sc-count{color:var(--neon2);}
+
+/* ---- EXERCISE SECTION ---- */
+.ex-section{
+  background:var(--card);border-radius:22px;
+  padding:22px 20px 18px;margin-bottom:26px;
+  box-shadow:var(--shadow);
+  border:1.5px solid var(--border);backdrop-filter:blur(8px);
+}
+.ex-title{
+  font-size:1.05rem;font-weight:900;
+  color:var(--neon3);margin-bottom:16px;padding-bottom:10px;
+  border-bottom:2px dashed rgba(248,150,30,.28);
+}
+.ex-subtitle{
+  font-size:.92rem;font-weight:700;color:var(--text2);
+  margin-bottom:14px;line-height:1.5;
+}
+
+/* ---- WORD BOX ---- */
+.word-box{
+  display:flex;flex-wrap:wrap;gap:8px;
+  background:linear-gradient(135deg,rgba(20,0,50,.7),rgba(0,20,50,.7));
+  border-radius:14px;border:2px dashed rgba(76,201,240,.4);
+  padding:12px 14px;margin-bottom:16px;
+}
+.w-chip{
+  background:rgba(76,201,240,.12);border:2px solid rgba(76,201,240,.4);
+  border-radius:10px;padding:4px 12px;
+  font-size:.9rem;font-weight:700;color:var(--neon2);cursor:default;transition:.2s;
+}
+.w-chip.used{opacity:.3;text-decoration:line-through;color:var(--text2);}
+
+/* ---- QUESTION CARD ---- */
+.q-card{
+  background:rgba(20,15,50,.65);border-radius:16px;
+  padding:16px 16px 14px;margin-bottom:14px;
+  border:1.5px solid var(--border);transition:.25s;
+}
+.q-card:hover{border-color:rgba(247,37,133,.4);box-shadow:0 0 16px rgba(247,37,133,.12);}
+.q-text{font-size:1.08rem;font-weight:700;color:var(--text);line-height:1.65;margin-bottom:12px;}
+.q-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,var(--neon1),var(--neon2));
+  color:#fff;border-radius:50%;width:28px;height:28px;
+  font-size:.82rem;font-weight:900;margin-right:8px;flex-shrink:0;
+}
+u{text-decoration-color:var(--neon3);text-decoration-thickness:2px;}
+
+/* ---- OPTIONS ---- */
+.opts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;}
+@media(max-width:520px){.opts-grid{grid-template-columns:1fr;}}
+.opt-btn{
+  background:linear-gradient(135deg,rgba(30,10,70,.8),rgba(10,20,60,.9));
+  border:2.5px solid rgba(76,201,240,.28);border-radius:14px;
+  padding:10px 13px;font-family:'Nunito',sans-serif;
+  font-size:1.0rem;font-weight:700;color:var(--text);
+  cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.4);
+  transition:transform .12s,box-shadow .12s,border-color .15s;text-align:left;
+}
+.opt-btn:hover:not(:disabled){transform:scale(1.04) translateY(-2px);box-shadow:0 8px 0 rgba(0,0,0,.4);border-color:var(--neon2);}
+.opt-btn.correct{
+  background:linear-gradient(135deg,rgba(67,233,123,.25),rgba(67,233,123,.12))!important;
+  border-color:var(--correct)!important;color:var(--correct)!important;
+  box-shadow:0 0 14px rgba(67,233,123,.3),0 5px 0 rgba(0,0,0,.3)!important;
+}
+.opt-btn.wrong{
+  background:linear-gradient(135deg,rgba(247,37,133,.25),rgba(247,37,133,.12))!important;
+  border-color:var(--wrong)!important;color:var(--wrong)!important;
+  box-shadow:0 0 14px rgba(247,37,133,.25),0 5px 0 rgba(0,0,0,.3)!important;
+  animation:shake .4s;
+}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* ---- GAP BTN ---- */
+.gap-btn{
+  display:inline-block;min-width:130px;
+  background:linear-gradient(135deg,rgba(247,37,133,.12),rgba(76,201,240,.1));
+  border:2.5px dashed rgba(76,201,240,.5);border-radius:10px;
+  padding:3px 10px;cursor:pointer;font-weight:800;
+  color:var(--neon2);font-size:1.0rem;transition:.2s;vertical-align:middle;
+}
+.gap-btn:hover:not(:disabled){background:rgba(76,201,240,.18);}
+.gap-btn.correct{background:rgba(67,233,123,.2)!important;border-color:var(--correct)!important;border-style:solid!important;color:var(--correct)!important;}
+.gap-btn.wrong{background:rgba(247,37,133,.2)!important;border-color:var(--wrong)!important;border-style:solid!important;color:var(--wrong)!important;animation:shake .4s;}
+
+/* ---- EXPLANATION ---- */
+.exp-block{
+  display:none;
+  background:linear-gradient(135deg,rgba(10,0,30,.98),rgba(0,10,30,.98));
+  border-left:4px solid var(--neon2);border-radius:0 14px 14px 0;
+  padding:15px 16px;margin-top:12px;
+  font-size:.97rem;line-height:1.75;color:var(--text2);
+}
+.exp-block.show{display:block;animation:slideD .4s ease;}
+@keyframes slideD{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.exp-label{font-weight:900;font-size:1rem;color:var(--neon2);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.exp-block ul{padding-left:18px;margin:6px 0;}
+.exp-block li{margin-bottom:6px;}
+.exp-block strong{color:#fff;}
+.exp-step{font-weight:800;color:var(--neon3);margin:10px 0 4px;font-size:.96rem;}
+
+/* ---- HIGHLIGHT CLASSES ---- */
+.p-word{color:#60a5fa;font-weight:800;}
+.p-phonetic{color:#c084fc;background:rgba(192,132,252,.12);border-radius:4px;padding:1px 5px;font-family:monospace;font-size:.92rem;}
+.p-mean{color:#fb923c;font-weight:700;}
+.p-grammar{color:#f87171;text-decoration:underline;text-decoration-color:#f87171;font-weight:700;}
+.hl-green{color:#4ade80;font-weight:900;}
+.hl-red{color:#f87171;text-decoration:line-through;font-weight:700;}
+
+/* ---- POPUP WORD CHOOSER ---- */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:3000;align-items:center;justify-content:center;}
+.overlay.active{display:flex;}
+.popup-box{
+  background:linear-gradient(135deg,#0d0030,#001030);
+  border-radius:22px;padding:24px 22px 20px;max-width:380px;width:92%;
+  box-shadow:0 0 50px rgba(247,37,133,.4);text-align:center;
+  border:1.5px solid rgba(247,37,133,.4);
+}
+.popup-box h3{font-size:1.05rem;font-weight:900;color:var(--neon2);margin-bottom:14px;}
+.popup-words{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;}
+.popup-word{
+  background:rgba(76,201,240,.1);border:2px solid rgba(76,201,240,.4);border-radius:12px;
+  padding:8px 14px;font-weight:700;font-size:.97rem;color:var(--neon2);cursor:pointer;transition:.15s;
+}
+.popup-word:hover{background:rgba(76,201,240,.25);transform:scale(1.05);}
+.popup-cancel{margin-top:14px;background:rgba(247,37,133,.15);border:1.5px solid var(--neon1);border-radius:10px;padding:8px 20px;font-weight:700;color:var(--neon1);cursor:pointer;font-size:.9rem;}
+
+/* ---- SUBMIT ---- */
+.submit-area{text-align:center;margin-top:30px;}
+.submit-btn{
+  background:linear-gradient(135deg,var(--neon1),var(--neon2));
+  color:#fff;border:none;border-radius:22px;padding:15px 50px;
+  font-family:'Nunito',sans-serif;font-size:1.2rem;font-weight:900;cursor:pointer;
+  box-shadow:0 8px 0 rgba(0,0,0,.45),0 0 30px rgba(247,37,133,.35);transition:.15s;letter-spacing:.5px;
+}
+.submit-btn:hover{transform:scale(1.04) translateY(-3px);}
+
+/* ---- NAME POPUP ---- */
+.name-popup-box{
+  background:linear-gradient(135deg,#0d0030,#001030);
+  border-radius:24px;padding:28px 26px 24px;max-width:420px;width:94%;
+  box-shadow:0 0 60px rgba(247,37,133,.45);text-align:center;
+  border:1.5px solid rgba(247,37,133,.35);
+}
+.name-popup-box h2{font-size:1.28rem;font-weight:900;background:linear-gradient(90deg,var(--neon1),var(--neon2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+.name-popup-box p{font-size:.9rem;color:var(--text2);margin-bottom:16px;}
+.name-input{width:100%;background:rgba(255,255,255,.06);border:2.5px solid rgba(76,201,240,.35);border-radius:12px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;color:var(--text);outline:none;transition:.2s;}
+.name-input:focus{border-color:var(--neon2);}
+.name-input.error{border-color:var(--neon1);}
+.name-input::placeholder{color:var(--text2);}
+.name-err{color:var(--neon1);font-size:.88rem;font-weight:700;margin-top:7px;display:none;}
+.confirm-btn{margin-top:14px;background:linear-gradient(135deg,var(--neon1),var(--neon2));color:#fff;border:none;border-radius:14px;padding:11px 36px;font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;box-shadow:0 6px 0 rgba(0,0,0,.4);transition:.15s;}
+.confirm-btn:hover{transform:translateY(-2px);}
+
+/* ---- RESULT ---- */
+.result-box{
+  background:linear-gradient(135deg,#0d0030,#000f20);
+  border-radius:28px;padding:28px 24px 24px;max-width:460px;width:95%;
+  box-shadow:0 0 70px rgba(247,37,133,.45);text-align:center;
+  border:1.5px solid rgba(247,37,133,.35);
+}
+.r-emoji{font-size:3.5rem;margin-bottom:8px;}
+.r-title{font-size:1.5rem;font-weight:900;background:linear-gradient(90deg,var(--neon1),var(--neon2),var(--neon3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
+.r-name{font-size:1.05rem;font-weight:800;color:var(--neon2);margin-bottom:4px;}
+.r-score{font-size:2.3rem;font-weight:900;color:var(--neon3);margin:10px 0;}
+.r-comment{font-size:1rem;font-weight:700;color:var(--text2);margin-bottom:14px;}
+.r-meme{width:100%;max-width:270px;height:180px;object-fit:cover;border-radius:16px;margin:0 auto 16px;display:block;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.r-close{background:linear-gradient(135deg,var(--neon1),var(--neon2));color:#fff;border:none;border-radius:14px;padding:11px 32px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:900;cursor:pointer;}
+
+/* ---- CONFETTI ---- */
+.conf{position:fixed;top:-10px;width:10px;height:14px;border-radius:3px;opacity:0;animation:cfall 1.3s ease-in forwards;pointer-events:none;z-index:9999;}
+@keyframes cfall{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(105vh) rotate(740deg)}}
+
+/* ---- PHONETIC OPTION ---- */
+.phone-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;}
+</style>
+</head>
+<body>
+
+<!-- STICKY REMINDER -->
+<div id="reminder" class="rem-pulse">
+  <div id="rem-header" onclick="toggleReminder()">
+    <div id="rem-title">⚡ NHẮC NHỞ QUAN TRỌNG — Bấm để mở rộng</div>
+    <button id="rem-toggle">▼ Xem</button>
+  </div>
+  <div id="rem-body">
+    <span>📖 Tra từ mới:</span> Dùng Google Dịch / ChatGPT / Gemini để hiểu rõ từng câu — không được đoán bừa!<br>
+    <span>🔊 Phát âm:</span> Tra từ điển Cambridge, bấm nghe rồi đọc theo cho đúng trọng âm.<br>
+    <span>✍️ Ghi vở:</span> Đọc kỹ giải thích → ghi từ mới & cấu trúc vào vở. Làm xong mà không ghi chép = lãng phí thời gian hoàn toàn!
+  </div>
+</div>
+
+<!-- FLOATING CITY ELEMENTS -->
+<div class="floats" id="floatLayer"></div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="quiz-header">
+    <h1>🏙️ TEST FOR UNIT 4 — My Neighbourhood</h1>
+    <p>🎓 Giáo viên tạo: Ms MS Chí Nên – ULIS &nbsp;|&nbsp; Tiếng Anh 6 • Unit 4</p>
+  </div>
+
+  <!-- SCORE BAR -->
+  <div class="score-bar">
+    <span class="sc">⚡ <span id="scoreDisp">0</span></span>
+    <div class="progress-wrap"><div class="progress-bar" id="progBar" style="width:0%"></div></div>
+    <span class="sc-count"><span id="answDisp">0</span>/33</span>
+  </div>
+
+  <!-- ====== EXERCISE I – PHONETICS ====== -->
+  <div class="ex-section">
+    <div class="ex-title">🔊 Exercise I: Choose the word whose underlined part is pronounced differently</div>
+
+    <!-- I.1 -->
+    <div class="q-card" id="card-I1">
+      <div class="q-text"><span class="q-num">1</span>Which word has a different underlined vowel sound?</div>
+      <div class="phone-grid" id="og-I1">
+        <button class="opt-btn" data-q="I1" data-v="a" onclick="pickMCQ(this,'I1','b')">a. pe<u>a</u>ceful</button>
+        <button class="opt-btn" data-q="I1" data-v="b" onclick="pickMCQ(this,'I1','b')">b. pl<u>ea</u>sure</button>
+        <button class="opt-btn" data-q="I1" data-v="c" onclick="pickMCQ(this,'I1','b')">c. sl<u>ee</u>py</button>
+        <button class="opt-btn" data-q="I1" data-v="d" onclick="pickMCQ(this,'I1','b')">d. ch<u>ea</u>p</button>
+      </div>
+      <div class="exp-block" id="exp-I1">
+        <div class="exp-label">🔊 Giải thích Ngữ âm Chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch yêu cầu:</div>
+        <p>Chọn từ có phần gạch chân phát âm <strong>khác</strong> với các từ còn lại.</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích phiên âm từng từ:</div>
+        <ul>
+          <li><span class="p-word">pe<u>a</u>ceful</span> <span class="p-phonetic">/ˈpiːs.fəl/</span> → "ea" = <span class="hl-green">/iː/</span></li>
+          <li><span class="p-word">pl<u>ea</u>sure</span> <span class="p-phonetic">/ˈpleʒ.ər/</span> → "ea" = <span class="hl-red">/e/</span> ← KHÁC!</li>
+          <li><span class="p-word">sl<u>ee</u>py</span> <span class="p-phonetic">/ˈsliː.pi/</span> → "ee" = <span class="hl-green">/iː/</span></li>
+          <li><span class="p-word">ch<u>ea</u>p</span> <span class="p-phonetic">/tʃiːp/</span> → "ea" = <span class="hl-green">/iː/</span></li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đáp án b đúng?</div>
+        <p><span class="hl-green">pleasure</span>: "ea" = <span class="p-phonetic">/e/</span> (âm "e" ngắn). Ba từ còn lại đều phát âm "ea/ee" = <span class="p-phonetic">/iː/</span> (âm "i" dài).</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao các đáp án khác sai?</div>
+        <p>peaceful, sleepy, cheap đều có nguyên âm dài <span class="hl-red">/iː/</span> → cùng nhóm → không phải đáp án.</p>
+      </div>
+    </div>
+
+    <!-- I.2 -->
+    <div class="q-card" id="card-I2">
+      <div class="q-text"><span class="q-num">2</span>Which word has a different underlined vowel sound?</div>
+      <div class="phone-grid" id="og-I2">
+        <button class="opt-btn" data-q="I2" data-v="a" onclick="pickMCQ(this,'I2','d')">a. exc<u>i</u>ting</button>
+        <button class="opt-btn" data-q="I2" data-v="b" onclick="pickMCQ(this,'I2','d')">b. qu<u>i</u>et</button>
+        <button class="opt-btn" data-q="I2" data-v="c" onclick="pickMCQ(this,'I2','d')">c. w<u>i</u>de</button>
+        <button class="opt-btn" data-q="I2" data-v="d" onclick="pickMCQ(this,'I2','d')">d. terr<u>i</u>ble</button>
+      </div>
+      <div class="exp-block" id="exp-I2">
+        <div class="exp-label">🔊 Giải thích Ngữ âm Chi tiết</div>
+        <div class="exp-step">📚 Bước 2 – Phân tích phiên âm từng từ:</div>
+        <ul>
+          <li><span class="p-word">exc<u>i</u>ting</span> <span class="p-phonetic">/ɪkˈsaɪ.tɪŋ/</span> → "i" = <span class="hl-green">/aɪ/</span></li>
+          <li><span class="p-word">qu<u>i</u>et</span> <span class="p-phonetic">/ˈkwaɪ.ɪt/</span> → "i" = <span class="hl-green">/aɪ/</span></li>
+          <li><span class="p-word">w<u>i</u>de</span> <span class="p-phonetic">/waɪd/</span> → "i" = <span class="hl-green">/aɪ/</span></li>
+          <li><span class="p-word">terr<u>i</u>ble</span> <span class="p-phonetic">/ˈter.ɪ.bəl/</span> → "i" = <span class="hl-red">/ɪ/</span> ← KHÁC!</li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đáp án d đúng?</div>
+        <p><span class="hl-green">terrible</span>: "i" = <span class="p-phonetic">/ɪ/</span> (âm "i" ngắn). Ba từ còn lại đều "i" = <span class="p-phonetic">/aɪ/</span> (nguyên âm đôi, dài).</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao các đáp án khác sai?</div>
+        <p>exciting, quiet, wide đều có "i" = <span class="hl-red">/aɪ/</span>. Đây là BẪY PHÁT ÂM: "i" trong tiếng Anh có thể đọc là /aɪ/ hoặc /ɪ/ tùy từ!</p>
+      </div>
+    </div>
+
+    <!-- I.3 -->
+    <div class="q-card" id="card-I3">
+      <div class="q-text"><span class="q-num">3</span>Which word has a different pronunciation of the "-ed" ending?</div>
+      <div class="phone-grid" id="og-I3">
+        <button class="opt-btn" data-q="I3" data-v="a" onclick="pickMCQ(this,'I3','c')">a. crowd<u>ed</u></button>
+        <button class="opt-btn" data-q="I3" data-v="b" onclick="pickMCQ(this,'I3','c')">b. interest<u>ed</u></button>
+        <button class="opt-btn" data-q="I3" data-v="c" onclick="pickMCQ(this,'I3','c')">c. bor<u>ed</u></button>
+        <button class="opt-btn" data-q="I3" data-v="d" onclick="pickMCQ(this,'I3','c')">d. pollut<u>ed</u></button>
+      </div>
+      <div class="exp-block" id="exp-I3">
+        <div class="exp-label">🔊 Giải thích Quy tắc đọc "-ed"</div>
+        <div class="exp-step">📚 Bước 2 – Phiên âm đuôi "-ed" từng từ:</div>
+        <ul>
+          <li><span class="p-word">crowd<u>ed</u></span> <span class="p-phonetic">/ˈkraʊ.dɪd/</span> → ed = <span class="hl-green">/ɪd/</span> (sau âm /d/)</li>
+          <li><span class="p-word">interest<u>ed</u></span> <span class="p-phonetic">/ˈɪn.trɪ.stɪd/</span> → ed = <span class="hl-green">/ɪd/</span> (sau âm /t/)</li>
+          <li><span class="p-word">bor<u>ed</u></span> <span class="p-phonetic">/bɔːrd/</span> → ed = <span class="hl-red">/d/</span> ← KHÁC!</li>
+          <li><span class="p-word">pollut<u>ed</u></span> <span class="p-phonetic">/pəˈluː.tɪd/</span> → ed = <span class="hl-green">/ɪd/</span> (sau âm /t/)</li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đáp án c đúng?</div>
+        <p><span class="p-grammar">Quy tắc đọc đuôi "-ed":</span><br>
+        • Sau âm <strong>/t/ hoặc /d/</strong> → đọc là <span class="hl-green">/ɪd/</span><br>
+        • Sau âm hữu thanh khác (b, g, l, m, n, r, v, z...) → đọc là <span class="hl-green">/d/</span><br>
+        • Sau âm vô thanh (p, k, f, s, ʃ...) → đọc là /t/<br>
+        "bored" kết thúc âm /r/ (hữu thanh, không phải /t/ hay /d/) → ed = <span class="hl-green">/d/</span>.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao các đáp án khác sai?</div>
+        <p>crowded (/d/ + ed), interested (/t/ + ed), polluted (/t/ + ed) → đều có quy tắc "/t/ hoặc /d/ + ed = /ɪd/".</p>
+      </div>
+    </div>
+
+    <!-- I.4 -->
+    <div class="q-card" id="card-I4">
+      <div class="q-text"><span class="q-num">4</span>Which word has a different pronunciation of the "-s" ending?</div>
+      <div class="phone-grid" id="og-I4">
+        <button class="opt-btn" data-q="I4" data-v="a" onclick="pickMCQ(this,'I4','b')">a. shop<u>s</u></button>
+        <button class="opt-btn" data-q="I4" data-v="b" onclick="pickMCQ(this,'I4','b')">b. theatre<u>s</u></button>
+        <button class="opt-btn" data-q="I4" data-v="c" onclick="pickMCQ(this,'I4','b')">c. street<u>s</u></button>
+        <button class="opt-btn" data-q="I4" data-v="d" onclick="pickMCQ(this,'I4','b')">d. park<u>s</u></button>
+      </div>
+      <div class="exp-block" id="exp-I4">
+        <div class="exp-label">🔊 Giải thích Quy tắc đọc đuôi "-s/es"</div>
+        <div class="exp-step">📚 Bước 2 – Phiên âm đuôi "-s" từng từ:</div>
+        <ul>
+          <li><span class="p-word">shop<u>s</u></span> <span class="p-phonetic">/ʃɒps/</span> → s = <span class="hl-green">/s/</span> (sau /p/ - vô thanh)</li>
+          <li><span class="p-word">theatre<u>s</u></span> <span class="p-phonetic">/ˈθɪə.tərz/</span> → s = <span class="hl-red">/z/</span> ← KHÁC! (sau /ə/ - nguyên âm)</li>
+          <li><span class="p-word">street<u>s</u></span> <span class="p-phonetic">/striːts/</span> → s = <span class="hl-green">/s/</span> (sau /t/ - vô thanh)</li>
+          <li><span class="p-word">park<u>s</u></span> <span class="p-phonetic">/pɑːrks/</span> → s = <span class="hl-green">/s/</span> (sau /k/ - vô thanh)</li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đáp án b đúng?</div>
+        <p><span class="p-grammar">Quy tắc đọc đuôi "-s":</span><br>
+        • Sau âm <strong>vô thanh</strong> (/p, t, k, f, θ/) → đọc là <span class="hl-green">/s/</span><br>
+        • Sau âm <strong>hữu thanh hoặc nguyên âm</strong> → đọc là <span class="hl-green">/z/</span><br>
+        "theatre" kết thúc bằng âm /ə/ (nguyên âm) → s = <span class="hl-green">/z/</span>.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao các đáp án khác sai?</div>
+        <p>shops (/p/→/s/), streets (/t/→/s/), parks (/k/→/s/) → đều sau âm vô thanh → s = /s/.</p>
+      </div>
+    </div>
+
+    <!-- I.5 -->
+    <div class="q-card" id="card-I5">
+      <div class="q-text"><span class="q-num">5</span>Which word has a different underlined vowel sound?</div>
+      <div class="phone-grid" id="og-I5">
+        <button class="opt-btn" data-q="I5" data-v="a" onclick="pickMCQ(this,'I5','a')">a. narr<u>ow</u></button>
+        <button class="opt-btn" data-q="I5" data-v="b" onclick="pickMCQ(this,'I5','a')">b. cr<u>ow</u>d</button>
+        <button class="opt-btn" data-q="I5" data-v="c" onclick="pickMCQ(this,'I5','a')">c. n<u>ow</u></button>
+        <button class="opt-btn" data-q="I5" data-v="d" onclick="pickMCQ(this,'I5','a')">d. ab<u>ou</u>t</button>
+      </div>
+      <div class="exp-block" id="exp-I5">
+        <div class="exp-label">🔊 Giải thích Nguyên âm "ow" và "ou"</div>
+        <div class="exp-step">📚 Bước 2 – Phiên âm từng từ:</div>
+        <ul>
+          <li><span class="p-word">narr<u>ow</u></span> <span class="p-phonetic">/ˈnær.əʊ/</span> → "ow" = <span class="hl-red">/əʊ/</span> ← KHÁC!</li>
+          <li><span class="p-word">cr<u>ow</u>d</span> <span class="p-phonetic">/kraʊd/</span> → "ow" = <span class="hl-green">/aʊ/</span></li>
+          <li><span class="p-word">n<u>ow</u></span> <span class="p-phonetic">/naʊ/</span> → "ow" = <span class="hl-green">/aʊ/</span></li>
+          <li><span class="p-word">ab<u>ou</u>t</span> <span class="p-phonetic">/əˈbaʊt/</span> → "ou" = <span class="hl-green">/aʊ/</span></li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đáp án a đúng?</div>
+        <p><span class="hl-green">narrow</span>: "ow" = <span class="p-phonetic">/əʊ/</span> (âm "ô" dài, như "go, no, snow"). Ba từ còn lại "ow/ou" = <span class="p-phonetic">/aʊ/</span> (như "cow, house").</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao các đáp án khác sai?</div>
+        <p>"ow" có <strong>hai cách đọc</strong>: /əʊ/ (window, yellow, narrow) và /aʊ/ (now, crowd, how). Đây là bẫy ngữ âm rất phổ biến!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== EXERCISE II – PLACES ====== -->
+  <div class="ex-section">
+    <div class="ex-title">🏪 Exercise II: What are these places? Write the name of the places.</div>
+    <div class="ex-subtitle">Word box: restaurant · bakery · cinema · grocery · post office · bookshop · bank · art gallery</div>
+    <div class="word-box" id="wbox2">
+      <span class="w-chip" id="chip-post office">post office</span>
+      <span class="w-chip" id="chip-bookshop">bookshop</span>
+      <span class="w-chip" id="chip-cinema">cinema</span>
+      <span class="w-chip" id="chip-restaurant">restaurant</span>
+      <span class="w-chip" id="chip-bank">bank</span>
+      <span class="w-chip" id="chip-grocery">grocery</span>
+      <span class="w-chip" id="chip-art gallery">art gallery</span>
+      <span class="w-chip" id="chip-bakery">bakery</span>
+    </div>
+
+    <div class="q-card" id="card-II1">
+      <div class="q-text"><span class="q-num">1</span>It is a place where we send letters and buy stamps. → <button class="gap-btn" id="gap-II1" onclick="openGap('II1')">__________</button></div>
+      <div class="exp-block" id="exp-II1">
+        <div class="exp-label">✅ Giải thích</div>
+        <div class="exp-step">📌 Dịch:</div><p>"Đây là nơi chúng ta gửi thư và mua tem." → <span class="hl-green">post office</span> (bưu điện)</p>
+        <div class="exp-step">📚 Giải thích:</div>
+        <ul>
+          <li><span class="p-word">send letters</span> <span class="p-mean">gửi thư</span> + <span class="p-word">buy stamps</span> <span class="p-mean">mua tem</span> → chỉ dịch vụ của <span class="hl-green">bưu điện (post office)</span>.</li>
+          <li>⚠️ <span class="p-grammar">Cấu trúc:</span> "a place where we + V" = nơi mà chúng ta… → quan hệ từ "where" dùng cho địa điểm.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="q-card" id="card-II2">
+      <div class="q-text"><span class="q-num">2</span>It is a place where we can buy books. → <button class="gap-btn" id="gap-II2" onclick="openGap('II2')">__________</button></div>
+      <div class="exp-block" id="exp-II2">
+        <div class="exp-label">✅ Giải thích</div>
+        <div class="exp-step">📌 Dịch:</div><p>"Đây là nơi chúng ta có thể mua sách." → <span class="hl-green">bookshop</span> (hiệu sách)</p>
+        <div class="exp-step">📚 Giải thích:</div>
+        <ul>
+          <li><span class="p-word">book</span> <span class="p-mean">sách</span> + <span class="p-word">shop</span> <span class="p-mean">cửa hàng</span> = <span class="hl-green">bookshop</span> (hiệu sách). Từ ghép đơn giản!</li>
+          <li>Tiếng Mỹ gọi là "bookstore". Tiếng Anh Anh gọi là "bookshop".</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="q-card" id="card-II3">
+      <div class="q-text"><span class="q-num">3</span>It is a place where we pay money to watch a movie. → <button class="gap-btn" id="gap-II3" onclick="openGap('II3')">__________</button></div>
+      <div class="exp-block" id="exp-II3">
+        <div class="exp-label">✅ Giải thích</div>
+        <div class="exp-step">📌 Dịch:</div><p>"Đây là nơi chúng ta trả tiền để xem phim." → <span class="hl-green">cinema</span> (rạp chiếu phim)</p>
+        <div class="exp-step">📚 Giải thích:</div>
+        <ul>
+          <li><span class="p-word">pay money</span> <span class="p-mean">trả tiền</span> + <span class="p-word">watch a movie</span> <span class="p-mean">xem phim</span> → đặc trưng của <span class="hl-green">cinema</span> (rạp chiếu phim).</li>
+          <li>Tiếng Mỹ: "movie theater". Tiếng Anh Anh: "cinema" <span class="p-phonetic">/ˈsɪn.ɪ.mə/</span>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="q-card" id="card-II4">
+      <div class="q-text"><span class="q-num">4</span>It is a place where we can buy and eat a meal. → <button class="gap-btn" id="gap-II4" onclick="openGap('II4')">__________</button></div>
+      <div class="exp-block" id="exp-II4">
+        <div class="exp-label">✅ Giải thích</div>
+        <div class="exp-step">📌 Dịch:</div><p>"Đây là nơi chúng ta có thể mua và ăn bữa ăn." → <span class="hl-green">restaurant</span> (nhà hàng)</p>
+        <div class="exp-step">📚 Giải thích:</div>
+        <ul>
+          <li><span class="p-word">buy and eat a meal</span> <span class="p-mean">mua và ăn bữa ăn</span> → chính xác là dịch vụ của <span class="hl-green">restaurant</span>.</li>
+          <li>Phát âm: <span class="p-phonetic">/ˈres.tər.ɒnt/</span> (Anh) hoặc <span class="p-phonetic">/ˈres.tər.ɑːnt/</span> (Mỹ). Nhiều người đọc sai!</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="q-card" id="card-II5">
+      <div class="q-text"><span class="q-num">5</span>It is a place where we can save money. → <button class="gap-btn" id="gap-II5" onclick="openGap('II5')">__________</button></div>
+      <div class="exp-block" id="exp-II5">
+        <div class="exp-label">✅ Giải thích</div>
+        <div class="exp-step">📌 Dịch:</div><p>"Đây là nơi chúng ta có thể tiết kiệm/gửi tiền." → <span class="hl-green">bank</span> (ngân hàng)</p>
+        <div class="exp-step">📚 Giải thích:</div>
+        <ul>
+          <li><span class="p-word">save money</span> <span class="p-mean">tiết kiệm tiền / gửi tiền</span> → chức năng chính của <span class="hl-green">bank</span> (ngân hàng).</li>
+          <li>⚠️ BẪY: "bank" còn có nghĩa là "bờ sông". Ở đây ngữ cảnh tiền tệ → nghĩa ngân hàng.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="q-card" id="card-II6">
+      <div class="q-text"><span class="q-num">6</span>It is a place where we can buy food and other goods. → <button class="gap-btn" id="gap-II6" onclick="openGap('II6')">__________</button></div>
+      <div class="exp-block" id="exp-II6">
+        <div class="exp-label">✅ Giải thích</div>
+        <div class="exp-step">📌 Dịch:</div><p>"Đây là nơi chúng ta có thể mua thực phẩm và hàng hóa khác." → <span class="hl-green">grocery</span> (cửa hàng tạp hóa)</p>
+        <div class="exp-step">📚 Giải thích:</div>
+        <ul>
+          <li><span class="p-word">grocery</span> <span class="p-phonetic">/ˈɡrəʊ.sər.i/</span> <span class="p-mean">cửa hàng tạp hóa</span> – bán thực phẩm và hàng tiêu dùng.</li>
+          <li>"grocery store" = siêu thị nhỏ. Khác với "restaurant" (phải ăn tại chỗ) – ở grocery bạn mua về nhà.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="q-card" id="card-II7">
+      <div class="q-text"><span class="q-num">7</span>It is a place where we can see paintings and other works of art. → <button class="gap-btn" id="gap-II7" onclick="openGap('II7')">__________</button></div>
+      <div class="exp-block" id="exp-II7">
+        <div class="exp-label">✅ Giải thích</div>
+        <div class="exp-step">📌 Dịch:</div><p>"Đây là nơi chúng ta có thể xem tranh và các tác phẩm nghệ thuật khác." → <span class="hl-green">art gallery</span> (phòng tranh / triển lãm nghệ thuật)</p>
+        <div class="exp-step">📚 Giải thích:</div>
+        <ul>
+          <li><span class="p-word">paintings</span> <span class="p-mean">các bức tranh</span> + <span class="p-word">works of art</span> <span class="p-mean">tác phẩm nghệ thuật</span> → <span class="hl-green">art gallery</span>.</li>
+          <li><span class="p-phonetic">/ˈɑːt ˌɡæl.ər.i/</span> – "gallery" có 3 âm tiết: gal-le-ry.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="q-card" id="card-II8">
+      <div class="q-text"><span class="q-num">8</span>It is a place where we can buy bread and cakes. → <button class="gap-btn" id="gap-II8" onclick="openGap('II8')">__________</button></div>
+      <div class="exp-block" id="exp-II8">
+        <div class="exp-label">✅ Giải thích</div>
+        <div class="exp-step">📌 Dịch:</div><p>"Đây là nơi chúng ta có thể mua bánh mì và bánh ngọt." → <span class="hl-green">bakery</span> (tiệm bánh)</p>
+        <div class="exp-step">📚 Giải thích:</div>
+        <ul>
+          <li><span class="p-word">bread</span> <span class="p-mean">bánh mì</span> + <span class="p-word">cakes</span> <span class="p-mean">bánh ngọt</span> → <span class="hl-green">bakery</span> <span class="p-phonetic">/ˈbeɪ.kər.i/</span> (tiệm bánh).</li>
+          <li>"bake" = nướng (bánh) → "bakery" = nơi nướng/bán bánh.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== EXERCISE III – MCQ ====== -->
+  <div class="ex-section">
+    <div class="ex-title">✏️ Exercise III: Choose the best answer a, b, c or d to complete the sentence.</div>
+
+    <!-- III.1 -->
+    <div class="q-card" id="card-III1">
+      <div class="q-text"><span class="q-num">1</span>What is there ________ your neighbourhood?</div>
+      <div class="opts-grid" id="og-III1">
+        <button class="opt-btn" data-q="III1" data-v="a" onclick="pickMCQ(this,'III1','a')">in</button>
+        <button class="opt-btn" data-q="III1" data-v="b" onclick="pickMCQ(this,'III1','a')">on</button>
+        <button class="opt-btn" data-q="III1" data-v="c" onclick="pickMCQ(this,'III1','a')">at</button>
+        <button class="opt-btn" data-q="III1" data-v="d" onclick="pickMCQ(this,'III1','a')">from</button>
+      </div>
+      <div class="exp-block" id="exp-III1">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Có gì trong khu phố của bạn?"</p>
+        <div class="exp-step">📚 Bước 2 – Dịch 4 đáp án:</div>
+        <ul><li><span class="p-word">in</span> <span class="p-mean">trong, ở trong</span> – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">on</span> <span class="p-mean">trên</span></li><li><span class="p-word">at</span> <span class="p-mean">tại (điểm cụ thể)</span></li><li><span class="p-word">from</span> <span class="p-mean">từ</span></li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p><span class="p-grammar">"in + khu vực/vùng/neighbourhood"</span> = ở trong một khu vực rộng. <span class="hl-green">"in your neighbourhood"</span> = trong khu phố của bạn. Collocation cố định!</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">on</span>: dùng cho bề mặt (on the table). <span class="hl-red">at</span>: dùng cho điểm chính xác (at school, at home) – không dùng "at neighbourhood". <span class="hl-red">from</span>: chỉ xuất phát điểm.</p>
+      </div>
+    </div>
+
+    <!-- III.2 -->
+    <div class="q-card" id="card-III2">
+      <div class="q-text"><span class="q-num">2</span>Turn left ________ the traffic lights and the restaurant is ________ your right.</div>
+      <div class="opts-grid" id="og-III2">
+        <button class="opt-btn" data-q="III2" data-v="a" onclick="pickMCQ(this,'III2','c')">in – on</button>
+        <button class="opt-btn" data-q="III2" data-v="b" onclick="pickMCQ(this,'III2','c')">at – in</button>
+        <button class="opt-btn" data-q="III2" data-v="c" onclick="pickMCQ(this,'III2','c')">at – on</button>
+        <button class="opt-btn" data-q="III2" data-v="d" onclick="pickMCQ(this,'III2','c')">on – in</button>
+      </div>
+      <div class="exp-block" id="exp-III2">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Rẽ trái <em>tại</em> đèn giao thông và nhà hàng ở <em>bên phải</em> bạn."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích giới từ:</div>
+        <ul>
+          <li><span class="p-grammar">"turn left/right AT + điểm giao thông"</span>: <span class="hl-green">at the traffic lights</span> = tại đèn giao thông. "at" chỉ điểm cụ thể, chính xác.</li>
+          <li><span class="p-grammar">"on your left/right"</span>: <span class="hl-green">on your right</span> = ở bên tay phải của bạn. Collocation cố định: <strong>on the left/right</strong>.</li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>→ <span class="hl-green">at – on</span>: "Turn left <strong>at</strong> the traffic lights" + "is <strong>on</strong> your right".</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">in the traffic lights</span>: sai vì "in" không dùng cho điểm/vị trí giao thông. <span class="hl-red">on your right</span> không thể thay bằng "in your right".</p>
+      </div>
+    </div>
+
+    <!-- III.3 -->
+    <div class="q-card" id="card-III3">
+      <div class="q-text"><span class="q-num">3</span>________ the second turning on the right and then go straight.</div>
+      <div class="opts-grid" id="og-III3">
+        <button class="opt-btn" data-q="III3" data-v="a" onclick="pickMCQ(this,'III3','d')">Cross</button>
+        <button class="opt-btn" data-q="III3" data-v="b" onclick="pickMCQ(this,'III3','d')">Get</button>
+        <button class="opt-btn" data-q="III3" data-v="c" onclick="pickMCQ(this,'III3','d')">Turn</button>
+        <button class="opt-btn" data-q="III3" data-v="d" onclick="pickMCQ(this,'III3','d')">Take</button>
+      </div>
+      <div class="exp-block" id="exp-III3">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"________ ngã rẽ thứ hai về phía bên phải rồi đi thẳng."</p>
+        <div class="exp-step">📚 Bước 2 – Dịch 4 đáp án:</div>
+        <ul><li><span class="p-word">Cross</span> <span class="p-mean">băng qua (đường)</span></li><li><span class="p-word">Get</span> <span class="p-mean">lấy, nhận</span></li><li><span class="p-word">Turn</span> <span class="p-mean">quay, rẽ</span></li><li><span class="p-word">Take</span> <span class="p-mean">rẽ vào, đi theo</span> – <span class="hl-green">✓ ĐÚNG</span></li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p><span class="p-grammar">"Take the + ordinal + turning on the left/right"</span> = rẽ vào ngã rẽ thứ... về phía trái/phải. Đây là <span class="hl-green">cụm chỉ đường cố định</span> trong tiếng Anh Anh. "take" ở đây = đi theo, rẽ vào.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">Cross the turning</span>: "cross" = băng qua, không đúng nghĩa. <span class="hl-red">Turn the turning</span>: lặp từ, nghe kỳ. <span class="hl-red">Get the turning</span>: vô nghĩa. Chỉ có "take" mới dùng được với "turning".</p>
+      </div>
+    </div>
+
+    <!-- III.4 -->
+    <div class="q-card" id="card-III4">
+      <div class="q-text"><span class="q-num">4</span>He is much ________ now, but he's still taking medication.</div>
+      <div class="opts-grid" id="og-III4">
+        <button class="opt-btn" data-q="III4" data-v="a" onclick="pickMCQ(this,'III4','c')">good</button>
+        <button class="opt-btn" data-q="III4" data-v="b" onclick="pickMCQ(this,'III4','c')">gooder</button>
+        <button class="opt-btn" data-q="III4" data-v="c" onclick="pickMCQ(this,'III4','c')">better</button>
+        <button class="opt-btn" data-q="III4" data-v="d" onclick="pickMCQ(this,'III4','c')">more better</button>
+      </div>
+      <div class="exp-block" id="exp-III4">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Anh ấy ________ hơn bây giờ, nhưng vẫn đang uống thuốc."</p>
+        <div class="exp-step">📚 Bước 2 – Dịch 4 đáp án:</div>
+        <ul><li><span class="p-word">good</span> <span class="p-mean">tốt (dạng gốc)</span></li><li><span class="p-word">gooder</span> – <span class="hl-red">KHÔNG TỒN TẠI!</span></li><li><span class="p-word">better</span> <span class="p-mean">tốt hơn (so sánh hơn bất quy tắc)</span> – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">more better</span> – <span class="hl-red">SAI – double comparative!</span></li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p><span class="p-grammar">Bất quy tắc:</span> good → <span class="hl-green">better</span> → best. Phó từ <strong>"much"</strong> tăng cường mức độ so sánh: "much better" = tốt hơn nhiều. "still taking medication" gợi ý anh ấy đang hồi phục (so sánh hơn trước).</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">gooder</span>: tuyệt đối không tồn tại. <span class="hl-red">more better</span>: "better" đã là dạng so sánh hơn rồi, thêm "more" là sai hoàn toàn (double comparative).</p>
+      </div>
+    </div>
+
+    <!-- III.5 -->
+    <div class="q-card" id="card-III5">
+      <div class="q-text"><span class="q-num">5</span>The air in many cities is heavily ________ with vehicle exhaust fumes.</div>
+      <div class="opts-grid" id="og-III5">
+        <button class="opt-btn" data-q="III5" data-v="a" onclick="pickMCQ(this,'III5','a')">polluted</button>
+        <button class="opt-btn" data-q="III5" data-v="b" onclick="pickMCQ(this,'III5','a')">crowded</button>
+        <button class="opt-btn" data-q="III5" data-v="c" onclick="pickMCQ(this,'III5','a')">wasted</button>
+        <button class="opt-btn" data-q="III5" data-v="d" onclick="pickMCQ(this,'III5','a')">contained</button>
+      </div>
+      <div class="exp-block" id="exp-III5">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Không khí ở nhiều thành phố bị ô nhiễm nặng bởi khói xe."</p>
+        <div class="exp-step">📚 Bước 2 – Dịch 4 đáp án:</div>
+        <ul><li><span class="p-word">polluted</span> <span class="p-mean">bị ô nhiễm</span> – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">crowded</span> <span class="p-mean">đông đúc</span> – dùng cho nơi đông người, không dùng cho không khí.</li><li><span class="p-word">wasted</span> <span class="p-mean">lãng phí</span> – không phù hợp.</li><li><span class="p-word">contained</span> <span class="p-mean">bị kiểm soát/chứa đựng</span> – nghĩa khác.</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p><span class="p-grammar">"polluted with + nguồn gây ô nhiễm"</span> = bị ô nhiễm bởi... Từ khóa: <span class="p-word">vehicle exhaust fumes</span> <span class="p-mean">khói xe</span> → nguyên nhân ô nhiễm → <span class="hl-green">polluted</span>.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">crowded with vehicle fumes</span>: "crowded" = đông đúc (người/vật), không dùng cho không khí. <span class="hl-red">wasted/contained</span>: không có colocation với "exhaust fumes".</p>
+      </div>
+    </div>
+
+    <!-- III.6 -->
+    <div class="q-card" id="card-III6">
+      <div class="q-text"><span class="q-num">6</span>I'm just going to the ________ to buy some medicines and bandage.</div>
+      <div class="opts-grid" id="og-III6">
+        <button class="opt-btn" data-q="III6" data-v="a" onclick="pickMCQ(this,'III6','b')">cinema</button>
+        <button class="opt-btn" data-q="III6" data-v="b" onclick="pickMCQ(this,'III6','b')">chemist's</button>
+        <button class="opt-btn" data-q="III6" data-v="c" onclick="pickMCQ(this,'III6','b')">restaurant</button>
+        <button class="opt-btn" data-q="III6" data-v="d" onclick="pickMCQ(this,'III6','b')">grocery</button>
+      </div>
+      <div class="exp-block" id="exp-III6">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Tôi đang đi đến ________ để mua thuốc và băng."</p>
+        <div class="exp-step">📚 Bước 2 – Dịch 4 đáp án:</div>
+        <ul><li><span class="p-word">cinema</span> <span class="p-mean">rạp phim</span></li><li><span class="p-word">chemist's</span> <span class="p-mean">nhà thuốc, hiệu thuốc</span> – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">restaurant</span> <span class="p-mean">nhà hàng</span></li><li><span class="p-word">grocery</span> <span class="p-mean">tạp hóa</span></li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p><span class="p-word">medicines</span> <span class="p-mean">thuốc</span> + <span class="p-word">bandage</span> <span class="p-mean">băng y tế</span> → chỉ có thể mua ở <span class="hl-green">chemist's</span> (hiệu thuốc). Tiếng Anh Anh gọi nhà thuốc là "chemist's" hoặc "pharmacy".</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">grocery</span>: bán thực phẩm, không bán thuốc. <span class="hl-red">cinema/restaurant</span>: hoàn toàn không liên quan đến thuốc men.</p>
+      </div>
+    </div>
+
+    <!-- III.7 -->
+    <div class="q-card" id="card-III7">
+      <div class="q-text"><span class="q-num">7</span>My neighbourhood is very ________ because everything is near my house.</div>
+      <div class="opts-grid" id="og-III7">
+        <button class="opt-btn" data-q="III7" data-v="a" onclick="pickMCQ(this,'III7','a')">convenient</button>
+        <button class="opt-btn" data-q="III7" data-v="b" onclick="pickMCQ(this,'III7','a')">exciting</button>
+        <button class="opt-btn" data-q="III7" data-v="c" onclick="pickMCQ(this,'III7','a')">comfortable</button>
+        <button class="opt-btn" data-q="III7" data-v="d" onclick="pickMCQ(this,'III7','a')">inconvenient</button>
+      </div>
+      <div class="exp-block" id="exp-III7">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Khu phố của tôi rất ________ vì mọi thứ đều gần nhà tôi."</p>
+        <div class="exp-step">📚 Bước 2 – Dịch 4 đáp án:</div>
+        <ul><li><span class="p-word">convenient</span> <span class="p-mean">thuận tiện</span> – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">exciting</span> <span class="p-mean">thú vị, hào hứng</span></li><li><span class="p-word">comfortable</span> <span class="p-mean">thoải mái</span></li><li><span class="p-word">inconvenient</span> <span class="p-mean">bất tiện</span> – trái nghĩa!</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>Vế giải thích <span class="p-grammar">"because everything is near"</span> = vì mọi thứ đều gần → nghĩa là <span class="hl-green">convenient</span> (thuận tiện). Gần nhà = tiện lợi.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">inconvenient</span>: nghĩa ngược lại – tiền tố "in-" phủ định. <span class="hl-red">comfortable</span>: thoải mái (về cảm giác), không nói về khoảng cách. <span class="hl-red">exciting</span>: hào hứng, không liên quan đến việc "gần".</p>
+      </div>
+    </div>
+
+    <!-- III.8 -->
+    <div class="q-card" id="card-III8">
+      <div class="q-text"><span class="q-num">8</span>________ go to the museum this weekend? – Good idea!</div>
+      <div class="opts-grid" id="og-III8">
+        <button class="opt-btn" data-q="III8" data-v="a" onclick="pickMCQ(this,'III8','c')">Let's</button>
+        <button class="opt-btn" data-q="III8" data-v="b" onclick="pickMCQ(this,'III8','c')">Why don't</button>
+        <button class="opt-btn" data-q="III8" data-v="c" onclick="pickMCQ(this,'III8','c')">Shall we</button>
+        <button class="opt-btn" data-q="III8" data-v="d" onclick="pickMCQ(this,'III8','c')">Could you</button>
+      </div>
+      <div class="exp-block" id="exp-III8">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"________ đi bảo tàng cuối tuần này nhé? – Ý kiến hay đấy!"</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích 4 cấu trúc:</div>
+        <ul>
+          <li><span class="p-word">Let's go</span> – câu cảm thán/đề nghị, thường không có dấu "?" sau đó.</li>
+          <li><span class="p-word">Why don't go</span> – <span class="hl-red">SAI ngữ pháp!</span> Phải là "Why don't WE go".</li>
+          <li><span class="p-word">Shall we go</span> – <span class="hl-green">✓ ĐÚNG</span> – câu hỏi đề nghị hoàn hảo.</li>
+          <li><span class="p-word">Could you go</span> – hỏi khả năng của <em>người khác</em>, không phải cùng đi.</li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p><span class="p-grammar">"Shall we + V?"</span> = Chúng ta...nhé? → Đề nghị cùng làm gì đó. Đáp lại "Good idea!" = Ý kiến hay → hoàn toàn phù hợp.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">Why don't go</span>: thiếu chủ ngữ "we" → sai ngữ pháp. <span class="hl-red">Could you go</span>: "you" = hỏi riêng người khác đi, không phải đề nghị cùng đi.</p>
+      </div>
+    </div>
+
+    <!-- III.9 -->
+    <div class="q-card" id="card-III9">
+      <div class="q-text"><span class="q-num">9</span>Living in a city is ________ convenient than living in the countryside.</div>
+      <div class="opts-grid" id="og-III9">
+        <button class="opt-btn" data-q="III9" data-v="a" onclick="pickMCQ(this,'III9','d')">a lot</button>
+        <button class="opt-btn" data-q="III9" data-v="b" onclick="pickMCQ(this,'III9','d')">much</button>
+        <button class="opt-btn" data-q="III9" data-v="c" onclick="pickMCQ(this,'III9','d')">many</button>
+        <button class="opt-btn" data-q="III9" data-v="d" onclick="pickMCQ(this,'III9','d')">more</button>
+      </div>
+      <div class="exp-block" id="exp-III9">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Sống ở thành phố ________ thuận tiện hơn sống ở vùng nông thôn."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích 4 đáp án:</div>
+        <ul>
+          <li><span class="p-word">a lot</span> – "a lot more convenient" = đúng nhưng không phải đáp án tốt nhất ở đây vì sau "a lot" cần thêm "more".</li>
+          <li><span class="p-word">much</span> – "much more convenient" = thuận tiện hơn nhiều → nhưng câu đã có "convenient" rồi, "much" cần "more" để hoàn chỉnh.</li>
+          <li><span class="p-word">many</span> – <span class="hl-red">SAI</span> – "many" chỉ đếm được, không dùng với tính từ.</li>
+          <li><span class="p-word">more</span> – <span class="hl-green">✓ ĐÚNG</span> – "more convenient than" = thuận tiện hơn.</li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p><span class="p-grammar">"more + adj (dài) + than"</span> = so sánh hơn. <span class="p-word">convenient</span> = 3 âm tiết → dùng <span class="hl-green">more</span>. Câu: "more convenient than" = thuận tiện hơn.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">many</span>: dùng với danh từ đếm được (many books), không dùng với tính từ. <span class="hl-red">much/a lot</span>: nếu dùng cần thêm "more" → "much more convenient" (nhưng câu chỉ có 1 chỗ trống).</p>
+      </div>
+    </div>
+
+    <!-- III.10 -->
+    <div class="q-card" id="card-III10">
+      <div class="q-text"><span class="q-num">10</span>Is there a supermarket in your neighbourhood? – "________"</div>
+      <div class="opts-grid" id="og-III10" style="grid-template-columns:1fr;">
+        <button class="opt-btn" data-q="III10" data-v="a" onclick="pickMCQ(this,'III10','b')" style="margin-bottom:2px;">No, it isn't. The supermarket is near my house.</button>
+        <button class="opt-btn" data-q="III10" data-v="b" onclick="pickMCQ(this,'III10','b')" style="margin-bottom:2px;">Yes. There is one not far from my house.</button>
+        <button class="opt-btn" data-q="III10" data-v="c" onclick="pickMCQ(this,'III10','b')" style="margin-bottom:2px;">There is a supermarket in my neighbourhood.</button>
+        <button class="opt-btn" data-q="III10" data-v="d" onclick="pickMCQ(this,'III10','b')">The supermarket is opposite the park.</button>
+      </div>
+      <div class="exp-block" id="exp-III10">
+        <div class="exp-label">📖 Giải thích chi tiết</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Có siêu thị nào trong khu phố bạn không?" – "________"</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích 4 đáp án:</div>
+        <ul>
+          <li><span class="p-word">No, it isn't. The supermarket is near my house.</span> <span class="p-mean">Không, không có. Siêu thị ở gần nhà tôi.</span> – <span class="hl-red">MÂU THUẪN!</span> Vừa nói "không" vừa nói "siêu thị gần nhà".</li>
+          <li><span class="p-word">Yes. There is one not far from my house.</span> <span class="p-mean">Có. Có một cái không xa nhà tôi.</span> – <span class="hl-green">✓ ĐÚNG</span></li>
+          <li><span class="p-word">There is a supermarket in my neighbourhood.</span> – Lặp lại câu hỏi, không tự nhiên.</li>
+          <li><span class="p-word">The supermarket is opposite the park.</span> – Không trả lời Yes/No.</li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>Câu hỏi Yes/No cần trả lời "Yes/No" trước. <span class="hl-green">"Yes. There is one not far from my house"</span> = Có, có một (siêu thị) không xa nhà tôi → trả lời đầy đủ, tự nhiên, không mâu thuẫn.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">Đáp án a</span>: logic sai – nói "No" nhưng lại xác nhận có siêu thị gần nhà. <span class="hl-red">c, d</span>: không trả lời Yes/No trực tiếp, nghe không tự nhiên.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== EXERCISE IV – VERB TENSES ====== -->
+  <div class="ex-section">
+    <div class="ex-title">⏰ Exercise IV: Put the verbs into the correct tense form.</div>
+
+    <!-- IV.1 -->
+    <div class="q-card" id="card-IV1">
+      <div class="q-text"><span class="q-num">1</span>I ________ (have) a great time in Hoi An <em>at present</em>.</div>
+      <div class="opts-grid" id="og-IV1">
+        <button class="opt-btn" data-q="IV1" data-v="a" onclick="pickMCQ(this,'IV1','b')">have</button>
+        <button class="opt-btn" data-q="IV1" data-v="b" onclick="pickMCQ(this,'IV1','b')">am having</button>
+        <button class="opt-btn" data-q="IV1" data-v="c" onclick="pickMCQ(this,'IV1','b')">had</button>
+        <button class="opt-btn" data-q="IV1" data-v="d" onclick="pickMCQ(this,'IV1','b')">has had</button>
+      </div>
+      <div class="exp-block" id="exp-IV1">
+        <div class="exp-label">📖 Giải thích Thì Hiện tại Tiếp diễn</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Tôi đang có khoảng thời gian tuyệt vời ở Hội An <em>hiện tại</em>."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích 4 đáp án:</div>
+        <ul><li><span class="p-word">have</span> – hiện tại đơn (thói quen/sự thật)</li><li><span class="p-word">am having</span> – hiện tại tiếp diễn – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">had</span> – quá khứ đơn</li><li><span class="p-word">has had</span> – hiện tại hoàn thành</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>Từ khóa: <span class="p-grammar">"at present"</span> = hiện tại, lúc này đang... → <span class="p-grammar">Thì HTTD: S + am/is/are + V-ing</span> → <span class="hl-green">"I am having"</span>. "have a great time" = có khoảng thời gian tuyệt vời.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">have</span>: hiện tại đơn không diễn tả hành động đang xảy ra lúc nói. <span class="hl-red">had</span>: quá khứ, mâu thuẫn với "at present". <span class="hl-red">has had</span>: chủ ngữ "I" cần "have had", không phải "has had".</p>
+      </div>
+    </div>
+
+    <!-- IV.2 -->
+    <div class="q-card" id="card-IV2">
+      <div class="q-text"><span class="q-num">2</span>There ________ (be) <em>always</em> a lot of traffic, day and night.</div>
+      <div class="opts-grid" id="og-IV2">
+        <button class="opt-btn" data-q="IV2" data-v="a" onclick="pickMCQ(this,'IV2','b')">are</button>
+        <button class="opt-btn" data-q="IV2" data-v="b" onclick="pickMCQ(this,'IV2','b')">is</button>
+        <button class="opt-btn" data-q="IV2" data-v="c" onclick="pickMCQ(this,'IV2','b')">was</button>
+        <button class="opt-btn" data-q="IV2" data-v="d" onclick="pickMCQ(this,'IV2','b')">were</button>
+      </div>
+      <div class="exp-block" id="exp-IV2">
+        <div class="exp-label">📖 Giải thích "There is/are"</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"<em>Luôn luôn</em> có rất nhiều giao thông, ngày và đêm."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích:</div>
+        <ul><li><span class="p-word">are</span> – số nhiều, nhưng "traffic" không đếm được</li><li><span class="p-word">is</span> – số ít/không đếm được – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">was/were</span> – quá khứ</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p><span class="p-word">traffic</span> = danh từ <span class="p-grammar">KHÔNG ĐẾM ĐƯỢC</span> (uncountable) → dùng <span class="hl-green">"There is"</span> (không dùng "are"). Từ "always" → hiện tại đơn. → <span class="hl-green">"There is always a lot of traffic"</span>.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">are</span>: chỉ dùng với danh từ số nhiều đếm được (there are many cars). "traffic" là uncountable → phải dùng "is". <span class="hl-red">was/were</span>: quá khứ, mâu thuẫn với "always" (thói quen hiện tại).</p>
+      </div>
+    </div>
+
+    <!-- IV.3 -->
+    <div class="q-card" id="card-IV3">
+      <div class="q-text"><span class="q-num">3</span>My friend, Michelle, and I ________ (spend) five days in Nha Trang <em>last year</em>.</div>
+      <div class="opts-grid" id="og-IV3">
+        <button class="opt-btn" data-q="IV3" data-v="a" onclick="pickMCQ(this,'IV3','c')">spend</button>
+        <button class="opt-btn" data-q="IV3" data-v="b" onclick="pickMCQ(this,'IV3','c')">are spending</button>
+        <button class="opt-btn" data-q="IV3" data-v="c" onclick="pickMCQ(this,'IV3','c')">spent</button>
+        <button class="opt-btn" data-q="IV3" data-v="d" onclick="pickMCQ(this,'IV3','c')">have spent</button>
+      </div>
+      <div class="exp-block" id="exp-IV3">
+        <div class="exp-label">📖 Giải thích Thì Quá khứ Đơn</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Bạn tôi, Michelle, và tôi đã dành 5 ngày ở Nha Trang <em>năm ngoái</em>."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích:</div>
+        <ul><li><span class="p-word">spend</span> – hiện tại đơn</li><li><span class="p-word">are spending</span> – HTTD</li><li><span class="p-word">spent</span> – quá khứ đơn bất quy tắc – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">have spent</span> – hiện tại hoàn thành</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>Từ khóa: <span class="p-grammar">"last year"</span> = năm ngoái → <span class="p-grammar">Thì Quá khứ Đơn</span>. <span class="p-word">spend</span> → bất quy tắc → <span class="hl-green">spent</span> (spend – spent – spent).</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">have spent</span>: hiện tại hoàn thành KHÔNG dùng với "last year" (mốc thời gian cụ thể đã qua). <span class="hl-red">are spending</span>: HTTD không dùng cho sự kiện đã xảy ra.</p>
+      </div>
+    </div>
+
+    <!-- IV.4 -->
+    <div class="q-card" id="card-IV4">
+      <div class="q-text"><span class="q-num">4</span>Outside, the sun ________ (shine) so I'm off to get some fresh air.</div>
+      <div class="opts-grid" id="og-IV4">
+        <button class="opt-btn" data-q="IV4" data-v="a" onclick="pickMCQ(this,'IV4','b')">shines</button>
+        <button class="opt-btn" data-q="IV4" data-v="b" onclick="pickMCQ(this,'IV4','b')">is shining</button>
+        <button class="opt-btn" data-q="IV4" data-v="c" onclick="pickMCQ(this,'IV4','b')">shone</button>
+        <button class="opt-btn" data-q="IV4" data-v="d" onclick="pickMCQ(this,'IV4','b')">has shone</button>
+      </div>
+      <div class="exp-block" id="exp-IV4">
+        <div class="exp-label">📖 Giải thích Thì Hiện tại Tiếp diễn</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Bên ngoài, mặt trời đang chiếu sáng nên tôi ra ngoài hít thở không khí trong lành."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích:</div>
+        <ul><li><span class="p-word">shines</span> – hiện tại đơn (thói quen)</li><li><span class="p-word">is shining</span> – HTTD – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">shone</span> – quá khứ đơn bất quy tắc</li><li><span class="p-word">has shone</span> – hiện tại hoàn thành</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>Hành động đang xảy ra ngay lúc nói → <span class="p-grammar">HTTD</span>. Bằng chứng: <span class="p-grammar">"so I'm off"</span> (so I am going out) = vì thế tôi đang ra ngoài → đang diễn ra ở thời điểm hiện tại → <span class="hl-green">is shining</span>.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">shines</span>: hiện tại đơn diễn tả sự thật khoa học (the sun shines = mặt trời chiếu sáng) nhưng đây là ngữ cảnh thời điểm cụ thể → cần HTTD. <span class="hl-red">shone/has shone</span>: quá khứ, mâu thuẫn.</p>
+      </div>
+    </div>
+
+    <!-- IV.5 -->
+    <div class="q-card" id="card-IV5">
+      <div class="q-text"><span class="q-num">5</span>We <em>usually</em> ________ (stay) at home for a holiday, but <em>this holiday</em> we ________ (travel) abroad.</div>
+      <div class="opts-grid" id="og-IV5">
+        <button class="opt-btn" data-q="IV5" data-v="a" onclick="pickMCQ(this,'IV5','a')">stay – are travelling</button>
+        <button class="opt-btn" data-q="IV5" data-v="b" onclick="pickMCQ(this,'IV5','a')">are staying – travel</button>
+        <button class="opt-btn" data-q="IV5" data-v="c" onclick="pickMCQ(this,'IV5','a')">stayed – were travelling</button>
+        <button class="opt-btn" data-q="IV5" data-v="d" onclick="pickMCQ(this,'IV5','a')">stay – travel</button>
+      </div>
+      <div class="exp-block" id="exp-IV5">
+        <div class="exp-label">📖 Giải thích – Hai thì trong một câu</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Chúng tôi <em>thường</em> ở nhà vào kỳ nghỉ, nhưng <em>kỳ nghỉ này</em> chúng tôi đang đi du lịch nước ngoài."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích từng vế:</div>
+        <ul>
+          <li>Vế 1: <span class="p-grammar">"usually"</span> → thói quen → <span class="p-grammar">Hiện tại Đơn</span> → <span class="hl-green">stay</span></li>
+          <li>Vế 2: <span class="p-grammar">"this holiday"</span> + "but" → đang xảy ra, đối lập với thói quen → <span class="p-grammar">HTTD</span> → <span class="hl-green">are travelling</span></li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>→ <span class="hl-green">stay – are travelling</span>. "Usually" = thường → HTĐ. "But this holiday" = nhưng lần này (đặc biệt, đang diễn ra) → HTTD. Đây là dạng câu đặc trưng phân biệt HTĐ và HTTD!</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">stay – travel</span>: cả hai HTĐ không thể hiện được sự đặc biệt "lần này khác". <span class="hl-red">are staying – travel</span>: "usually" cần HTĐ, không phải HTTD.</p>
+      </div>
+    </div>
+
+    <!-- IV.6 -->
+    <div class="q-card" id="card-IV6">
+      <div class="q-text"><span class="q-num">6</span>________ (be) there any bookshops in your neighbourhood?</div>
+      <div class="opts-grid" id="og-IV6">
+        <button class="opt-btn" data-q="IV6" data-v="a" onclick="pickMCQ(this,'IV6','b')">Is</button>
+        <button class="opt-btn" data-q="IV6" data-v="b" onclick="pickMCQ(this,'IV6','b')">Are</button>
+        <button class="opt-btn" data-q="IV6" data-v="c" onclick="pickMCQ(this,'IV6','b')">Was</button>
+        <button class="opt-btn" data-q="IV6" data-v="d" onclick="pickMCQ(this,'IV6','b')">Were</button>
+      </div>
+      <div class="exp-block" id="exp-IV6">
+        <div class="exp-label">📖 Giải thích "Is/Are there...?"</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"________ có hiệu sách nào trong khu phố bạn không?"</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích:</div>
+        <ul><li><span class="p-word">Is there</span> – dùng với danh từ số ít hoặc không đếm được.</li><li><span class="p-word">Are there</span> – dùng với danh từ số nhiều – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">Was/Were</span> – quá khứ</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p><span class="p-word">any bookshops</span> → <span class="p-grammar">"bookshops" = số nhiều</span> → <span class="hl-green">"Are there any bookshops...?"</span>. "any" thường dùng trong câu phủ định và câu hỏi.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">Is there any bookshops</span>: "bookshops" số nhiều không dùng với "Is". <span class="hl-red">Was/Were</span>: quá khứ, không phù hợp ngữ cảnh hỏi hiện tại.</p>
+      </div>
+    </div>
+
+    <!-- IV.7 -->
+    <div class="q-card" id="card-IV7">
+      <div class="q-text"><span class="q-num">7</span>My grandma ________ (not like) living in the city.</div>
+      <div class="opts-grid" id="og-IV7">
+        <button class="opt-btn" data-q="IV7" data-v="a" onclick="pickMCQ(this,'IV7','b')">don't like</button>
+        <button class="opt-btn" data-q="IV7" data-v="b" onclick="pickMCQ(this,'IV7','b')">doesn't like</button>
+        <button class="opt-btn" data-q="IV7" data-v="c" onclick="pickMCQ(this,'IV7','b')">didn't like</button>
+        <button class="opt-btn" data-q="IV7" data-v="d" onclick="pickMCQ(this,'IV7','b')">isn't liking</button>
+      </div>
+      <div class="exp-block" id="exp-IV7">
+        <div class="exp-label">📖 Giải thích Hiện tại Đơn phủ định</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Bà tôi không thích sống ở thành phố."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích:</div>
+        <ul><li><span class="p-word">don't like</span> – phủ định HTĐ với I/you/we/they</li><li><span class="p-word">doesn't like</span> – phủ định HTĐ với he/she/it – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">didn't like</span> – quá khứ</li><li><span class="p-word">isn't liking</span> – <span class="hl-red">SAI</span> – "like" là stative verb!</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>Chủ ngữ: <span class="p-word">my grandma</span> = she → <span class="p-grammar">HTĐ phủ định: S + doesn't + V</span> → <span class="hl-green">"doesn't like"</span>. "like" diễn tả sở thích lâu dài → HTĐ.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">don't like</span>: "grandma" = she → phải dùng "doesn't", không phải "don't". <span class="hl-red">isn't liking</span>: <span class="p-grammar">Stative verbs</span> (like, love, hate, want, know...) KHÔNG dùng được với HTTD!</p>
+      </div>
+    </div>
+
+    <!-- IV.8 -->
+    <div class="q-card" id="card-IV8">
+      <div class="q-text"><span class="q-num">8</span>How ________ (I / get) to the railway station? – Go straight ahead then turn left.</div>
+      <div class="opts-grid" id="og-IV8">
+        <button class="opt-btn" data-q="IV8" data-v="a" onclick="pickMCQ(this,'IV8','a')">do I get</button>
+        <button class="opt-btn" data-q="IV8" data-v="b" onclick="pickMCQ(this,'IV8','a')">am I getting</button>
+        <button class="opt-btn" data-q="IV8" data-v="c" onclick="pickMCQ(this,'IV8','a')">did I get</button>
+        <button class="opt-btn" data-q="IV8" data-v="d" onclick="pickMCQ(this,'IV8','a')">will I get</button>
+      </div>
+      <div class="exp-block" id="exp-IV8">
+        <div class="exp-label">📖 Giải thích Câu hỏi Hiện tại Đơn</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Tôi đến ga đường sắt bằng cách nào?" – "Đi thẳng rồi rẽ trái."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích:</div>
+        <ul><li><span class="p-word">do I get</span> – câu hỏi HTĐ – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">am I getting</span> – HTTD</li><li><span class="p-word">did I get</span> – quá khứ đơn</li><li><span class="p-word">will I get</span> – tương lai</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>Hỏi đường = hỏi cách thức, thói quen, thực tế → <span class="p-grammar">HTĐ</span>. <span class="p-grammar">"How + do/does + S + V?"</span> → <span class="hl-green">"How do I get to...?"</span> = Tôi đến... bằng cách nào? Đây là cấu trúc hỏi đường chuẩn.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">am I getting</span>: HTTD không dùng để hỏi đường (không phải hành động đang xảy ra). <span class="hl-red">did I get</span>: quá khứ, đã đến rồi thì hỏi làm gì. <span class="hl-red">will I get</span>: tương lai, không phù hợp với câu hỏi đường thông thường.</p>
+      </div>
+    </div>
+
+    <!-- IV.9 -->
+    <div class="q-card" id="card-IV9">
+      <div class="q-text"><span class="q-num">9</span>Where ________ (you / go) now? – We ________ (go) to Tan Ky House.</div>
+      <div class="opts-grid" id="og-IV9">
+        <button class="opt-btn" data-q="IV9" data-v="a" onclick="pickMCQ(this,'IV9','a')">are you going – are going</button>
+        <button class="opt-btn" data-q="IV9" data-v="b" onclick="pickMCQ(this,'IV9','a')">do you go – go</button>
+        <button class="opt-btn" data-q="IV9" data-v="c" onclick="pickMCQ(this,'IV9','a')">did you go – went</button>
+        <button class="opt-btn" data-q="IV9" data-v="d" onclick="pickMCQ(this,'IV9','a')">will you go – will go</button>
+      </div>
+      <div class="exp-block" id="exp-IV9">
+        <div class="exp-label">📖 Giải thích Câu hỏi HTTD</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Bạn đang đi đâu vậy? – Chúng tôi đang đi đến Nhà cổ Tấn Ký."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích:</div>
+        <ul><li><span class="p-word">are you going – are going</span> – HTTD – <span class="hl-green">✓ ĐÚNG</span></li><li><span class="p-word">do you go – go</span> – HTĐ (thói quen)</li><li><span class="p-word">did you go – went</span> – quá khứ</li><li><span class="p-word">will you go – will go</span> – tương lai</li></ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>Từ khóa: <span class="p-grammar">"now"</span> = bây giờ → hành động đang diễn ra → <span class="p-grammar">HTTD</span>. <span class="p-grammar">"Where + are/am/is + S + going?"</span> → <span class="hl-green">"Where are you going?"</span>. Câu trả lời cũng dùng HTTD: <span class="hl-green">"We are going to..."</span>.</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">do you go</span>: hỏi thói quen (Where do you go every day?), không phải hỏi ngay lúc này. <span class="hl-red">did/will</span>: sai thì so với "now".</p>
+      </div>
+    </div>
+
+    <!-- IV.10 -->
+    <div class="q-card" id="card-IV10">
+      <div class="q-text"><span class="q-num">10</span>________ (be) there a post office nearby? – No. There ________ (be) no post offices near here.</div>
+      <div class="opts-grid" id="og-IV10">
+        <button class="opt-btn" data-q="IV10" data-v="a" onclick="pickMCQ(this,'IV10','b')">Is – is</button>
+        <button class="opt-btn" data-q="IV10" data-v="b" onclick="pickMCQ(this,'IV10','b')">Is – are</button>
+        <button class="opt-btn" data-q="IV10" data-v="c" onclick="pickMCQ(this,'IV10','b')">Are – is</button>
+        <button class="opt-btn" data-q="IV10" data-v="d" onclick="pickMCQ(this,'IV10','b')">Are – are</button>
+      </div>
+      <div class="exp-block" id="exp-IV10">
+        <div class="exp-label">📖 Giải thích "There is/are" – Câu hỏi và phủ định</div>
+        <div class="exp-step">📌 Bước 1 – Dịch câu:</div><p>"Có bưu điện nào gần đây không? – Không. Không có bưu điện nào gần đây cả."</p>
+        <div class="exp-step">📚 Bước 2 – Phân tích từng vế:</div>
+        <ul>
+          <li>Vế 1: <span class="p-word">"a post office"</span> = số ít → <span class="hl-green">Is there</span> a post office?</li>
+          <li>Vế 2: <span class="p-word">"no post offices"</span> = số nhiều (plural) → <span class="hl-green">There are</span> no post offices.</li>
+        </ul>
+        <div class="exp-step">✅ Bước 3 – Tại sao đúng?</div>
+        <p>→ <span class="hl-green">Is – are</span>. <br>
+        Câu hỏi: "a post office" (số ít) → "Is there?". <br>
+        Câu trả lời phủ định: "post offices" (số nhiều) → "There are no post offices". Đây là dạng câu chuyển đổi số ít → số nhiều rất hay gặp!</p>
+        <div class="exp-step">❌ Bước 4 – Tại sao sai?</div>
+        <p><span class="hl-red">Is – is</span>: câu trả lời có "post offices" (số nhiều) nên không dùng "is". <span class="hl-red">Are – ...</span>: câu hỏi có "a post office" (số ít) nên không dùng "Are".</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-area">
+    <button class="submit-btn" onclick="openNamePop()">🏙️ NỘP BÀI &amp; XEM KẾT QUẢ</button>
+  </div>
+</div>
+
+<!-- WORD CHOOSER POPUP -->
+<div class="overlay" id="wordPopup">
+  <div class="popup-box">
+    <h3>🏪 Chọn tên địa điểm:</h3>
+    <div class="popup-words" id="popWords"></div>
+    <button class="popup-cancel" onclick="closeGap()">✖ Đóng</button>
+  </div>
+</div>
+
+<!-- NAME POPUP -->
+<div class="overlay" id="nameOverlay">
+  <div class="name-popup-box">
+    <h2>✍️ Nhập tên của bạn</h2>
+    <p>Để nhận kết quả được cá nhân hóa!</p>
+    <input type="text" class="name-input" id="stuName" placeholder="Ví dụ: Nguyễn Văn A..." maxlength="50"
+      onkeydown="if(event.key==='Enter')doConfirm()">
+    <div class="name-err" id="nameErr">⚠️ Vui lòng nhập tên trước khi xem điểm nhé!</div>
+    <br>
+    <button class="confirm-btn" onclick="doConfirm()">✅ Xác nhận &amp; Xem điểm</button>
+  </div>
+</div>
+
+<!-- RESULT POPUP -->
+<div class="overlay" id="resultOverlay">
+  <div class="result-box">
+    <div class="r-emoji" id="rEmoji">🎉</div>
+    <div class="r-title" id="rTitle">KẾT QUẢ</div>
+    <div class="r-name" id="rName"></div>
+    <div class="r-score" id="rScore">0/33</div>
+    <div class="r-comment" id="rComment"></div>
+    <img class="r-meme" id="rMeme" src="" alt="meme" onerror="this.style.display='none'">
+    <br>
+    <button class="r-close" onclick="document.getElementById('resultOverlay').classList.remove('active')">🔄 Đóng &amp; Ôn lại</button>
+  </div>
+</div>
+
+<!-- AUDIO -->
+<audio id="sndWrong1" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/mission_impossible.mp3" preload="auto"></audio>
+<audio id="sndWrong2" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3" preload="auto"></audio>
+<audio id="sndIntro" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/harry_potter.mp3" preload="auto"></audio>
+
+<script>
+/* ============================================================
+   FLOATING CITY OBJECTS
+============================================================ */
+(()=>{
+  const items=['🏠','🏪','🚗','🏙️','🌆','🛺','🏬','🚦','🌃','💡','🗺️','🏦','🎬','📮'];
+  const layer=document.getElementById('floatLayer');
+  for(let i=0;i<28;i++){
+    const d=document.createElement('div');
+    d.className='fobj'+(Math.random()>.5?' side':'');
+    d.textContent=items[Math.floor(Math.random()*items.length)];
+    d.style.cssText=`left:${Math.random()*100}vw;font-size:${14+Math.random()*20}px;animation-duration:${9+Math.random()*15}s;animation-delay:${Math.random()*10}s;opacity:${0.07+Math.random()*0.12};`;
+    layer.appendChild(d);
+  }
+})();
+
+/* ============================================================
+   STICKY REMINDER
+============================================================ */
+function toggleReminder(){
+  const r=document.getElementById('reminder');
+  const t=document.getElementById('rem-toggle');
+  if(r.classList.contains('expanded')){
+    r.classList.remove('expanded');
+    t.textContent='▼ Xem';
+  } else {
+    r.classList.add('expanded');
+    t.textContent='▲ Thu';
+  }
+}
+
+/* ============================================================
+   INTRO AUDIO (Harry Potter) – play once
+============================================================ */
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    const a=document.getElementById('sndIntro');
+    if(a){a.volume=0.55;a.play().catch(()=>{});}
+  },800);
+});
+
+/* ============================================================
+   AUDIO
+============================================================ */
+let wrongToggle=false;
+function playWrong(){
+  wrongToggle=!wrongToggle;
+  const a=document.getElementById(wrongToggle?'sndWrong1':'sndWrong2');
+  if(a){a.currentTime=0;a.volume=0.6;a.play().catch(()=>{});}
+}
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+function playCorrect(){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.connect(g);g.connect(AC.destination);
+  o.type='sine';o.frequency.setValueAtTime(880,AC.currentTime);
+  o.frequency.exponentialRampToValueAtTime(1320,AC.currentTime+.15);
+  g.gain.setValueAtTime(.28,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+.4);
+  o.start();o.stop(AC.currentTime+.4);
+}
+
+/* ============================================================
+   CONFETTI
+============================================================ */
+function confetti(){
+  const c=['#f72585','#4cc9f0','#f8961e','#43e97b','#7209b7','#3a0ca3'];
+  for(let i=0;i<38;i++){
+    const d=document.createElement('div');d.className='conf';
+    d.style.cssText=`left:${Math.random()*100}vw;background:${c[Math.floor(Math.random()*c.length)]};width:${7+Math.random()*8}px;height:${10+Math.random()*10}px;animation-delay:${Math.random()*.5}s;animation-duration:${1+Math.random()*.6}s;`;
+    document.body.appendChild(d);setTimeout(()=>d.remove(),2000);
+  }
+}
+
+/* ============================================================
+   STATE
+============================================================ */
+let score=0,answered=0;
+const TOTAL=33;
+const done={};
+let usedWords=[];
+let curGap=null;
+
+function updUI(){
+  document.getElementById('scoreDisp').textContent=score;
+  document.getElementById('answDisp').textContent=answered;
+  document.getElementById('progBar').style.width=((answered/TOTAL)*100)+'%';
+}
+
+/* ============================================================
+   MCQ HANDLER
+============================================================ */
+function pickMCQ(btn,qid,correct){
+  if(done[qid]) return;
+  done[qid]=true;answered++;
+  const grid=btn.parentElement;
+  const all=grid.querySelectorAll('.opt-btn');
+  all.forEach(b=>{
+    b.disabled=true;
+    if(b.dataset.v===correct) b.classList.add('correct');
+  });
+  if(btn.dataset.v===correct){
+    score++;btn.classList.add('correct');playCorrect();confetti();
+  } else {
+    btn.classList.add('wrong');playWrong();
+  }
+  document.getElementById('exp-'+qid).classList.add('show');
+  updUI();
+}
+
+/* ============================================================
+   GAP FILL (Exercise II)
+============================================================ */
+const placesWords=['post office','bookshop','cinema','restaurant','bank','grocery','art gallery','bakery'];
+const gapAns={
+  'II1':'post office','II2':'bookshop','II3':'cinema','II4':'restaurant',
+  'II5':'bank','II6':'grocery','II7':'art gallery','II8':'bakery'
+};
+
+function openGap(gid){
+  if(done['gap-'+gid]) return;
+  curGap=gid;
+  const cont=document.getElementById('popWords');
+  cont.innerHTML='';
+  const avail=placesWords.filter(w=>!usedWords.includes(w));
+  avail.forEach(w=>{
+    const btn=document.createElement('button');
+    btn.className='popup-word';btn.textContent=w;
+    btn.onclick=()=>handleGap(gid,w);
+    cont.appendChild(btn);
+  });
+  document.getElementById('wordPopup').classList.add('active');
+}
+function closeGap(){document.getElementById('wordPopup').classList.remove('active');curGap=null;}
+function handleGap(gid,chosen){
+  closeGap();
+  if(done['gap-'+gid]) return;
+  done['gap-'+gid]=true;answered++;
+  const correct=gapAns[gid];
+  const gbtn=document.getElementById('gap-'+gid);
+  gbtn.textContent=chosen;gbtn.disabled=true;
+  if(chosen===correct){
+    score++;gbtn.classList.add('correct');playCorrect();confetti();
+    usedWords.push(chosen);
+    const chip=document.getElementById('chip-'+chosen);
+    if(chip) chip.classList.add('used');
+  } else {
+    gbtn.classList.add('wrong');playWrong();
+  }
+  document.getElementById('exp-'+gid).classList.add('show');
+  updUI();
+}
+
+/* ============================================================
+   NAME & RESULT
+============================================================ */
+function openNamePop(){document.getElementById('nameOverlay').classList.add('active');document.getElementById('stuName').focus();}
+function doConfirm(){
+  const name=document.getElementById('stuName').value.trim();
+  const inp=document.getElementById('stuName');
+  const err=document.getElementById('nameErr');
+  if(!name){inp.classList.add('error');err.style.display='block';return;}
+  inp.classList.remove('error');err.style.display='none';
+  document.getElementById('nameOverlay').classList.remove('active');
+  showResult(name);
+}
+document.getElementById('stuName').addEventListener('keydown',e=>{if(e.key==='Enter')doConfirm();});
+
+function showResult(name){
+  const pct=score/TOTAL;
+  let emoji,title,comment,meme;
+  if(pct===1){emoji='🏆';title='THIÊN TÀI TUYỆT ĐỐI!';comment='Xuất sắc! Không sai câu nào – đỉnh của đỉnh! 🎊';meme='https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif';}
+  else if(pct>=0.8){emoji='🌟';title='XUẤT SẮC LẮM!';comment='Rất tốt! Còn một chút xíu nữa là perfect rồi! 💪';meme='https://media.giphy.com/media/3otPoS81loriI9sO8o/giphy.gif';}
+  else if(pct>=0.6){emoji='👍';title='KHÁ TỐT!';comment='Nền tảng ổn rồi, tiếp tục luyện tập thêm nhé! 📖';meme='https://media.giphy.com/media/3otPoS81loriI9sO8o/giphy.gif';}
+  else{emoji='😅';title='CỐ LÊN NÀO!';comment='Nhớ đọc kỹ giải thích và ghi chép vào vở nhé! 🚀';meme='https://media.giphy.com/media/d2lcHJTG5Tscg/giphy.gif';}
+  document.getElementById('rEmoji').textContent=emoji;
+  document.getElementById('rTitle').textContent=title;
+  document.getElementById('rName').textContent='👤 '+name;
+  document.getElementById('rScore').textContent=score+'/'+TOTAL+' câu đúng';
+  document.getElementById('rComment').textContent=comment;
+  document.getElementById('rMeme').src=meme;
+  document.getElementById('resultOverlay').classList.add('active');
+}
+
+updUI();
+</script>
+</body>
+</html>

@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Master Quiz - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-glass: rgba(255, 255, 255, 0.45);
+            --border-glass: rgba(255, 255, 255, 0.6);
+            --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --color-word: #0056b3;
+            --color-mean: #cc4e00;
+            --color-green: #198754;
+            --color-red: #dc3545;
+            --btn-hover: rgba(255, 255, 255, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #ffc3a0, #ffafbd, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Emojis Background */
+        .floating-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .float-item {
+            position: absolute;
+            font-size: 3rem;
+            animation: floatAnim 10s linear infinite;
+            opacity: 0.4;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));
+        }
+        @keyframes floatAnim {
+            0% { transform: translateY(110vh) rotate(0deg); }
+            100% { transform: translateY(-10vh) rotate(360deg); }
+        }
+
+        /* UI Structure */
+        .header {
+            position: absolute;
+            top: 10px; left: 20px;
+            font-weight: 800;
+            color: #555;
+            z-index: 10;
+            font-size: 14px;
+            background: var(--primary-glass);
+            padding: 5px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-glass);
+        }
+
+        .sticky-note {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background: rgba(255, 243, 205, 0.85);
+            backdrop-filter: blur(10px);
+            border-left: 5px solid #ffc107;
+            padding: 10px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-glass);
+            font-weight: 600;
+            font-size: 13px;
+            max-width: 600px;
+            text-align: justify;
+            color: #664d03;
+            animation: bounceIn 0.8s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { top: -50px; opacity: 0; }
+            50% { top: 20px; }
+            100% { top: 10px; opacity: 1; }
+        }
+
+        .main-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            padding-top: 80px; /* Space for sticky */
+            padding-bottom: 20px;
+            gap: 20px;
+            z-index: 1;
+            position: relative;
+        }
+
+        .pane {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            margin: 0 15px;
+            background: var(--primary-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 24px;
+            box-shadow: var(--shadow-glass);
+            scroll-behavior: smooth;
+        }
+        
+        .pane::-webkit-scrollbar { width: 8px; }
+        .pane::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        /* Reading Content */
+        .passage-title {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .paragraph {
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .trans-btn {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #444;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            display: block;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .trans-btn:hover { transform: scale(1.05); }
+        .translation {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            border-left: 4px solid #a8edea;
+            border-radius: 8px;
+            font-style: italic;
+            font-size: 15px;
+        }
+
+        /* Glossary Table */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            font-size: 14px;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.8);
+            text-align: left;
+        }
+        .glossary-table th { background: rgba(161, 196, 253, 0.5); font-weight: 800; }
+
+        /* Questions */
+        .q-card {
+            background: rgba(255,255,255,0.6);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            border: 1px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .q-text {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            color: #1a252f;
+        }
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .opt-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid transparent;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .opt-btn:hover { background: white; border-color: #a1c4fd; transform: translateY(-2px); }
+        .opt-btn.correct { background: #d4edda !important; border-color: #28a745 !important; color: #155724; }
+        .opt-btn.wrong { background: #f8d7da !important; border-color: #dc3545 !important; color: #721c24; }
+        .opt-btn:disabled { cursor: not-allowed; opacity: 0.8; transform: none; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake-anim { animation: shake 0.4s ease; }
+
+        /* Explanation Styling (MASTER LEVEL) */
+        .explanation {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            border-left: 5px solid #ffafbd;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        
+        .p-word { color: var(--color-word); font-weight: 800; }
+        .p-mean { color: var(--color-mean); font-weight: 600; }
+        .p-grammar { color: var(--color-red); text-decoration: underline; font-weight: 700; font-style: italic;}
+        .hl-green { color: var(--color-green); font-weight: 800; }
+        .hl-red { color: var(--color-red); text-decoration: line-through; font-weight: 600; }
+
+        /* Welcome & Result Overlay */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .modal-glass {
+            background: rgba(255, 255, 255, 0.85);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            max-width: 500px;
+            width: 90%;
+            border: 2px solid white;
+        }
+        .modal-glass h1 { color: #d63384; font-weight: 900; margin-bottom: 20px; font-size: 2rem;}
+        .start-btn, .submit-btn {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            border-radius: 30px;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 154, 158, 0.4);
+            transition: 0.3s;
+        }
+        .start-btn:hover, .submit-btn:hover { transform: scale(1.05); }
+        .submit-btn { width: 100%; margin-top: 20px; display: block;}
+        
+        #student-name {
+            width: 100%; padding: 12px; border-radius: 10px; border: 2px solid #a1c4fd;
+            font-size: 16px; margin-bottom: 20px; outline: none; font-weight: 600;
+        }
+        .gif-result { width: 100%; max-height: 250px; border-radius: 12px; margin: 15px 0; object-fit: cover;}
+
+    </style>
+</head>
+<body>
+
+    <div class="floating-bg" id="floating-bg"></div>
+
+    <div class="header">Giáo viên tạo: Ms MS Chí Nên</div>
+
+    <div class="sticky-note">
+        📢 <b>LỜI NHẮN TỪ MS MS Chí Nên:</b><br>
+        Kéo câu làm tới đâu vẫn hiện tới đó! Hãy tự giác tra cứu từ mới bằng Google Dịch/ChatGPT để hiểu rõ nội dung câu hỏi, KHÔNG ĐƯỢC lười suy nghĩ mà chọn bừa. Tra cứu từ điển Cambridge nghe và đọc theo. Chỉ có <b>đọc thật kỹ phần giải thích</b> rồi ghi lại từ/cấu trúc vào vở thì mới thật sự giỏi lên. Làm cho xong mà không học thì chỉ tốn thời gian vô ích nhé các em!
+    </div>
+
+    <div class="overlay" id="start-overlay">
+        <div class="modal-glass">
+            <h1>🌟 BÀI TẬP ĐỌC HIỂU 🌟</h1>
+            <p style="margin-bottom: 20px; font-size: 16px; font-weight: 600;">Lưu ý: Bật âm thanh thiết bị. Nhạc nền mở bài chỉ phát 1 lần duy nhất lúc đầu để các em tập trung làm bài.</p>
+            <button class="start-btn" onclick="startQuiz()">BẮT ĐẦU LÀM BÀI 🚀</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="result-overlay" style="display: none;">
+        <div class="modal-glass">
+            <h1 id="res-title">KẾT QUẢ CỦA EM</h1>
+            <h2 id="res-name" style="color: #0056b3; margin-bottom: 10px;"></h2>
+            <h1 id="res-score" style="font-size: 3rem; color: #28a745; margin: 10px 0;"></h1>
+            <h3 id="res-scale" style="color: #d63384; margin-bottom: 10px;"></h3>
+            <p id="res-comment" style="font-weight: 700; font-size: 18px; margin-bottom: 15px;"></p>
+            <img id="res-gif" class="gif-result" src="" alt="Result GIF">
+            <button class="start-btn" onclick="location.reload()">LÀM LẠI BÀI 🔄</button>
+        </div>
+    </div>
+
+    <audio id="bgm-start" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/super_mario_bros.mp3"></audio>
+    <audio id="snd-ding" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+    <audio id="snd-duck" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3"></audio>
+
+    <div class="main-container">
+        
+        <div class="pane left">
+            <h2 class="passage-title">📖 Passage IX: Health & Diet</h2>
+            <div class="paragraph">
+                A good diet and regular exercise should keep you healthy. Your body needs the vitamins and <b>(1)___</b> found in vegetables and fruit. It also needs enough exercise to <b>(2)___</b> muscles and bones and reduce your chances of getting sick.
+                <button class="trans-btn" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                <div class="translation">Một chế độ ăn uống tốt và tập thể dục thường xuyên sẽ giúp bạn khỏe mạnh. Cơ thể bạn cần các vitamin và chất dinh dưỡng có trong rau củ và trái cây. Nó cũng cần tập thể dục đủ để làm chắc khỏe cơ bắp và xương, đồng thời giảm nguy cơ mắc bệnh.</div>
+            </div>
+
+            <div class="paragraph">
+                What kind of a diet is best? At the top of anyone's list should be fresh fruit and vegetables. You also need to eat <b>(3)___</b> such as rice, wheat, oats, or corn. Dairy products in the form of milk and cheese provide your body with necessary calcium. Protein comes <b>(4)___</b> meat and nuts. Don't eat too much meat, <b>(5)___</b>. Eating too much red meat, in particular, is not good for your heart, and it might increase your chances of getting cancer.
+                <button class="trans-btn" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                <div class="translation">Loại chế độ ăn uống nào là tốt nhất? Đứng đầu danh sách của bất kỳ ai nên là trái cây và rau củ tươi. Bạn cũng cần ăn các loại ngũ cốc như gạo, lúa mì, yến mạch hoặc ngô. Các sản phẩm từ sữa dưới dạng sữa tươi và phô mai cung cấp cho cơ thể bạn lượng canxi cần thiết. Protein đến từ thịt và các loại hạt. Tuy nhiên, đừng ăn quá nhiều thịt. Việc ăn quá nhiều thịt đỏ nói riêng không tốt cho tim mạch của bạn, và nó có thể làm tăng nguy cơ mắc bệnh ung thư.</div>
+            </div>
+
+            <div class="paragraph">
+                Try not to eat junk food. <b>(6)___</b> junk food? Potato chips, donuts, candy, and cookies are junk food. Many people who eat junk food fail to eat healthy food because they like the taste of junk food <b>(7)___</b>. If kids eat a lot of junk food, they will develop bad eating habits. Being healthy is not that hard. If you eat right, get regular exercise, and avoid <b>(8)___</b> habits, you will thank yourself in the future.
+                <button class="trans-btn" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                <div class="translation">Cố gắng đừng ăn đồ ăn vặt. Đồ ăn vặt là gì? Khoai tây chiên, bánh rán, kẹo và bánh quy là đồ ăn vặt. Nhiều người ăn đồ ăn vặt thất bại trong việc ăn đồ ăn lành mạnh bởi vì họ thích hương vị của đồ ăn vặt hơn. Nếu trẻ em ăn nhiều đồ ăn vặt, chúng sẽ phát triển những thói quen ăn uống xấu. Việc khỏe mạnh không quá khó. Nếu bạn ăn uống đúng cách, tập thể dục thường xuyên và tránh những thói quen không lành mạnh, bạn sẽ cảm ơn chính mình trong tương lai.</div>
+            </div>
+
+            <table class="glossary-table">
+                <tr><th>Từ vựng (Vocabulary)</th><th>Loại từ (POS)</th><th>Nghĩa (Meaning)</th></tr>
+                <tr><td>Diet</td><td>(n)</td><td>Chế độ ăn uống</td></tr>
+                <tr><td>Nutrient</td><td>(n)</td><td>Chất dinh dưỡng</td></tr>
+                <tr><td>Strengthen</td><td>(v)</td><td>Làm cho chắc khỏe</td></tr>
+                <tr><td>Grain</td><td>(n)</td><td>Ngũ cốc, hạt</td></tr>
+                <tr><td>Dairy product</td><td>(n)</td><td>Sản phẩm làm từ sữa</td></tr>
+                <tr><td>Calcium</td><td>(n)</td><td>Canxi</td></tr>
+                <tr><td>Particular</td><td>(adj)</td><td>Cụ thể, đặc biệt</td></tr>
+                <tr><td>Cancer</td><td>(n)</td><td>Bệnh ung thư</td></tr>
+                <tr><td>Junk food</td><td>(n)</td><td>Đồ ăn vặt, đồ ăn rác (kém dinh dưỡng)</td></tr>
+                <tr><td>Habit</td><td>(n)</td><td>Thói quen</td></tr>
+            </table>
+
+            <hr style="margin: 40px 0; border: 1px dashed #fff;">
+
+            <h2 class="passage-title">📖 Passage X: Stress Management</h2>
+            <div class="paragraph">
+                Practical stress management can help students deal with their worries and become more productive, competent and efficient. First of all, students must be able to design and stick to a timetable. Choose a relaxing break between work and study, even if it's just taking out time to breathe. In addition, a healthy lifestyle is essential for students. Let's drink more water as well as take out time to get some air and exercise.
+                <button class="trans-btn" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                <div class="translation">Quản lý căng thẳng thực tế có thể giúp học sinh đối phó với những lo lắng và trở nên năng suất, có năng lực và hiệu quả hơn. Trước hết, học sinh phải có khả năng thiết kế và tuân thủ một thời gian biểu. Hãy chọn một khoảng thời gian nghỉ ngơi thư giãn giữa việc làm và học, ngay cả khi chỉ là dành thời gian để thở. Ngoài ra, một lối sống lành mạnh là điều thiết yếu đối với học sinh. Hãy uống nhiều nước hơn cũng như dành thời gian ra ngoài hít thở không khí và tập thể dục.</div>
+            </div>
+
+            <div class="paragraph">
+                Furthermore, organization is very important in academic life for dealing with stress. By keeping academic notes organized, turning in assignments on time, and keeping track of all deadlines, stress can be reduced to a great extent. Stress can also get worse if a person feels lonely. Therefore, by letting out all your thoughts to someone you trust, you immediately feel a lot better. 
+                <button class="trans-btn" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                <div class="translation">Hơn nữa, sự tổ chức sắp xếp rất quan trọng trong đời sống học tập để đối phó với căng thẳng. Bằng cách giữ cho ghi chép học tập gọn gàng, nộp bài tập đúng hạn và theo dõi tất cả các thời hạn (deadline), căng thẳng có thể được giảm bớt ở mức độ lớn. Căng thẳng cũng có thể trở nên tồi tệ hơn nếu một người cảm thấy cô đơn. Do đó, bằng cách nói ra tất cả suy nghĩ của bạn với người mà bạn tin tưởng, bạn sẽ ngay lập tức cảm thấy tốt hơn rất nhiều.</div>
+            </div>
+
+            <div class="paragraph">
+                However, if you feel extremely stressed out, take a break and do something you love. Whether it is painting or listening to music, doing something you enjoy can cheer up your mood and distract you from a stressor. It's about time that we students accept that we can achieve just as much in life without all the stress.
+                <button class="trans-btn" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                <div class="translation">Tuy nhiên, nếu bạn cảm thấy cực kỳ căng thẳng, hãy nghỉ ngơi và làm điều gì đó bạn yêu thích. Cho dù đó là vẽ tranh hay nghe nhạc, làm điều gì đó bạn thích có thể làm tâm trạng bạn vui lên và giúp bạn phân tâm khỏi tác nhân gây căng thẳng. Đã đến lúc học sinh chúng ta chấp nhận rằng chúng ta có thể đạt được nhiều điều tương đương trong cuộc sống mà không cần phải mang theo tất cả những căng thẳng đó.</div>
+            </div>
+
+            <table class="glossary-table">
+                <tr><th>Từ vựng (Vocabulary)</th><th>Loại từ (POS)</th><th>Nghĩa (Meaning)</th></tr>
+                <tr><td>Practical</td><td>(adj)</td><td>Thực tế, mang tính thực hành</td></tr>
+                <tr><td>Productive</td><td>(adj)</td><td>Năng suất, hiệu quả</td></tr>
+                <tr><td>Competent</td><td>(adj)</td><td>Có năng lực, thạo việc</td></tr>
+                <tr><td>Efficient</td><td>(adj)</td><td>Có hiệu suất cao (không lãng phí)</td></tr>
+                <tr><td>Timetable</td><td>(n)</td><td>Thời gian biểu</td></tr>
+                <tr><td>Essential</td><td>(adj)</td><td>Thiết yếu, vô cùng quan trọng</td></tr>
+                <tr><td>Organization</td><td>(n)</td><td>Sự tổ chức, sắp xếp khoa học</td></tr>
+                <tr><td>Academic</td><td>(adj)</td><td>Thuộc về học thuật/nhà trường</td></tr>
+                <tr><td>Assignment</td><td>(n)</td><td>Bài tập được giao</td></tr>
+                <tr><td>Distract</td><td>(v)</td><td>Làm sao nhãng, làm phân tâm</td></tr>
+            </table>
+
+        </div>
+
+        <div class="pane right" id="quiz-container">
+            <h2 class="passage-title" style="color: #d63384; font-size: 1.2rem;">📝 BÀI TẬP IX (CLOZE TEST)</h2>
+
+            <div class="q-card" data-q="1">
+                <p class="q-text">1. Your body needs the vitamins and <b>(1)___</b> found in vegetables and fruit.</p>
+                <div class="options-grid">
+                    <button class="opt-btn">substances</button>
+                    <button class="opt-btn">elements</button>
+                    <button class="opt-btn">components</button>
+                    <button class="opt-btn" data-correct="true">nutrients</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Cơ thể bạn cần các vitamin và ___ được tìm thấy trong rau và trái cây.<br>
+                    <b>Phân tích 4 đáp án:</b><br>
+                    - substances (<span class='p-grammar'>n</span>): <span class='p-mean'>các chất</span> ❌ <span class='hl-red'>Sai vì từ này quá chung chung.</span><br>
+                    - elements (<span class='p-grammar'>n</span>): <span class='p-mean'>các nguyên tố/yếu tố</span> ❌ <span class='hl-red'>Sai ngữ cảnh sinh học/dinh dưỡng.</span><br>
+                    - components (<span class='p-grammar'>n</span>): <span class='p-mean'>các thành phần</span> ❌ <span class='hl-red'>Sai ngữ cảnh.</span><br>
+                    - nutrients (<span class='p-grammar'>n</span>): <span class='p-mean'>chất dinh dưỡng</span> ✅ <span class='hl-green'>Đúng. Rau củ quả cung cấp "vitamin và khoáng chất/dinh dưỡng".</span><br>
+                    🔍 <b>Cụm từ cố định:</b> <span class='p-word'>vitamins and nutrients</span> (<span class='p-mean'>vitamin và chất dinh dưỡng</span>).
+                </div>
+            </div>
+
+            <div class="q-card" data-q="2">
+                <p class="q-text">2. It also needs enough exercise to <b>(2)___</b> muscles and bones...</p>
+                <div class="options-grid">
+                    <button class="opt-btn" data-correct="true">strengthen</button>
+                    <button class="opt-btn">improve</button>
+                    <button class="opt-btn">relax</button>
+                    <button class="opt-btn">tighten</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Nó cũng cần đủ bài tập thể dục để ___ cơ bắp và xương...<br>
+                    <b>Phân tích 4 đáp án:</b><br>
+                    - strengthen (<span class='p-grammar'>v</span>): <span class='p-mean'>làm cho mạnh lên, củng cố</span> ✅ <span class='hl-green'>Đúng. Tập thể dục giúp xương và cơ bắp chắc khỏe hơn.</span><br>
+                    - improve (<span class='p-grammar'>v</span>): <span class='p-mean'>cải thiện</span> ❌ <span class='hl-red'>Thường dùng cho kỹ năng, tình trạng, ít dùng trực tiếp với "muscles".</span><br>
+                    - relax (<span class='p-grammar'>v</span>): <span class='p-mean'>thư giãn</span> ❌ <span class='hl-red'>Tập thể dục là vận động, không phải thư giãn cơ.</span><br>
+                    - tighten (<span class='p-grammar'>v</span>): <span class='p-mean'>thắt chặt</span> ❌ <span class='hl-red'>Sai nghĩa.</span><br>
+                    🔍 <b>Cấu trúc:</b> <span class='p-grammar'>S + need + to V</span>: Cần làm gì. Dùng <span class='p-word'>strengthen</span> là phù hợp nhất với <span class='p-word'>muscles and bones</span>.
+                </div>
+            </div>
+
+            <div class="q-card" data-q="3">
+                <p class="q-text">3. You also need to eat <b>(3)___</b> such as rice, wheat, oats, or corn.</p>
+                <div class="options-grid">
+                    <button class="opt-btn">plants</button>
+                    <button class="opt-btn" data-correct="true">grains</button>
+                    <button class="opt-btn">seeds</button>
+                    <button class="opt-btn">veggies</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Bạn cũng cần ăn ___ chẳng hạn như gạo, lúa mì, yến mạch hoặc ngô.<br>
+                    <b>Phân tích 4 đáp án:</b><br>
+                    - plants (<span class='p-grammar'>n</span>): <span class='p-mean'>thực vật</span> ❌ <span class='hl-red'>Quá rộng.</span><br>
+                    - grains (<span class='p-grammar'>n</span>): <span class='p-mean'>ngũ cốc, hạt (lương thực)</span> ✅ <span class='hl-green'>Đúng vì gạo, lúa mì, yến mạch đều là các loại ngũ cốc.</span><br>
+                    - seeds (<span class='p-grammar'>n</span>): <span class='p-mean'>hạt giống (dùng để gieo trồng hoặc hạt nhỏ như hạt hướng dương)</span> ❌ <span class='hl-red'>Không dùng gọi gạo/lúa mì trong bữa ăn chính.</span><br>
+                    - veggies (<span class='p-grammar'>n</span>): <span class='p-mean'>rau củ</span> ❌ <span class='hl-red'>Gạo và lúa mì không phải rau.</span>
+                </div>
+            </div>
+
+            <div class="q-card" data-q="4">
+                <p class="q-text">4. Protein comes <b>(4)___</b> meat and nuts.</p>
+                <div class="options-grid">
+                    <button class="opt-btn">by</button>
+                    <button class="opt-btn">for</button>
+                    <button class="opt-btn" data-correct="true">from</button>
+                    <button class="opt-btn">of</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Protein đến ___ thịt và các loại hạt.<br>
+                    <b>Phân tích:</b><br>
+                    ✅ <span class='hl-green'>Đáp án đúng là "from"</span>.<br>
+                    🔍 <b>Ngữ pháp:</b> Động từ <span class='p-word'>come</span> đi với giới từ <span class='p-word'>from</span> tạo thành cụm <span class='p-grammar'>come from</span> mang nghĩa là <span class='p-mean'>bắt nguồn từ, đến từ đâu</span>. Các giới từ by, for, of đều ❌ <span class='hl-red'>sai cấu trúc</span>.
+                </div>
+            </div>
+
+            <div class="q-card" data-q="5">
+                <p class="q-text">5. Don't eat too much meat, <b>(5)___</b>.</p>
+                <div class="options-grid">
+                    <button class="opt-btn">moreover</button>
+                    <button class="opt-btn">therefore</button>
+                    <button class="opt-btn" data-correct="true">however</button>
+                    <button class="opt-btn">meanwhile</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Đừng ăn quá nhiều thịt, ___.<br>
+                    <b>Phân tích liên từ:</b> Câu trước nói thịt cung cấp protein (ý tốt). Câu này khuyên đừng ăn nhiều (ý ngược lại).<br>
+                    - moreover (<span class='p-grammar'>adv</span>): <span class='p-mean'>hơn nữa (bổ sung ý)</span> ❌ <span class='hl-red'>Sai logic.</span><br>
+                    - therefore (<span class='p-grammar'>adv</span>): <span class='p-mean'>do đó (chỉ kết quả)</span> ❌ <span class='hl-red'>Sai logic.</span><br>
+                    - however (<span class='p-grammar'>adv</span>): <span class='p-mean'>tuy nhiên (chỉ sự tương phản)</span> ✅ <span class='hl-green'>Đúng. "Tuy nhiên, đừng ăn quá nhiều thịt."</span><br>
+                    - meanwhile (<span class='p-grammar'>adv</span>): <span class='p-mean'>trong khi đó</span> ❌ <span class='hl-red'>Sai logic thời gian.</span>
+                </div>
+            </div>
+
+            <div class="q-card" data-q="6">
+                <p class="q-text">6. <b>(6)___</b> junk food?</p>
+                <div class="options-grid">
+                    <button class="opt-btn">Which</button>
+                    <button class="opt-btn">What</button>
+                    <button class="opt-btn">How's</button>
+                    <button class="opt-btn" data-correct="true">What's</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Đồ ăn vặt ___?<br>
+                    <b>Phân tích:</b> Nhìn vào câu trả lời phía sau: "Potato chips, donuts... are junk food" (Khoai tây chiên... là đồ ăn vặt). Tức là câu hỏi đang hỏi về định nghĩa.<br>
+                    ✅ <span class='hl-green'>Đúng là "What's" (viết tắt của What is). "What is junk food?" = Đồ ăn vặt là gì?</span><br>
+                    ❌ <span class='hl-red'>"What" thiếu động từ to be "is". "Which" dùng để lựa chọn. "How's" sai nghĩa.</span>
+                </div>
+            </div>
+
+            <div class="q-card" data-q="7">
+                <p class="q-text">7. ...because they like the taste of junk food <b>(7)___</b>.</p>
+                <div class="options-grid">
+                    <button class="opt-btn" data-correct="true">better</button>
+                    <button class="opt-btn">best</button>
+                    <button class="opt-btn">worse</button>
+                    <button class="opt-btn">worst</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> ...bởi vì họ thích hương vị của đồ ăn vặt ___.<br>
+                    <b>Phân tích:</b> Cụm "fail to eat healthy food" (không ăn đồ lành mạnh) chỉ ra sự so sánh giữa 2 thứ: "đồ ăn lành mạnh" và "đồ ăn vặt".<br>
+                    ✅ <span class='hl-green'>Vì so sánh giữa 2 đối tượng nên ta dùng so sánh hơn: "better" (thích hơn). Cấu trúc <span class='p-grammar'>like sth better (than sth)</span>.</span><br>
+                    ❌ <span class='hl-red'>Không dùng "best" (so sánh nhất) vì chỉ có 2 loại đồ ăn. "Worse" (tệ hơn) sai về mặt logic ngữ nghĩa.</span>
+                </div>
+            </div>
+
+            <div class="q-card" data-q="8">
+                <p class="q-text">8. If you eat right, get regular exercise, and avoid <b>(8)___</b> habits, you will thank yourself in the future.</p>
+                <div class="options-grid">
+                    <button class="opt-btn">annoying</button>
+                    <button class="opt-btn" data-correct="true">unhealthy</button>
+                    <button class="opt-btn">nasty</button>
+                    <button class="opt-btn">irritating</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Nếu bạn ăn uống đúng, tập thể dục thường xuyên, và tránh những thói quen ___, bạn sẽ cảm ơn bản thân trong tương lai.<br>
+                    <b>Phân tích 4 đáp án:</b><br>
+                    - annoying (<span class='p-grammar'>adj</span>): <span class='p-mean'>phiền toái</span> ❌ <span class='hl-red'>Không phù hợp chủ đề sức khỏe.</span><br>
+                    - unhealthy (<span class='p-grammar'>adj</span>): <span class='p-mean'>không lành mạnh, có hại cho sức khỏe</span> ✅ <span class='hl-green'>Đúng tuyệt đối với ngữ cảnh "eating right & exercise".</span><br>
+                    - nasty (<span class='p-grammar'>adj</span>): <span class='p-mean'>bẩn thỉu, tục tĩu</span> ❌ <span class='hl-red'>Sai nghĩa.</span><br>
+                    - irritating (<span class='p-grammar'>adj</span>): <span class='p-mean'>gây khó chịu</span> ❌ <span class='hl-red'>Sai nghĩa.</span>
+                </div>
+            </div>
+
+            <hr style="margin: 40px 0; border: 1px dashed #fff;">
+            <h2 class="passage-title" style="color: #0056b3; font-size: 1.2rem;">📝 BÀI TẬP X (READING COMPREHENSION)</h2>
+
+            <div class="q-card" data-q="9">
+                <p class="q-text">1. Practical stress management can help students ________.</p>
+                <div class="options-grid">
+                    <button class="opt-btn" data-correct="true">deal with stress</button>
+                    <button class="opt-btn">have more time</button>
+                    <button class="opt-btn">face up to the worst situation</button>
+                    <button class="opt-btn">think critically</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Quản lý căng thẳng thực tế có thể giúp học sinh ________.<br>
+                    <b>Phân tích 4 đáp án:</b><br>
+                    - deal with stress (<span class='p-mean'>đối phó với căng thẳng</span>) ✅ <span class='hl-green'>Đúng.</span><br>
+                    - have more time (<span class='p-mean'>có nhiều thời gian hơn</span>) ❌ <span class='hl-red'>Sai, bài không đề cập giúp có thêm thời gian.</span><br>
+                    - face up to the worst situation (<span class='p-mean'>đối mặt với tình huống xấu nhất</span>) ❌ <span class='hl-red'>Không có thông tin.</span><br>
+                    - think critically (<span class='p-mean'>suy nghĩ phản biện</span>) ❌ <span class='hl-red'>Không có thông tin.</span><br>
+                    🔍 <b>Dẫn chứng trong bài (Câu 1):</b> "Practical stress management can help students <span class='hl-green'>deal with their worries</span>..."<br>
+                    👉 <b>Dịch:</b> "Quản lý căng thẳng thực tế có thể giúp học sinh đối phó với những <span class='hl-green'>lo lắng (căng thẳng)</span>..." Cụm <span class='p-word'>worries</span> đồng nghĩa với <span class='p-word'>stress</span>.
+                </div>
+            </div>
+
+            <div class="q-card" data-q="10">
+                <p class="q-text">2. What should students pay attention to when designing a timetable?</p>
+                <div class="options-grid">
+                    <button class="opt-btn">They have to arrange time to breathe.</button>
+                    <button class="opt-btn" data-correct="true">They need to set time for relaxation.</button>
+                    <button class="opt-btn">They don't need to take notice of certain tasks.</button>
+                    <button class="opt-btn">They should stop working and studying.</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Học sinh nên chú ý điều gì khi thiết kế thời gian biểu?<br>
+                    <b>Phân tích:</b><br>
+                    - They have to arrange time to breathe. ❌ <span class='hl-red'>Sai vì "breathe" trong bài là nghĩa bóng (nghỉ ngơi), không phải nghĩa đen.</span><br>
+                    - They need to set time for relaxation. ✅ <span class='hl-green'>Đúng. Họ cần dành thời gian để thư giãn.</span><br>
+                    - They don't need to take notice... ❌ <span class='hl-red'>Sai thông tin.</span><br>
+                    - They should stop working... ❌ <span class='hl-red'>Sai vì vẫn phải làm và học, chỉ là nghỉ xen kẽ.</span><br>
+                    🔍 <b>Dẫn chứng:</b> "Choose a <span class='hl-green'>relaxing break</span> between work and study..."<br>
+                    👉 <b>Dịch:</b> "Hãy chọn một <span class='hl-green'>khoảng nghỉ ngơi thư giãn</span> giữa lúc làm việc và học tập..."
+                </div>
+            </div>
+
+            <div class="q-card" data-q="11">
+                <p class="q-text">3. What can students do to lead a healthy lifestyle?</p>
+                <div class="options-grid">
+                    <button class="opt-btn">Visit their doctor as scheduled.</button>
+                    <button class="opt-btn">Not to put much pressure on time management.</button>
+                    <button class="opt-btn">Follow the timetable strictly.</button>
+                    <button class="opt-btn" data-correct="true">Go outside for fresh air, do regular exercise and drink more water.</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Học sinh có thể làm gì để có một lối sống lành mạnh?<br>
+                    <b>Phân tích:</b><br>
+                    ✅ <span class='hl-green'>Đáp án Đúng: Đi ra ngoài hít thở không khí trong lành, tập thể dục thường xuyên và uống nhiều nước hơn.</span> Các đáp án khác ❌ <span class='hl-red'>không được đề cập hoặc sai lệch với câu hỏi về "healthy lifestyle"</span>.<br>
+                    🔍 <b>Dẫn chứng:</b> "...a healthy lifestyle is essential... Let's <span class='hl-green'>drink more water</span> as well as take out time to <span class='hl-green'>get some air and exercise</span>."<br>
+                    👉 <b>Dịch:</b> "...một lối sống lành mạnh là thiết yếu... Hãy <span class='hl-green'>uống nhiều nước hơn</span> cũng như dành thời gian <span class='hl-green'>hít thở không khí và tập thể dục</span>."
+                </div>
+            </div>
+
+            <div class="q-card" data-q="12">
+                <p class="q-text">4. Why is organization important in academic life?</p>
+                <div class="options-grid">
+                    <button class="opt-btn">Because it can help students get good grades.</button>
+                    <button class="opt-btn">Because it is a must for all students.</button>
+                    <button class="opt-btn" data-correct="true">Because it can help students reduce stress.</button>
+                    <button class="opt-btn">Because it leads to better results.</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Tại sao sự tổ chức (ngăn nắp/khoa học) lại quan trọng trong đời sống học tập?<br>
+                    <b>Phân tích:</b><br>
+                    - ...get good grades (<span class='p-mean'>được điểm cao</span>) ❌ <span class='hl-red'>Bài không nói đến điểm số.</span><br>
+                    - ...reduce stress (<span class='p-mean'>giảm căng thẳng</span>) ✅ <span class='hl-green'>Đúng.</span><br>
+                    🔍 <b>Dẫn chứng:</b> "Furthermore, organization is very important in academic life <span class='hl-green'>for dealing with stress</span>."<br>
+                    👉 <b>Dịch:</b> "Hơn nữa, sự tổ chức rất quan trọng trong đời sống học tập để <span class='hl-green'>đối phó (làm giảm) căng thẳng</span>."
+                </div>
+            </div>
+
+            <div class="q-card" data-q="13">
+                <p class="q-text">5. Which of the following sentences is true?</p>
+                <div class="options-grid">
+                    <button class="opt-btn">You should stay alone when being under pressure.</button>
+                    <button class="opt-btn">When you feel lonely, you should grab someone to talk.</button>
+                    <button class="opt-btn" data-correct="true">The more lonely you are, the more stress you can have.</button>
+                    <button class="opt-btn">It is believed that stress can control itself.</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Câu nào dưới đây là đúng?<br>
+                    <b>Phân tích:</b><br>
+                    - stay alone... (<span class='p-mean'>ở một mình khi áp lực</span>) ❌ <span class='hl-red'>Sai, bài khuyên nên nói chuyện với người tin tưởng.</span><br>
+                    - grab someone to talk ❌ <span class='hl-red'>Sai chi tiết "grab someone" (bắt bừa ai đó), bài nói là "someone you trust" (người bạn tin tưởng).</span><br>
+                    - The more lonely you are, the more stress you can have. ✅ <span class='hl-green'>Đúng. (Càng cô đơn thì càng căng thẳng).</span><br>
+                    🔍 <b>Dẫn chứng:</b> "<span class='hl-green'>Stress can also get worse if a person feels lonely.</span>"<br>
+                    👉 <b>Dịch:</b> "<span class='hl-green'>Căng thẳng cũng có thể trở nên tồi tệ hơn (nhiều hơn) nếu một người cảm thấy cô đơn.</span>"
+                </div>
+            </div>
+
+            <div class="q-card" data-q="14">
+                <p class="q-text">6. What should you do when you are feeling stressed?</p>
+                <div class="options-grid">
+                    <button class="opt-btn">Take time for reflection on your progress.</button>
+                    <button class="opt-btn">Ease your soul and your mind.</button>
+                    <button class="opt-btn">Stay away from other people.</button>
+                    <button class="opt-btn" data-correct="true">Take a break and do what you enjoy.</button>
+                </div>
+                <div class="explanation">
+                    <b>Dịch câu hỏi:</b> Bạn nên làm gì khi cảm thấy căng thẳng?<br>
+                    <b>Phân tích:</b><br>
+                    - Take time for reflection... (<span class='p-mean'>Dành thời gian suy ngẫm tiến độ</span>) ❌ <span class='hl-red'>Không có trong bài.</span><br>
+                    - Ease your soul... (<span class='p-mean'>Làm dịu tâm hồn</span>) ❌ <span class='hl-red'>Quá chung chung, không sát text.</span><br>
+                    - Stay away from other people. ❌ <span class='hl-red'>Sai hoàn toàn, bài khuyên tìm người tin tưởng để chia sẻ.</span><br>
+                    - Take a break and do what you enjoy. ✅ <span class='hl-green'>Đúng. (Nghỉ ngơi và làm điều bạn thích).</span><br>
+                    🔍 <b>Dẫn chứng:</b> "However, if you feel extremely stressed out, <span class='hl-green'>take a break and do something you love</span>."<br>
+                    👉 <b>Dịch:</b> "Tuy nhiên, nếu bạn cảm thấy cực kỳ căng thẳng, hãy <span class='hl-green'>nghỉ ngơi và làm điều gì đó bạn yêu thích (enjoy)</span>."
+                </div>
+            </div>
+
+            <button class="submit-btn" onclick="showSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+
+            <div id="name-modal" style="display: none; margin-top: 20px; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 12px; border: 2px solid #a1c4fd;">
+                <h3 style="margin-bottom: 15px; color: #d63384;">Nhập tên của em để nhận điểm nhé!</h3>
+                <input type="text" id="student-name" placeholder="Ví dụ: Nguyễn Văn A">
+                <button class="start-btn" style="width: 100%; font-size: 1rem; padding: 10px;" onclick="calculateScore()">Xác Nhận Nộp Bài</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const totalQuestions = 14;
+        let score = 0;
+        let answeredQuestions = 0;
+
+        // Audio Objects
+        const bgmStart = document.getElementById('bgm-start');
+        const sndDing = document.getElementById('snd-ding');
+        const sndDuck = document.getElementById('snd-duck');
+        bgmStart.volume = 0.5;
+
+        // Emoji floating generation
+        const emojis = ['🍎', '🏃‍♂️', '📚', '🧘‍♀️', '🥦', '⏰', '🎵'];
+        const floatBg = document.getElementById('floating-bg');
+        for(let i=0; i<15; i++) {
+            let el = document.createElement('div');
+            el.className = 'float-item';
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (8 + Math.random() * 5) + 's';
+            el.style.animationDelay = (Math.random() * 5) + 's';
+            floatBg.appendChild(el);
+        }
+
+        // Start Quiz Function
+        function startQuiz() {
+            document.getElementById('start-overlay').style.display = 'none';
+            bgmStart.play().catch(e => console.log("Audio play prevented by browser"));
+            
+            // Shuffle Answers on Load
+            document.querySelectorAll('.options-grid').forEach(grid => {
+                for (let i = grid.children.length; i >= 0; i--) {
+                    grid.appendChild(grid.children[Math.random() * i | 0]);
+                }
+            });
+        }
+
+        // Translation Toggle
+        function toggleTrans(btn) {
+            let transDiv = btn.nextElementSibling;
+            if(transDiv.style.display === 'block') {
+                transDiv.style.display = 'none';
+                btn.innerHTML = 'Mở dịch đoạn này 🌟';
+            } else {
+                transDiv.style.display = 'block';
+                btn.innerHTML = 'Ẩn dịch ❌';
+            }
+        }
+
+        // Quiz Logic
+        document.querySelectorAll('.opt-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                let grid = this.parentElement;
+                let card = grid.parentElement;
+                let explanation = card.querySelector('.explanation');
+                
+                // Prevent multiple clicks
+                if(grid.dataset.answered === "true") return;
+                grid.dataset.answered = "true";
+                answeredQuestions++;
+
+                // Disable all buttons in this question
+                let buttons = grid.querySelectorAll('.opt-btn');
+                buttons.forEach(b => b.disabled = true);
+
+                let isCorrect = this.getAttribute('data-correct') === "true";
+
+                if (isCorrect) {
+                    this.classList.add('correct');
+                    score++;
+                    sndDing.currentTime = 0;
+                    sndDing.play();
+                    
+                    // Confetti Effect
+                    let rect = this.getBoundingClientRect();
+                    confetti({
+                        particleCount: 50,
+                        spread: 60,
+                        origin: {
+                            x: (rect.left + rect.width / 2) / window.innerWidth,
+                            y: (rect.top + rect.height / 2) / window.innerHeight
+                        }
+                    });
+                } else {
+                    this.classList.add('wrong');
+                    this.classList.add('shake-anim');
+                    sndDuck.currentTime = 0;
+                    sndDuck.play();
+                    
+                    // Highlight correct answer automatically
+                    buttons.forEach(b => {
+                        if(b.getAttribute('data-correct') === "true") {
+                            b.classList.add('correct');
+                        }
+                    });
+                }
+
+                // Show Explanation
+                explanation.style.display = 'block';
+            });
+        });
+
+        // Submit Logic
+        function showSubmitModal() {
+            if(answeredQuestions < totalQuestions) {
+                alert(`Em mới làm ${answeredQuestions}/${totalQuestions} câu. Hãy làm hết rồi mới nộp nhé!`);
+                return;
+            }
+            document.querySelector('.submit-btn').style.display = 'none';
+            document.getElementById('name-modal').style.display = 'block';
+        }
+
+        function calculateScore() {
+            let name = document.getElementById('student-name').value.trim();
+            if(!name) {
+                alert("Em chưa nhập tên kìa!");
+                return;
+            }
+
+            // Math logic
+            let scale10 = Math.round((score / totalQuestions) * 10 * 10) / 10;
+            let percent = score / totalQuestions;
+
+            document.getElementById('res-name').innerText = "Học sinh: " + name;
+            document.getElementById('res-score').innerText = `${score} / ${totalQuestions} Câu`;
+            document.getElementById('res-scale').innerText = `Điểm hệ 10: ${scale10} Điểm`;
+
+            let commentEl = document.getElementById('res-comment');
+            let gifEl = document.getElementById('res-gif');
+
+            if(percent === 1) {
+                commentEl.innerText = "Tuyệt đỉnh! Em là thiên tài ngôn ngữ thực sự! 💯";
+                commentEl.style.color = "#ff007f";
+                gifEl.src = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; // Celebrate GIF
+            } else if (percent >= 0.6) {
+                commentEl.innerText = "Rất tốt! Em đã cố gắng rất nhiều, High-five! 👏";
+                commentEl.style.color = "#fd7e14";
+                gifEl.src = "https://media.giphy.com/media/l0ErFafpUCQTQFMSk/giphy.gif"; // High five GIF
+            } else {
+                commentEl.innerText = "Đừng buồn nhé, hãy đọc kỹ phần giải thích và thử lại, cô tin em sẽ làm được! 💪";
+                commentEl.style.color = "#dc3545";
+                gifEl.src = "https://media.giphy.com/media/3o6wrvdHFbwBrUFenu/giphy.gif"; // Crying/Encourage GIF
+            }
+
+            document.getElementById('result-overlay').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

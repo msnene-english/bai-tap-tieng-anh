@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Tập Tiếng Anh - Gamification - Ms MS Chí Nên</title>
+    <style>
+        /* CSS VARIABLES & FONTS */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap');
+        
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --correct-color: #4ade80;
+            --wrong-color: #f87171;
+            --primary-text: #1e293b;
+            --highlight: #ec4899;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, #ffc3a0, #ffafbd, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--primary-text);
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll for split screen */
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* FLOATING BACKGROUND SVG */
+        .bg-svg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+        .float-anim { animation: float 6s ease-in-out infinite; }
+        .float-anim:nth-child(2) { animation-delay: 2s; animation-duration: 8s; }
+        .float-anim:nth-child(3) { animation-delay: 4s; animation-duration: 7s; }
+        
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(10deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        /* HEADER & STICKY NOTICE */
+        header {
+            text-align: right;
+            padding: 5px 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #4c1d95;
+            background: rgba(255,255,255,0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        #sticky-notice {
+            background: rgba(255, 234, 167, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid #fdcb6e;
+            color: #d35400;
+            padding: 10px 20px;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            font-size: 0.95rem;
+            border-radius: 0 0 15px 15px;
+            margin: 0 10px;
+            animation: pulseWarning 2s infinite;
+        }
+
+        @keyframes pulseWarning {
+            0% { box-shadow: 0 0 0 0 rgba(253, 203, 110, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(253, 203, 110, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(253, 203, 110, 0); }
+        }
+
+        /* SPLIT SCREEN LAYOUT */
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 10px;
+            gap: 15px;
+            height: calc(100vh - 80px);
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: var(--glass-shadow);
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.8); border-radius: 10px; }
+
+        /* READING PASSAGE STYLES */
+        .passage-box {
+            background: rgba(255,255,255,0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-size: 1.15rem;
+            line-height: 1.8;
+        }
+        
+        .passage-title {
+            font-size: 1.4rem;
+            color: #8b5cf6;
+            margin-bottom: 15px;
+            font-weight: 900;
+            text-shadow: 1px 1px 2px #fff;
+        }
+
+        .btn-translate {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border: 2px solid white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #374151;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+        }
+        .btn-translate:hover { transform: scale(1.05); }
+
+        .translation-content {
+            display: none;
+            background: #fdf2f8;
+            padding: 15px;
+            border-left: 4px solid #ec4899;
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+            color: #475569;
+        }
+
+        /* GLOSSARY TABLE */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(255,255,255,0.7);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .glossary-table th { background: #8b5cf6; color: white; padding: 12px; text-align: left; }
+        .glossary-table td { padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .glossary-table tr:last-child td { border-bottom: none; }
+        .glossary-table tr:hover { background: rgba(255,255,255,0.9); }
+
+        /* QUESTION STYLES */
+        .question-card {
+            background: rgba(255,255,255,0.6);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid transparent;
+            transition: 0.3s;
+        }
+        .question-card:hover { border-color: rgba(255,255,255,0.8); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .question-text { font-size: 1.2rem; font-weight: 800; margin-bottom: 15px; color: #1e3a8a; }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #334155;
+            /* Yêu cầu: Không cắt chữ */
+            white-space: normal; 
+            word-wrap: break-word;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .option-btn.correct { background: var(--correct-color); color: white; border-color: var(--correct-color); }
+        .option-btn.wrong { background: var(--wrong-color); color: white; border-color: var(--wrong-color); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* EXPLANATION FORMATTING */
+        .explanation-box {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.85);
+            border-radius: 12px;
+            border-left: 5px solid #3b82f6;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Bọc thẻ HTML theo yêu cầu */
+        .p-word { color: #9333ea; font-weight: 800; font-size: 1.1rem; background: #faf5ff; padding: 2px 5px; border-radius: 4px;}
+        .p-phonetic { color: #64748b; font-style: italic; }
+        .p-mean { color: #0284c7; font-weight: 700; }
+        .p-grammar { color: #b45309; background: #fef3c7; padding: 3px 6px; border-radius: 5px; font-weight: bold; border: 1px dashed #f59e0b; }
+        .hl-green { color: #15803d; font-weight: 800; text-transform: uppercase; }
+        .hl-red { color: #b91c1c; font-weight: 800; text-transform: uppercase; }
+
+        .expl-step { margin-bottom: 10px; }
+        .expl-step ul { padding-left: 20px; list-style-type: none;}
+        .expl-step ul li { margin-bottom: 5px; padding-left: 15px; position: relative;}
+        .expl-step ul li::before { content: "🔹"; position: absolute; left: 0; top: 0;}
+
+        /* SUBMIT BUTTON */
+        .submit-btn {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.3rem;
+            font-weight: 900;
+            border-radius: 30px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .submit-btn:hover { transform: scale(1.02); box-shadow: 0 15px 25px rgba(239, 68, 68, 0.4); }
+
+        /* MODAL */
+        #result-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 1000;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 25px; text-align: center;
+            max-width: 500px; width: 90%; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .modal-content h2 { color: #4c1d95; font-size: 2rem; margin-bottom: 10px; }
+        .score-display { font-size: 3rem; font-weight: 900; color: #ec4899; margin: 15px 0; }
+        .score-10 { font-size: 1.5rem; color: #10b981; font-weight: 800; margin-bottom: 15px;}
+        #meme-img { max-width: 100%; border-radius: 15px; margin: 15px 0; height: 200px; object-fit: cover;}
+        .close-modal {
+            background: #e2e8f0; border: none; padding: 10px 20px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s;
+        }
+        .close-modal:hover { background: #cbd5e1; }
+        
+        #student-name-input {
+            width: 100%; padding: 12px; border: 2px solid #a78bfa; border-radius: 10px;
+            font-size: 1.1rem; margin-bottom: 15px; outline: none;
+        }
+
+        /* CONFETTI CANVAS */
+        #confetti { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 999; }
+    </style>
+</head>
+<body>
+
+    <svg class="bg-svg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="grad1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                <stop offset="0%" style="stop-color:rgba(255,255,255,0.8); stop-opacity:1" />
+                <stop offset="100%" style="stop-color:rgba(255,255,255,0); stop-opacity:1" />
+            </radialGradient>
+        </defs>
+        <circle cx="20%" cy="30%" r="150" fill="url(#grad1)" />
+        <circle cx="80%" cy="70%" r="200" fill="url(#grad1)" />
+        <text x="10%" y="20%" font-size="50" class="float-anim">📚</text>
+        <text x="85%" y="40%" font-size="60" class="float-anim">🌍</text>
+        <text x="15%" y="80%" font-size="55" class="float-anim">🌱</text>
+        <text x="75%" y="85%" font-size="45" class="float-anim">♻️</text>
+    </svg>
+
+    <header>Giáo viên tạo: Ms MS Chí Nên</header>
+    <div id="sticky-notice">
+        ⚠️ LƯU Ý: Tự giác tra cứu từ mới bằng Google Dịch/Gemini/Cambridge! Kéo tới đâu làm tới đó. Đọc kỹ giải thích, ghi chép từ vựng vào vở mới giỏi được! Tuyệt đối không chọn bừa!
+    </div>
+
+    <audio id="audio-encourage" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/File%20nghe%20Ket%20A2/ti%E1%BA%BFng%20%C4%91%E1%BB%8Dc%20kh%C3%ADch%20l%E1%BB%87%20p1.mp3"></audio>
+    <audio id="audio-wrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3"></audio>
+
+    <div class="container">
+        
+        <div class="panel" id="left-panel">
+            
+            <div class="passage-box">
+                <div class="passage-title">PASSAGE I: Language Club</div>
+                
+                <p id="p1-1">Learning a new language can open many doors for you. A language class is a great way to learn the basics, but if you’re looking (31) ______ a way to engage further with the language and culture, a language club might be the answer.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans1-1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1-1" class="translation-content">
+                    Học một ngôn ngữ mới có thể mở ra nhiều cánh cửa cho bạn. Một lớp học ngôn ngữ là một cách tuyệt vời để học những điều cơ bản, nhưng nếu bạn đang tìm kiếm một cách để gắn kết sâu hơn với ngôn ngữ và văn hóa, một câu lạc bộ ngôn ngữ có thể là câu trả lời.
+                </div>
+
+                <p id="p1-2">(32) ______ a language club allows you to explore a language outside of the formal classroom. You might feel more comfortable speaking in this setting if there are parts of the language you’re struggling with. Enjoy the relaxed atmosphere, and (33) ______ afraid to ask others for tips on learning the language.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans1-2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1-2" class="translation-content">
+                    Tham gia một câu lạc bộ ngôn ngữ cho phép bạn khám phá ngôn ngữ bên ngoài lớp học chính thức. Bạn có thể cảm thấy thoải mái hơn khi nói trong bối cảnh này nếu có những phần ngôn ngữ mà bạn đang gặp khó khăn. Hãy tận hưởng bầu không khí thư giãn và đừng ngại hỏi người khác các mẹo học ngôn ngữ.
+                </div>
+
+                <p id="p1-3">One of the best things about being in a language club is the new (34) ______ of people you’ll meet. A club lets you meet new friends from different grades and interests. Use this group when trying to master your new language. Form study groups or group (35) ______ for help outside of meeting times. You’ll start to feel more (36) ______ in the language with the support of others who have the same goal.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans1-3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1-3" class="translation-content">
+                    Một trong những điều tuyệt vời nhất khi tham gia câu lạc bộ ngôn ngữ là cộng đồng những người mới mà bạn sẽ gặp. Một câu lạc bộ cho phép bạn gặp gỡ những người bạn mới từ các khối lớp và sở thích khác nhau. Hãy sử dụng nhóm này khi cố gắng thành thạo ngôn ngữ mới của bạn. Thành lập các nhóm học tập hoặc các nhóm trò chuyện để được giúp đỡ ngoài giờ họp. Bạn sẽ bắt đầu cảm thấy tự tin hơn trong ngôn ngữ với sự hỗ trợ của những người khác có cùng mục tiêu.
+                </div>
+            </div>
+
+            <table class="glossary-table">
+                <thead><tr><th>Vocabulary (Từ vựng)</th><th>Type (Loại từ)</th><th>Meaning (Nghĩa)</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="p-word">Engage</span> <span class="p-phonetic">/ɪnˈɡeɪdʒ/</span></td><td>(v)</td><td>Tham gia, gắn kết</td></tr>
+                    <tr><td><span class="p-word">Atmosphere</span> <span class="p-phonetic">/ˈætməsfɪr/</span></td><td>(n)</td><td>Bầu không khí</td></tr>
+                    <tr><td><span class="p-word">Struggle</span> <span class="p-phonetic">/ˈstrʌɡl/</span></td><td>(v)</td><td>Gặp khó khăn, chật vật</td></tr>
+                    <tr><td><span class="p-word">Master</span> <span class="p-phonetic">/ˈmæstər/</span></td><td>(v)</td><td>Làm chủ, thành thạo</td></tr>
+                    <tr><td><span class="p-word">Community</span> <span class="p-phonetic">/kəˈmjuːnəti/</span></td><td>(n)</td><td>Cộng đồng</td></tr>
+                </tbody>
+            </table>
+
+            <div class="passage-box">
+                <div class="passage-title">PASSAGE II: Teenagers' Responsibilities</div>
+                
+                <p id="p2-1">Today’s teenagers are increasingly aware of the importance of environmental and social responsibility. They don’t just observe what is happening around them, but actively participate in efforts aimed at improving the environment and society.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans2-1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2-1" class="translation-content">
+                    Thanh thiếu niên ngày nay ngày càng nhận thức rõ tầm quan trọng của trách nhiệm xã hội và môi trường. Họ không chỉ quan sát những gì đang xảy ra xung quanh mình mà còn tích cực tham gia vào các nỗ lực nhằm cải thiện môi trường và xã hội.
+                </div>
+
+                <p id="p2-2">Many teenagers are involved in global environmental movements. Besides, they organise local campaigns to clean up litter, plant trees, and promote waste separation. Teenagers also realise the significance of reducing the use of plastic and changing to environmentally friendly products. They become an example for adults, showing how small changes in everyday life can have a big impact on the planet.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans2-2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2-2" class="translation-content">
+                    Nhiều thanh thiếu niên tham gia vào các phong trào môi trường toàn cầu. Bên cạnh đó, họ tổ chức các chiến dịch địa phương để dọn rác, trồng cây và thúc đẩy phân loại rác thải. Thanh thiếu niên cũng nhận ra ý nghĩa của việc giảm sử dụng nhựa và chuyển sang các sản phẩm thân thiện với môi trường. Họ trở thành tấm gương cho người lớn, cho thấy những thay đổi nhỏ trong cuộc sống hàng ngày có thể tác động lớn đến hành tinh như thế nào.
+                </div>
+
+                <p id="p2-3">In addition to environmental issues, teenagers are engaged in social efforts. They take part in volunteer programmes and support charitable organisations. For example, many teenagers join projects aimed at helping the homeless or supporting children with disabilities. They realise that everyone can contribute to a better society.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans2-3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2-3" class="translation-content">
+                    Ngoài các vấn đề môi trường, thanh thiếu niên còn tham gia vào các nỗ lực xã hội. Họ tham gia các chương trình tình nguyện và hỗ trợ các tổ chức từ thiện. Ví dụ, nhiều thanh thiếu niên tham gia các dự án nhằm giúp đỡ người vô gia cư hoặc hỗ trợ trẻ em khuyết tật. Họ nhận ra rằng mọi người đều có thể đóng góp cho một xã hội tốt đẹp hơn.
+                </div>
+
+                <p id="p2-4">Teenagers today are the generation that shapes the future. Their environmental and social responsibility activities are an important step towards creating a sustainable and fair world.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans2-4')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2-4" class="translation-content">
+                    Thanh thiếu niên ngày nay là thế hệ định hình tương lai. Các hoạt động trách nhiệm xã hội và môi trường của họ là một bước quan trọng hướng tới việc tạo ra một thế giới bền vững và công bằng.
+                </div>
+            </div>
+
+            <table class="glossary-table">
+                <thead><tr><th>Vocabulary (Từ vựng)</th><th>Type (Loại từ)</th><th>Meaning (Nghĩa)</th></tr></thead>
+                <tbody>
+                    <tr><td><span class="p-word">Aware of</span> <span class="p-phonetic">/əˈwer əv/</span></td><td>(adj)</td><td>Nhận thức về</td></tr>
+                    <tr><td><span class="p-word">Movement</span> <span class="p-phonetic">/ˈmuːvmənt/</span></td><td>(n)</td><td>Phong trào</td></tr>
+                    <tr><td><span class="p-word">Significance</span> <span class="p-phonetic">/sɪɡˈnɪfɪkəns/</span></td><td>(n)</td><td>Tầm quan trọng, ý nghĩa</td></tr>
+                    <tr><td><span class="p-word">Charitable</span> <span class="p-phonetic">/ˈtʃærətəbl/</span></td><td>(adj)</td><td>Thuộc về từ thiện</td></tr>
+                    <tr><td><span class="p-word">Sustainable</span> <span class="p-phonetic">/səˈsteɪnəbl/</span></td><td>(adj)</td><td>Bền vững</td></tr>
+                </tbody>
+            </table>
+
+        </div>
+
+        <div class="panel" id="right-panel">
+            <div id="questions-container"></div>
+            
+            <button class="submit-btn" onclick="openSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+        </div>
+    </div>
+
+    <div id="result-modal">
+        <div class="modal-content">
+            <div id="input-step">
+                <h2>Bạn tên là gì?</h2>
+                <input type="text" id="student-name-input" placeholder="Nhập tên của bạn vào đây..." required>
+                <button class="submit-btn" style="margin-top:0" onclick="calculateScore()">Xác nhận nộp bài</button>
+            </div>
+            <div id="result-step" style="display:none;">
+                <h2 id="r-name">Tên học sinh</h2>
+                <div class="score-display" id="r-score">0/12</div>
+                <div class="score-10" id="r-score-10">Điểm hệ 10: 0.00/10</div>
+                <div id="r-comment" style="font-weight:bold; color:#1e293b; font-size: 1.2rem;"></div>
+                <img id="meme-img" src="" alt="Meme feedback">
+                <br>
+                <button class="close-modal" onclick="closeModal()">Đóng / Xem lại bài</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="confetti"></canvas>
+
+    <script>
+        // --- DATA CÂU HỎI & GIẢI THÍCH (TUÂN THỦ TUYỆT ĐỐI FORMAT 4 BƯỚC VÀ BỌC THẺ CSS) ---
+        const questionsData = [
+            // CÂU 31
+            {
+                id: 31,
+                text: "Question 31: ...but if you’re looking (31) ______ a way to engage further...",
+                options: [
+                    { text: "to", isCorrect: false },
+                    { text: "for", isCorrect: true },
+                    { text: "with", isCorrect: false },
+                    { text: "of", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>...nhưng nếu bạn đang tìm kiếm (31) ______ một cách để gắn kết sâu hơn...</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>to ➔ Dịch: <span class="p-mean">đến/tới (giới từ)</span></li>
+                            <li>for ➔ Dịch: <span class="p-mean">cho/để tìm kiếm (giới từ)</span></li>
+                            <li>with ➔ Dịch: <span class="p-mean">với (giới từ)</span></li>
+                            <li>of ➔ Dịch: <span class="p-mean">của (giới từ)</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>for</b>. Ta có cụm động từ (Phrasal verb) <span class="p-grammar">look for something</span> mang nghĩa là <span class="p-mean">tìm kiếm thứ gì đó</span>. Ngữ cảnh câu là "tìm kiếm một cách thức" nên chọn <b>for</b> là chính xác nhất.</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Các đáp án còn lại sai vì không tạo thành cụm từ có nghĩa phù hợp. <span class="p-word">Look to</span> thường nghĩa là trông cậy vào, <span class="p-word">look with/of</span> không hợp ngữ pháp ở đây.</div>
+                `
+            },
+            // CÂU 32
+            {
+                id: 32,
+                text: "Question 32: (32) ______ a language club allows you to explore a language...",
+                options: [
+                    { text: "Joining", isCorrect: true },
+                    { text: "Posting", isCorrect: false },
+                    { text: "Connecting", isCorrect: false },
+                    { text: "Logging", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>(32) ______ một câu lạc bộ ngôn ngữ cho phép bạn khám phá một ngôn ngữ...</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>Joining ➔ Dịch: <span class="p-mean">Việc tham gia (v-ing)</span></li>
+                            <li>Posting ➔ Dịch: <span class="p-mean">Việc đăng tải (v-ing)</span></li>
+                            <li>Connecting ➔ Dịch: <span class="p-mean">Việc kết nối (v-ing)</span></li>
+                            <li>Logging ➔ Dịch: <span class="p-mean">Việc đăng nhập (v-ing)</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>Joining</b>. Ở vị trí đầu câu làm chủ ngữ, ta cần một Danh động từ (Gerund/V-ing). Cụm từ <span class="p-word">Join a club</span> nghĩa là <span class="p-mean">Tham gia một câu lạc bộ</span> là sự kết hợp từ (Collocation) chuẩn nhất với ngữ cảnh.</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Các đáp án kia sai ngữ cảnh. Không ai nói "đăng tải câu lạc bộ" (<span class="p-word">Posting</span>) hay "đăng nhập câu lạc bộ" (<span class="p-word">Logging</span>). Mặc dù <span class="p-word">Connecting</span> (kết nối) có vẻ liên quan, nhưng nó cần giới từ đi kèm như 'connecting with/to', không đi trực tiếp với danh từ club như thế này.</div>
+                `
+            },
+            // CÂU 33
+            {
+                id: 33,
+                text: "Question 33: Enjoy the relaxed atmosphere, and (33) ______ afraid to ask others...",
+                options: [
+                    { text: "not to be", isCorrect: false },
+                    { text: "not be", isCorrect: false },
+                    { text: "don't be", isCorrect: true },
+                    { text: "don't to be", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Hãy tận hưởng bầu không khí thư giãn, và (33) ______ sợ khi phải hỏi người khác...</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>not to be ➔ Dịch: <span class="p-mean">không trở nên (sai cấu trúc mệnh lệnh)</span></li>
+                            <li>not be ➔ Dịch: <span class="p-mean">không là (sai cấu trúc)</span></li>
+                            <li>don't be ➔ Dịch: <span class="p-mean">đừng (Cấu trúc mệnh lệnh phủ định)</span></li>
+                            <li>don't to be ➔ Dịch: <span class="p-mean">đừng để (sai ngữ pháp hoàn toàn)</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>don't be</b>. Câu phía trước là "Enjoy..." (Hãy tận hưởng...) - đây là <span class="p-grammar">Câu mệnh lệnh khẳng định</span>. Từ "and" nối hai vế tương đương, vế sau khuyên "đừng sợ", ta cần dùng <span class="p-grammar">Câu mệnh lệnh phủ định: Don't + V(nguyên thể)</span>. Vì "afraid" là tính từ nên động từ đi kèm phải là "be" ➔ <span class="p-grammar">Don't be afraid</span>.</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Các đáp án còn lại sai hoàn toàn về mặt ngữ pháp tiếng Anh cơ bản. Không có cấu trúc mệnh lệnh bắt đầu bằng "not to be" hay "not be" đứng độc lập ở vế này.</div>
+                `
+            },
+            // CÂU 34
+            {
+                id: 34,
+                text: "Question 34: One of the best things... is the new (34) ______ of people you’ll meet.",
+                options: [
+                    { text: "community", isCorrect: true },
+                    { text: "speciality", isCorrect: false },
+                    { text: "communication", isCorrect: false },
+                    { text: "society", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Một trong những điều tuyệt vời nhất... là một (34) ______ những người mới mà bạn sẽ gặp.</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>community ➔ Dịch: <span class="p-mean">cộng đồng (n)</span></li>
+                            <li>speciality ➔ Dịch: <span class="p-mean">đặc sản, chuyên môn (n)</span></li>
+                            <li>communication ➔ Dịch: <span class="p-mean">sự giao tiếp (n)</span></li>
+                            <li>society ➔ Dịch: <span class="p-mean">xã hội (n)</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>community</b>. Câu lạc bộ (club) chính là nơi tập hợp những người có chung sở thích tạo thành một <span class="p-word">community</span> (cộng đồng). Dùng cụm "community of people" là hoàn toàn tự nhiên và hợp lý.</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> <span class="p-word">Speciality</span> (đặc sản/chuyên môn) không hợp nghĩa. <span class="p-word">Communication</span> (sự giao tiếp) là danh từ trừu tượng không đếm được, không dùng "a new communication of people". <span class="p-word">Society</span> (xã hội) mang tầm vóc quá lớn, không phù hợp để chỉ quy mô một câu lạc bộ nhỏ bé.</div>
+                `
+            },
+            // CÂU 35
+            {
+                id: 35,
+                text: "Question 35: Form study groups or group (35) ______ for help outside of meeting times.",
+                options: [
+                    { text: "chats", isCorrect: true },
+                    { text: "works", isCorrect: false },
+                    { text: "classes", isCorrect: false },
+                    { text: "posts", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Thành lập các nhóm học tập hoặc các (35) ______ nhóm để được giúp đỡ ngoài giờ họp.</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>chats ➔ Dịch: <span class="p-mean">cuộc trò chuyện (n)</span></li>
+                            <li>works ➔ Dịch: <span class="p-mean">tác phẩm, công việc (n)</span></li>
+                            <li>classes ➔ Dịch: <span class="p-mean">lớp học (n)</span></li>
+                            <li>posts ➔ Dịch: <span class="p-mean">bài đăng (n)</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>chats</b>. Ta có cụm danh từ ghép (Compound noun) rất phổ biến hiện nay là <span class="p-word">group chats</span> mang nghĩa là <span class="p-mean">nhóm trò chuyện (trên mạng/điện thoại)</span>. Phù hợp với mục đích để "hỏi đáp, giúp đỡ ngoài giờ".</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> "Group works" thường dùng làm bài tập nhóm trên lớp, không phải để chat nhờ giúp đỡ ngoài giờ. "Group classes" bị lặp nghĩa với "study groups" phía trước. "Group posts" (bài đăng nhóm) không phải là phương tiện trực tiếp để "for help" nhanh chóng như trò chuyện.</div>
+                `
+            },
+            // CÂU 36
+            {
+                id: 36,
+                text: "Question 36: You’ll start to feel more (36) ______ in the language with the support of others...",
+                options: [
+                    { text: "sensitive", isCorrect: false },
+                    { text: "peaceful", isCorrect: false },
+                    { text: "stressed", isCorrect: false },
+                    { text: "confident", isCorrect: true }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Bạn sẽ bắt đầu cảm thấy (36) ______ hơn trong ngôn ngữ đó với sự hỗ trợ của những người khác...</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>sensitive ➔ Dịch: <span class="p-mean">nhạy cảm (adj)</span></li>
+                            <li>peaceful ➔ Dịch: <span class="p-mean">thanh bình, yên tĩnh (adj)</span></li>
+                            <li>stressed ➔ Dịch: <span class="p-mean">căng thẳng (adj)</span></li>
+                            <li>confident ➔ Dịch: <span class="p-mean">tự tin (adj)</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>confident</b>. Khi bạn học ngôn ngữ và nhận được sự "hỗ trợ" (support) từ bạn bè trong câu lạc bộ, hệ quả logic là bạn sẽ trở nên <span class="p-word">confident</span> (tự tin) hơn khi sử dụng ngôn ngữ đó. Đây là Collocation: <span class="p-grammar">feel confident in doing sth/ in sth</span>.</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Nhận được sự giúp đỡ thì không thể nào dẫn tới <span class="p-word">stressed</span> (căng thẳng). <span class="p-word">Peaceful</span> (yên bình) dùng tả cảnh vật hoặc tâm trạng nghỉ ngơi, không dùng tả thái độ dùng ngôn ngữ. <span class="p-word">Sensitive</span> (nhạy cảm) hoàn toàn lạc đề.</div>
+                `
+            },
+            // CÂU 37 (True/False)
+            {
+                id: 37,
+                text: "Question 37 (T/F): Teenagers pay much attention to environmental and social issues these days.",
+                options: [
+                    { text: "True", isCorrect: true },
+                    { text: "False", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Thanh thiếu niên ngày nay chú ý nhiều đến các vấn đề môi trường và xã hội.</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>True ➔ Dịch: <span class="p-mean">Đúng</span></li>
+                            <li>False ➔ Dịch: <span class="p-mean">Sai</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>True</b>. Dựa vào câu đầu tiên của đoạn văn số 1: <span class="p-word">"Today’s teenagers are increasingly aware of the importance of environmental and social responsibility."</span> (Thanh thiếu niên ngày nay ngày càng nhận thức rõ tầm quan trọng của trách nhiệm xã hội và môi trường). Cụm "aware of" đồng nghĩa với "pay attention to".</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Không có yếu tố nào khiến nhận định này sai so với thông tin cung cấp trong bài đọc.</div>
+                `
+            },
+            // CÂU 38 (True/False)
+            {
+                id: 38,
+                text: "Question 38 (T/F): Teenagers organise campaigns to replace eco-friendly products.",
+                options: [
+                    { text: "True", isCorrect: false },
+                    { text: "False", isCorrect: true }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Thanh thiếu niên tổ chức các chiến dịch để thay thế (loại bỏ) các sản phẩm thân thiện với môi trường.</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>True ➔ Dịch: <span class="p-mean">Đúng</span></li>
+                            <li>False ➔ Dịch: <span class="p-mean">Sai</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>False</b>. Bài đọc đoạn 2 ghi rõ: <span class="p-word">"...changing to environmentally friendly products."</span> nghĩa là chuyển SANG SỬ DỤNG (changing to) các sản phẩm thân thiện với môi trường, chứ không phải là thay thế/loại bỏ (replace) chúng.</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Bẫy từ vựng! Đề bài dùng từ <span class="p-word">replace</span> (thay thế bỏ đi), làm ngược lại hoàn toàn ý nghĩa tích cực mà đoạn văn đang đề cập.</div>
+                `
+            },
+            // CÂU 39 (True/False)
+            {
+                id: 39,
+                text: "Question 39 (T/F): Adults set an example for teenagers to contribute positively to the environment.",
+                options: [
+                    { text: "True", isCorrect: false },
+                    { text: "False", isCorrect: true }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Người lớn làm gương cho thanh thiếu niên để đóng góp tích cực cho môi trường.</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>True ➔ Dịch: <span class="p-mean">Đúng</span></li>
+                            <li>False ➔ Dịch: <span class="p-mean">Sai</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>False</b>. Bài đọc cuối đoạn 2 viết: <span class="p-word">"They (Teenagers) become an example for adults..."</span> (HỌ - tức là thanh thiếu niên - trở thành tấm gương cho người lớn). Câu hỏi lại viết ngược lại là người lớn làm gương cho thanh thiếu niên.</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Bẫy đảo ngược chủ thể! Bạn phải đọc kỹ đại từ "They" trong bài đang ám chỉ ai. Ở đây They là Teenagers.</div>
+                `
+            },
+            // CÂU 40 (True/False)
+            {
+                id: 40,
+                text: "Question 40 (T/F): Many teenagers participate in social efforts to assist those who need help.",
+                options: [
+                    { text: "True", isCorrect: true },
+                    { text: "False", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Nhiều thanh thiếu niên tham gia vào các nỗ lực xã hội để hỗ trợ những người cần giúp đỡ.</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>True ➔ Dịch: <span class="p-mean">Đúng</span></li>
+                            <li>False ➔ Dịch: <span class="p-mean">Sai</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>True</b>. Trong đoạn 3 có ghi: <span class="p-word">"...many teenagers join projects aimed at helping the homeless or supporting children with disabilities."</span> (nhiều thanh thiếu niên tham gia các dự án nhằm giúp đỡ người vô gia cư hoặc hỗ trợ trẻ em khuyết tật). Đây chính là hành động "assist those who need help".</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Thông tin hoàn toàn khớp với bài đọc, việc chọn False là sai hoàn toàn.</div>
+                `
+            },
+            // CÂU 41
+            {
+                id: 41,
+                text: 'Question 41: The word "significance" in paragraph 2 is closest in meaning to ______.',
+                options: [
+                    { text: "importance", isCorrect: true },
+                    { text: "performance", isCorrect: false },
+                    { text: "attendance", isCorrect: false },
+                    { text: "appearance", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Từ "significance" (ý nghĩa, tầm quan trọng) trong đoạn 2 gần nghĩa nhất với từ ______.</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>importance ➔ Dịch: <span class="p-mean">sự quan trọng (n)</span></li>
+                            <li>performance ➔ Dịch: <span class="p-mean">màn trình diễn, hiệu suất (n)</span></li>
+                            <li>attendance ➔ Dịch: <span class="p-mean">sự có mặt, tham dự (n)</span></li>
+                            <li>appearance ➔ Dịch: <span class="p-mean">ngoại hình, sự xuất hiện (n)</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>importance</b>. Từ vựng <span class="p-word">significance</span> /sɪɡˈnɪfɪkəns/ đồng nghĩa trực tiếp với <span class="p-word">importance</span> /ɪmˈpɔːrtns/ (Tầm quan trọng). Ngữ cảnh "realise the significance of reducing plastic" nghĩa là nhận ra TẦM QUAN TRỌNG của việc giảm nhựa.</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Các từ <span class="p-word">performance</span>, <span class="p-word">attendance</span>, <span class="p-word">appearance</span> mang nghĩa hoàn toàn khác biệt và không thể thay thế vào vị trí này để tạo ra câu có nghĩa hợp lý.</div>
+                `
+            },
+            // CÂU 42
+            {
+                id: 42,
+                text: "Question 42: What could be the best title for the passage?",
+                options: [
+                    { text: "The Rise of Environmental Movements", isCorrect: false },
+                    { text: "How Teenagers Organise Social Campaigns", isCorrect: false },
+                    { text: "Teenagers Take Action for a Better World", isCorrect: true },
+                    { text: "Teenagers Watch the World Change Around Them", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="expl-step"><b>Bước 1: Dịch đề bài</b><br>Tiêu đề nào sau đây là phù hợp nhất cho đoạn văn?</div>
+                    <div class="expl-step"><b>Bước 2: Các đáp án:</b>
+                        <ul>
+                            <li>The Rise of Environmental Movements ➔ Dịch: <span class="p-mean">Sự trỗi dậy của các phong trào môi trường</span></li>
+                            <li>How Teenagers Organise Social Campaigns ➔ Dịch: <span class="p-mean">Cách thanh thiếu niên tổ chức các chiến dịch xã hội</span></li>
+                            <li>Teenagers Take Action for a Better World ➔ Dịch: <span class="p-mean">Thanh thiếu niên hành động vì một thế giới tốt đẹp hơn</span></li>
+                            <li>Teenagers Watch the World Change Around Them ➔ Dịch: <span class="p-mean">Thanh thiếu niên nhìn thế giới thay đổi quanh họ</span></li>
+                        </ul>
+                    </div>
+                    <div class="expl-step"><b>Bước 3: <span class="hl-green">Tại sao đúng:</span></b> Đáp án đúng là <b>Teenagers Take Action for a Better World</b>. Bài đọc bao quát cả 2 khía cạnh: "environmental" (môi trường - đoạn 2) và "social" (xã hội - đoạn 3). Tiêu đề này bao trùm được cả hai ý (hành động vì thế giới tốt đẹp hơn).</div>
+                    <div class="expl-step"><b>Bước 4: <span class="hl-red">Tại sao sai:</span></b> Đáp án thứ nhất và thứ hai bị TỨC TẾ/THIẾU Ý (chỉ nói về Môi trường hoặc Xã hội). Đáp án cuối cùng sai hoàn toàn vì thanh thiếu niên KHÔNG CHỈ "watch" (nhìn) mà họ "actively participate" (tích cực tham gia) và định hình tương lai.</div>
+                `
+            }
+        ];
+
+        // --- CORE LOGIC & AUDIO ---
+        let score = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = questionsData.length;
+        let isAudioPlayed = false;
+
+        // Âm thanh
+        const audioEncourage = document.getElementById('audio-encourage');
+        const audioWrong = document.getElementById('audio-wrong');
+
+        // Hàm tạo tiếng Ding (Web Audio API) cho câu đúng để đảm bảo luôn chạy mượt
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playCorrectSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Note A5
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); // Slide to A6
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Bật audio khích lệ lần đầu click
+        document.body.addEventListener('click', () => {
+            if (!isAudioPlayed) {
+                audioEncourage.play().catch(e => console.log("Audio play prevented by browser"));
+                isAudioPlayed = true;
+            }
+        }, { once: true });
+
+        // Shuffle Array
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // --- RENDER GIAO DIỆN CÂU HỎI ---
+        const container = document.getElementById('questions-container');
+
+        questionsData.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `q-card-${q.id}`;
+
+            const qText = document.createElement('div');
+            qText.className = 'question-text';
+            qText.innerHTML = q.text;
+            card.appendChild(qText);
+
+            const optionsGrid = document.createElement('div');
+            optionsGrid.className = 'options-grid';
+            
+            // Xáo trộn đáp án MỖI LẦN TẢI TRANG
+            const shuffledOptions = shuffle([...q.options]);
+
+            shuffledOptions.forEach((opt) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = opt.text; // Không cắt chữ, giữ nguyên
+                btn.onclick = () => handleAnswer(btn, opt.isCorrect, q.id, shuffledOptions);
+                optionsGrid.appendChild(btn);
+            });
+
+            card.appendChild(optionsGrid);
+
+            // Khung giải thích
+            const expl = document.createElement('div');
+            expl.className = 'explanation-box';
+            expl.id = `expl-${q.id}`;
+            expl.innerHTML = q.explanation;
+            card.appendChild(expl);
+
+            container.appendChild(card);
+        });
+
+        // Xử lý nút dịch
+        function toggleTranslate(id) {
+            const el = document.getElementById(id);
+            if(el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        // --- XỬ LÝ CHỌN ĐÁP ÁN ---
+        function handleAnswer(btn, isCorrect, qId, allOptions) {
+            const card = document.getElementById(`q-card-${qId}`);
+            const buttons = card.querySelectorAll('.option-btn');
+            
+            // Khóa các nút
+            buttons.forEach(b => b.disabled = true);
+            answeredQuestions++;
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playCorrectSound();
+                fireConfetti();
+                score++;
+            } else {
+                btn.classList.add('wrong');
+                btn.classList.add('shake');
+                audioWrong.currentTime = 0;
+                audioWrong.play();
+                
+                // Tự động Highlight đáp án đúng
+                buttons.forEach(b => {
+                    const matchedOpt = allOptions.find(o => o.text === b.innerHTML);
+                    if(matchedOpt && matchedOpt.isCorrect) {
+                        b.classList.add('correct');
+                        b.style.opacity = '0.7'; // Phân biệt với việc tự chọn trúng
+                    }
+                });
+            }
+
+            // Hiện giải thích
+            document.getElementById(`expl-${qId}`).style.display = 'block';
+        }
+
+        // --- CONFETTI EFFECT ---
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#fce18a', '#ff726d', '#b48def', '#f4306d'];
+            for(let i=0; i<100; i++) {
+                pieces.push({
+                    x: canvas.width/2, y: canvas.height/2 + 100,
+                    vx: (Math.random()-0.5)*20, vy: (Math.random()-1)*20,
+                    size: Math.random()*10+5, color: colors[Math.floor(Math.random()*colors.length)]
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                let active = false;
+                pieces.forEach(p => {
+                    p.x += p.vx; p.y += p.vy; p.vy += 0.5; // gravity
+                    if(p.y < canvas.height) active = true;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                    ctx.fill();
+                });
+                if(active) requestAnimationFrame(animate);
+                else ctx.clearRect(0,0,canvas.width,canvas.height);
+            }
+            animate();
+        }
+
+        // --- SUBMIT LOGIC ---
+        const modal = document.getElementById('result-modal');
+        function openSubmitModal() {
+            if(answeredQuestions < totalQuestions) {
+                alert(`Bạn mới làm ${answeredQuestions}/${totalQuestions} câu. Hãy hoàn thành hết trước khi nộp nhé!`);
+                return;
+            }
+            modal.style.display = 'flex';
+        }
+
+        function calculateScore() {
+            const nameInput = document.getElementById('student-name-input').value.trim();
+            if(!nameInput) {
+                alert("Vui lòng nhập tên của bạn!");
+                return;
+            }
+
+            document.getElementById('input-step').style.display = 'none';
+            document.getElementById('result-step').style.display = 'block';
+
+            document.getElementById('r-name').innerText = `Học sinh: ${nameInput}`;
+            document.getElementById('r-score').innerText = `${score} / ${totalQuestions}`;
+            
+            // Tính điểm hệ 10
+            let score10 = (score / totalQuestions) * 10;
+            document.getElementById('r-score-10').innerText = `Điểm quy đổi: ${score10.toFixed(2)} / 10`;
+
+            const percentage = score / totalQuestions;
+            const img = document.getElementById('meme-img');
+            const comment = document.getElementById('r-comment');
+
+            // Gán GIF động tùy biến theo điểm
+            if(percentage === 1) {
+                img.src = "https://media.giphy.com/media/l0HTYLqYYOUuIhiT2/giphy.gif"; // Thiên tài
+                comment.innerText = "Tuyệt cú mèo! Ms MS Chí Nên đánh giá bạn là một THIÊN TÀI! 🌟";
+                comment.style.color = "#16a34a";
+            } else if(percentage >= 0.6) {
+                img.src = "https://media.giphy.com/media/xT0GqssRweIhlz209i/giphy.gif"; // Khá
+                comment.innerText = "Rất tốt! Cố gắng chút nữa là đạt điểm tối đa nha! 👍";
+                comment.style.color = "#2563eb";
+            } else {
+                img.src = "https://media.giphy.com/media/26ufcVAp3Pn01YZKU/giphy.gif"; // Yếu
+                comment.innerText = "Chưa được tốt lắm rồi! Hãy đọc lại kỹ phần Giải thích chi tiết nhé! 💪";
+                comment.style.color = "#dc2626";
+            }
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

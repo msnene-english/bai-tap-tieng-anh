@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wh-Questions Quiz - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-purple: #8854C0;
+            --primary-teal: #00C9A7;
+            --correct-green: #00D26A;
+            --error-red: #FF4757;
+            --bg-pastel: #f0f4f8;
+            --text-dark: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-pastel);
+            background-image: radial-gradient(#8854c022 2px, transparent 2px);
+            background-size: 30px 30px;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        header {
+            width: 100%;
+            background: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--primary-purple);
+            font-weight: 900;
+        }
+
+        .teacher-name {
+            font-size: 0.9rem;
+            color: #636e72;
+            margin-top: 5px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 90%;
+            max-width: 600px;
+            height: 15px;
+            background: #dfe6e9;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary-teal), var(--primary-purple));
+            transition: width 0.3s ease;
+        }
+
+        /* Quiz Card */
+        .quiz-container {
+            width: 95%;
+            max-width: 600px;
+            perspective: 1000px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 10px 0px #d6d6d6, 0 15px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            transition: transform 0.2s;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* Options */
+        .options-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 3px solid #e2e8f0;
+            padding: 15px 20px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            box-shadow: 0 5px 0px #e2e8f0;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-purple);
+            box-shadow: 0 8px 0px var(--primary-purple);
+        }
+
+        .option-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0px var(--primary-purple);
+        }
+
+        .option-btn.correct {
+            background-color: #d1fae5;
+            border-color: var(--correct-green);
+            box-shadow: 0 5px 0px var(--correct-green);
+            color: #065f46;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2;
+            border-color: var(--error-red);
+            box-shadow: 0 5px 0px var(--error-red);
+            color: #991b1b;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 20px;
+            background: #f8f9fa;
+            border-left: 8px solid var(--primary-purple);
+            display: none;
+            animation: slideUp 0.4s ease;
+        }
+
+        .explanation-title {
+            color: var(--primary-purple);
+            font-weight: 900;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .shake { animation: shake 0.3s ease-in-out; }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Navigation */
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .btn-next {
+            flex: 1;
+            padding: 15px;
+            background: var(--primary-teal);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 6px 0px #00a88b;
+            transition: all 0.1s;
+        }
+
+        .btn-next:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0px #00a88b;
+        }
+
+        /* Result Modal */
+        #result-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 8px solid var(--primary-teal);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary-teal);
+        }
+
+        /* Glossary Table */
+        .glossary-container {
+            margin-top: 30px;
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: var(--primary-purple);
+            color: white;
+        }
+
+        .tag-u { text-decoration: underline; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Trắc nghiệm Từ để hỏi (Wh-Questions) - Lớp 6</h1>
+        <div class="teacher-name">Giáo viên tạo: Ms MS Chí Nên</div>
+    </header>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="quiz-container" id="quizContainer">
+        <!-- Question Card will be injected here -->
+    </div>
+
+    <div id="result-modal">
+        <div class="modal-content">
+            <h2 id="result-title">Tuyệt vời!</h2>
+            <div class="score-circle" id="scoreValue">0/20</div>
+            <p id="result-comment">Bạn đã hoàn thành bài thi rất tốt!</p>
+            <button class="btn-next" onclick="location.reload()">Làm lại bài</button>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <script>
+        const quizData = [
+            {
+                q: "1. \"_______ is your favorite TV show?\" - \"It's Tom and Jerry.\"",
+                options: ["A. Who", "B. What", "C. Where", "D. When"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. Who (đại từ): Ai (hỏi về người).",
+                        "B. What (đại từ): Cái gì/Gì (hỏi về sự vật, tên chương trình).",
+                        "C. Where (trạng từ): Ở đâu (hỏi về địa điểm).",
+                        "D. When (trạng từ): Khi nào (hỏi về thời gian)."
+                    ],
+                    translation: "\"Chương trình TV yêu thích của bạn là gì?\" - \"Đó là Tom và Jerry.\"",
+                    whyCorrect: "Câu trả lời là 'Tom and Jerry' (tên một chương trình/vật), nên ta dùng 'What' để hỏi về danh tính của sự vật đó.",
+                    whyWrong: "Loại A vì không hỏi người. Loại C, D vì câu trả lời không chỉ nơi chốn hay thời gian."
+                }
+            },
+            {
+                q: "2. \"_______ do you usually watch TV?\" - \"In the living room.\"",
+                options: ["A. When", "B. Where", "C. Who", "D. Why"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. When: Khi nào.",
+                        "B. Where: Ở đâu.",
+                        "C. Who: Ai.",
+                        "D. Why: Tại sao."
+                    ],
+                    translation: "\"Bạn thường xem TV ở đâu?\" - \"Trong phòng khách.\"",
+                    whyCorrect: "Câu trả lời 'In the living room' (Trong phòng khách) là một trạng ngữ chỉ nơi chốn -> dùng 'Where'.",
+                    whyWrong: "Các phương án khác hỏi về thời gian, con người hoặc lý do đều không khớp với 'phòng khách'."
+                }
+            },
+            {
+                q: "3. \"_______ do you watch cartoons?\" - \"Every Saturday morning.\"",
+                options: ["A. What time", "B. Where", "C. When", "D. What"],
+                correct: 2,
+                explanation: {
+                    analysis: [
+                        "A. What time: Mấy giờ (hỏi giờ cụ thể).",
+                        "B. Where: Ở đâu.",
+                        "C. When: Khi nào (hỏi mốc thời gian chung).",
+                        "D. What: Cái gì."
+                    ],
+                    translation: "\"Khi nào bạn xem phim hoạt hình?\" - \"Mỗi sáng thứ Bảy.\"",
+                    whyCorrect: "Trả lời bằng 'Every Saturday morning' (Sáng thứ Bảy) là một mốc thời gian -> dùng 'When'.",
+                    whyWrong: "Dùng 'What time' thường yêu cầu giờ cụ thể trên đồng hồ (ví dụ: 8:00 AM)."
+                }
+            },
+            {
+                q: "4. \"_______ does the news start?\" - \"At 7 o'clock.\"",
+                options: ["A. How long", "B. What time", "C. How far", "D. How old"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. How long: Bao lâu.",
+                        "B. What time: Mấy giờ.",
+                        "C. How far: Bao xa.",
+                        "D. How old: Bao nhiêu tuổi."
+                    ],
+                    translation: "\"Bản tin bắt đầu lúc mấy giờ?\" - \"Lúc 7 giờ.\"",
+                    whyCorrect: "Câu trả lời 'At 7 o'clock' là giờ đồng hồ cụ thể -> dùng 'What time'.",
+                    whyWrong: "Các từ còn lại hỏi về độ dài, khoảng cách hoặc tuổi tác đều sai ngữ nghĩa."
+                }
+            },
+            {
+                q: "5. \"_______ watches TV with you in the evening?\" - \"My family.\"",
+                options: ["A. Who", "B. What", "C. Why", "D. Where"],
+                correct: 0,
+                explanation: {
+                    analysis: [
+                        "A. Who: Ai.",
+                        "B. What: Cái gì.",
+                        "C. Why: Tại sao.",
+                        "D. Where: Ở đâu."
+                    ],
+                    translation: "\"Ai xem TV cùng bạn vào buổi tối?\" - \"Gia đình tôi.\"",
+                    whyCorrect: "Câu trả lời 'My family' (Gia đình tôi) chỉ người -> dùng 'Who' đóng vai trò chủ ngữ.",
+                    whyWrong: "Không dùng What/Why/Where vì câu trả lời là chủ thể người."
+                }
+            },
+            {
+                q: "6. \"_______ remote control is this?\" - \"It's my brother's.\"",
+                options: ["A. Who", "B. Whose", "C. Which", "D. Where"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. Who: Ai.",
+                        "B. Whose: Của ai (hỏi về sở hữu).",
+                        "C. Which: Cái nào (lựa chọn).",
+                        "D. Where: Ở đâu."
+                    ],
+                    translation: "\"Cái điều khiển từ xa này là của ai?\" - \"Của anh trai tôi.\"",
+                    whyCorrect: "Câu trả lời có sở hữu cách 's (my brother's) -> dùng 'Whose'.",
+                    whyWrong: "Who hỏi người (chủ ngữ), không hỏi sự sở hữu."
+                }
+            },
+            {
+                q: "7. \"_______ channel do you like, Channel 1 or Channel 2?\" - \"Channel 1.\"",
+                options: ["A. What", "B. Which", "C. Who", "D. When"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. What: Cái gì.",
+                        "B. Which: Cái nào (dùng khi có sự lựa chọn giới hạn).",
+                        "C. Who: Ai.",
+                        "D. When: Khi nào."
+                    ],
+                    translation: "\"Bạn thích kênh nào, Kênh 1 hay Kênh 2?\" - \"Kênh 1.\"",
+                    whyCorrect: "Khi câu hỏi đưa ra sự lựa chọn cụ thể (A or B) -> dùng 'Which'.",
+                    whyWrong: "What thường hỏi chung chung, không giới hạn lựa chọn rõ ràng như Which."
+                }
+            },
+            {
+                q: "8. \"_______ don't you like horror movies?\" - \"Because they're scary.\"",
+                options: ["A. How", "B. Why", "C. What", "D. When"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. How: Như thế nào/Bằng cách nào.",
+                        "B. Why: Tại sao.",
+                        "C. What: Cái gì.",
+                        "D. When: Khi nào."
+                    ],
+                    translation: "\"Tại sao bạn không thích phim kinh dị?\" - \"Bởi vì chúng đáng sợ.\"",
+                    whyCorrect: "Câu trả lời bắt đầu bằng 'Because' (Bởi vì) để giải thích lý do -> dùng 'Why'.",
+                    whyWrong: "How/What/When không dùng để hỏi lý do."
+                }
+            },
+            {
+                q: "9. \"_______ do you turn on the TV?\" - \"Press the power button.\"",
+                options: ["A. What", "B. How", "C. Why", "D. Where"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. What: Cái gì.",
+                        "B. How: Làm thế nào (hỏi cách thức).",
+                        "C. Why: Tại sao.",
+                        "D. Where: Ở đâu."
+                    ],
+                    translation: "\"Làm thế nào để bạn bật TV?\" - \"Nhấn nút nguồn.\"",
+                    whyCorrect: "Câu trả lời hướng dẫn cách thực hiện hành động -> dùng 'How'.",
+                    whyWrong: "What/Why/Where không dùng để hỏi về quy trình thực hiện."
+                }
+            },
+            {
+                q: "10. \"_______ is this TV?\" - \"It's 2 years old.\"",
+                options: ["A. How much", "B. How old", "C. How far", "D. How"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. How much: Bao nhiêu (tiền/lượng).",
+                        "B. How old: Bao nhiêu tuổi/thâm niên.",
+                        "C. How far: Bao xa.",
+                        "D. How: Như thế nào."
+                    ],
+                    translation: "\"Chiếc TV này dùng được bao lâu rồi?\" - \"Nó được 2 năm tuổi.\"",
+                    whyCorrect: "Hỏi về tuổi thọ của vật dùng cấu trúc 'How old + be + subject?'.",
+                    whyWrong: "Không dùng How much vì không hỏi giá tiền ở đây."
+                }
+            },
+            {
+                q: "11. \"_______ hours do you watch TV every day?\" - \"About 2 hours.\"",
+                options: ["A. How much", "B. How many", "C. How long", "D. How far"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. How much: Bao nhiêu (danh từ không đếm được).",
+                        "B. How many: Bao nhiêu (danh từ đếm được số nhiều).",
+                        "C. How long: Bao lâu.",
+                        "D. How far: Bao xa."
+                    ],
+                    translation: "\"Bạn xem TV bao nhiêu tiếng mỗi ngày?\" - \"Khoảng 2 tiếng.\"",
+                    whyCorrect: "Vì 'hours' là danh từ đếm được số nhiều -> dùng 'How many'.",
+                    whyWrong: "Dùng How long thì không đi kèm danh từ 'hours' ngay sau đó (How long do you watch TV?)."
+                }
+            },
+            {
+                q: "12. \"_______ does a new TV cost?\" - \"About 500 dollars.\"",
+                options: ["A. How many", "B. How much", "C. How long", "D. How"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. How many: Bao nhiêu (số lượng).",
+                        "B. How much: Bao nhiêu (giá tiền).",
+                        "C. How long: Bao lâu.",
+                        "D. How: Như thế nào."
+                    ],
+                    translation: "\"Một chiếc TV mới giá bao nhiêu?\" - \"Khoảng 500 đô la.\"",
+                    whyCorrect: "Động từ 'cost' (trị giá) đi kèm với 'How much' để hỏi giá tiền.",
+                    whyWrong: "How many dùng cho số lượng đồ vật đếm được, không dùng cho đơn giá tổng quát."
+                }
+            },
+            {
+                q: "13. \"_______ do you watch sports on TV?\" - \"Twice a week.\"",
+                options: ["A. How long", "B. How far", "C. How often", "D. When"],
+                correct: 2,
+                explanation: {
+                    analysis: [
+                        "A. How long: Bao lâu.",
+                        "B. How far: Bao xa.",
+                        "C. How often: Bao lâu một lần (hỏi tần suất).",
+                        "D. When: Khi nào."
+                    ],
+                    translation: "\"Bạn có thường xem thể thao trên TV không?\" - \"Hai lần một tuần.\"",
+                    whyCorrect: "Câu trả lời 'Twice a week' chỉ mức độ thường xuyên -> dùng 'How often'.",
+                    whyWrong: "When chỉ hỏi mốc thời gian, không nhấn mạnh tần suất."
+                }
+            },
+            {
+                q: "14. \"_______ is the TV shop from here?\" - \"About 2 kilometers.\"",
+                options: ["A. How long", "B. How far", "C. How much", "D. How"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. How long: Bao lâu.",
+                        "B. How far: Bao xa (hỏi khoảng cách).",
+                        "C. How much: Bao nhiêu.",
+                        "D. How: Như thế nào."
+                    ],
+                    translation: "\"Cửa hàng TV cách đây bao xa?\" - \"Khoảng 2 ki-lô-mét.\"",
+                    whyCorrect: "Câu trả lời '2 kilometers' là đơn vị đo khoảng cách -> dùng 'How far'.",
+                    whyWrong: "How long hỏi về thời gian hoặc độ dài vật lý, không dùng cho khoảng cách lộ trình."
+                }
+            },
+            {
+                q: "15. \"_______ is each episode of this series?\" - \"45 minutes.\"",
+                options: ["A. How far", "B. How long", "C. How much", "D. When"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. How far: Bao xa.",
+                        "B. How long: Bao lâu (độ dài thời gian).",
+                        "C. How much: Bao nhiêu.",
+                        "D. When: Khi nào."
+                    ],
+                    translation: "\"Mỗi tập phim của bộ này dài bao lâu?\" - \"45 phút.\"",
+                    whyCorrect: "Trả lời bằng khoảng thời gian '45 minutes' -> dùng 'How long'.",
+                    whyWrong: "When dùng để hỏi thời điểm bắt đầu/kết thúc cụ thể."
+                }
+            },
+            {
+                q: "16. \"_______ color is your TV?\" - \"It's black.\"",
+                options: ["A. Which", "B. What", "C. Where", "D. Who"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. Which: Cái nào.",
+                        "B. What: Gì/Cái gì.",
+                        "C. Where: Ở đâu.",
+                        "D. Who: Ai."
+                    ],
+                    translation: "\"TV của bạn màu gì?\" - \"Nó màu đen.\"",
+                    whyCorrect: "Cấu trúc 'What + noun' (What color) là cách hỏi thông dụng về đặc điểm.",
+                    whyWrong: "Which color chỉ dùng khi có danh sách màu cho sẵn để chọn."
+                }
+            },
+            {
+                q: "17. \"_______ presents the weather forecast?\" - \"Mr. Johnson does.\"",
+                options: ["A. Who", "B. What", "C. Why", "D. When"],
+                correct: 0,
+                explanation: {
+                    analysis: [
+                        "A. Who: Ai.",
+                        "B. What: Cái gì.",
+                        "C. Why: Tại sao.",
+                        "D. When: Khi nào."
+                    ],
+                    translation: "\"Ai dẫn chương trình dự báo thời tiết?\" - \"Ông Johnson dẫn.\"",
+                    whyCorrect: "Câu trả lời là tên người cụ thể -> dùng 'Who'.",
+                    whyWrong: "Các từ khác không hỏi về chủ thể thực hiện hành động."
+                }
+            },
+            {
+                q: "18. \"_______ do you watch TV?\" - \"After dinner.\"",
+                options: ["A. Where", "B. When", "C. Why", "D. Who"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. Where: Ở đâu.",
+                        "B. When: Khi nào.",
+                        "C. Why: Tại sao.",
+                        "D. Who: Ai."
+                    ],
+                    translation: "\"Khi nào bạn xem TV?\" - \"Sau bữa tối.\"",
+                    whyCorrect: "Trả lời 'After dinner' là mốc thời gian -> dùng 'When'.",
+                    whyWrong: "Where/Why/Who không khớp ngữ nghĩa câu trả lời."
+                }
+            },
+            {
+                q: "19. \"_______ TV programs do you watch?\" - \"Three or four.\"",
+                options: ["A. How much", "B. How many", "C. How long", "D. How far"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. How much: Bao nhiêu (không đếm được).",
+                        "B. How many: Bao nhiêu (đếm được).",
+                        "C. How long: Bao lâu.",
+                        "D. How far: Bao xa."
+                    ],
+                    translation: "\"Bạn xem bao nhiêu chương trình TV?\" - \"Ba hoặc bốn chương trình.\"",
+                    whyCorrect: "Vì 'programs' là danh từ đếm được số nhiều -> dùng 'How many'.",
+                    whyWrong: "How much không đi với danh từ đếm được số nhiều."
+                }
+            },
+            {
+                q: "20. \"_______ do you like watching TV?\" - \"Because it's relaxing.\"",
+                options: ["A. What", "B. Why", "C. When", "D. Where"],
+                correct: 1,
+                explanation: {
+                    analysis: [
+                        "A. What: Cái gì.",
+                        "B. Why: Tại sao.",
+                        "C. When: Khi nào.",
+                        "D. Where: Ở đâu."
+                    ],
+                    translation: "\"Tại sao bạn thích xem TV?\" - \"Bởi vì nó mang lại sự thư giãn.\"",
+                    whyCorrect: "Câu trả lời 'Because...' giải thích lý do -> bắt buộc dùng 'Why'.",
+                    whyWrong: "What/When/Where không dùng để hỏi nguyên nhân."
+                }
+            }
+        ];
+
+        let currentQ = 0;
+        let score = 0;
+        let answered = false;
+
+        // Audio Context for sound effects
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(freq, type, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playCorrect() { playSound(880, 'sine', 0.3); }
+        function playWrong() { playSound(220, 'square', 0.5); }
+
+        function renderQuestion() {
+            const data = quizData[currentQ];
+            const container = document.getElementById('quizContainer');
+            answered = false;
+
+            let optionsHtml = data.options.map((opt, index) => `
+                <button class="option-btn" onclick="checkAnswer(${index}, this)">
+                    ${opt}
+                </button>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="card" id="card-${currentQ}">
+                    <div class="question-text">${data.q}</div>
+                    <div class="options-grid">
+                        ${optionsHtml}
+                    </div>
+                    <div class="explanation-box" id="explanation">
+                        <div class="explanation-title">
+                            <span>💡 Cô MS Chí Nên giải thích:</span>
+                        </div>
+                        <div style="margin-bottom:10px;"><strong>1. Phân tích 4 đáp án:</strong></div>
+                        <ul style="padding-left:20px; margin-bottom:15px;">
+                            ${data.explanation.analysis.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                        <div style="margin-bottom:10px;"><strong>2. Dịch nghĩa toàn câu:</strong> <em>${data.explanation.translation}</em></div>
+                        <div style="margin-bottom:10px;"><strong>3. Tại sao chọn đáp án này?</strong></div>
+                        <p style="margin-bottom:10px;">${data.explanation.whyCorrect}</p>
+                        <p><strong>4. Tại sao loại đáp án kia?</strong> ${data.explanation.whyWrong}</p>
+                    </div>
+                    <div class="nav-buttons" id="navButtons" style="display:none">
+                        <button class="btn-next" onclick="nextQuestion()">
+                            ${currentQ === quizData.length - 1 ? 'Xem kết quả' : 'Câu tiếp theo ➜'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            updateProgress();
+        }
+
+        function checkAnswer(index, btn) {
+            if (answered) return;
+            answered = true;
+
+            const data = quizData[currentQ];
+            const allBtns = document.querySelectorAll('.option-btn');
+            const expBox = document.getElementById('explanation');
+            const navButtons = document.getElementById('navButtons');
+
+            if (index === data.correct) {
+                btn.classList.add('correct');
+                score++;
+                playCorrect();
+                triggerConfetti();
+            } else {
+                btn.classList.add('wrong');
+                allBtns[data.correct].classList.add('correct');
+                document.getElementById(`card-${currentQ}`).classList.add('shake');
+                playWrong();
+            }
+
+            expBox.style.display = 'block';
+            navButtons.style.display = 'flex';
+        }
+
+        function nextQuestion() {
+            currentQ++;
+            if (currentQ < quizData.length) {
+                renderQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function updateProgress() {
+            const percent = ((currentQ) / quizData.length) * 100;
+            document.getElementById('progressBar').style.width = percent + '%';
+        }
+
+        function showResult() {
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('result-modal').style.display = 'flex';
+            document.getElementById('scoreValue').innerText = `${score}/${quizData.length}`;
+            
+            let comment = "";
+            if(score === quizData.length) comment = "Xuất sắc! Bạn là thiên tài Wh-Questions!";
+            else if(score > 15) comment = "Rất tốt! Bạn nắm kiến thức rất chắc chắn.";
+            else if(score > 10) comment = "Khá tốt! Hãy đọc kỹ phần giải thích của cô để tiến bộ nhé.";
+            else comment = "Đừng nản chí! Hãy ôn lại từ để hỏi và thử lại nhé.";
+            
+            document.getElementById('result-comment').innerText = comment;
+            triggerConfetti();
+        }
+
+        // Simple Confetti
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function triggerConfetti() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 4,
+                    color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+                    speed: Math.random() * 3 + 2,
+                    angle: Math.random() * 6
+                });
+            }
+            drawConfetti();
+        }
+
+        function drawConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, i) => {
+                p.y += p.speed;
+                p.x += Math.sin(p.angle) * 2;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                if (p.y > canvas.height) particles.splice(i, 1);
+            });
+            if (particles.length > 0) requestAnimationFrame(drawConfetti);
+        }
+
+        window.onload = renderQuestion;
+    </script>
+
+    <!-- Academic Glossary Section -->
+    <div class="quiz-container">
+        <div class="card">
+            <h3 style="color:var(--primary-purple); font-weight:900;">📚 BẢNG TỪ VỰNG NÂNG CAO (GLOSSARY)</h3>
+            <p style="font-size:0.9rem; color:#636e72; margin-bottom:15px;">Các từ vựng quan trọng xuất hiện trong bài thi:</p>
+            <div class="glossary-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Từ vựng</th>
+                            <th>Loại từ</th>
+                            <th>Nghĩa tiếng Việt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Favorite</td>
+                            <td>Adj</td>
+                            <td>Được yêu thích nhất</td>
+                        </tr>
+                        <tr>
+                            <td>Remote control</td>
+                            <td>Noun</td>
+                            <td>Điều khiển từ xa</td>
+                        </tr>
+                        <tr>
+                            <td>Episode</td>
+                            <td>Noun</td>
+                            <td>Tập phim</td>
+                        </tr>
+                        <tr>
+                            <td>Series</td>
+                            <td>Noun</td>
+                            <td>Phim bộ / Chuỗi chương trình</td>
+                        </tr>
+                        <tr>
+                            <td>Horror movie</td>
+                            <td>Noun</td>
+                            <td>Phim kinh dị</td>
+                        </tr>
+                        <tr>
+                            <td>Weather forecast</td>
+                            <td>Noun</td>
+                            <td>Dự báo thời tiết</td>
+                        </tr>
+                        <tr>
+                            <td>Present</td>
+                            <td>Verb</td>
+                            <td>Dẫn chương trình / Trình bày</td>
+                        </tr>
+                        <tr>
+                            <td>Relaxing</td>
+                            <td>Adj</td>
+                            <td>Mang tính thư giãn</td>
+                        </tr>
+                        <tr>
+                            <td>Kilometer</td>
+                            <td>Noun</td>
+                            <td>Ki-lô-mét (Đơn vị khoảng cách)</td>
+                        </tr>
+                        <tr>
+                            <td>Cost</td>
+                            <td>Verb</td>
+                            <td>Trị giá / Có giá là</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

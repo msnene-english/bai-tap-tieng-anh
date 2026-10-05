@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Reading Test - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Variables & Global Settings */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --correct-color: #4ade80;
+            --wrong-color: #f87171;
+            --text-main: #1f2937;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        /* Animated Pastel Gradient Background */
+        body {
+            background: linear-gradient(-45deg, #ffdde1, #ee9ca7, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating SVG Pattern */
+        .svg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+        }
+        .emoji {
+            position: absolute;
+            font-size: 3rem;
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        /* Header */
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .header-title { font-size: 1.2rem; font-weight: 800; color: #4338ca; }
+        .header-author { font-size: 0.9rem; font-weight: 600; color: #6b7280; font-style: italic; }
+
+        /* Split Screen Layout */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+            padding: 20px;
+            gap: 20px;
+        }
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            padding: 30px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.8); border-radius: 10px; }
+
+        /* Reading Section */
+        .passage-title {
+            font-size: 1.5rem; font-weight: 800; margin-bottom: 15px; color: #3730a3;
+            text-align: center; text-transform: uppercase;
+        }
+        .paragraph-box {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        .eng-text { font-size: 1.15rem; line-height: 1.8; font-weight: 600; margin-bottom: 10px;}
+        .vi-text { 
+            font-size: 1.1rem; line-height: 1.6; color: #4338ca; 
+            margin-top: 10px; padding-top: 10px; border-top: 1px dashed #a5b4fc;
+            display: none; 
+        }
+        .vi-text.show { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn-translate {
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            border: none; padding: 8px 15px; border-radius: 20px;
+            font-weight: 700; color: #1e3a8a; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.2s;
+        }
+        .btn-translate:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+
+        /* Glossary Table */
+        .glossary-table {
+            width: 100%; border-collapse: collapse; margin-top: 15px;
+            background: rgba(255,255,255,0.6); border-radius: 12px; overflow: hidden;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 12px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .glossary-table th { background: rgba(161, 196, 253, 0.5); color: #1e3a8a; }
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        /* Quiz Section */
+        .question-card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px; padding: 25px; margin-bottom: 25px;
+            border: 1px solid #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .q-text { font-size: 1.25rem; font-weight: 800; margin-bottom: 15px; color: #111827; }
+        .options-grid { display: grid; gap: 12px; }
+        .btn-option {
+            background: #ffffff; border: 2px solid #e5e7eb; border-radius: 15px;
+            padding: 15px 20px; font-size: 1.1rem; font-weight: 600; text-align: left;
+            cursor: pointer; transition: all 0.2s; color: #374151;
+            white-space: normal; height: auto; text-overflow: clip; /* Bắt buộc không cắt chữ */
+        }
+        .btn-option:hover:not(:disabled) {
+            border-color: #a1c4fd; background: #f3f4f6; transform: scale(1.01);
+        }
+        .btn-option.correct { background: var(--correct-color); border-color: var(--correct-color); color: #fff; }
+        .btn-option.wrong { background: var(--wrong-color); border-color: var(--wrong-color); color: #fff; animation: shake 0.4s; }
+        .btn-option:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+
+        /* Explanation Styling */
+        .explanation {
+            margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.9);
+            border-radius: 12px; border-left: 5px solid #6366f1;
+            font-size: 1rem; line-height: 1.6; display: none;
+        }
+        .explanation.show { display: block; animation: fadeIn 0.5s; }
+        
+        /* Custom Spans for Explanations */
+        .p-word { font-weight: 800; color: #1e40af; }
+        .p-phonetic { font-style: italic; color: #047857; font-weight: 600; }
+        .p-mean { color: #b45309; font-weight: 700; }
+        .p-grammar { display: inline-block; padding: 2px 8px; background: #fee2e2; color: #991b1b; border-radius: 6px; font-weight: 700; font-family: monospace; font-size: 0.95rem; }
+        .hl-green { background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .hl-red { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+
+        /* Submit Button */
+        .btn-submit {
+            display: block; width: 100%; padding: 20px; margin-top: 30px;
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            border: none; border-radius: 20px; font-size: 1.5rem; font-weight: 800;
+            color: #fff; cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 8px 20px rgba(253, 160, 133, 0.4); transition: transform 0.2s;
+        }
+        .btn-submit:hover { transform: translateY(-3px); }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: #fff; padding: 40px; border-radius: 24px;
+            text-align: center; max-width: 500px; width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .modal-title { font-size: 2rem; color: #1f2937; margin-bottom: 20px; }
+        .name-input {
+            width: 100%; padding: 15px; font-size: 1.2rem;
+            border: 2px solid #e5e7eb; border-radius: 12px; margin-bottom: 20px;
+            outline: none; text-align: center; font-weight: 600;
+        }
+        .name-input:focus { border-color: #6366f1; }
+        .btn-confirm {
+            background: #6366f1; color: white; border: none; padding: 12px 30px;
+            font-size: 1.2rem; font-weight: 700; border-radius: 12px; cursor: pointer;
+        }
+        .score-display { font-size: 3.5rem; font-weight: 900; color: #4f46e5; margin: 10px 0; }
+        .score-scale10 { font-size: 1.5rem; font-weight: 700; color: #059669; margin-bottom: 15px; }
+        .teacher-comment { font-size: 1.2rem; font-style: italic; color: #4b5563; margin-bottom: 20px; }
+        .gif-container img { width: 100%; max-height: 250px; object-fit: cover; border-radius: 12px; }
+        
+        /* Confetti Container */
+        #confetti-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+        }
+        .confetti-piece { position: absolute; top: -20px; animation: fall linear forwards; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="svg-pattern">
+        <div class="emoji" style="top: 10%; left: 10%; animation-delay: 0s;">🏠</div>
+        <div class="emoji" style="top: 20%; left: 80%; animation-delay: 1s;">🛸</div>
+        <div class="emoji" style="top: 70%; left: 15%; animation-delay: 2s;">🚀</div>
+        <div class="emoji" style="top: 80%; left: 75%; animation-delay: 3s;">🌋</div>
+        <div class="emoji" style="top: 40%; left: 50%; animation-delay: 1.5s;">☀️</div>
+        <div class="emoji" style="top: 60%; left: 90%; animation-delay: 2.5s;">🚲</div>
+    </div>
+
+    <header>
+        <div class="header-title">🌟 GAMIFIED READING TEST</div>
+        <div class="header-author">Giáo viên tạo: Ms MS Chí Nên</div>
+    </header>
+
+    <div class="container">
+        <div class="panel" id="reading-panel">
+            
+            <div class="passage-title">PASSAGE 1: THE STRANGE HOUSE</div>
+            
+            <div class="paragraph-box">
+                <div class="eng-text">
+                    Driving down the beautiful Interstate 70, away from Denver, Colorado and into the foot of the Rocky Mountains, you can see a strange (27) _____ in the south. An oval shape seems to float just above the trees at (28) _____ top of a cliff, looking at the highway below.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vi-text">
+                    Lái xe dọc theo Xa lộ liên bang 70 xinh đẹp, rời khỏi Denver, Colorado và đi vào chân dãy núi Rocky, bạn có thể nhìn thấy một tòa nhà kỳ lạ ở phía nam. Một hình bầu dục dường như lơ lửng ngay phía trên những tán cây ở đỉnh vách đá, nhìn xuống đường cao tốc bên dưới.
+                </div>
+            </div>
+
+            <div class="paragraph-box">
+                <div class="eng-text">
+                    You might think you've spotted a UFO, (29) _____ the building is actually called the Sculptured House. The house was built (30) _____ 1963 and is famous for its sci-fi history. It also has many names: “the Flying Saucer House,” “the Sleeper House,” and “the Spaceship House”. This house, which (31) _____ like it comes from the future, was built by architect Charles Deaton.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vi-text">
+                    Bạn có thể nghĩ rằng mình đã phát hiện ra một chiếc UFO (vật thể bay không xác định), nhưng tòa nhà này thực chất được gọi là Ngôi nhà Điêu khắc. Ngôi nhà được xây dựng vào năm 1963 và nổi tiếng với lịch sử mang tính khoa học viễn tưởng. Nó cũng có nhiều tên gọi: "Ngôi nhà Đĩa bay", "Ngôi nhà Ngủ" và "Ngôi nhà Tàu vũ trụ". Ngôi nhà này, thứ trông có vẻ như đến từ tương lai, được xây dựng bởi kiến trúc sư Charles Deaton.
+                </div>
+            </div>
+
+            <div class="passage-title" style="margin-top: 40px;">PASSAGE 2: HI-SEAS PROJECT</div>
+            
+            <div class="paragraph-box">
+                <div class="eng-text">
+                    Have you ever wondered what living in a house on Mars might be like? The HI-SEAS is a project to learn about problems that people living on Mars may have. People who join this project live and work together for four to twelve months in a house on a volcano in Hawaii, where the environment is quite similar to Mars.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vi-text">
+                    Bạn đã bao giờ tự hỏi việc sống trong một ngôi nhà trên Sao Hỏa sẽ như thế nào chưa? HI-SEAS là một dự án nhằm tìm hiểu về những vấn đề mà những người sống trên Sao Hỏa có thể gặp phải. Những người tham gia dự án này sống và làm việc cùng nhau từ bốn đến mười hai tháng trong một ngôi nhà trên một ngọn núi lửa ở Hawaii, nơi có môi trường khá giống với Sao Hỏa.
+                </div>
+            </div>
+
+            <div class="paragraph-box">
+                <div class="eng-text">
+                    The house has six small bedrooms, a living room, a bathroom, a kitchen, a science laboratory, an office, and a gym. In each bedroom, there is enough space for a bed and some personal items. The living room has a bookshelf full of Russian books, DVDs, puzzles, and board games. The power in the house mainly comes from sunlight, but when the weather is too cloudy, there is an exercise bike in the gym that can charge batteries!
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vi-text">
+                    Ngôi nhà có sáu phòng ngủ nhỏ, một phòng khách, một phòng tắm, một nhà bếp, một phòng thí nghiệm khoa học, một văn phòng và một phòng tập thể dục. Trong mỗi phòng ngủ, có đủ không gian cho một chiếc giường và một số vật dụng cá nhân. Phòng khách có một giá sách chứa đầy sách tiếng Nga, đĩa DVD, câu đố và trò chơi cờ bàn. Nguồn điện trong nhà chủ yếu đến từ ánh sáng mặt trời, nhưng khi thời tiết quá nhiều mây, có một chiếc xe đạp tập thể dục trong phòng gym có thể sạc pin!
+                </div>
+            </div>
+
+            <div class="paragraph-box">
+                <div class="eng-text">
+                    Scientists hope that this project will help them know how to keep astronauts happy and healthy when they need to stay on Mars for a long time in the future.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vi-text">
+                    Các nhà khoa học hy vọng rằng dự án này sẽ giúp họ biết cách giữ cho các phi hành gia vui vẻ và khỏe mạnh khi họ cần ở lại Sao Hỏa trong một thời gian dài trong tương lai.
+                </div>
+            </div>
+
+            <div class="passage-title" style="margin-top: 30px; font-size: 1.2rem;">📖 GLOSSARY (TỪ VỰNG HỌC THUẬT)</div>
+            <table class="glossary-table">
+                <tr><th>Vocabulary</th><th>Part of Speech</th><th>Meaning (Vietnamese)</th></tr>
+                <tr><td>Interstate</td><td>(n)</td><td>Xa lộ liên bang</td></tr>
+                <tr><td>Float</td><td>(v)</td><td>Trôi nổi, lơ lửng</td></tr>
+                <tr><td>Cliff</td><td>(n)</td><td>Vách đá</td></tr>
+                <tr><td>Architect</td><td>(n)</td><td>Kiến trúc sư</td></tr>
+                <tr><td>Environment</td><td>(n)</td><td>Môi trường</td></tr>
+                <tr><td>Laboratory</td><td>(n)</td><td>Phòng thí nghiệm khoa học</td></tr>
+                <tr><td>Personal</td><td>(adj)</td><td>Thuộc về cá nhân</td></tr>
+                <tr><td>Astronaut</td><td>(n)</td><td>Phi hành gia</td></tr>
+                <tr><td>Oval</td><td>(adj)</td><td>Hình bầu dục</td></tr>
+                <tr><td>Sci-fi (Science fiction)</td><td>(n)</td><td>Khoa học viễn tưởng</td></tr>
+            </table>
+
+        </div>
+
+        <div class="panel" id="quiz-panel">
+            <div id="questions-container">
+                </div>
+            <button class="btn-submit" onclick="triggerSubmit()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="name-modal">
+        <div class="modal-content">
+            <div class="modal-title">👋 Nhập Tên Của Con Nhé!</div>
+            <input type="text" id="student-name" class="name-input" placeholder="Ví dụ: Nguyễn Minh Đức">
+            <button class="btn-confirm" onclick="processSubmit()">Xác Nhận Nộp Bài</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="score-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-title" id="score-greeting">Chúc mừng hoàn thành!</div>
+            <div class="score-display" id="final-score">10/10</div>
+            <div class="score-scale10" id="final-scale10">Điểm hệ số 10: 10.00/10</div>
+            <div class="teacher-comment" id="teacher-comment">Cô MS Chí Nên rất tự hào về con!</div>
+            <div class="gif-container">
+                <img id="score-gif" src="" alt="Score GIF">
+            </div>
+            <button class="btn-confirm" style="margin-top: 20px;" onclick="closeModal('score-modal')">Xem Lại Bài Chữa</button>
+        </div>
+    </div>
+
+    <div id="confetti-container"></div>
+
+    <script>
+        // Web Audio API Synthesis for immediate feedback without loading files
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); // Slide up
+            
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playTingTing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2); // Slide down
+            
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        // Confetti Effect
+        function shootConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'];
+            
+            for(let i=0; i<30; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti-piece');
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.width = Math.random() * 10 + 5 + 'px';
+                conf.style.height = Math.random() * 20 + 10 + 'px';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                container.appendChild(conf);
+                
+                setTimeout(() => conf.remove(), 4000);
+            }
+        }
+    </script>
+
+    <script>
+        // Data structure matching the exact constraints (NO English prompt for Gap-fill, NO ABCD options)
+        const quizData = [
+            {
+                id: 27,
+                isGapFill: true,
+                question: "Câu 27: Select the best answer",
+                options: [
+                    { text: "building", correct: true },
+                    { text: "build", correct: false },
+                    { text: "builder", correct: false },
+                    { text: "built", correct: false }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> Câu 27: Chọn đáp án đúng nhất.<br>
+                    <b>Dịch đề bài:</b> Chọn đáp án đúng nhất điền vào chỗ trống.<br>
+                    <b>Các đáp án:</b><br>
+                    * building ➔ Dịch: <span class='p-mean'>tòa nhà (danh từ)</span><br>
+                    * build ➔ Dịch: <span class='p-mean'>xây dựng (động từ nguyên thể)</span><br>
+                    * builder ➔ Dịch: <span class='p-mean'>thợ xây (danh từ chỉ người)</span><br>
+                    * built ➔ Dịch: <span class='p-mean'>đã xây dựng (động từ chia V2/V-ed)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>building</b>. <span class='p-grammar'>Công thức: a/an/the + Adj + Noun</span>. Phía trước có mạo từ "a" và tính từ "strange" (kỳ lạ), nên vị trí (27) cần một danh từ chỉ vật. Hợp lý nhất là <span class='p-word'>building</span> <span class='p-phonetic'>/ˈbɪldɪŋ/</span> vì vế sau nói về "tòa nhà được gọi là Sculptured House".<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "build" và "built" là động từ nên sai ngữ pháp. "builder" là thợ xây, lắp vào ngữ cảnh "bạn có thể nhìn thấy một người thợ xây kỳ lạ ở phía nam, hình dáng bầu dục" là hoàn toàn sai logic.
+                `
+            },
+            {
+                id: 28,
+                isGapFill: true,
+                question: "Câu 28: Select the best answer",
+                options: [
+                    { text: "a", correct: false },
+                    { text: "the", correct: true },
+                    { text: "Ø (no article)", correct: false },
+                    { text: "an", correct: false }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> Câu 28: Chọn đáp án đúng nhất.<br>
+                    <b>Dịch đề bài:</b> Chọn đáp án đúng nhất điền vào chỗ trống.<br>
+                    <b>Các đáp án:</b><br>
+                    * a ➔ Dịch: <span class='p-mean'>một (mạo từ không xác định)</span><br>
+                    * the ➔ Dịch: <span class='p-mean'>mạo từ xác định</span><br>
+                    * Ø (no article) ➔ Dịch: <span class='p-mean'>không dùng mạo từ</span><br>
+                    * an ➔ Dịch: <span class='p-mean'>một (dùng trước nguyên âm)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>the</b>. Ta có cụm từ cố định (collocation) <span class='p-grammar'>at the top of something</span> (ở trên đỉnh của cái gì đó). Ví dụ: at the top of a cliff (ở trên đỉnh vách đá). Do đó bắt buộc dùng mạo từ xác định <span class='p-word'>the</span>.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> Các đáp án mạo từ "a", "an" hoặc không dùng mạo từ (Ø) đều phá vỡ cấu trúc cụm giới từ chỉ vị trí cố định trong tiếng Anh.
+                `
+            },
+            {
+                id: 29,
+                isGapFill: true,
+                question: "Câu 29: Select the best answer",
+                options: [
+                    { text: "so", correct: false },
+                    { text: "but", correct: true },
+                    { text: "and", correct: false },
+                    { text: "or", correct: false }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> Câu 29: Chọn đáp án đúng nhất.<br>
+                    <b>Dịch đề bài:</b> Chọn đáp án đúng nhất điền vào chỗ trống.<br>
+                    <b>Các đáp án:</b><br>
+                    * so ➔ Dịch: <span class='p-mean'>vì vậy (chỉ kết quả)</span><br>
+                    * but ➔ Dịch: <span class='p-mean'>nhưng (chỉ sự tương phản)</span><br>
+                    * and ➔ Dịch: <span class='p-mean'>và (chỉ sự bổ sung)</span><br>
+                    * or ➔ Dịch: <span class='p-mean'>hoặc (chỉ sự lựa chọn)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>but</b>. Câu chứa hai vế mang ý nghĩa trái ngược nhau: "Bạn có thể TƯỞNG rằng đó là UFO" (You might think...) >< "THỰC CHẤT nó là một tòa nhà" (the building is actually...). Liên từ <span class='p-word'>but</span> hoàn hảo để nối hai mệnh đề tương phản này.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "so" (vì vậy), "and" (và), "or" (hoặc) không tạo ra được nét nghĩa đối lập giữa việc bị đánh lừa thị giác và sự thật.
+                `
+            },
+            {
+                id: 30,
+                isGapFill: true,
+                question: "Câu 30: Select the best answer",
+                options: [
+                    { text: "at", correct: false },
+                    { text: "on", correct: false },
+                    { text: "in", correct: true },
+                    { text: "for", correct: false }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> Câu 30: Chọn đáp án đúng nhất.<br>
+                    <b>Dịch đề bài:</b> Chọn đáp án đúng nhất điền vào chỗ trống.<br>
+                    <b>Các đáp án:</b><br>
+                    * at ➔ Dịch: <span class='p-mean'>vào lúc (thường đi với giờ)</span><br>
+                    * on ➔ Dịch: <span class='p-mean'>vào ngày (thường đi với thứ/ngày tháng năm)</span><br>
+                    * in ➔ Dịch: <span class='p-mean'>vào năm/tháng/mùa</span><br>
+                    * for ➔ Dịch: <span class='p-mean'>trong khoảng (chỉ thời lượng)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>in</b>. Theo <span class='p-grammar'>quy tắc giới từ chỉ thời gian</span>, ta dùng giới từ "in" đứng trước các mốc thời gian lớn như năm (years), tháng (months), thập kỷ, thế kỷ. Ở đây "1963" là một năm nên chọn "in 1963".<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "at" dùng cho mốc giờ (at 5 PM). "on" dùng cho ngày cụ thể (on Monday). "for" dùng cho một khoảng thời gian (for 2 years).
+                `
+            },
+            {
+                id: 31,
+                isGapFill: true,
+                question: "Câu 31: Select the best answer",
+                options: [
+                    { text: "sees", correct: false },
+                    { text: "watches", correct: false },
+                    { text: "views", correct: false },
+                    { text: "looks", correct: true }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> Câu 31: Chọn đáp án đúng nhất.<br>
+                    <b>Dịch đề bài:</b> Chọn đáp án đúng nhất điền vào chỗ trống.<br>
+                    <b>Các đáp án:</b><br>
+                    * sees ➔ Dịch: <span class='p-mean'>nhìn thấy (v - hành động của mắt)</span><br>
+                    * watches ➔ Dịch: <span class='p-mean'>xem, theo dõi (v - nhìn cái gì đó chuyển động)</span><br>
+                    * views ➔ Dịch: <span class='p-mean'>ngắm nhìn, xem xét (v)</span><br>
+                    * looks ➔ Dịch: <span class='p-mean'>trông có vẻ (v - động từ nối)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>looks</b>. Trong tiếng Anh, cấu trúc <span class='p-grammar'>look(s) like + Noun / Mệnh đề</span> có nghĩa là "trông có vẻ như, nhìn giống như". Đại từ quan hệ "which" thay thế cho "This house" (số ít) nên động từ thêm 's'. Câu "which looks like it comes from the future" dịch là "ngôi nhà TRÔNG CÓ VẺ NHƯ đến từ tương lai".<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "see", "watch", "view" là động từ chỉ hành động (action verbs) mà chủ thể phải là con người/động vật có mắt, ngôi nhà không thể tự thực hiện hành động nhìn/xem được.
+                `
+            },
+            {
+                id: 32,
+                isGapFill: false,
+                question: "Câu 32: People who join the HI-SEAS project _____.",
+                options: [
+                    { text: "had problems living on Mars", correct: false },
+                    { text: "live on Mars for four months", correct: false },
+                    { text: "live and work in one house", correct: true },
+                    { text: "share one bedroom", correct: false }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> People who join the HI-SEAS project _____.<br>
+                    <b>Dịch đề bài:</b> Những người tham gia dự án HI-SEAS _____.<br>
+                    <b>Các đáp án:</b><br>
+                    * had problems living on Mars ➔ Dịch: <span class='p-mean'>đã gặp vấn đề khi sống trên Sao Hỏa</span><br>
+                    * live on Mars for four months ➔ Dịch: <span class='p-mean'>sống trên Sao Hỏa trong bốn tháng</span><br>
+                    * live and work in one house ➔ Dịch: <span class='p-mean'>sống và làm việc trong cùng một ngôi nhà</span><br>
+                    * share one bedroom ➔ Dịch: <span class='p-mean'>chia sẻ chung một phòng ngủ</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>live and work in one house</b>. Dẫn chứng trong bài (Đoạn 1): "People who join this project <span class='p-word'>live and work together</span>... in a house on a volcano in Hawaii." (Những người tham gia dự án này sống và làm việc cùng nhau... trong một ngôi nhà trên núi lửa ở Hawaii).<br>
+                    * <span class='hl-red'>Tại sao sai:</span> Họ không hề lên Sao Hỏa (dự án ở Hawaii) nên sai ý "live on Mars". "share one bedroom" sai vì bài ghi "The house has six small bedrooms" (có 6 phòng).
+                `
+            },
+            {
+                id: 33,
+                isGapFill: false,
+                question: "Câu 33: Where is the HI-SEAS project's house located?",
+                options: [
+                    { text: "on Mars", correct: false },
+                    { text: "in Russia", correct: false },
+                    { text: "in a laboratory", correct: false },
+                    { text: "in Hawaii", correct: true }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> Where is the HI-SEAS project's house located?<br>
+                    <b>Dịch đề bài:</b> Ngôi nhà của dự án HI-SEAS nằm ở đâu?<br>
+                    <b>Các đáp án:</b><br>
+                    * on Mars ➔ Dịch: <span class='p-mean'>trên Sao Hỏa</span><br>
+                    * in Russia ➔ Dịch: <span class='p-mean'>ở nước Nga</span><br>
+                    * in a laboratory ➔ Dịch: <span class='p-mean'>trong một phòng thí nghiệm</span><br>
+                    * in Hawaii ➔ Dịch: <span class='p-mean'>ở Hawaii</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>in Hawaii</b>. Rất rõ ràng trong câu 3 của đoạn 1: "...in a house on a volcano in <span class='p-word'>Hawaii</span>, where the environment is quite similar to Mars." (trong một ngôi nhà trên núi lửa ở Hawaii, nơi môi trường khá giống Sao Hỏa).<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "on Mars" (Sao Hỏa) là mục tiêu nghiên cứu, không phải địa điểm thật. "Russia" (Nga) chỉ xuất hiện trong cụm "Russian books" (sách tiếng Nga).
+                `
+            },
+            {
+                id: 34,
+                isGapFill: false,
+                question: "Câu 34: According to the passage, which of the following rooms is NOT in the HI-SEAS house?",
+                options: [
+                    { text: "living room", correct: false },
+                    { text: "gym", correct: false },
+                    { text: "dining room", correct: true },
+                    { text: "office", correct: false }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> According to the passage, which of the following rooms is NOT in the HI-SEAS house?<br>
+                    <b>Dịch đề bài:</b> Theo đoạn văn, phòng nào sau đây KHÔNG có trong ngôi nhà HI-SEAS?<br>
+                    <b>Các đáp án:</b><br>
+                    * living room ➔ Dịch: <span class='p-mean'>phòng khách</span><br>
+                    * gym ➔ Dịch: <span class='p-mean'>phòng tập thể dục</span><br>
+                    * dining room ➔ Dịch: <span class='p-mean'>phòng ăn</span><br>
+                    * office ➔ Dịch: <span class='p-mean'>văn phòng làm việc</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>dining room</b>. Ta áp dụng kỹ năng Scanning đoạn 2: "The house has six small bedrooms, a <span class='p-word'>living room</span>, a bathroom, a kitchen, a science laboratory, an <span class='p-word'>office</span>, and a <span class='p-word'>gym</span>." Không hề có sự xuất hiện của <span class='p-word'>dining room</span> (phòng ăn).<br>
+                    * <span class='hl-red'>Tại sao sai:</span> Câu hỏi tìm thông tin KHÔNG có mặt (NOT), 3 phòng còn lại (living room, gym, office) đều được liệt kê trực tiếp trong bài.
+                `
+            },
+            {
+                id: 35,
+                isGapFill: false,
+                question: "Câu 35: Where does most of the house's power come from?",
+                options: [
+                    { text: "clouds", correct: false },
+                    { text: "the sun", correct: true },
+                    { text: "an exercise bike", correct: false },
+                    { text: "puzzles", correct: false }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> Where does most of the house's power come from?<br>
+                    <b>Dịch đề bài:</b> Phần lớn năng lượng (điện) của ngôi nhà đến từ đâu?<br>
+                    <b>Các đáp án:</b><br>
+                    * clouds ➔ Dịch: <span class='p-mean'>những đám mây</span><br>
+                    * the sun ➔ Dịch: <span class='p-mean'>Mặt trời</span><br>
+                    * an exercise bike ➔ Dịch: <span class='p-mean'>một chiếc xe đạp tập thể dục</span><br>
+                    * puzzles ➔ Dịch: <span class='p-mean'>những trò chơi xếp hình</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>the sun</b>. Dẫn chứng ở cuối đoạn 2: "The power in the house mainly comes from <span class='p-word'>sunlight</span>..." (Nguồn điện trong nhà chủ yếu đến từ ánh sáng mặt trời). Sunlight đồng nghĩa với năng lượng từ the sun.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "an exercise bike" (xe đạp tập thể dục) chỉ dùng để sạc pin dự phòng khi thời tiết quá nhiều mây (khi the weather is too cloudy), chứ không phải là nguồn chính (most/mainly).
+                `
+            },
+            {
+                id: 36,
+                isGapFill: false,
+                question: "Câu 36: The word \"they\" in the final paragraph refers to _____.",
+                options: [
+                    { text: "scientists", correct: false },
+                    { text: "astronauts", correct: true },
+                    { text: "projects", correct: false },
+                    { text: "batteries", correct: false }
+                ],
+                explanation: `
+                    <b>Đề bài:</b> The word "they" in the final paragraph refers to _____.<br>
+                    <b>Dịch đề bài:</b> Từ "they" (họ) trong đoạn cuối ám chỉ ai/cái gì?<br>
+                    <b>Các đáp án:</b><br>
+                    * scientists ➔ Dịch: <span class='p-mean'>các nhà khoa học</span><br>
+                    * astronauts ➔ Dịch: <span class='p-mean'>các phi hành gia</span><br>
+                    * projects ➔ Dịch: <span class='p-mean'>các dự án</span><br>
+                    * batteries ➔ Dịch: <span class='p-mean'>các cục pin</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>astronauts</b>. Dẫn chứng: "...keep <span class='p-word'>astronauts</span> happy and healthy when <span class='p-word'>they</span> need to stay on Mars..." (giữ cho các phi hành gia vui vẻ và khỏe mạnh khi họ cần ở lại Sao Hỏa). Theo quy tắc, đại từ "they" thay thế cho danh từ số nhiều chỉ người/vật ngay trước nó. Ở đây "they" chính là những phi hành gia.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> Nếu thay "scientists" (nhà khoa học) vào thì câu sẽ thành "giữ phi hành gia vui vẻ khi nhà khoa học ở lại Sao Hỏa" -> Sai logic hoàn toàn.
+                `
+            }
+        ];
+
+        // Utils: Shuffle Array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Global State
+        let correctCount = 0;
+        let answeredQuestions = new Set();
+        const totalQuestions = quizData.length;
+
+        // Render Questions
+        function renderQuiz() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+
+            quizData.forEach((q, index) => {
+                const shuffledOptions = shuffleArray([...q.options]);
+                
+                let optionsHtml = '';
+                shuffledOptions.forEach(opt => {
+                    optionsHtml += `
+                        <button class="btn-option" 
+                                onclick="handleAnswer(this, ${q.id}, ${opt.correct})">
+                            ${opt.text}
+                        </button>
+                    `;
+                });
+
+                const html = `
+                    <div class="question-card" id="q-card-${q.id}">
+                        <div class="q-text">${q.question}</div>
+                        <div class="options-grid">
+                            ${optionsHtml}
+                        </div>
+                        <div class="explanation" id="exp-${q.id}">
+                            ${q.explanation}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        // Handle Answer Click
+        function handleAnswer(btn, questionId, isCorrect) {
+            if (answeredQuestions.has(questionId)) return; // Prevent multi-click
+
+            answeredQuestions.add(questionId);
+            const parentCard = document.getElementById(`q-card-${questionId}`);
+            const allBtns = parentCard.querySelectorAll('.btn-option');
+            
+            // Disable all buttons in this question
+            allBtns.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playDing();
+                shootConfetti();
+                correctCount++;
+            } else {
+                btn.classList.add('wrong');
+                playTingTing();
+                
+                // Highlight correct answer
+                allBtns.forEach(b => {
+                    const optionText = b.innerText.trim();
+                    const correctOptText = quizData.find(q => q.id === questionId).options.find(o => o.correct).text;
+                    if (optionText === correctOptText) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            // Show explanation
+            document.getElementById(`exp-${questionId}`).classList.add('show');
+        }
+
+        // Translate Toggle function
+        function toggleTranslation(btn) {
+            const viText = btn.nextElementSibling;
+            if (viText.classList.contains('show')) {
+                viText.classList.remove('show');
+                btn.innerText = "Mở dịch đoạn này 🌟";
+            } else {
+                viText.classList.add('show');
+                btn.innerText = "Đóng bản dịch 🙈";
+            }
+        }
+
+        // Submit Process
+        function triggerSubmit() {
+            document.getElementById('name-modal').style.display = 'flex';
+        }
+
+        function processSubmit() {
+            const name = document.getElementById('student-name').value.trim();
+            if (!name) {
+                alert("Con nhớ nhập tên trước khi nộp bài nhé!");
+                return;
+            }
+
+            // Close name modal, open score modal
+            document.getElementById('name-modal').style.display = 'none';
+            
+            // Calculate Score
+            const percentage = (correctCount / totalQuestions) * 100;
+            const scale10Score = ((correctCount / totalQuestions) * 10).toFixed(2);
+            
+            document.getElementById('score-greeting').innerText = `Kết quả của ${name}!`;
+            document.getElementById('final-score').innerText = `${correctCount}/${totalQuestions}`;
+            document.getElementById('final-scale10').innerText = `Điểm quy đổi: ${scale10Score}/10`;
+            
+            const gifImg = document.getElementById('score-gif');
+            const comment = document.getElementById('teacher-comment');
+
+            if (percentage === 100) {
+                gifImg.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; // Minion cheer
+                comment.innerText = "Wow! Con là thiên tài tiếng Anh! Cô MS Chí Nên tự hào về con! 🥇";
+            } else if (percentage >= 60) {
+                gifImg.src = "https://media.giphy.com/media/l41YmQjOz9qg2Ecow/giphy.gif"; // High five
+                comment.innerText = "Làm rất tốt! Cố gắng chút nữa là đạt điểm tuyệt đối nha con! 👏";
+            } else {
+                gifImg.src = "https://media.giphy.com/media/2rtQMJvhzOnRe/giphy.gif"; // Sad/try again
+                comment.innerText = "Hơi tiếc một chút! Nhớ đọc thật kỹ phần giải thích của cô để lần sau phục thù nhé! 💪";
+            }
+
+            document.getElementById('score-modal').style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Init
+        window.onload = renderQuiz;
+
+    </script>
+</body>
+</html>

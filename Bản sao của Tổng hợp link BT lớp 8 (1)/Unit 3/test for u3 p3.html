@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive English Test - Ms MS Chí Nên</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.35);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --primary-color: #ff9a9e;
+            --secondary-color: #fecfef;
+            --text-main: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            overflow: hidden; /* For split screen */
+            height: 100vh;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Background Emojis */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.4;
+        }
+        
+        /* Sticky Note */
+        .sticky-note {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 234, 167, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.6);
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: var(--glass-shadow);
+            z-index: 1000;
+            font-size: 0.9rem;
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            font-weight: 600;
+            color: #d35400;
+        }
+
+        /* Split Screen Layout */
+        .header {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #6c5ce7;
+            background: var(--glass-bg);
+            padding: 5px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+            border: 1px solid var(--glass-border);
+            z-index: 100;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            padding-top: 60px; /* space for sticky note */
+        }
+
+        .left-pane, .right-pane {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.6) transparent;
+        }
+        
+        .left-pane::-webkit-scrollbar, .right-pane::-webkit-scrollbar {
+            width: 8px;
+        }
+        .left-pane::-webkit-scrollbar-thumb, .right-pane::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.6);
+            border-radius: 10px;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .passage-title {
+            font-size: 1.5rem;
+            color: #6c5ce7;
+            margin-bottom: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .paragraph {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .translate-btn {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            color: #2d3436;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .translate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .translation-text {
+            display: none;
+            background: rgba(255,255,255,0.5);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-style: italic;
+            border-left: 4px solid #ff9a9e;
+        }
+
+        /* Glossary Table */
+        table.glossary {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        table.glossary th, table.glossary td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+        }
+        table.glossary th {
+            background: rgba(108, 92, 231, 0.2);
+            color: #2d3436;
+            font-weight: 800;
+        }
+
+        /* Question UI */
+        .question-box {
+            margin-bottom: 30px;
+        }
+        .q-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #0984e3;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .opt-btn {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+            border: 2px solid #fff;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #2d3436;
+            text-align: center;
+            white-space: normal; /* DO NOT TRUNCATE */
+            height: auto;
+        }
+        .opt-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.02);
+        }
+        
+        .opt-btn.correct {
+            background: #55efc4 !important;
+            color: #000;
+            border-color: #00b894;
+            box-shadow: 0 0 20px rgba(85, 239, 196, 0.6);
+        }
+        
+        .opt-btn.incorrect {
+            background: #ff7675 !important;
+            color: #fff;
+            border-color: #d63031;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Explanation Styling */
+        .explanation {
+            display: none;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 5px solid #0984e3;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        /* Semantic Span Classes Required */
+        .p-word { color: #0984e3; font-weight: 700; } /* Xanh dương */
+        .p-mean { color: #E2725B; font-weight: 600; } /* Đất nung */
+        .p-grammar { text-decoration: underline red; font-weight: bold; } /* Ngữ pháp */
+        .hl-green { color: #00b894; font-weight: 800; } /* Đúng/Từ khóa */
+        .hl-red { color: #d63031; text-decoration: line-through; font-weight: 600; } /* Sai */
+
+        .submit-area {
+            text-align: center;
+            margin: 40px 0;
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3);
+            transition: 0.3s;
+        }
+        .submit-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Start Overlay */
+        #start-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .start-btn {
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            border: 2px solid #fff;
+            padding: 20px 50px;
+            font-size: 2rem;
+            border-radius: 50px;
+            font-weight: 800;
+            color: #2d3436;
+            cursor: pointer;
+            box-shadow: var(--glass-shadow);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Result Popup */
+        #result-popup {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            z-index: 2000;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        .score-display {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #6c5ce7;
+            margin: 15px 0;
+        }
+        .scale-10 {
+            font-size: 1.5rem;
+            color: #00b894;
+            font-weight: bold;
+        }
+        .meme-gif {
+            width: 100%;
+            max-height: 250px;
+            border-radius: 15px;
+            object-fit: cover;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bgm-intro" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/harry_potter.mp3"></audio>
+    <audio id="snd-correct" src="https://www.myinstants.com/media/sounds/correct-answer-sound-effect-19.mp3"></audio>
+    <audio id="snd-incorrect" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/File%20nghe%20Ket%20A2/huh_sound_effect-www_tiengdong_com.mp3"></audio>
+
+    <div id="start-overlay">
+        <button class="start-btn" onclick="startTest()">BẮT ĐẦU LÀM BÀI 🚀</button>
+    </div>
+
+    <svg class="bg-pattern" xmlns="http://www.w3.org/2000/svg">
+        <text x="10%" y="20%" font-size="50">📱</text>
+        <text x="80%" y="30%" font-size="60">😴</text>
+        <text x="40%" y="70%" font-size="40">💻</text>
+        <text x="90%" y="80%" font-size="50">🌙</text>
+        <text x="20%" y="90%" font-size="55">🌐</text>
+        <text x="70%" y="15%" font-size="45">🛌</text>
+    </svg>
+
+    <div class="header">Giáo viên tạo: Ms MS Chí Nên</div>
+    
+    <div class="sticky-note">
+        ⚠️ LƯU Ý TỪ CÔ MS Chí Nên: Tự giác tra cứu từ mới bằng Google Dịch/AI. Kéo tới đâu làm tới đó. Đọc kỹ giải thích, tra cứu ngữ âm (Cambridge), ghi chép lại từ/cấu trúc mới để giỏi lên. Không chọn bừa!
+    </div>
+
+    <div class="container">
+        <div class="left-pane">
+            
+            <div class="glass-card">
+                <h2 class="passage-title">Reading 1: YouTube</h2>
+                
+                <p class="paragraph">
+                    YouTube is the second most (1)_____ website in the world and each day more than 720,000 hours of videos are uploaded to it. This video streaming app is also one of the most popular platforms (2)_____ children, from elementary school kids all the way to teens. YouTube makes money by keeping people on the platform (3)_____ video after video, so it's in their interest to capture (4)_____ with shocking and engaging videos, even if it's not good for young users.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('t1-p1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t1-p1">
+                    YouTube là trang web được truy cập nhiều thứ hai trên thế giới và mỗi ngày có hơn 720.000 giờ video được tải lên đó. Ứng dụng phát trực tuyến video này cũng là một trong những nền tảng phổ biến nhất đối với trẻ em, từ học sinh tiểu học cho đến thanh thiếu niên. YouTube kiếm tiền bằng cách giữ mọi người trên nền tảng xem hết video này đến video khác, vì vậy lợi ích của họ là thu hút sự chú ý bằng những video gây sốc và hấp dẫn, ngay cả khi nó không tốt cho người dùng nhỏ tuổi.
+                </div>
+
+                <p class="paragraph">
+                    Despite its potential for harmful (5)_____, YouTube's educational and wholesome entertainment possibilities are immense - (6)_____ for young people. From changing a bike tire to making a Halloween costume out of things lying around the house, functional and creative videos about (7)_____ to solve problems are incredibly common. In addition to super-useful how-to videos, there are also documentaries, language tutorials, exercise, yoga, stretching videos, (8)_____ more. Almost anything teens are studying at school is bound to have a corresponding video to help make the lesson more clear — and possibly even fun!
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('t1-p2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t1-p2">
+                    Bất chấp khả năng chứa nội dung độc hại, khả năng giải trí lành mạnh và mang tính giáo dục của YouTube là vô cùng lớn - đặc biệt là đối với những người trẻ tuổi. Từ việc thay lốp xe đạp đến làm trang phục Halloween từ những vật dụng quanh nhà, những video sáng tạo và hữu ích về cách giải quyết vấn đề vô cùng phổ biến. Ngoài những video hướng dẫn siêu hữu ích, còn có phim tài liệu, hướng dẫn ngôn ngữ, video tập thể dục, yoga, giãn cơ và nhiều hơn thế nữa. Hầu như bất cứ thứ gì thanh thiếu niên đang học ở trường đều có video tương ứng để giúp bài học trở nên rõ ràng hơn - và thậm chí có thể thú vị hơn!
+                </div>
+
+                <h3 style="margin-top:20px; color:#6c5ce7;">📚 Glossary 1</h3>
+                <table class="glossary">
+                    <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                    <tr><td>Stream</td><td>v / n</td><td>Phát trực tuyến / Dòng suối</td></tr>
+                    <tr><td>Platform</td><td>n</td><td>Nền tảng</td></tr>
+                    <tr><td>Engaging</td><td>adj</td><td>Hấp dẫn, lôi cuốn</td></tr>
+                    <tr><td>Immense</td><td>adj</td><td>Bao la, vô cùng lớn (C1)</td></tr>
+                    <tr><td>Wholesome</td><td>adj</td><td>Lành mạnh, bổ ích</td></tr>
+                    <tr><td>Functional</td><td>adj</td><td>Thiết thực, hữu dụng</td></tr>
+                    <tr><td>Corresponding</td><td>adj</td><td>Tương ứng, phù hợp</td></tr>
+                    <tr><td>Documentary</td><td>n</td><td>Phim tài liệu</td></tr>
+                    <tr><td>Bound to (do sth)</td><td>adj phrase</td><td>Chắc chắn sẽ xảy ra (B2)</td></tr>
+                    <tr><td>Capture</td><td>v</td><td>Thu hút, bắt lấy</td></tr>
+                </table>
+            </div>
+
+            <div class="glass-card">
+                <h2 class="passage-title">Reading 2: Sleep for Teenagers</h2>
+                
+                <p class="paragraph">
+                    Getting enough sleep is important for people of any age. In teenagers, good quality sleep is really essential because it plays an important role in their physical, emotional and mental development. Sleep benefits the brain and promotes attention, memory, and analytical thought.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('t2-p1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t2-p1">
+                    Ngủ đủ giấc là điều quan trọng đối với mọi người ở mọi lứa tuổi. Ở thanh thiếu niên, giấc ngủ chất lượng tốt thực sự rất cần thiết vì nó đóng vai trò quan trọng trong sự phát triển thể chất, cảm xúc và tinh thần của các em. Giấc ngủ có lợi cho não và thúc đẩy sự chú ý, trí nhớ và tư duy phân tích.
+                </div>
+
+                <p class="paragraph">
+                    Sleep deprivation, on the other hand, leads to drowsiness, lack of attention, and causes poor academic performance. Inadequate sleep in teenagers can also increase their risk of depression, anxiety and low self-esteem.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('t2-p2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t2-p2">
+                    Mặt khác, thiếu ngủ dẫn đến buồn ngủ, thiếu chú ý và gây ra kết quả học tập kém. Ngủ không đủ giấc ở thanh thiếu niên cũng có thể làm tăng nguy cơ trầm cảm, lo âu và lòng tự trọng thấp.
+                </div>
+
+                <p class="paragraph">
+                    Experts recommend that teenagers get 8 to 10 hours of sleep per night to maintain good health. However, most teenagers get far less than the recommended hours of sleep every night. This is partly due to the natural shift in their circadian rhythm, which makes it difficult for them to sleep before 11pm. They have a natural tendency to stay up late in the night and sleep in longer during the morning. Other factors contributing to sleep problems include an early start at school, a heavy workload of homework and school assignments, extracurricular activities, a busy social life, and an excessive use of electronic devices. Teenagers may end up staying late at night to fit in many of these tasks or to hang out with friends at night during the weekends, which can all leave them sleep deprived.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('t2-p3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t2-p3">
+                    Các chuyên gia khuyên thanh thiếu niên nên ngủ từ 8 đến 10 giờ mỗi đêm để duy trì sức khỏe tốt. Tuy nhiên, hầu hết thanh thiếu niên ngủ ít hơn nhiều so với số giờ được khuyến nghị mỗi đêm. Điều này một phần là do sự thay đổi tự nhiên trong nhịp sinh học của họ, khiến họ khó có thể ngủ trước 11 giờ đêm. Các em có xu hướng tự nhiên thức khuya vào ban đêm và ngủ nướng vào buổi sáng. Các yếu tố khác góp phần gây ra các vấn đề về giấc ngủ bao gồm việc bắt đầu học sớm ở trường, khối lượng bài tập về nhà và bài tập ở trường quá lớn, các hoạt động ngoại khóa, đời sống xã hội bận rộn và việc sử dụng quá nhiều thiết bị điện tử. Thanh thiếu niên có thể thức khuya để hoàn thành nhiều công việc này hoặc đi chơi với bạn bè vào ban đêm trong những ngày cuối tuần, tất cả đều có thể khiến các em thiếu ngủ.
+                </div>
+
+                <h3 style="margin-top:20px; color:#6c5ce7;">📚 Glossary 2</h3>
+                <table class="glossary">
+                    <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                    <tr><td>Essential</td><td>adj</td><td>Cực kỳ cần thiết, thiết yếu (B2)</td></tr>
+                    <tr><td>Analytical</td><td>adj</td><td>Thuộc về phân tích (C1)</td></tr>
+                    <tr><td>Deprivation</td><td>n</td><td>Sự thiếu hụt, tước đoạt (C1)</td></tr>
+                    <tr><td>Drowsiness</td><td>n</td><td>Sự buồn ngủ, lơ mơ</td></tr>
+                    <tr><td>Inadequate</td><td>adj</td><td>Không đầy đủ (B2)</td></tr>
+                    <tr><td>Self-esteem</td><td>n</td><td>Lòng tự trọng, sự tự tôn (C1)</td></tr>
+                    <tr><td>Circadian rhythm</td><td>n phrase</td><td>Nhịp sinh học (C2)</td></tr>
+                    <tr><td>Tendency</td><td>n</td><td>Xu hướng (B2)</td></tr>
+                    <tr><td>Extracurricular</td><td>adj</td><td>Ngoại khóa (C1)</td></tr>
+                    <tr><td>Excessive</td><td>adj</td><td>Thái quá, quá mức (B2)</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="right-pane" id="exercises-container">
+            <div class="submit-area">
+                <button class="submit-btn" onclick="submitTest()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-popup">
+        <h2 style="color: #2d3436; font-weight: 800; font-size: 1.8rem;" id="student-greeting"></h2>
+        <div class="score-display" id="final-score"></div>
+        <div class="scale-10" id="scale-10-score"></div>
+        <p style="font-size: 1.2rem; margin-top: 10px; font-weight: bold; color: #d63031;" id="teacher-feedback"></p>
+        <img id="result-gif" class="meme-gif" src="" alt="Result Meme">
+        <button class="submit-btn" style="margin-top: 20px; font-size: 1rem; padding: 10px 20px;" onclick="closePopup()">Xem lại bài</button>
+    </div>
+
+    <script>
+        // --- DATA STRUCTURE ---
+        // Questions array. Using raw strings, shuffle algorithm will randomize options visually but keep logic intact.
+        const quizData = [
+            // PART 1: YOUTUBE (CLOZE TEST) -> Question text must be "Câu [X]: Select the best answer"
+            {
+                qText: "Câu (1): Select the best answer",
+                options: [
+                    { text: "watched", type: "v", mean: "được xem", correct: false, reason: "Không tạo thành cụm từ cố định tự nhiên chỉ lượng truy cập web." },
+                    { text: "visited", type: "v", mean: "được truy cập, ghé thăm", correct: true, reason: "" },
+                    { text: "checked", type: "v", mean: "được kiểm tra", correct: false, reason: "Không dùng cho việc đánh giá độ phổ biến của website." },
+                    { text: "connected", type: "v", mean: "được kết nối", correct: false, reason: "Không hợp ngữ nghĩa." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống (1).<br>
+                    Phân tích đáp án:<br>
+                    - watched (<span class='p-word'>v</span> - <span class='p-mean'>được xem</span>) <span class='hl-red'>❌ Sai</span> vì không hợp cụm từ.<br>
+                    - visited (<span class='p-word'>v</span> - <span class='p-mean'>được truy cập, ghé thăm</span>) <span class='hl-green'>✅ Đúng</span>. <span class='p-grammar'>Collocation</span>: "most visited website" (trang web được truy cập nhiều nhất).<br>
+                    - checked (<span class='p-word'>v</span> - <span class='p-mean'>được kiểm tra</span>) <span class='hl-red'>❌ Sai</span>.<br>
+                    - connected (<span class='p-word'>v</span> - <span class='p-mean'>được kết nối</span>) <span class='hl-red'>❌ Sai</span>.<br>
+                    🔍 Dẫn chứng: "YouTube is the second most visited website in the world..."<br>
+                    👉 Dịch: "YouTube là trang web <span class='hl-green'>**được truy cập**</span> nhiều thứ hai trên thế giới..."
+                `
+            },
+            {
+                qText: "Câu (2): Select the best answer",
+                options: [
+                    { text: "to", type: "prep", mean: "đến", correct: false, reason: "Sai giới từ đi với popular." },
+                    { text: "for", type: "prep", mean: "cho", correct: false, reason: "Sai giới từ đi với popular." },
+                    { text: "in", type: "prep", mean: "trong", correct: false, reason: "Sai giới từ đi với popular." },
+                    { text: "with", type: "prep", mean: "với", correct: true, reason: "" }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống (2).<br>
+                    Phân tích đáp án:<br>
+                    - to, for, in (<span class='p-word'>prep</span> - <span class='p-mean'>giới từ</span>) <span class='hl-red'>❌ Sai</span> cấu trúc.<br>
+                    - with (<span class='p-word'>prep</span> - <span class='p-mean'>với</span>) <span class='hl-green'>✅ Đúng</span>. <span class='p-grammar'>Cấu trúc ngữ pháp</span>: <span class='p-grammar'>be popular with/among somebody</span> (phổ biến, được yêu thích bởi ai đó).<br>
+                    🔍 Dẫn chứng: "...is also one of the most popular platforms with children..."<br>
+                    👉 Dịch: "...cũng là một trong những nền tảng <span class='hl-green'>**phổ biến nhất đối với**</span> trẻ em..."
+                `
+            },
+            {
+                qText: "Câu (3): Select the best answer",
+                options: [
+                    { text: "to watch", type: "v", mean: "để xem", correct: false, reason: "Sai cấu trúc keep sb doing sth." },
+                    { text: "watching", type: "v-ing", mean: "xem", correct: true, reason: "" },
+                    { text: "watch", type: "v (bare)", mean: "xem", correct: false, reason: "Sai cấu trúc keep sb doing sth." },
+                    { text: "watched", type: "v-ed", mean: "đã xem/được xem", correct: false, reason: "Sai cấu trúc keep sb doing sth." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống (3).<br>
+                    Phân tích đáp án:<br>
+                    - to watch, watch, watched (<span class='p-word'>v</span>) <span class='hl-red'>❌ Sai</span> cấu trúc.<br>
+                    - watching (<span class='p-word'>v-ing</span>) <span class='hl-green'>✅ Đúng</span>. <span class='p-grammar'>Cấu trúc ngữ pháp</span>: <span class='p-grammar'>keep + somebody + V-ing</span> (khiến ai đó liên tục làm gì).<br>
+                    🔍 Dẫn chứng: "YouTube makes money by keeping people on the platform watching video after video..."<br>
+                    👉 Dịch: "YouTube kiếm tiền bằng cách <span class='hl-green'>**giữ cho mọi người liên tục xem**</span> hết video này đến video khác..."
+                `
+            },
+            {
+                qText: "Câu (4): Select the best answer",
+                options: [
+                    { text: "concentration", type: "n", mean: "sự tập trung", correct: false, reason: "Ít dùng với động từ capture." },
+                    { text: "notice", type: "n", mean: "sự chú ý/thông báo", correct: false, reason: "Không tạo cụm từ cố định." },
+                    { text: "attention", type: "n", mean: "sự chú ý", correct: true, reason: "" },
+                    { text: "notification", type: "n", mean: "sự thông báo", correct: false, reason: "Sai nghĩa." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống (4).<br>
+                    Phân tích đáp án:<br>
+                    - concentration (<span class='p-word'>n</span> - <span class='p-mean'>sự tập trung</span>) <span class='hl-red'>❌ Sai</span>.<br>
+                    - notice, notification <span class='hl-red'>❌ Sai</span>.<br>
+                    - attention (<span class='p-word'>n</span> - <span class='p-mean'>sự chú ý</span>) <span class='hl-green'>✅ Đúng</span>. <span class='p-grammar'>Collocation</span>: <span class='p-grammar'>capture/catch one's attention</span> (thu hút sự chú ý của ai).<br>
+                    🔍 Dẫn chứng: "...so it's in their interest to capture attention with shocking and engaging videos..."<br>
+                    👉 Dịch: "...vì vậy lợi ích của họ là <span class='hl-green'>**thu hút sự chú ý**</span> bằng những video gây sốc và hấp dẫn..."
+                `
+            },
+            {
+                qText: "Câu (5): Select the best answer",
+                options: [
+                    { text: "subject", type: "n", mean: "chủ đề/môn học", correct: false, reason: "Không hợp với bối cảnh đánh giá tính chất video trên mạng." },
+                    { text: "content", type: "n", mean: "nội dung", correct: true, reason: "" },
+                    { text: "thought", type: "n", mean: "suy nghĩ", correct: false, reason: "Không hợp nghĩa." },
+                    { text: "idea", type: "n", mean: "ý tưởng", correct: false, reason: "Không hợp nghĩa." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống (5).<br>
+                    Phân tích đáp án:<br>
+                    - subject (<span class='p-word'>n</span> - <span class='p-mean'>chủ đề</span>) <span class='hl-red'>❌ Sai</span>.<br>
+                    - content (<span class='p-word'>n</span> - <span class='p-mean'>nội dung</span>) <span class='hl-green'>✅ Đúng</span>. Khi nói về các nền tảng mạng xã hội, ta dùng từ "content" để chỉ các bài đăng, video (nội dung độc hại).<br>
+                    - thought, idea <span class='hl-red'>❌ Sai</span>.<br>
+                    🔍 Dẫn chứng: "Despite its potential for harmful content..."<br>
+                    👉 Dịch: "Bất chấp khả năng chứa <span class='hl-green'>**nội dung**</span> độc hại..."
+                `
+            },
+            {
+                qText: "Câu (6): Select the best answer",
+                options: [
+                    { text: "special", type: "adj", mean: "đặc biệt", correct: false, reason: "Cần một trạng từ bổ nghĩa cho cả cụm phía sau." },
+                    { text: "specially", type: "adv", mean: "cách đặc biệt (vì mục đích cụ thể)", correct: false, reason: "Dùng specially khi nói về một mục đích cụ thể (được thiết kế đặc biệt cho...)." },
+                    { text: "especially", type: "adv", mean: "nhất là, đặc biệt là", correct: true, reason: "" },
+                    { text: "especial", type: "adj", mean: "đặc biệt", correct: false, reason: "Là tính từ, sai từ loại." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống (6).<br>
+                    Phân tích đáp án:<br>
+                    - special, especial (<span class='p-word'>adj</span>) <span class='hl-red'>❌ Sai</span> vì chỗ trống cần <span class='p-grammar'>trạng từ (adv)</span> để nhấn mạnh.<br>
+                    - specially (<span class='p-word'>adv</span>) <span class='hl-red'>❌ Sai</span> vì specially mang nghĩa "dành riêng cho một mục đích nào đó".<br>
+                    - especially (<span class='p-word'>adv</span> - <span class='p-mean'>nhất là, đặc biệt là</span>) <span class='hl-green'>✅ Đúng</span> dùng để nhấn mạnh một ngoại lệ hay trường hợp nổi bật nhất.<br>
+                    🔍 Dẫn chứng: "...educational and wholesome entertainment possibilities are immense - especially for young people."<br>
+                    👉 Dịch: "...khả năng giải trí lành mạnh và mang tính giáo dục là vô cùng lớn - <span class='hl-green'>**đặc biệt là**</span> đối với những người trẻ tuổi."
+                `
+            },
+            {
+                qText: "Câu (7): Select the best answer",
+                options: [
+                    { text: "what", type: "pron", mean: "cái gì", correct: false, reason: "Cấu trúc what to V là làm gì, không hợp nghĩa." },
+                    { text: "where", type: "adv", mean: "ở đâu", correct: false, reason: "Không hợp nghĩa." },
+                    { text: "who", type: "pron", mean: "ai", correct: false, reason: "Không hợp nghĩa." },
+                    { text: "how", type: "adv", mean: "như thế nào/cách", correct: true, reason: "" }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống (7).<br>
+                    Phân tích đáp án:<br>
+                    - what, where, who <span class='hl-red'>❌ Sai</span> nghĩa so với bối cảnh làm video hướng dẫn giải quyết vấn đề.<br>
+                    - how (<span class='p-word'>adv</span> - <span class='p-mean'>cách thức</span>) <span class='hl-green'>✅ Đúng</span>. <span class='p-grammar'>Từ để hỏi + to V</span>: <span class='p-grammar'>how to solve problems</span> (cách giải quyết vấn đề).<br>
+                    🔍 Dẫn chứng: "...functional and creative videos about how to solve problems are incredibly common."<br>
+                    👉 Dịch: "...những video sáng tạo và thiết thực về <span class='hl-green'>**cách**</span> giải quyết vấn đề thì vô cùng phổ biến."
+                `
+            },
+            {
+                qText: "Câu (8): Select the best answer",
+                options: [
+                    { text: "and", type: "conj", mean: "và", correct: true, reason: "" },
+                    { text: "but", type: "conj", mean: "nhưng", correct: false, reason: "Dùng để nối 2 ý tương phản, sai logic." },
+                    { text: "or", type: "conj", mean: "hoặc", correct: false, reason: "Chỉ sự lựa chọn, sai logic liệt kê." },
+                    { text: "so", type: "conj", mean: "vì vậy", correct: false, reason: "Chỉ kết quả, sai logic." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống (8).<br>
+                    Phân tích đáp án:<br>
+                    - but, or, so (<span class='p-word'>conj</span> - <span class='p-mean'>liên từ</span>) <span class='hl-red'>❌ Sai</span> logic vì đoạn văn đang liệt kê thêm các loại video.<br>
+                    - and (<span class='p-word'>conj</span> - <span class='p-mean'>và</span>) <span class='hl-green'>✅ Đúng</span>. Cụm <span class='p-grammar'>and more</span> nghĩa là "và nhiều thứ khác nữa".<br>
+                    🔍 Dẫn chứng: "...documentaries, language tutorials, exercise, yoga, stretching videos, and more."<br>
+                    👉 Dịch: "...phim tài liệu, hướng dẫn ngôn ngữ, video tập thể dục, yoga, video giãn cơ, <span class='hl-green'>**và**</span> nhiều hơn thế nữa."
+                `
+            },
+            
+            // PART 2: SLEEP (READING COMPREHENSION) -> Keeps full question text
+            {
+                qText: "Câu 9: Why is sleep extremely important for teenagers?",
+                options: [
+                    { text: "It helps them stay up late in the night and sleep in longer during the morning.", type: "", mean: "Nó giúp các em thức khuya và ngủ nướng vào buổi sáng.", correct: false, reason: "Đây là nguyên nhân gây thiếu ngủ chứ không phải lý do giấc ngủ quan trọng." },
+                    { text: "It causes poor academic performance and low self-esteem.", type: "", mean: "Nó gây ra kết quả học tập kém và lòng tự trọng thấp.", correct: false, reason: "Đây là hậu quả của việc thiếu ngủ, không phải tầm quan trọng của giấc ngủ." },
+                    { text: "It plays an important role in their physical, emotional and mental development.", type: "", mean: "Nó đóng vai trò quan trọng trong sự phát triển thể chất, cảm xúc và tinh thần.", correct: true, reason: "" },
+                    { text: "It makes them sleep before 11pm every night.", type: "", mean: "Nó khiến các em ngủ trước 11 giờ mỗi đêm.", correct: false, reason: "Thông tin sai với bài đọc (thanh thiếu niên khó ngủ trước 11h)." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Tại sao giấc ngủ lại cực kỳ quan trọng đối với thanh thiếu niên?<br>
+                    Phân tích đáp án:<br>
+                    - It helps them stay up late... (<span class='p-mean'>Nó giúp thức khuya...</span>) <span class='hl-red'>❌ Sai</span> vì đây là xu hướng sinh học chứ không phải lợi ích.<br>
+                    - It causes poor academic... (<span class='p-mean'>Nó gây ra học lực kém...</span>) <span class='hl-red'>❌ Sai</span> vì đây là hậu quả của THIẾU ngủ (sleep deprivation).<br>
+                    - It plays an important role... (<span class='p-mean'>Nó đóng vai trò quan trọng...</span>) <span class='hl-green'>✅ Đúng</span>.<br>
+                    - It makes them sleep before 11pm... (<span class='p-mean'>Nó làm các em ngủ trước 11h...</span>) <span class='hl-red'>❌ Sai</span>.<br>
+                    🔍 Dẫn chứng: "In teenagers, good quality sleep is really essential because it plays an important role in their physical, emotional and mental development."<br>
+                    👉 Dịch: "...bởi vì nó đóng một <span class='hl-green'>**vai trò quan trọng trong sự phát triển thể chất, cảm xúc và tinh thần**</span> của họ."
+                `
+            },
+            {
+                qText: "Câu 10: What are the benefits of sleep for the brain?",
+                options: [
+                    { text: "It leads to drowsiness and lack of attention.", type: "", mean: "Nó dẫn đến tình trạng buồn ngủ và thiếu chú ý.", correct: false, reason: "Hậu quả của thiếu ngủ, không phải lợi ích." },
+                    { text: "It promotes attention, memory, and analytical thought.", type: "", mean: "Nó thúc đẩy sự chú ý, trí nhớ và tư duy phân tích.", correct: true, reason: "" },
+                    { text: "It helps teenagers use electronic devices effectively.", type: "", mean: "Nó giúp thanh thiếu niên sử dụng thiết bị điện tử hiệu quả.", correct: false, reason: "Không có thông tin trong bài." },
+                    { text: "It shifts their circadian rhythm naturally.", type: "", mean: "Nó thay đổi nhịp sinh học tự nhiên.", correct: false, reason: "Sai logic so với bài đọc." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Những lợi ích của giấc ngủ đối với não bộ là gì?<br>
+                    Phân tích đáp án:<br>
+                    - It leads to drowsiness... (<span class='p-mean'>Gây buồn ngủ...</span>) <span class='hl-red'>❌ Sai</span> (Đây là hậu quả của thiếu ngủ).<br>
+                    - It promotes attention... (<span class='p-mean'>Thúc đẩy sự chú ý, trí nhớ và tư duy phân tích.</span>) <span class='hl-green'>✅ Đúng</span>.<br>
+                    - It helps use electronic devices... <span class='hl-red'>❌ Sai</span> không có trong bài.<br>
+                    - It shifts circadian rhythm... <span class='hl-red'>❌ Sai</span> (Sự thay đổi nhịp sinh học là tự nhiên, không phải do ngủ mang lại lợi ích này).<br>
+                    🔍 Dẫn chứng: "Sleep benefits the brain and promotes attention, memory, and analytical thought."<br>
+                    👉 Dịch: "Giấc ngủ có lợi cho não và <span class='hl-green'>**thúc đẩy sự chú ý, trí nhớ và tư duy phân tích**</span>."
+                `
+            },
+            {
+                qText: "Câu 11: How can sleep deprivation affect a teenager's life?",
+                options: [
+                    { text: "It helps them complete heavy workloads of homework.", type: "", mean: "Nó giúp hoàn thành khối lượng bài tập lớn.", correct: false, reason: "Sai kiến thức." },
+                    { text: "It improves their physical and mental development.", type: "", mean: "Nó cải thiện sự phát triển thể chất và tinh thần.", correct: false, reason: "Đây là lợi ích của NGỦ, không phải THIẾU NGỦ." },
+                    { text: "It allows them to hang out with friends during weekends.", type: "", mean: "Nó cho phép các em đi chơi với bạn bè.", correct: false, reason: "Việc đi chơi là nguyên nhân gây thiếu ngủ chứ không phải ảnh hưởng của thiếu ngủ." },
+                    { text: "It leads to drowsiness, poor academic performance, and a higher risk of depression.", type: "", mean: "Nó dẫn đến buồn ngủ, kết quả học tập kém và nguy cơ trầm cảm cao hơn.", correct: true, reason: "" }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Sự thiếu ngủ có thể ảnh hưởng đến cuộc sống của thanh thiếu niên như thế nào?<br>
+                    Phân tích đáp án:<br>
+                    - Các đáp án giúp học bài, cải thiện thể chất, đi chơi bạn bè <span class='hl-red'>❌ Sai</span> hoàn toàn vì Sleep deprivation (Thiếu ngủ) mang lại hậu quả tiêu cực.<br>
+                    - It leads to drowsiness... (<span class='p-mean'>Dẫn đến buồn ngủ, học kém, nguy cơ trầm cảm.</span>) <span class='hl-green'>✅ Đúng</span>.<br>
+                    🔍 Dẫn chứng (Đoạn 2): "Sleep deprivation... leads to drowsiness, lack of attention, and causes poor academic performance. Inadequate sleep... can also increase their risk of depression..."<br>
+                    👉 Dịch: "Mặt khác, thiếu ngủ dẫn đến <span class='hl-green'>**buồn ngủ, thiếu chú ý và gây ra kết quả học tập kém... làm tăng nguy cơ trầm cảm**</span>..."
+                `
+            },
+            {
+                qText: "Câu 12: How many hours of sleep does a teenager need every night?",
+                options: [
+                    { text: "Far less than the recommended hours.", type: "", mean: "Ít hơn rất nhiều so với số giờ được khuyến nghị.", correct: false, reason: "Đây là thực trạng, không phải nhu cầu." },
+                    { text: "Before 11pm.", type: "", mean: "Trước 11 giờ đêm.", correct: false, reason: "Đây là mốc thời gian, không phải số lượng giờ ngủ." },
+                    { text: "8 to 10 hours.", type: "", mean: "8 đến 10 giờ.", correct: true, reason: "" },
+                    { text: "Longer during the morning.", type: "", mean: "Nhiều hơn vào buổi sáng.", correct: false, reason: "Sai." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Thanh thiếu niên cần ngủ bao nhiêu giờ mỗi đêm?<br>
+                    Phân tích đáp án:<br>
+                    - Far less than... (<span class='p-mean'>Ít hơn rất nhiều...</span>) <span class='hl-red'>❌ Sai</span> vì đây là thực tế hiện nay, không phải lời khuyên cần thiết.<br>
+                    - Before 11pm. <span class='hl-red'>❌ Sai</span> hỏi "bao nhiêu tiếng", không hỏi "khi nào".<br>
+                    - 8 to 10 hours. (<span class='p-mean'>8 đến 10 tiếng.</span>) <span class='hl-green'>✅ Đúng</span>.<br>
+                    - Longer during the morning. <span class='hl-red'>❌ Sai</span>.<br>
+                    🔍 Dẫn chứng (Đoạn 3): "Experts recommend that teenagers get 8 to 10 hours of sleep per night to maintain good health."<br>
+                    👉 Dịch: "Các chuyên gia khuyên thanh thiếu niên nên ngủ từ <span class='hl-green'>**8 đến 10 giờ**</span> mỗi đêm..."
+                `
+            },
+            {
+                qText: "Câu 13: Are most teenagers getting enough sleep?",
+                options: [
+                    { text: "Yes, they always get 8 to 10 hours.", type: "", mean: "Có, các em luôn ngủ đủ 8 đến 10 giờ.", correct: false, reason: "Sai với văn bản." },
+                    { text: "Yes, because they sleep in longer during the morning.", type: "", mean: "Có, vì các em ngủ nướng vào buổi sáng.", correct: false, reason: "Việc ngủ nướng không bù đắp đủ số giờ." },
+                    { text: "No, most teenagers get far less than the recommended hours of sleep.", type: "", mean: "Không, hầu hết các em ngủ ít hơn nhiều so với số giờ khuyến nghị.", correct: true, reason: "" },
+                    { text: "No, they don't sleep at all.", type: "", mean: "Không, các em không ngủ chút nào.", correct: false, reason: "Phóng đại quá mức." }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Hầu hết thanh thiếu niên có ngủ đủ giấc không?<br>
+                    Phân tích đáp án:<br>
+                    - Yes, they always get 8 to 10 hours. <span class='hl-red'>❌ Sai</span>.<br>
+                    - Yes, because they sleep in longer... <span class='hl-red'>❌ Sai</span>.<br>
+                    - No, most teenagers get far less... (<span class='p-mean'>Không, đa số ngủ ít hơn mức khuyên rất nhiều.</span>) <span class='hl-green'>✅ Đúng</span>.<br>
+                    - No, they don't sleep at all. <span class='hl-red'>❌ Sai</span> (không có chuyện không ngủ chút nào).<br>
+                    🔍 Dẫn chứng (Đoạn 3): "However, most teenagers get far less than the recommended hours of sleep every night."<br>
+                    👉 Dịch: "Tuy nhiên, hầu hết thanh thiếu niên <span class='hl-green'>**ngủ ít hơn nhiều so với số giờ được khuyến nghị**</span> mỗi đêm."
+                `
+            },
+            {
+                qText: "Câu 14: What are the causes of sleep deprivation in teenagers?",
+                options: [
+                    { text: "Maintaining good health and physical development.", type: "", mean: "Duy trì sức khỏe tốt và phát triển thể chất.", correct: false, reason: "Lợi ích, không phải nguyên nhân." },
+                    { text: "Eating too much before bedtime and lack of extracurricular activities.", type: "", mean: "Ăn quá nhiều trước khi ngủ và thiếu hoạt động ngoại khóa.", correct: false, reason: "Không có thông tin trong bài." },
+                    { text: "Going to bed before 11pm and sleeping 8 to 10 hours.", type: "", mean: "Đi ngủ trước 11h và ngủ 8-10 tiếng.", correct: false, reason: "Đây là thói quen tốt." },
+                    { text: "Circadian rhythm shift, early school start, heavy workloads, social life, and electronic devices.", type: "", mean: "Sự thay đổi nhịp sinh học, đi học sớm, bài tập nhiều, đời sống xã hội và thiết bị điện tử.", correct: true, reason: "" }
+                ],
+                explanation: `
+                    Dịch câu hỏi: Nguyên nhân gây thiếu ngủ ở thanh thiếu niên là gì?<br>
+                    Phân tích đáp án:<br>
+                    - Các đáp án duy trì sức khỏe, ăn nhiều, đi ngủ sớm <span class='hl-red'>❌ Sai</span> hoàn toàn vì đi ngược lại logic hoặc không có trong bài.<br>
+                    - Circadian rhythm shift, early school start... (<span class='p-mean'>Thay đổi nhịp sinh học, học sớm, khối lượng bài vở lớn...</span>) <span class='hl-green'>✅ Đúng</span>.<br>
+                    🔍 Dẫn chứng (Đoạn 3): "This is partly due to the natural shift in their circadian rhythm... Other factors contributing to sleep problems include an early start at school, a heavy workload of homework... a busy social life, and an excessive use of electronic devices."<br>
+                    👉 Dịch: "Điều này một phần do sự <span class='hl-green'>**thay đổi tự nhiên trong nhịp sinh học**</span>... Các yếu tố khác... bao gồm <span class='hl-green'>**bắt đầu học sớm, khối lượng bài tập lớn, đời sống xã hội bận rộn và việc sử dụng quá nhiều thiết bị điện tử**</span>."
+                `
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = quizData.length;
+
+        // Shuffle Function for array items
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Initialize UI
+        function initQuiz() {
+            const container = document.getElementById('exercises-container');
+            const submitBtn = document.querySelector('.submit-area');
+
+            quizData.forEach((q, index) => {
+                // Shuffle options
+                let opts = [...q.options];
+                shuffleArray(opts);
+
+                let box = document.createElement('div');
+                box.className = 'glass-card question-box';
+                box.id = `qbox-${index}`;
+
+                let qText = document.createElement('div');
+                qText.className = 'q-text';
+                qText.innerHTML = q.qText;
+                box.appendChild(qText);
+
+                let grid = document.createElement('div');
+                grid.className = 'options-grid';
+
+                opts.forEach((opt, optIndex) => {
+                    let btn = document.createElement('button');
+                    btn.className = 'opt-btn';
+                    // User Request: No ABCD, full text. 
+                    btn.innerHTML = opt.text; 
+                    btn.onclick = () => checkAnswer(btn, opt.correct, index, box);
+                    grid.appendChild(btn);
+                });
+
+                box.appendChild(grid);
+
+                let expl = document.createElement('div');
+                expl.className = 'explanation';
+                expl.id = `expl-${index}`;
+                expl.innerHTML = q.explanation;
+                box.appendChild(expl);
+
+                container.insertBefore(box, submitBtn);
+            });
+        }
+
+        function toggleTranslation(id) {
+            let el = document.getElementById(id);
+            if (el.style.display === "block") {
+                el.style.display = "none";
+            } else {
+                el.style.display = "block";
+            }
+        }
+
+        function checkAnswer(btn, isCorrect, qIndex, box) {
+            // Prevent multiple clicks
+            let allBtns = box.querySelectorAll('.opt-btn');
+            if (allBtns[0].disabled) return; 
+
+            allBtns.forEach(b => b.disabled = true);
+            answeredQuestions++;
+
+            let sndCorrect = document.getElementById('snd-correct');
+            let sndIncorrect = document.getElementById('snd-incorrect');
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                sndCorrect.currentTime = 0;
+                sndCorrect.play();
+                score++;
+                
+                // Fire Confetti
+                let rect = btn.getBoundingClientRect();
+                let x = (rect.left + rect.width / 2) / window.innerWidth;
+                let y = (rect.top + rect.height / 2) / window.innerHeight;
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { x: x, y: y },
+                    colors: ['#55efc4', '#00b894', '#ffeaa7']
+                });
+            } else {
+                btn.classList.add('incorrect');
+                sndIncorrect.currentTime = 0;
+                sndIncorrect.play();
+                
+                // Highlight correct answer
+                allBtns.forEach(b => {
+                    let textMatched = quizData[qIndex].options.find(o => o.text === b.innerHTML && o.correct);
+                    if (textMatched) b.classList.add('correct');
+                });
+            }
+
+            // Show explanation
+            document.getElementById(`expl-${qIndex}`).style.display = 'block';
+        }
+
+        function startTest() {
+            document.getElementById('start-overlay').style.display = 'none';
+            document.getElementById('bgm-intro').play();
+            // Stop intro music after 5 seconds to not distract
+            setTimeout(() => {
+                let bgm = document.getElementById('bgm-intro');
+                let fade = setInterval(() => {
+                    if (bgm.volume > 0.1) bgm.volume -= 0.1;
+                    else { clearInterval(fade); bgm.pause(); bgm.volume = 1; }
+                }, 200);
+            }, 5000);
+        }
+
+        function submitTest() {
+            if (answeredQuestions < totalQuestions) {
+                alert(`Con mới làm ${answeredQuestions}/${totalQuestions} câu. Hãy hoàn thành hết bài nhé! Cô MS Chí Nên nghiêm khắc lắm đấy 🧐`);
+                return;
+            }
+
+            let name = prompt("Nhập tên của con để nộp bài cho Cô MS Chí Nên (VD: Tiến Vinh, Bảo Ngọc...):");
+            if (!name || name.trim() === "") {
+                alert("Con phải nhập tên mới được nộp bài!");
+                return;
+            }
+
+            let percent = (score / totalQuestions) * 100;
+            let scale10 = ((score / totalQuestions) * 10).toFixed(1);
+            
+            document.getElementById('student-greeting').innerText = `Chúc mừng ${name}!`;
+            document.getElementById('final-score').innerText = `Điểm của con: ${score}/${totalQuestions}`;
+            document.getElementById('scale-10-score').innerText = `Quy đổi hệ 10: ${scale10} Điểm`;
+
+            let feedback = document.getElementById('teacher-feedback');
+            let gif = document.getElementById('result-gif');
+
+            if (percent === 100) {
+                feedback.innerText = "Tuyệt đỉnh xuất sắc! Con đúng là một thiên tài! 🏆 Điểm số rực rỡ!";
+                feedback.style.color = "#00b894";
+                gif.src = "https://media.giphy.com/media/l41YkxvU8c7J7Bba0/giphy.gif"; // Smart/Genius GIF
+            } else if (percent >= 60) {
+                feedback.innerText = "Rất tốt! Con đã nắm được bài. Hãy đọc kỹ phần giải thích những câu sai nhé! 👍";
+                feedback.style.color = "#0984e3";
+                gif.src = "https://media.giphy.com/media/3o7TKDk86t06T7IWYM/giphy.gif"; // High Five GIF
+            } else {
+                feedback.innerText = "Không sao cả, vạn sự khởi đầu nan! Con hãy xem thật kỹ GIẢI THÍCH CHUẨN MASTER của cô và ghi chép lại nhé! Cố lên! 💪";
+                feedback.style.color = "#d63031";
+                gif.src = "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif"; // Crying/Try Harder GIF
+            }
+
+            document.getElementById('result-popup').style.display = 'block';
+        }
+        
+        function closePopup() {
+            document.getElementById('result-popup').style.display = 'none';
+        }
+
+        // On Load
+        window.onload = initQuiz;
+
+    </script>
+</body>
+</html>

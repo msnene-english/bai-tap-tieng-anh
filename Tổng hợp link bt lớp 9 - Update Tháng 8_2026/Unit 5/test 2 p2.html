@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified English Test - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(-45deg, #ffc3a0, #ffafbd, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .floating-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1), transparent);
+        }
+
+        .emoji {
+            position: absolute;
+            font-size: 2.5rem;
+            opacity: 0.7;
+            animation: floatUp linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(105vh) rotate(0deg) scale(0.8); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(-10vh) rotate(360deg) scale(1.2); opacity: 0; }
+        }
+
+        header {
+            text-align: center;
+            padding: 8px;
+            z-index: 10;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+
+        #app-container {
+            display: flex; /* Hiển thị ngay từ đầu */
+            flex: 1;
+            width: 100%;
+            height: calc(100vh - 35px);
+            z-index: 10;
+            padding: 15px;
+            gap: 20px;
+        }
+
+        .pane {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Scrollbar styling */
+        .pane::-webkit-scrollbar { width: 8px; }
+        .pane::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        .pane::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.8); border-radius: 10px; }
+
+        .passage-block, .question-block {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .passage-title {
+            font-size: 1.4rem;
+            color: #4338ca;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .para-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+
+        .para-trans {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #047857;
+            background: rgba(167, 243, 208, 0.4);
+            padding: 10px;
+            border-left: 4px solid #10b981;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .btn-translate {
+            background: #fff;
+            border: 2px solid #fbbf24;
+            color: #d97706;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: block;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 2px 0 #fbbf24;
+        }
+
+        .btn-translate:hover { background: #fef3c7; }
+        .btn-translate:active { transform: translateY(2px); box-shadow: none; }
+
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .glossary-table th { background: #6366f1; color: white; font-weight: 700; }
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        /* Questions */
+        .q-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #111827;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .btn-option {
+            background: white;
+            border: 2px solid #e5e7eb;
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0 #e5e7eb;
+        }
+
+        .btn-option:hover:not(:disabled) {
+            border-color: #6366f1;
+            background: #eef2ff;
+        }
+
+        .btn-option:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #e5e7eb;
+        }
+
+        .btn-option:disabled { cursor: not-allowed; }
+
+        .btn-option.correct {
+            background: #4ade80 !important;
+            border-color: #22c55e !important;
+            color: white !important;
+            box-shadow: 0 4px 0 #16a34a !important;
+        }
+        .btn-option.correct:active { box-shadow: 0 0 0 transparent !important; }
+
+        .btn-option.incorrect {
+            background: #f87171 !important;
+            border-color: #ef4444 !important;
+            color: white !important;
+            box-shadow: 0 4px 0 #dc2626 !important;
+            animation: shake 0.4s ease-in-out;
+        }
+        .btn-option.incorrect:active { box-shadow: 0 0 0 transparent !important; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+            75% { transform: translateX(-6px); }
+        }
+
+        .explanation {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 10px;
+            border-left: 5px solid #6366f1;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            display: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            color: #1f2937;
+        }
+
+        /* Color classes for explanation */
+        .p-word { color: #c026d3; font-weight: 800; background: #fae8ff; padding: 0 4px; border-radius: 4px; }
+        .p-phonetic { color: #8b5cf6; font-style: italic; font-weight: 600;}
+        .p-mean { color: #0284c7; font-weight: 700; background: #e0f2fe; padding: 0 4px; border-radius: 4px; }
+        .p-grammar { color: #d97706; font-weight: 800; background: #fef3c7; padding: 0 4px; border-radius: 4px; }
+        .hl-green { color: #15803d; font-weight: 800; background: #dcfce7; padding: 0 4px; border-radius: 4px; }
+        .hl-red { color: #b91c1c; font-weight: 800; background: #fee2e2; padding: 0 4px; border-radius: 4px; }
+
+        .submit-btn-container {
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #4338ca;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-submit:active { transform: translateY(6px); box-shadow: none; }
+
+        /* Popup Scorecard */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .scorecard {
+            background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px;
+            text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .score-title { font-size: 1.8rem; color: #4338ca; font-weight: 800; margin-bottom: 15px; }
+        .score-student { font-size: 1.2rem; font-weight: 600; color: #374151; margin-bottom: 10px; }
+        .score-points { font-size: 3rem; font-weight: 900; color: #10b981; margin: 10px 0; }
+        .score-converted { font-size: 1.2rem; font-weight: 700; color: #f59e0b; margin-bottom: 15px; }
+        .score-comment { font-size: 1.1rem; color: #4b5563; font-style: italic; margin-bottom: 20px; }
+        .score-gif { width: 100%; border-radius: 10px; margin-bottom: 15px; max-height: 200px; object-fit: cover;}
+        
+        .confetti {
+            position: fixed; width: 10px; height: 10px; z-index: 999; pointer-events: none;
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG Floating Emojis -->
+    <div class="floating-svg" id="floating-svg"></div>
+
+    <header>Giáo viên tạo: Ms MS Chí Nên</header>
+
+    <div id="app-container">
+        <!-- LEFT PANE: Reading -->
+        <div class="pane left-pane" id="reading-pane">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- RIGHT PANE: Questions -->
+        <div class="pane right-pane">
+            <div id="quiz-pane">
+                <!-- Rendered by JS -->
+            </div>
+            <div class="submit-btn-container">
+                <button class="btn-submit" onclick="submitTest()">🎯 Nộp Bài Tính Điểm & Xem Kết Quả</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scorecard Overlay -->
+    <div class="overlay" id="overlay">
+        <div class="scorecard">
+            <div class="score-title">KẾT QUẢ BÀI LÀM</div>
+            <div class="score-student" id="score-name">Học sinh: </div>
+            <div class="score-points" id="score-raw">0/12</div>
+            <div class="score-converted" id="score-10">Điểm hệ 10: 0.00/10</div>
+            <img class="score-gif" id="score-gif" src="" alt="Meme">
+            <div class="score-comment" id="score-comment"></div>
+            <button class="btn-translate" style="margin-top:10px" onclick="location.reload()">Làm Lại Bài</button>
+        </div>
+    </div>
+
+    <script>
+        // Data Structures
+        const passages = [
+            {
+                id: 1,
+                title: "KIDS' COOKING CAMP",
+                content: [
+                    {
+                        en: "Kids ages 8-14. April 6-8, 2025. 9 AM - 12 PM | Ampersand (36 MLK Blvd., Savannah, GA)",
+                        vi: "Trẻ em từ 8-14 tuổi. Ngày 6-8 tháng 4 năm 2025. 9 giờ sáng - 12 giờ trưa | Ampersand (36 MLK Blvd., Savannah, GA)"
+                    },
+                    {
+                        en: "The Tummy Time Foods Kids Can Cook Camp is a (32) _____ camp that teaches kids how to select and prepare healthier food options from scratch!",
+                        vi: "Trại hè Tummy Time Foods Kids Can Cook là một trại hè kéo dài ba ngày, dạy trẻ em cách lựa chọn và chuẩn bị các lựa chọn thực phẩm lành mạnh hơn ngay từ đầu!"
+                    },
+                    {
+                        en: "Kids will learn basic cooking skills, kitchen safety, and more! Each day will (33) _____ a different lesson and menu, and kids will eat their own culinary creations!",
+                        vi: "Trẻ em sẽ học các kỹ năng nấu ăn cơ bản, an toàn nhà bếp và hơn thế nữa! Mỗi ngày sẽ tập trung vào một bài học và thực đơn khác nhau, và trẻ em sẽ được ăn chính những tác phẩm ẩm thực do mình tạo ra!"
+                    },
+                    {
+                        en: "Tuition: $125 per child (Including all materials and food). For (34) _____ information, contact us at: info@tummytimefoods.com",
+                        vi: "Học phí: 125 đô la một trẻ (Bao gồm tất cả nguyên liệu và thức ăn). Để biết thêm thông tin, hãy liên hệ với chúng tôi tại: info@tummytimefoods.com"
+                    }
+                ],
+                glossary: [
+                    { word: "select", pos: "v", mean: "lựa chọn" },
+                    { word: "prepare", pos: "v", mean: "chuẩn bị" },
+                    { word: "healthier", pos: "adj", mean: "lành mạnh hơn" },
+                    { word: "option", pos: "n", mean: "sự lựa chọn" },
+                    { word: "scratch", pos: "n", mean: "từ đầu (from scratch)" },
+                    { word: "basic", pos: "adj", mean: "cơ bản" },
+                    { word: "safety", pos: "n", mean: "sự an toàn" },
+                    { word: "culinary", pos: "adj", mean: "thuộc về nấu nướng" },
+                    { word: "creation", pos: "n", mean: "sự sáng tạo, tác phẩm" },
+                    { word: "tuition", pos: "n", mean: "học phí" }
+                ]
+            },
+            {
+                id: 2,
+                title: "WILDLIFE PHOTOGRAPHY",
+                content: [
+                    {
+                        en: "As Gir is the only home to wild lions outside Africa, it is the best and only place to document the life of these big cats.",
+                        vi: "Vì Gir là ngôi nhà duy nhất của những con sư tử hoang dã bên ngoài châu Phi, nên đây là nơi tốt nhất và duy nhất để ghi lại cuộc sống của những loài mèo lớn này."
+                    },
+                    {
+                        en: "Our team of expert naturalists and managers has specialised in arranging safaris for wildlife lovers and professional wildlife photographers and filmmakers (35) _____ over 23 years.",
+                        vi: "Đội ngũ gồm các nhà tự nhiên học và nhà quản lý chuyên gia của chúng tôi đã chuyên tổ chức các chuyến dã ngoại cho những người yêu động vật hoang dã, các nhiếp ảnh gia và nhà làm phim động vật hoang dã chuyên nghiệp trong hơn 23 năm."
+                    },
+                    {
+                        en: "We facilitate permits to photograph and film within the Lion Reserve.",
+                        vi: "Chúng tôi hỗ trợ xin giấy phép để chụp ảnh và quay phim trong Khu bảo tồn sư tử."
+                    },
+                    {
+                        en: "We are happy to assist with (36) _____ travelling photographers or groups.",
+                        vi: "Chúng tôi rất vui được hỗ trợ các nhiếp ảnh gia đi du lịch một mình hoặc theo nhóm."
+                    },
+                    {
+                        en: "Tailor-made trips, according to interests, budgets, time frames, and other (37) _____ can be arranged. Make booking online via email: info@asianadventures.in",
+                        vi: "Các chuyến đi được thiết kế riêng, theo sở thích, ngân sách, khung thời gian và các yêu cầu khác đều có thể được sắp xếp. Đặt vé trực tuyến qua email: info@asianadventures.in"
+                    }
+                ],
+                glossary: [
+                    { word: "document", pos: "v", mean: "ghi lại, dẫn chứng" },
+                    { word: "expert", pos: "n/adj", mean: "chuyên gia, chuyên môn" },
+                    { word: "naturalist", pos: "n", mean: "nhà tự nhiên học" },
+                    { word: "specialise", pos: "v", mean: "chuyên về" },
+                    { word: "arrange", pos: "v", mean: "sắp xếp" },
+                    { word: "professional", pos: "adj", mean: "chuyên nghiệp" },
+                    { word: "filmmaker", pos: "n", mean: "nhà làm phim" },
+                    { word: "facilitate", pos: "v", mean: "tạo điều kiện thuận lợi" },
+                    { word: "permit", pos: "n", mean: "giấy phép" },
+                    { word: "tailor-made", pos: "adj", mean: "được thiết kế riêng" }
+                ]
+            },
+            {
+                id: 3,
+                title: "OVERCOMING EMBARRASSMENT",
+                content: [
+                    {
+                        en: "Tripped over our own feet? Waved at someone who was waving at someone else? Dropped food all over ourselves at a party? Had a giant piece of food stuck in our teeth all day? Sent an inappropriate text to the wrong person? We've all done super embarrassing things that have made us wish the ground would open up and swallow us whole already. When you do something silly, it's best to let go of your embarrassment and move on. Otherwise, it can haunt you forever.",
+                        vi: "Vấp ngã bởi chính đôi chân của mình? Vẫy tay chào một ai đó đang vẫy tay với người khác? Đánh rơi thức ăn dính đầy người tại một bữa tiệc? Bị một miếng thức ăn khổng lồ mắc kẹt trong răng cả ngày? Gửi nhầm một tin nhắn không phù hợp cho người khác? Tất cả chúng ta đều từng làm những điều vô cùng xấu hổ khiến chúng ta ước gì mặt đất nứt ra và nuốt chửng mình ngay lập tức. Khi bạn làm một điều gì đó ngớ ngẩn, tốt nhất là hãy rũ bỏ sự xấu hổ đó và bước tiếp. Nếu không, nó có thể ám ảnh bạn mãi mãi."
+                    },
+                    {
+                        en: "If you can laugh at yourself, you've already won. Embarrassment loses its power when you don't take yourself too seriously. Owning the moment and having a good laugh about it is the best way to let it go. Moreover, remember that people are too caught up in their own lives to give your awkward moments too much thought. Why dwell on something no one else is even thinking about?",
+                        vi: "Nếu bạn có thể tự cười nhạo bản thân, bạn đã chiến thắng rồi. Sự xấu hổ sẽ mất đi sức mạnh khi bạn không coi trọng bản thân mình quá mức. Chấp nhận khoảnh khắc đó và có một trận cười sảng khoái về nó là cách tốt nhất để buông bỏ nó. Hơn nữa, hãy nhớ rằng mọi người đều quá bận rộn với cuộc sống của riêng họ để bận tâm quá nhiều đến những khoảnh khắc lúng túng của bạn. Tại sao phải cứ nghĩ mãi về một điều mà thậm chí không ai khác đang nghĩ đến?"
+                    },
+                    {
+                        en: "In the end, we're all just trying not to trip over our own feet. So the next time you're feeling a little embarrassed, take a deep breath, laugh it off, and move on.",
+                        vi: "Cuối cùng, tất cả chúng ta đều chỉ đang cố gắng để không vấp ngã bởi chính đôi chân của mình. Vì vậy, lần tới khi bạn cảm thấy hơi xấu hổ, hãy hít một hơi thật sâu, cười xòa cho qua chuyện và bước tiếp."
+                    }
+                ],
+                glossary: [
+                    { word: "inappropriate", pos: "adj", mean: "không phù hợp" },
+                    { word: "embarrassing", pos: "adj", mean: "đáng xấu hổ" },
+                    { word: "swallow", pos: "v", mean: "nuốt chửng" },
+                    { word: "silly", pos: "adj", mean: "ngớ ngẩn" },
+                    { word: "haunt", pos: "v", mean: "ám ảnh" },
+                    { word: "seriously", pos: "adv", mean: "một cách nghiêm túc" },
+                    { word: "awkward", pos: "adj", mean: "ngượng ngùng, lúng túng" },
+                    { word: "dwell on", pos: "v", mean: "cứ nghĩ mãi về" },
+                    { word: "encounter", pos: "v", mean: "bắt gặp, chạm trán" },
+                    { word: "anxiety", pos: "n", mean: "sự lo âu" }
+                ]
+            }
+        ];
+
+        const questions = [
+            {
+                id: 32, text: "Câu [32]: Select the best answer.", textEn: "Select the best answer.", trans: "Chọn đáp án đúng nhất điền vào ô trống (32).",
+                options: [
+                    { t: "three-day", m: "kéo dài 3 ngày (tính từ)", correct: true },
+                    { t: "three-days", m: "sai cấu trúc ngữ pháp", correct: false },
+                    { t: "three days", m: "3 ngày (danh từ số nhiều)", correct: false },
+                    { t: "threes day", m: "sai cấu trúc ngữ pháp", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>three-day</strong>. Cụm từ <span class='p-word'>a three-day camp</span> sử dụng cấu trúc <span class='p-grammar'>Số đếm + Danh từ số ít</span> nối với nhau bằng dấu gạch ngang để tạo thành một tính từ ghép. Tính từ ghép này đứng trước để bổ nghĩa cho danh từ <span class='p-word'>camp</span> <span class='p-mean'>(trại hè)</span> ở phía sau.",
+                expWrong: "Các đáp án còn lại sai về mặt ngữ pháp.<br>- Bẫy thứ nhất: Không bao giờ được thêm 's' vào danh từ trong một cụm tính từ ghép (loại <span class='p-word'>three-days</span> và <span class='p-word'>threes day</span>).<br>- Bẫy thứ hai: <span class='p-word'>three days</span> đứng độc lập là một cụm danh từ số nhiều, nó không thể đứng ngay trước danh từ <span class='p-word'>camp</span> như một tính từ bổ nghĩa."
+            },
+            {
+                id: 33, text: "Câu [33]: Select the best answer.", textEn: "Select the best answer.", trans: "Chọn đáp án đúng nhất điền vào ô trống (33).",
+                options: [
+                    { t: "rely on", m: "phụ thuộc vào, dựa dẫm vào (cụm động từ)", correct: false },
+                    { t: "look out", m: "coi chừng, cẩn thận (cụm động từ)", correct: false },
+                    { t: "focus on", m: "tập trung vào (cụm động từ)", correct: true },
+                    { t: "pass down", m: "truyền lại (cụm động từ)", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>focus on</strong>. Ngữ cảnh câu <span class='p-word'>Each day will focus on a different lesson and menu</span> mang ý nghĩa là mỗi ngày học sẽ <span class='p-mean'>tập trung vào</span> một bài học và một thực đơn khác nhau. Sự kết hợp từ vựng này hoàn toàn logic với mục đích của một trại hè nấu ăn.",
+                expWrong: "Các cụm động từ (phrasal verbs) còn lại bị sai ngữ cảnh:<br>- <span class='p-word'>rely on</span> <span class='p-mean'>(dựa dẫm vào)</span>: Bài học không thể dựa dẫm vào nhau.<br>- <span class='p-word'>look out</span> <span class='p-mean'>(coi chừng)</span>: Dùng để cảnh báo nguy hiểm, không hợp lý.<br>- <span class='p-word'>pass down</span> <span class='p-mean'>(truyền lại cho đời sau)</span>: Không thể dùng để nói về việc phân bổ bài học mỗi ngày."
+            },
+            {
+                id: 34, text: "Câu [34]: Select the best answer.", textEn: "Select the best answer.", trans: "Chọn đáp án đúng nhất điền vào ô trống (34).",
+                options: [
+                    { t: "much", m: "nhiều (lượng từ)", correct: false },
+                    { t: "more", m: "nhiều hơn, thêm (lượng từ)", correct: true },
+                    { t: "less", m: "ít hơn (lượng từ)", correct: false },
+                    { t: "most", m: "nhiều nhất (lượng từ)", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>more</strong>. Ta có collocation (cụm từ cố định) rất phổ biến: <span class='p-grammar'>For more information</span> có nghĩa là <span class='p-mean'>Để biết thêm thông tin chi tiết</span>. Cụm này luôn được đặt ở cuối các thông báo để hướng dẫn người đọc liên hệ khi cần.",
+                expWrong: "- <span class='p-word'>much information</span> <span class='p-mean'>(nhiều thông tin)</span>: Về mặt ngữ pháp thì đúng, nhưng nó nghe rất gượng gạo và không phải là cụm cố định dùng trong thông báo.<br>- <span class='p-word'>less information</span> <span class='p-mean'>(ít thông tin hơn)</span>: Sai logic hoàn toàn vì người ta liên hệ để biết thêm chứ không phải để biết ít đi.<br>- <span class='p-word'>most information</span> <span class='p-mean'>(hầu hết thông tin)</span>: Sai cấu trúc và không có nghĩa trong ngữ cảnh này."
+            },
+            {
+                id: 35, text: "Câu [35]: Select the best answer.", textEn: "Select the best answer.", trans: "Chọn đáp án đúng nhất điền vào ô trống (35).",
+                options: [
+                    { t: "since", m: "kể từ khi (dùng với mốc thời gian)", correct: false },
+                    { t: "by", m: "bởi, trước (thời điểm)", correct: false },
+                    { t: "for", m: "trong khoảng (dùng với khoảng thời gian)", correct: true },
+                    { t: "in", m: "trong (dùng với tháng, năm, mùa)", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>for</strong>. Câu này sử dụng thì Hiện tại hoàn thành <span class='p-grammar'>has specialised</span>. Ta áp dụng cấu trúc <span class='p-grammar'>for + khoảng thời gian</span> (ở đây là <span class='p-word'>for over 23 years</span> - <span class='p-mean'>trong suốt hơn 23 năm</span>) để diễn tả hành động kéo dài từ quá khứ đến hiện tại.",
+                expWrong: "- <span class='p-word'>since</span> + mốc thời gian trong quá khứ (Ví dụ: since 2000). Không đi với khoảng thời gian.<br>- <span class='p-word'>in</span> + tháng/năm/mùa. Dùng cho mốc thời gian cố định, không dùng với 'over 23 years'.<br>- <span class='p-word'>by</span> + mốc thời gian <span class='p-mean'>(trước lúc nào đó)</span>. Thường dùng với thì tương lai hoàn thành hoặc quá khứ hoàn thành."
+            },
+            {
+                id: 36, text: "Câu [36]: Select the best answer.", textEn: "Select the best answer.", trans: "Chọn đáp án đúng nhất điền vào ô trống (36).",
+                options: [
+                    { t: "simple", m: "đơn giản (tính từ)", correct: false },
+                    { t: "single", m: "đơn lẻ, cá nhân, đi một mình (tính từ)", correct: true },
+                    { t: "only", m: "duy nhất, chỉ (tính từ/trạng từ)", correct: false },
+                    { t: "lonely", m: "cô đơn (tính từ chỉ cảm xúc)", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>single</strong>. Cụm từ <span class='p-word'>single travelling photographers</span> mang nghĩa là các nhiếp ảnh gia đi du lịch <span class='p-mean'>đơn lẻ, đi một mình</span>. Chú ý từ khóa <span class='p-word'>or groups</span> (hoặc đi theo nhóm) ở ngay phía sau, tạo ra sự tương phản rõ ràng giữa khách đi lẻ (single) và khách đi đoàn (groups).",
+                expWrong: "- <span class='p-word'>simple</span> <span class='p-mean'>(đơn giản)</span>: Không dùng để mô tả số lượng người đi du lịch.<br>- <span class='p-word'>only</span> <span class='p-mean'>(duy nhất)</span>: Không đúng ngữ pháp khi ghép vào cụm danh từ ở vị trí này.<br>- Bẫy từ vựng: <span class='p-word'>lonely</span> <span class='p-mean'>(cô đơn)</span>. Từ này chỉ cảm xúc buồn bã vì ở một mình, trong khi ngữ cảnh chỉ đơn thuần nói về số lượng khách đi tour."
+            },
+            {
+                id: 37, text: "Câu [37]: Select the best answer.", textEn: "Select the best answer.", trans: "Chọn đáp án đúng nhất điền vào ô trống (37).",
+                options: [
+                    { t: "requirements", m: "các yêu cầu (danh từ)", correct: true },
+                    { t: "competitions", m: "các cuộc thi đấu (danh từ)", correct: false },
+                    { t: "experiences", m: "các trải nghiệm (danh từ)", correct: false },
+                    { t: "situations", m: "các tình huống (danh từ)", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>requirements</strong>. Câu văn liệt kê các yếu tố để thiết kế tour: interests (sở thích), budgets (ngân sách), time frames (khung thời gian). Do đó, từ phù hợp nhất để chốt lại danh sách này là <span class='p-word'>other requirements</span> <span class='p-mean'>(và các yêu cầu khác)</span> của khách hàng.",
+                expWrong: "- <span class='p-word'>competitions</span> <span class='p-mean'>(các cuộc thi)</span>: Đi du lịch nghỉ dưỡng thì không liên quan đến thi đấu.<br>- <span class='p-word'>experiences</span> <span class='p-mean'>(trải nghiệm)</span>: Không logic khi nói 'sắp xếp chuyến đi dựa trên các trải nghiệm khác'. Khách hàng đưa ra yêu cầu trước, công ty mới sắp xếp tour.<br>- <span class='p-word'>situations</span> <span class='p-mean'>(tình huống)</span>: Từ này mang tính thụ động, không phải là điều kiện để đặt tour."
+            },
+            {
+                id: 38, text: "Câu [38]: Decide whether the following sentences are True (T) or False (F).", textEn: "It's unusual to encounter embarrassing situations in public or crowded places.", trans: "Rất hiếm khi gặp phải những tình huống xấu hổ ở nơi công cộng hoặc đông người.",
+                options: [
+                    { t: "True", m: "Đúng", correct: false },
+                    { t: "False", m: "Sai", correct: true }
+                ],
+                expRight: "Đáp án đúng là <strong>False</strong>. Ngay ở đoạn 1, tác giả khẳng định: <span class='p-word'>We've all done super embarrassing things</span> <span class='p-mean'>(Tất cả chúng ta đều đã từng làm những điều vô cùng đáng xấu hổ)</span>. Điều này chứng tỏ việc gặp tình huống ngượng ngùng là cực kỳ phổ biến và ai cũng từng bị, trái ngược hoàn toàn với từ <span class='p-word'>unusual</span> <span class='p-mean'>(hiếm khi, bất thường)</span> trong đề bài.",
+                expWrong: "Đáp án <span class='p-word'>True</span> sai vì nó cung cấp thông tin ngược lại với dẫn chứng trong bài đọc, tạo ra lỗi sai logic nghiêm trọng."
+            },
+            {
+                id: 39, text: "Câu [39]: Decide whether the following sentences are True (T) or False (F).", textEn: "If you keep thinking about your embarrassing moment, it can affect you for a long time.", trans: "Nếu bạn cứ nghĩ mãi về khoảnh khắc xấu hổ của mình, nó có thể ảnh hưởng đến bạn trong một thời gian dài.",
+                options: [
+                    { t: "True", m: "Đúng", correct: true },
+                    { t: "False", m: "Sai", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>True</strong>. Dẫn chứng nằm ở cuối đoạn 1: <span class='p-word'>Otherwise, it can haunt you forever.</span> <span class='p-mean'>(Nếu không, nó có thể ám ảnh bạn mãi mãi)</span>. Động từ <span class='p-word'>haunt</span> <span class='p-mean'>(ám ảnh)</span> đồng nghĩa với cụm <span class='p-word'>affect you for a long time</span> <span class='p-mean'>(ảnh hưởng đến bạn trong thời gian dài)</span> trong đề bài.",
+                expWrong: "Đáp án <span class='p-word'>False</span> là sai vì câu phát biểu hoàn toàn khớp với ý kiến của tác giả đưa ra trong văn bản."
+            },
+            {
+                id: 40, text: "Câu [40]: Decide whether the following sentences are True (T) or False (F).", textEn: "People usually spend lots of time thinking about your awkward moments.", trans: "Mọi người thường dành nhiều thời gian để suy nghĩ về những khoảnh khắc lúng túng của bạn.",
+                options: [
+                    { t: "True", m: "Đúng", correct: false },
+                    { t: "False", m: "Sai", correct: true }
+                ],
+                expRight: "Đáp án đúng là <strong>False</strong>. Dẫn chứng ở đoạn 2 nêu rõ: <span class='p-word'>remember that people are too caught up in their own lives to give your awkward moments too much thought.</span> <span class='p-mean'>(hãy nhớ rằng mọi người đều quá bận rộn với cuộc sống của riêng họ để bận tâm quá nhiều đến những khoảnh khắc lúng túng của bạn)</span>. Do đó, người khác KHÔNG hề dành nhiều thời gian (spend lots of time) để nghĩ về bạn như đề bài nói.",
+                expWrong: "Đáp án <span class='p-word'>True</span> rơi vào bẫy tâm lý thông thường của con người (nghĩ rằng ai cũng soi mói mình), nhưng đi ngược lại lập luận giải tỏa tâm lý của tác giả trong bài."
+            },
+            {
+                id: 41, text: "Câu [41]: Decide whether the following sentences are True (T) or False (F).", textEn: "If you do something embarrassing, laugh it off and try not to give it too much thought.", trans: "Nếu bạn làm điều gì đó đáng xấu hổ, hãy cười cho qua chuyện và cố gắng đừng suy nghĩ quá nhiều về nó.",
+                options: [
+                    { t: "True", m: "Đúng", correct: true },
+                    { t: "False", m: "Sai", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>True</strong>. Toàn bộ đoạn cuối chính là lời khuyên chốt lại vấn đề: <span class='p-word'>So the next time you're feeling a little embarrassed, take a deep breath, laugh it off, and move on.</span> <span class='p-mean'>(Vì vậy, lần tới khi cảm thấy hơi xấu hổ, hãy hít sâu, cười xòa cho qua chuyện và bước tiếp)</span>. Ý này giống hệt với nội dung câu hỏi đưa ra.",
+                expWrong: "Chọn <span class='p-word'>False</span> là sai vì nó phủ nhận trực tiếp thông điệp cốt lõi và hướng giải quyết tích cực mà tác giả đề xuất."
+            },
+            {
+                id: 42, text: "Câu [42]: The word \"dwell on\" in paragraph 2 is closest in meaning to _____.", textEn: "The word \"dwell on\" in paragraph 2 is closest in meaning to _____.", trans: "Từ 'dwell on' ở đoạn 2 có nghĩa gần nhất với _____.",
+                options: [
+                    { t: "forget what you're already done", m: "quên những gì bạn đã làm", correct: false },
+                    { t: "remind everyone of something", m: "nhắc nhở mọi người về điều gì đó", correct: false },
+                    { t: "keep thinking or talking about something", m: "cứ nghĩ hoặc nói mãi về một điều gì đó", correct: true },
+                    { t: "laugh at your embarrassing self", m: "tự cười nhạo bản thân đang xấu hổ của bạn", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>keep thinking or talking about something</strong>. Cụm động từ (phrasal verb) <span class='p-word'>dwell on something</span> mang ý nghĩa là <span class='p-mean'>cứ mãi suy nghĩ, băn khoăn hoặc dằn vặt về một vấn đề gì đó, đặc biệt là chuyện buồn hoặc chuyện đáng xấu hổ</span>. Câu hỏi tu từ của tác giả 'Tại sao phải cứ nghĩ mãi về một điều...' hàm ý khuyên ta nên buông bỏ.",
+                expWrong: "- Bẫy: <span class='p-word'>forget what you're already done</span> <span class='p-mean'>(quên những gì bạn đã làm)</span>. Từ này mang ý nghĩa hoàn toàn trái ngược với 'dwell on'.<br>- <span class='p-word'>remind everyone of something</span> <span class='p-mean'>(nhắc nhở mọi người)</span>: Không đúng ngữ cảnh vì người ta không đi nhắc nhở người khác về sự xấu hổ của mình.<br>- <span class='p-word'>laugh at your embarrassing self</span> <span class='p-mean'>(tự cười nhạo bản thân)</span>: Đây là cách giải quyết vấn đề (let it go), chứ không phải là định nghĩa của từ 'dwell on'."
+            },
+            {
+                id: 43, text: "Câu [43]: What is the main idea of the passage?", textEn: "What is the main idea of the passage?", trans: "Ý chính của đoạn văn là gì?",
+                options: [
+                    { t: "Embarrassing situations can lead to anxiety and depression.", m: "Những tình huống xấu hổ có thể dẫn đến lo âu và trầm cảm.", correct: false },
+                    { t: "It's best to let go of embarrassment instead of holding onto it.", m: "Tốt nhất là hãy rũ bỏ sự xấu hổ thay vì cứ bám chấp lấy nó.", correct: true },
+                    { t: "The best way to get over embarrassment is to keep talking about it.", m: "Cách tốt nhất để vượt qua sự xấu hổ là liên tục nói về nó.", correct: false },
+                    { t: "Everyone should try to avoid embarrassing situations.", m: "Mọi người nên cố gắng tránh những tình huống xấu hổ.", correct: false }
+                ],
+                expRight: "Đáp án đúng là <strong>It's best to let go of embarrassment instead of holding onto it</strong> <span class='p-mean'>(Tốt nhất là hãy rũ bỏ sự xấu hổ thay vì cứ bám chấp lấy nó)</span>. Xuyên suốt 3 đoạn văn, tác giả nêu ví dụ về sự ngượng ngùng và liên tục lặp lại các cụm từ thể hiện sự buông bỏ như: <span class='p-word'>let go of your embarrassment</span>, <span class='p-word'>move on</span>, <span class='p-word'>laugh it off</span>.",
+                expWrong: "- <span class='p-word'>Embarrassing situations can lead to anxiety and depression.</span> <span class='p-mean'>(...dẫn đến lo âu, trầm cảm)</span>. Bài đọc có nhắc đến việc bị ám ảnh, nhưng không hề đề cập đến thuật ngữ y khoa nghiêm trọng như 'depression'.<br>- <span class='p-word'>The best way to get over embarrassment is to keep talking about it.</span> <span class='p-mean'>(Cách tốt nhất... là liên tục nói về nó)</span>. Sai bét, tác giả khuyên đừng nghĩ nhiều về nó (don't dwell on it), nên việc liên tục nói về nó là đi ngược lại lời khuyên.<br>- <span class='p-word'>Everyone should try to avoid embarrassing situations.</span> <span class='p-mean'>(Mọi người nên cố tránh các tình huống xấu hổ)</span>. Ở đoạn cuối tác giả bảo 'chúng ta đều cố gắng không tự vấp ngã', ngầm hiểu là chuyện xấu hổ lỡ xảy ra thì cứ vui vẻ đón nhận, chứ né tránh hoàn toàn là điều bất khả thi."
+            }
+        ];
+
+        // State
+        let correctAnswersCount = 0;
+        let answeredQuestions = new Set();
+        
+        // Audio Setup
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function playTing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function shootConfetti() {
+            const colors = ['#fde047', '#f472b6', '#38bdf8', '#4ade80', '#c084fc'];
+            for (let i = 0; i < 40; i++) {
+                let conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = -10 + 'px';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                let size = Math.random() * 8 + 6;
+                conf.style.width = size + 'px';
+                conf.style.height = size + 'px';
+                conf.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 3500);
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function renderPassages() {
+            const container = document.getElementById('reading-pane');
+            passages.forEach(p => {
+                let html = `<div class="passage-block"><div class="passage-title">${p.title}</div>`;
+                p.content.forEach((para, idx) => {
+                    html += `
+                        <div class="para-text">${para.en}</div>
+                        <div class="para-trans" id="trans-${p.id}-${idx}">${para.vi}</div>
+                        <button class="btn-translate" onclick="toggleTrans('${p.id}-${idx}')">Mở dịch đoạn này 🌟</button>
+                    `;
+                });
+                
+                html += `<table class="glossary-table">
+                            <tr><th>Từ vựng (Word)</th><th>Loại từ (POS)</th><th>Nghĩa (Meaning)</th></tr>`;
+                p.glossary.forEach(g => {
+                    html += `<tr><td><strong>${g.word}</strong></td><td>${g.pos}</td><td>${g.mean}</td></tr>`;
+                });
+                html += `</table></div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function toggleTrans(id) {
+            const el = document.getElementById('trans-' + id);
+            if (el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('quiz-pane');
+            questions.forEach(q => {
+                let originalOptions = [...q.options];
+                shuffleArray(q.options);
+                
+                let html = `<div class="question-block" id="qblock-${q.id}">
+                                <div class="q-text">${q.text}</div>`;
+                
+                let optsHtml = `<div class="options-grid">`;
+                q.options.forEach((opt, idx) => {
+                    optsHtml += `<button class="btn-option" id="btn-${q.id}-${idx}" 
+                                  onclick="checkAnswer(${q.id}, ${idx}, ${opt.correct})">
+                                  ${opt.t}
+                                  </button>`;
+                });
+                optsHtml += `</div>`;
+                
+                let expOptionsHtml = `<ul style="list-style-type:none; padding-left:0; margin-bottom:15px; margin-top:5px;">`;
+                originalOptions.forEach(opt => {
+                    expOptionsHtml += `<li style="margin-bottom:6px;">* <strong>${opt.t}</strong> ➔ Dịch: <span class='p-mean'>${opt.m}</span></li>`;
+                });
+                expOptionsHtml += `</ul>`;
+
+                let expHtml = `
+                    <div class="explanation" id="exp-${q.id}">
+                        <div style="font-size:1.2rem; color:#4338ca; font-weight:800; margin-bottom:10px;">Câu ${q.id}</div>
+                        <div style="margin-bottom:8px;"><strong>Đề bài:</strong> ${q.textEn}</div>
+                        <div style="margin-bottom:8px;"><strong>Dịch đề bài:</strong> ${q.trans}</div>
+                        <div style="margin-bottom:4px; margin-top:15px; font-weight:700;">Các đáp án:</div>
+                        ${expOptionsHtml}
+                        <div style="margin-bottom:8px; margin-top:15px; font-weight:700;">Giải thích chi tiết:</div>
+                        <div style="margin-bottom:8px;"><span class="hl-green">Tại sao đúng:</span> ${q.expRight}</div>
+                        <div><span class="hl-red">Tại sao sai:</span> ${q.expWrong}</div>
+                    </div>
+                `;
+                
+                container.innerHTML += html + optsHtml + expHtml + `</div>`;
+            });
+        }
+
+        window.checkAnswer = function(qId, optIdx, isCorrect) {
+            if (answeredQuestions.has(qId)) return;
+            answeredQuestions.add(qId);
+            
+            const btn = document.getElementById(`btn-${qId}-${optIdx}`);
+            const block = document.getElementById(`qblock-${qId}`);
+            const exp = document.getElementById(`exp-${qId}`);
+            
+            const buttons = block.querySelectorAll('.btn-option');
+            buttons.forEach(b => b.disabled = true);
+            
+            if (isCorrect) {
+                btn.classList.add('correct');
+                correctAnswersCount++;
+                playDing();
+                shootConfetti();
+            } else {
+                btn.classList.add('incorrect');
+                playTing();
+                const qData = questions.find(x => x.id === qId);
+                const correctIdx = qData.options.findIndex(x => x.correct === true);
+                document.getElementById(`btn-${qId}-${correctIdx}`).classList.add('correct');
+            }
+            
+            exp.style.display = 'block';
+        }
+
+        window.submitTest = function() {
+            if (answeredQuestions.size < questions.length) {
+                alert(`Bạn mới làm ${answeredQuestions.size}/${questions.length} câu. Hãy hoàn thành hết nhé!`);
+                return;
+            }
+            
+            const name = prompt("Nhập tên của con để nộp bài nhé:");
+            if (!name || name.trim() === "") {
+                alert("Con phải nhập tên mới được nộp bài!");
+                return;
+            }
+            
+            const score10 = (correctAnswersCount / questions.length) * 10;
+            const percent = (correctAnswersCount / questions.length) * 100;
+            
+            document.getElementById('score-name').innerText = "Học sinh: " + name;
+            document.getElementById('score-raw').innerText = `${correctAnswersCount}/${questions.length}`;
+            document.getElementById('score-10').innerText = `Điểm hệ 10: ${score10.toFixed(2)}/10`;
+            
+            const gifEl = document.getElementById('score-gif');
+            const commentEl = document.getElementById('score-comment');
+            
+            if (percent === 100) {
+                gifEl.src = "https://media.giphy.com/media/l41lUjUgLLwWrz20w/giphy.gif";
+                commentEl.innerText = "Ms MS Chí Nên: Tuyệt cú mèo! Con là thiên tài ngoại ngữ! 🌟";
+            } else if (percent >= 60) {
+                gifEl.src = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif";
+                commentEl.innerText = "Ms MS Chí Nên: Rất tốt! Cố gắng thêm một chút nữa là hoàn hảo! 👍";
+            } else {
+                gifEl.src = "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif";
+                commentEl.innerText = "Ms MS Chí Nên: Hơi tiếc nhỉ, con nhớ đọc kỹ giải thích và làm lại nhé. Cố lên! 💪";
+            }
+            
+            document.getElementById('overlay').style.display = 'flex';
+        }
+
+        // Generate floating background emojis
+        const emojis = ['📚', '🌳', '🦁', '🍳', '✈️', '🌍', '🚀', '🥕', '🎨', '🔥'];
+        const svgContainer = document.getElementById('floating-svg');
+        for(let i=0; i<15; i++) {
+            let el = document.createElement('div');
+            el.className = 'emoji';
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + '%';
+            el.style.animationDuration = (Math.random() * 15 + 10) + 's';
+            el.style.animationDelay = (Math.random() * 10) + 's';
+            svgContainer.appendChild(el);
+        }
+
+        // Init
+        renderPassages();
+        renderQuestions();
+
+    </script>
+</body>
+</html>

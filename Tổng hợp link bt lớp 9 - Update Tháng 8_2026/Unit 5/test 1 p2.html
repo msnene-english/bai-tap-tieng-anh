@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Tập Tiếng Anh Gamification - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #ffc3a0 0%, #ffafbd 100%);
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --text-main: #333;
+            --primary: #ff758c;
+            --correct: #4ade80;
+            --incorrect: #f87171;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating SVG Pattern */
+        .svg-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        /* Header */
+        header {
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(0,0,0,0.6);
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 10;
+        }
+
+        /* Split Layout */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        h2, h3 { color: #ff4b72; margin-bottom: 15px; }
+
+        .passage {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.5);
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .translate-btn {
+            background: #ffe3e3;
+            color: #ff4b72;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .translate-btn:hover { background: #ffd1d1; transform: translateY(-2px); }
+
+        .translation {
+            display: none;
+            margin-top: 10px;
+            color: #555;
+            font-style: italic;
+            border-left: 3px solid #ff4b72;
+            padding-left: 10px;
+        }
+
+        /* Glossary Table */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .glossary-table th { background: rgba(255, 75, 114, 0.1); color: #ff4b72; }
+
+        /* Questions */
+        .question-card {
+            background: rgba(255,255,255,0.6);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--glass-border);
+        }
+        .question-text { font-size: 18px; font-weight: 600; margin-bottom: 15px; }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid transparent;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: #ffb6c1;
+        }
+        .option-btn.correct { background: var(--correct); color: white; border-color: var(--correct); }
+        .option-btn.incorrect { background: var(--incorrect); color: white; border-color: var(--incorrect); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+        .shake { animation: shake 0.4s; }
+
+        /* Explanations */
+        .explanation {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 10px;
+            font-size: 15px;
+            border-left: 4px solid #ff4b72;
+        }
+        
+        /* Custom Tags for Explanation */
+        .p-word { font-weight: bold; color: #2563eb; }
+        .p-phonetic { font-style: italic; color: #7c3aed; }
+        .p-mean { color: #d97706; font-weight: 600; }
+        .p-grammar { background: #fef08a; padding: 2px 5px; border-radius: 4px; font-family: monospace; color: #854d0e; font-weight: bold;}
+        .hl-green { color: #16a34a; font-weight: bold; }
+        .hl-red { color: #dc2626; font-weight: bold; }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #ff4b72, #ff758c);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(255, 75, 114, 0.4);
+            transition: transform 0.2s;
+        }
+        .submit-btn:hover { transform: scale(1.02); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 24px;
+            text-align: center; max-width: 400px; width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .modal-content img { max-width: 200px; border-radius: 15px; margin: 20px 0; }
+        .modal-content input {
+            width: 100%; padding: 12px; margin-bottom: 20px;
+            border: 2px solid #eee; border-radius: 10px; font-size: 16px; font-family: inherit;
+        }
+        .btn-start {
+            background: #ff4b72; color: white; border: none; padding: 10px 20px;
+            border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: bold;
+        }
+
+        #confetti-canvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating Emojis SVG -->
+    <svg class="svg-bg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <pattern id="pattern" x="0" y="0" width="150" height="150" patternUnits="userSpaceOnUse">
+                <text x="20" y="40" font-size="30">🏕️</text>
+                <text x="100" y="80" font-size="30">🏖️</text>
+                <text x="50" y="130" font-size="30">🐢</text>
+                <text x="130" y="20" font-size="20">☀️</text>
+                <text x="10" y="100" font-size="25">🌊</text>
+            </pattern>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern)"></rect>
+    </svg>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>Giáo viên tạo: Ms MS Chí Nên</header>
+
+    <div class="container">
+        <!-- LEFT PANEL: Reading Passages -->
+        <div class="panel">
+            <h2>📖 Reading Passages</h2>
+            
+            <!-- Passage 1 -->
+            <div class="passage-box">
+                <h3>Passage 1: Summer Camp</h3>
+                <div class="passage">
+                    <p>Camp is a great place for teens to learn (30) ___ to do things on their own. When parents aren't there to remind them to brush their teeth, eat healthy foods, or wear sunscreen, life at camp becomes a great exercise in the everyday responsibilities.</p>
+                    <button class="translate-btn" onclick="toggleTranslate('trans1_1')">Mở dịch đoạn này 🌟</button>
+                    <div id="trans1_1" class="translation">Trại hè là một nơi tuyệt vời để thanh thiếu niên học cách tự làm mọi việc. Khi bố mẹ không ở đó để nhắc nhở chúng đánh răng, ăn thức ăn lành mạnh, hay bôi kem chống nắng, cuộc sống tại trại hè trở thành một bài tập tuyệt vời về những trách nhiệm hàng ngày.</div>
+                </div>
+                <div class="passage">
+                    <p>Sometimes, teens take the (31) ___ from a counsellor or director more seriously, and even the most dependent teen can learn independence and self-reliance. Furthermore, teens often return home with an improved attitude towards performing daily chores and tasks (32) ___.</p>
+                    <button class="translate-btn" onclick="toggleTranslate('trans1_2')">Mở dịch đoạn này 🌟</button>
+                    <div id="trans1_2" class="translation">Đôi khi, thanh thiếu niên coi trọng những lời nhắc nhở từ cố vấn hoặc giám đốc hơn, và thậm chí một thiếu niên phụ thuộc nhất cũng có thể học được sự tự lập và tự lực. Hơn nữa, thanh thiếu niên thường trở về nhà với một thái độ được cải thiện đối với việc thực hiện các công việc và nhiệm vụ hàng ngày một cách độc lập.</div>
+                </div>
+                <div class="passage">
+                    <p>A good teen summer camp programme offers (33) ___ activities and a place to sleep at night: it offers a strong community for teens to join that is centred upon shared values like acceptance, accountability, and curiosity. While away at an overnight camp, teens will learn to work (34) ___ other campers, have fun and develop skills with teens from different backgrounds. Campers at a teen summer camp must learn to work cooperatively, collaborate with peers and adults, and be an (35) ___ member of a team.</p>
+                    <button class="translate-btn" onclick="toggleTranslate('trans1_3')">Mở dịch đoạn này 🌟</button>
+                    <div id="trans1_3" class="translation">Một chương trình trại hè tốt cho thanh thiếu niên mang lại nhiều hơn là chỉ các hoạt động và một nơi để ngủ vào ban đêm: nó mang lại một cộng đồng vững chắc cho thanh thiếu niên tham gia, tập trung vào những giá trị chung như sự chấp nhận, tinh thần trách nhiệm và sự tò mò. Trong thời gian ở lại trại hè qua đêm, thanh thiếu niên sẽ học cách làm việc với các trại sinh khác, vui chơi và phát triển kỹ năng cùng những thanh thiếu niên có xuất thân khác nhau. Các trại sinh tại trại hè phải học cách làm việc một cách hợp tác, phối hợp với bạn bè và người lớn, và trở thành một thành viên hiệu quả của một đội.</div>
+                </div>
+
+                <h4>Bảng từ vựng (Glossary)</h4>
+                <table class="glossary-table">
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td>Responsibility</td><td>n</td><td>Trách nhiệm</td></tr>
+                    <tr><td>Counsellor</td><td>n</td><td>Cố vấn, người tư vấn</td></tr>
+                    <tr><td>Dependent</td><td>adj</td><td>Phụ thuộc, ỷ lại</td></tr>
+                    <tr><td>Independence</td><td>n</td><td>Sự tự lập, độc lập</td></tr>
+                    <tr><td>Self-reliance</td><td>n</td><td>Sự tự lực, tự dựa vào bản thân</td></tr>
+                    <tr><td>Attitude</td><td>n</td><td>Thái độ</td></tr>
+                    <tr><td>Accountability</td><td>n</td><td>Trách nhiệm giải trình</td></tr>
+                    <tr><td>Curiosity</td><td>n</td><td>Sự tò mò, ham học hỏi</td></tr>
+                    <tr><td>Cooperatively</td><td>adv</td><td>Một cách hợp tác</td></tr>
+                    <tr><td>Collaborate</td><td>v</td><td>Hợp tác, cộng tác</td></tr>
+                </table>
+            </div>
+
+            <hr style="border-top: 2px dashed #ffb6c1; margin: 40px 0;">
+
+            <!-- Passage 2 -->
+            <div class="passage-box">
+                <h3>Passage 2: Family Vacation</h3>
+                <div class="passage">
+                    <p>Our family vacation last summer was truly an unforgettable experience. We chose to go to a beach resort in a tropical paradise, with white sand beaches, crystal-clear waters, and a vibrant culture. The whole trip was filled with beautiful memories that we will treasure forever.</p>
+                    <button class="translate-btn" onclick="toggleTranslate('trans2_1')">Mở dịch đoạn này 🌟</button>
+                    <div id="trans2_1" class="translation">Kỳ nghỉ gia đình của chúng tôi vào mùa hè năm ngoái thực sự là một trải nghiệm không thể nào quên. Chúng tôi đã chọn đi đến một khu nghỉ dưỡng bãi biển ở một thiên đường nhiệt đới, với những bãi biển cát trắng, nước trong vắt và một nền văn hóa sôi động. Toàn bộ chuyến đi tràn ngập những kỷ niệm đẹp mà chúng tôi sẽ trân trọng mãi mãi.</div>
+                </div>
+                <div class="passage">
+                    <p>One of our favourite things about the vacation was spending time together as a family. We took long walks along the beach, played volleyball, and swam in the warm waters. We also took a guided tour of a nearby village, where we learned about the local customs and traditions. We visited a historic temple and admired its beautiful architecture. We even tried some of the local cuisine, which was delicious and <b>unlike anything we had ever tasted before</b>. Another highlight of the vacation was the adventure activities we did together. We went snorkelling and saw colourful fish swimming around us, and even spotted a few sea turtles.</p>
+                    <button class="translate-btn" onclick="toggleTranslate('trans2_2')">Mở dịch đoạn này 🌟</button>
+                    <div id="trans2_2" class="translation">Một trong những điều chúng tôi yêu thích nhất trong kỳ nghỉ là dành thời gian bên nhau như một gia đình. Chúng tôi đi dạo dài trên bãi biển, chơi bóng chuyền và bơi trong làn nước ấm. Chúng tôi cũng tham gia một chuyến tham quan có hướng dẫn viên tại một ngôi làng lân cận, nơi chúng tôi tìm hiểu về phong tục và truyền thống địa phương. Chúng tôi đã đến thăm một ngôi đền lịch sử và chiêm ngưỡng kiến trúc tuyệt đẹp của nó. Chúng tôi thậm chí đã thử một số món ăn địa phương, rất ngon và không giống bất cứ thứ gì chúng tôi từng nếm trước đây. Một điểm nổi bật khác của kỳ nghỉ là các hoạt động phiêu lưu mà chúng tôi đã làm cùng nhau. Chúng tôi đi lặn với ống thở và thấy những con cá đầy màu sắc bơi xung quanh, và thậm chí còn phát hiện ra một vài con rùa biển.</div>
+                </div>
+                <div class="passage">
+                    <p>Looking back on our vacation, we realise how important it was for us to spend time together. In our busy lives, it's easy to get caught up in work and responsibilities and forget the value of spending time with loved ones. But this vacation reminded us of the joy that comes from creating <b>lasting</b> memories with our family.</p>
+                    <button class="translate-btn" onclick="toggleTranslate('trans2_3')">Mở dịch đoạn này 🌟</button>
+                    <div id="trans2_3" class="translation">Nhìn lại kỳ nghỉ của mình, chúng tôi nhận ra việc dành thời gian cho nhau quan trọng như thế nào. Trong cuộc sống bận rộn, chúng ta rất dễ bị cuốn vào công việc và trách nhiệm mà quên mất giá trị của việc dành thời gian cho những người thân yêu. Nhưng kỳ nghỉ này đã nhắc nhở chúng tôi về niềm vui đến từ việc tạo ra những kỷ niệm bền vững cùng gia đình.</div>
+                </div>
+
+                <h4>Bảng từ vựng (Glossary)</h4>
+                <table class="glossary-table">
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td>Unforgettable</td><td>adj</td><td>Không thể nào quên</td></tr>
+                    <tr><td>Tropical</td><td>adj</td><td>Thuộc vùng nhiệt đới</td></tr>
+                    <tr><td>Vibrant</td><td>adj</td><td>Sôi động, rực rỡ</td></tr>
+                    <tr><td>Treasure</td><td>v</td><td>Trân trọng, quý trọng</td></tr>
+                    <tr><td>Architecture</td><td>n</td><td>Kiến trúc</td></tr>
+                    <tr><td>Cuisine</td><td>n</td><td>Ẩm thực, phong cách nấu ăn</td></tr>
+                    <tr><td>Highlight</td><td>n</td><td>Điểm nhấn, phần nổi bật nhất</td></tr>
+                    <tr><td>Snorkelling</td><td>n</td><td>Môn lặn có ống thở</td></tr>
+                    <tr><td>Responsibility</td><td>n</td><td>Trách nhiệm</td></tr>
+                    <tr><td>Lasting</td><td>adj</td><td>Lâu dài, bền vững</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Exercises -->
+        <div class="panel">
+            <h2>🎮 Exercises</h2>
+            <div id="questions-container"></div>
+            <button class="submit-btn" onclick="showSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="name-modal" class="modal-overlay" style="display:flex;">
+        <div class="modal-content">
+            <h2>Chào mừng con đến với bài test!</h2>
+            <p>Vui lòng nhập tên của con để bắt đầu nhé:</p>
+            <input type="text" id="student-name" placeholder="VD: Minh Đức, Tuệ Minh...">
+            <button class="btn-start" onclick="startGame()">Bắt đầu làm bài 🚀</button>
+        </div>
+    </div>
+
+    <div id="result-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="result-title"></h2>
+            <img id="result-gif" src="" alt="Result GIF">
+            <h3 id="result-score" style="font-size: 24px; color: #ff4b72;"></h3>
+            <h3 id="result-scale" style="font-size: 20px; color: #2563eb;"></h3>
+            <p id="result-message" style="margin-top: 15px; font-weight: bold;"></p>
+            <button class="btn-start" style="margin-top:20px;" onclick="location.reload()">Làm lại bài 🔄</button>
+        </div>
+    </div>
+
+<script>
+    // Audio Context Setup
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playDing() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function playError() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    // Simple Confetti
+    function shootConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const pieces = [];
+        const colors = ['#ff4b72', '#4ade80', '#fbbf24', '#3b82f6', '#a855f7'];
+        
+        for(let i = 0; i < 100; i++) {
+            pieces.push({
+                x: canvas.width / 2,
+                y: canvas.height / 2 + 200,
+                vx: (Math.random() - 0.5) * 20,
+                vy: (Math.random() - 1) * 20 - 5,
+                size: Math.random() * 10 + 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                rotation: Math.random() * 360,
+                rs: (Math.random() - 0.5) * 10
+            });
+        }
+
+        let animationId;
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let active = false;
+            pieces.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.5; // gravity
+                p.rotation += p.rs;
+                if(p.y < canvas.height) active = true;
+                
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                ctx.restore();
+            });
+            if(active) {
+                animationId = requestAnimationFrame(update);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        update();
+        setTimeout(() => cancelAnimationFrame(animationId), 2000);
+    }
+
+    function toggleTranslate(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Questions Data (Following User's Strict Format)
+    const questions = [
+        {
+            id: 30,
+            text: "Câu 30: Select the best answer",
+            options: [
+                { text: "who", mean: "ai" },
+                { text: "what", mean: "cái gì" },
+                { text: "how", mean: "cách thức, làm thế nào" },
+                { text: "whether", mean: "liệu rằng" }
+            ],
+            correct: "how",
+            expl: `
+                <b>Dịch đề bài:</b> Câu 30: Chọn đáp án đúng nhất điền vào chỗ trống.<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>who ➔ Dịch: <span class='p-mean'>ai</span></li>
+                    <li>what ➔ Dịch: <span class='p-mean'>cái gì</span></li>
+                    <li>how ➔ Dịch: <span class='p-mean'>cách thức, làm thế nào</span></li>
+                    <li>whether ➔ Dịch: <span class='p-mean'>liệu rằng</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>how</b>. Ta có cấu trúc <span class='p-grammar'>learn + how + to V(nguyên thể)</span> mang nghĩa là <span class='p-mean'>học cách làm gì đó</span>. Ghép vào ngữ cảnh: "learn how to do things on their own" (học cách tự làm mọi việc).</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> Các từ để hỏi như <span class='p-word'>who</span> hay <span class='p-word'>what</span> không tạo thành cụm từ hợp lý về nghĩa với <span class='p-word'>to do things</span>, và <span class='p-word'>whether</span> (liệu có hay không) sai hoàn toàn về ngữ cảnh.</li>
+                </ul>
+            `
+        },
+        {
+            id: 31,
+            text: "Câu 31: Select the best answer",
+            options: [
+                { text: "activities", mean: "các hoạt động" },
+                { text: "courses", mean: "các khóa học" },
+                { text: "announcements", mean: "các thông báo" },
+                { text: "reminders", mean: "những lời nhắc nhở" }
+            ],
+            correct: "reminders",
+            expl: `
+                <b>Dịch đề bài:</b> Câu 31: Chọn đáp án đúng nhất điền vào chỗ trống.<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>activities ➔ Dịch: <span class='p-mean'>các hoạt động</span></li>
+                    <li>courses ➔ Dịch: <span class='p-mean'>các khóa học</span></li>
+                    <li>announcements ➔ Dịch: <span class='p-mean'>các thông báo</span></li>
+                    <li>reminders ➔ Dịch: <span class='p-mean'>những lời nhắc nhở</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>reminders</b>. Ở câu trước tác giả có đề cập "When parents aren't there to remind them..." (Khi bố mẹ không ở đó để nhắc nhở...). Do đó, danh từ phù hợp nhất về mặt logic ở đây phải là <span class='p-word'>reminders</span> (những lời nhắc nhở từ cố vấn).</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> Các từ <span class='p-word'>activities</span> (hoạt động), <span class='p-word'>courses</span> (khóa học), hay <span class='p-word'>announcements</span> (thông báo chung chung) không kết nối được với mạch ý "nhắc nhở sinh hoạt" từ câu trước đó.</li>
+                </ul>
+            `
+        },
+        {
+            id: 32,
+            text: "Câu 32: Select the best answer",
+            options: [
+                { text: "independently", mean: "một cách độc lập (trạng từ)" },
+                { text: "independent", mean: "độc lập (tính từ)" },
+                { text: "dependently", mean: "một cách phụ thuộc (trạng từ)" },
+                { text: "dependent", mean: "phụ thuộc (tính từ)" }
+            ],
+            correct: "independently",
+            expl: `
+                <b>Dịch đề bài:</b> Câu 32: Chọn đáp án đúng nhất điền vào chỗ trống.<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>independently ➔ Dịch: <span class='p-mean'>một cách độc lập (trạng từ)</span></li>
+                    <li>independent ➔ Dịch: <span class='p-mean'>độc lập (tính từ)</span></li>
+                    <li>dependently ➔ Dịch: <span class='p-mean'>một cách phụ thuộc (trạng từ)</span></li>
+                    <li>dependent ➔ Dịch: <span class='p-mean'>phụ thuộc (tính từ)</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>independently</b>. Chỗ trống đứng ở cuối câu, bổ nghĩa cho cụm động từ <span class='p-word'>performing daily chores and tasks</span> (thực hiện các công việc hàng ngày). Theo nguyên tắc ngữ pháp, ta cần một trạng từ <span class='p-grammar'>Adv bổ nghĩa cho Verb</span>. Về nghĩa, đi cắm trại giúp các em tự lập hơn nên phải là <span class='p-word'>independently</span>.</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> <span class='p-word'>independent</span> và <span class='p-word'>dependent</span> là tính từ, không thể đứng cuối câu để bổ nghĩa cho động từ thường. <span class='p-word'>dependently</span> (phụ thuộc) lại sai hoàn toàn về mặt ngữ nghĩa của bài đọc.</li>
+                </ul>
+            `
+        },
+        {
+            id: 33,
+            text: "Câu 33: Select the best answer",
+            options: [
+                { text: "the more than", mean: "nhiều hơn (sai ngữ pháp)" },
+                { text: "much more than", mean: "nhiều hơn rất nhiều so với" },
+                { text: "the most of", mean: "hầu hết" },
+                { text: "one of the most", mean: "một trong những ... nhất" }
+            ],
+            correct: "much more than",
+            expl: `
+                <b>Dịch đề bài:</b> Câu 33: Chọn đáp án đúng nhất điền vào chỗ trống.<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>the more than ➔ Dịch: <span class='p-mean'>nhiều hơn (sai cấu trúc)</span></li>
+                    <li>much more than ➔ Dịch: <span class='p-mean'>nhiều hơn rất nhiều so với</span></li>
+                    <li>the most of ➔ Dịch: <span class='p-mean'>hầu hết</span></li>
+                    <li>one of the most ➔ Dịch: <span class='p-mean'>một trong những ... nhất</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>much more than</b>. Cụm từ này đóng vai trò nhấn mạnh, mang nghĩa "mang lại nhiều thứ hơn rất nhiều so với việc chỉ là...". Ở đây trại hè mang lại nhiều thứ hơn việc chỉ có các hoạt động và chỗ ngủ. Cấu trúc <span class='p-grammar'>much + so sánh hơn</span> dùng để nhấn mạnh.</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> <span class='p-word'>the more than</span> sai cấu trúc tiếng Anh. <span class='p-word'>the most of</span> và <span class='p-word'>one of the most</span> dùng trong so sánh nhất, nhưng theo sau chỗ trống là liệt kê "activities and a place to sleep" đối lập với vế sau dấu hai chấm (mang lại một cộng đồng...), nên dùng so sánh hơn là chính xác nhất.</li>
+                </ul>
+            `
+        },
+        {
+            id: 34,
+            text: "Câu 34: Select the best answer",
+            options: [
+                { text: "with", mean: "với, cùng với" },
+                { text: "for", mean: "cho, vì" },
+                { text: "as", mean: "như là" },
+                { text: "at", mean: "tại" }
+            ],
+            correct: "with",
+            expl: `
+                <b>Dịch đề bài:</b> Câu 34: Chọn đáp án đúng nhất điền vào chỗ trống.<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>with ➔ Dịch: <span class='p-mean'>với, cùng với</span></li>
+                    <li>for ➔ Dịch: <span class='p-mean'>cho, vì</span></li>
+                    <li>as ➔ Dịch: <span class='p-mean'>như là</span></li>
+                    <li>at ➔ Dịch: <span class='p-mean'>tại</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>with</b>. Ta có collocation (cụm từ cố định) <span class='p-grammar'>work with somebody</span> mang nghĩa là làm việc cùng với ai đó. Ngữ cảnh: "learn to work with other campers" (học cách làm việc cùng với những trại sinh khác).</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> <span class='p-word'>work for</span> (làm việc cho ai - kiểu sếp/nhân viên), <span class='p-word'>work as</span> (làm nghề gì), <span class='p-word'>work at</span> (làm việc tại đâu) đều hoàn toàn sai lệch ngữ cảnh.</li>
+                </ul>
+            `
+        },
+        {
+            id: 35,
+            text: "Câu 35: Select the best answer",
+            options: [
+                { text: "unforgettable", mean: "không thể quên" },
+                { text: "embarrassing", mean: "xấu hổ, ngượng ngùng" },
+                { text: "inexperienced", mean: "thiếu kinh nghiệm" },
+                { text: "effective", mean: "hiệu quả, có ích" }
+            ],
+            correct: "effective",
+            expl: `
+                <b>Dịch đề bài:</b> Câu 35: Chọn đáp án đúng nhất điền vào chỗ trống.<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>unforgettable ➔ Dịch: <span class='p-mean'>không thể quên</span></li>
+                    <li>embarrassing ➔ Dịch: <span class='p-mean'>xấu hổ, ngượng ngùng</span></li>
+                    <li>inexperienced ➔ Dịch: <span class='p-mean'>thiếu kinh nghiệm</span></li>
+                    <li>effective ➔ Dịch: <span class='p-mean'>hiệu quả, có ích</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>effective</b>. Đoạn văn đang nói về việc các trại sinh phải học cách phối hợp làm việc nhóm (work cooperatively, collaborate...). Do đó, mục tiêu cuối cùng là trở thành một thành viên <span class='p-mean'>hiệu quả, có năng lực</span> của nhóm: <span class='p-grammar'>an effective member</span>.</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> Các tính từ tiêu cực như <span class='p-word'>embarrassing</span> hay <span class='p-word'>inexperienced</span> đi ngược lại với lợi ích tích cực mà trại hè mang lại. <span class='p-word'>unforgettable</span> thường dùng mô tả một kỷ niệm/trải nghiệm chứ không dùng để miêu tả năng lực của một "member" trong nhóm làm việc.</li>
+                </ul>
+            `
+        },
+        {
+            id: 36,
+            text: "According to the passage, the writer ________.",
+            options: [
+                { text: "went to a beach resort with his friends", mean: "đi đến một khu nghỉ dưỡng bãi biển với bạn bè" },
+                { text: "had some bad experiences with the trip", mean: "có một vài trải nghiệm tồi tệ với chuyến đi" },
+                { text: "will never forget this family vacation", mean: "sẽ không bao giờ quên kỳ nghỉ gia đình này" },
+                { text: "visited an ancient city near a forest", mean: "đã đến thăm một thành phố cổ gần một khu rừng" }
+            ],
+            correct: "will never forget this family vacation",
+            expl: `
+                <b>Dịch đề bài:</b> Theo đoạn văn, người viết ________.<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>went to a beach resort with his friends ➔ Dịch: <span class='p-mean'>đi đến một khu nghỉ dưỡng bãi biển với bạn bè</span></li>
+                    <li>had some bad experiences with the trip ➔ Dịch: <span class='p-mean'>có một vài trải nghiệm tồi tệ với chuyến đi</span></li>
+                    <li>will never forget this family vacation ➔ Dịch: <span class='p-mean'>sẽ không bao giờ quên kỳ nghỉ gia đình này</span></li>
+                    <li>visited an ancient city near a forest ➔ Dịch: <span class='p-mean'>đã đến thăm một thành phố cổ gần một khu rừng</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>will never forget this family vacation</b>. Dẫn chứng nằm ngay câu đầu tiên của bài đọc: "Our family vacation last summer was truly an <span class='p-word'>unforgettable</span> experience" (Kỳ nghỉ gia đình... thực sự là một trải nghiệm không thể nào quên). Nghĩa là tác giả sẽ không bao giờ quên nó.</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> Tác giả đi cùng <span class='p-word'>family</span> (gia đình) chứ không phải bạn bè. Chuyến đi mang lại "beautiful memories" chứ không hề có trải nghiệm tồi tệ (bad experiences). Họ đi "beach resort" chứ không đi rừng.</li>
+                </ul>
+            `
+        },
+        {
+            id: 37,
+            text: "What did the writer like most about this vacation?",
+            options: [
+                { text: "He could do many interesting activities at the beach.", mean: "Anh ấy có thể làm nhiều hoạt động thú vị ở bãi biển." },
+                { text: "He could spend time with his family members.", mean: "Anh ấy có thể dành thời gian cho các thành viên trong gia đình." },
+                { text: "He could host a guided tour for his family.", mean: "Anh ấy có thể làm chủ nhà cho một chuyến tham quan có hướng dẫn viên." },
+                { text: "He could try the food that he had never eaten before.", mean: "Anh ấy có thể thử đồ ăn mà anh ấy chưa bao giờ ăn trước đây." }
+            ],
+            correct: "He could spend time with his family members.",
+            expl: `
+                <b>Dịch đề bài:</b> Người viết thích điều gì nhất ở kỳ nghỉ này?<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>He could do many interesting activities at the beach. ➔ Dịch: <span class='p-mean'>Anh ấy có thể làm nhiều hoạt động thú vị ở bãi biển.</span></li>
+                    <li>He could spend time with his family members. ➔ Dịch: <span class='p-mean'>Anh ấy có thể dành thời gian cho các thành viên trong gia đình.</span></li>
+                    <li>He could host a guided tour for his family. ➔ Dịch: <span class='p-mean'>Anh ấy có thể làm chủ nhà tổ chức tour.</span></li>
+                    <li>He could try the food that he had never eaten before. ➔ Dịch: <span class='p-mean'>Anh ấy có thể thử đồ ăn chưa từng ăn.</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>He could spend time with his family members.</b>. Dẫn chứng nằm ở đầu đoạn 2: "One of our <span class='p-word'>favourite things</span> about the vacation was <span class='hl-green'>spending time together as a family</span>." (Một trong những điều yêu thích nhất là dành thời gian cùng nhau như một gia đình).</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> Mặc dù tác giả có tham gia các hoạt động ở bãi biển và thử đồ ăn mới, nhưng chúng không được nhắc đến với cụm từ chỉ mức độ thích nhất (favourite things). Việc tác giả làm chủ nhà (host) tổ chức tour là thông tin sai sự thật so với bài đọc.</li>
+                </ul>
+            `
+        },
+        {
+            id: 38,
+            text: "What does the phrase “unlike anything we had ever tasted before” suggest about the local cuisine?",
+            options: [
+                { text: "It was unfamiliar and unique.", mean: "Nó mới lạ và độc đáo." },
+                { text: "It was similar to their usual food.", mean: "Nó giống với thức ăn thường ngày của họ." },
+                { text: "It was strange and unpleasant.", mean: "Nó kỳ lạ và khó chịu/khó ăn." },
+                { text: "It was very popular worldwide.", mean: "Nó rất phổ biến trên toàn thế giới." }
+            ],
+            correct: "It was unfamiliar and unique.",
+            expl: `
+                <b>Dịch đề bài:</b> Cụm từ "không giống bất cứ thứ gì chúng tôi từng nếm trước đây" gợi ý điều gì về ẩm thực địa phương?<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>It was unfamiliar and unique. ➔ Dịch: <span class='p-mean'>Nó mới lạ và độc đáo.</span></li>
+                    <li>It was similar to their usual food. ➔ Dịch: <span class='p-mean'>Nó giống với thức ăn thường ngày của họ.</span></li>
+                    <li>It was strange and unpleasant. ➔ Dịch: <span class='p-mean'>Nó kỳ lạ và khó ăn.</span></li>
+                    <li>It was very popular worldwide. ➔ Dịch: <span class='p-mean'>Nó rất phổ biến trên toàn thế giới.</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>It was unfamiliar and unique.</b>. Cụm từ "unlike anything we had ever tasted before" mang nghĩa là món ăn này chưa từng được nếm thử trong quá khứ, tức là nó mang tính mới lạ (unfamiliar) và độc đáo (unique) đối với tác giả. Tác giả cũng khen nó "delicious" (ngon) nên đây là một trải nghiệm tích cực.</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> Đáp án <span class='p-word'>similar</span> sai vì nó trái nghĩa với từ "unlike" (không giống). Đáp án <span class='p-word'>unpleasant</span> sai vì tác giả khen đồ ăn "delicious". Thông tin nó "popular worldwide" (nổi tiếng thế giới) không hề được đề cập trong bài.</li>
+                </ul>
+            `
+        },
+        {
+            id: 39,
+            text: "Which of the following activities did the family take part in during the vacation?",
+            options: [
+                { text: "They play different kinds of sports at the beach with the locals.", mean: "Họ chơi nhiều môn thể thao khác nhau ở bãi biển với người dân địa phương." },
+                { text: "They stayed in a homestay at a nearby village to learn about local traditions.", mean: "Họ ở lại homestay tại một ngôi làng lân cận để tìm hiểu truyền thống địa phương." },
+                { text: "They took a tour to see all the historic structures of the village.", mean: "Họ đi tour để ngắm tất cả các công trình lịch sử của ngôi làng." },
+                { text: "They went snorkelling and saw many fish and some sea turtles.", mean: "Họ đi lặn ống thở và thấy nhiều cá cùng một vài chú rùa biển." }
+            ],
+            correct: "They went snorkelling and saw many fish and some sea turtles.",
+            expl: `
+                <b>Dịch đề bài:</b> Gia đình đã tham gia hoạt động nào sau đây trong kỳ nghỉ?<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>They play different kinds of sports... ➔ Dịch: <span class='p-mean'>Họ chơi thể thao với người dân địa phương.</span></li>
+                    <li>They stayed in a homestay... ➔ Dịch: <span class='p-mean'>Họ ở homestay để học truyền thống.</span></li>
+                    <li>They took a tour to see all... ➔ Dịch: <span class='p-mean'>Họ ngắm tất cả công trình lịch sử.</span></li>
+                    <li>They went snorkelling and saw... ➔ Dịch: <span class='p-mean'>Họ đi lặn và thấy cá cùng rùa biển.</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>They went snorkelling and saw many fish and some sea turtles.</b>. Dẫn chứng rõ ràng ở cuối đoạn 2: "We went <span class='p-word'>snorkelling</span> and saw colourful fish swimming around us, and even spotted a few <span class='p-word'>sea turtles</span>."</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> Họ chơi bóng chuyền nhưng không nói là chơi cùng người địa phương (with the locals). Họ ở "beach resort" chứ không phải homestay. Họ có thăm một ngôi đền lịch sử (a historic temple) chứ không phải tất cả các công trình (all the historic structures).</li>
+                </ul>
+            `
+        },
+        {
+            id: 40,
+            text: "The writer sometimes forgets the value of family time because ________.",
+            options: [
+                { text: "family vacations remind him of some precious memories", mean: "những kỳ nghỉ gia đình gợi nhắc anh ấy về những kỷ niệm quý giá" },
+                { text: "he focuses more on travelling and exploring than on his family", mean: "anh ấy tập trung nhiều vào việc đi du lịch và khám phá hơn là gia đình" },
+                { text: "he is too busy with work and other duties in life", mean: "anh ấy quá bận rộn với công việc và các nhiệm vụ khác trong cuộc sống" },
+                { text: "he prefers to spend time alone when he has free time", mean: "anh ấy thích dành thời gian một mình khi có thời gian rảnh" }
+            ],
+            correct: "he is too busy with work and other duties in life",
+            expl: `
+                <b>Dịch đề bài:</b> Người viết đôi khi quên mất giá trị của thời gian bên gia đình bởi vì ________.<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>family vacations remind him... ➔ Dịch: <span class='p-mean'>kỳ nghỉ gợi nhắc kỷ niệm.</span></li>
+                    <li>he focuses more on travelling... ➔ Dịch: <span class='p-mean'>tập trung du lịch hơn gia đình.</span></li>
+                    <li>he is too busy with work and other duties in life ➔ Dịch: <span class='p-mean'>quá bận rộn với công việc và trách nhiệm.</span></li>
+                    <li>he prefers to spend time alone... ➔ Dịch: <span class='p-mean'>thích ở một mình.</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>he is too busy with work and other duties in life</b>. Dẫn chứng ở đoạn cuối: "In our busy lives, it's easy to get caught up in <span class='p-word'>work and responsibilities</span> and forget the value of spending time with loved ones." (dễ bị cuốn vào công việc và trách nhiệm - bằng nghĩa với duties).</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> Các thông tin như "thích ở một mình" hay "tập trung du lịch hơn gia đình" không hề được đề cập trong bài đọc.</li>
+                </ul>
+            `
+        },
+        {
+            id: 41,
+            text: "The word “lasting” in the last paragraph is opposite in meaning to ________.",
+            options: [
+                { text: "short-term", mean: "ngắn hạn" },
+                { text: "memorable", mean: "đáng nhớ" },
+                { text: "permanent", mean: "vĩnh cửu, lâu dài" },
+                { text: "occupied", mean: "bận rộn, bị chiếm dụng" }
+            ],
+            correct: "short-term",
+            expl: `
+                <b>Dịch đề bài:</b> Từ "lasting" trong đoạn cuối trái nghĩa với ________.<br><br>
+                <b>Các đáp án:</b><br>
+                <ul>
+                    <li>short-term ➔ Dịch: <span class='p-mean'>ngắn hạn</span></li>
+                    <li>memorable ➔ Dịch: <span class='p-mean'>đáng nhớ</span></li>
+                    <li>permanent ➔ Dịch: <span class='p-mean'>vĩnh cửu, lâu dài</span></li>
+                    <li>occupied ➔ Dịch: <span class='p-mean'>bận rộn</span></li>
+                </ul><br>
+                <b>Giải thích chi tiết:</b><br>
+                <ul>
+                    <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>short-term</b>. Từ <span class='p-word'>lasting</span> có nghĩa là "kéo dài, bền vững" (tương đương với long-lasting, permanent). Do đề bài yêu cầu tìm từ <span class='hl-red'>TRÁI NGHĨA (opposite in meaning)</span>, ta chọn <span class='p-word'>short-term</span> (ngắn hạn).</li>
+                    <li><span class='hl-red'>Tại sao sai:</span> <span class='p-word'>permanent</span> là từ đồng nghĩa, không phải trái nghĩa. <span class='p-word'>memorable</span> (đáng nhớ) không xét về mặt thời gian. <span class='p-word'>occupied</span> (bận rộn) hoàn toàn không liên quan về nghĩa. Cẩn thận bẫy tìm từ đồng nghĩa thay vì trái nghĩa!</li>
+                </ul>
+            `
+        }
+    ];
+
+    let userAnswers = {};
+    let score = 0;
+
+    // Shuffle Array Function
+    function shuffle(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex != 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    // Initialize the quiz
+    function startGame() {
+        const nameInput = document.getElementById('student-name').value.trim();
+        if(!nameInput) {
+            alert('Con vui lòng nhập tên trước khi bắt đầu nhé!');
+            return;
+        }
+        document.getElementById('name-modal').style.display = 'none';
+        renderQuestions();
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('questions-container');
+        container.innerHTML = '';
+        
+        questions.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = 'q-card-' + q.id;
+
+            const qText = document.createElement('div');
+            qText.className = 'question-text';
+            qText.innerText = q.text;
+
+            const grid = document.createElement('div');
+            grid.className = 'options-grid';
+
+            // Shuffle options
+            let shuffledOptions = shuffle([...q.options]);
+
+            shuffledOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt.text;
+                btn.onclick = () => selectAnswer(q.id, opt.text, btn, grid, q.correct, q.expl);
+                grid.appendChild(btn);
+            });
+
+            const explDiv = document.createElement('div');
+            explDiv.className = 'explanation';
+            explDiv.id = 'expl-' + q.id;
+
+            card.appendChild(qText);
+            card.appendChild(grid);
+            card.appendChild(explDiv);
+            container.appendChild(card);
+        });
+    }
+
+    function selectAnswer(qId, selectedText, btn, gridElement, correctText, explanationHtml) {
+        // Disable all buttons in this grid
+        const buttons = gridElement.querySelectorAll('button');
+        buttons.forEach(b => b.disabled = true);
+
+        userAnswers[qId] = selectedText;
+
+        const explDiv = document.getElementById('expl-' + qId);
+        explDiv.innerHTML = explanationHtml;
+        explDiv.style.display = 'block';
+
+        if (selectedText === correctText) {
+            btn.classList.add('correct');
+            playDing();
+            shootConfetti();
+            score++;
+        } else {
+            btn.classList.add('incorrect');
+            btn.classList.add('shake');
+            playError();
+            // Highlight correct answer
+            buttons.forEach(b => {
+                if(b.innerText === correctText) {
+                    b.classList.add('correct');
+                }
+            });
+        }
+    }
+
+    function showSubmitModal() {
+        const total = questions.length;
+        if(Object.keys(userAnswers).length < total) {
+            alert('Con chưa làm hết các câu hỏi. Vui lòng hoàn thành 100% bài nhé!');
+            return;
+        }
+
+        const studentName = document.getElementById('student-name').value;
+        const percentage = score / total;
+        
+        const modal = document.getElementById('result-modal');
+        const title = document.getElementById('result-title');
+        const gif = document.getElementById('result-gif');
+        const scoreTxt = document.getElementById('result-score');
+        const scaleTxt = document.getElementById('result-scale');
+        const msg = document.getElementById('result-message');
+
+        title.innerText = 'Bảng Điểm Của: ' + studentName;
+        scoreTxt.innerText = 'Số câu đúng: ' + score + '/' + total;
+        
+        // Convert to 10-point scale (round to 2 decimal places)
+        const scale10 = ((score / total) * 10).toFixed(2);
+        scaleTxt.innerText = 'Điểm quy đổi: ' + scale10 + '/10 điểm';
+
+        if (percentage === 1) {
+            // 100%
+            gif.src = 'https://media.giphy.com/media/26tOZ42Mg6pbTUPHW/giphy.gif';
+            msg.innerText = 'LỜI PHÊ TỪ MS MS Chí Nên: Tuyệt đỉnh! Con chính là một thiên tài tiếng Anh! Chúc mừng con đã đạt điểm tuyệt đối nhé! 🎉';
+            msg.style.color = '#16a34a';
+        } else if (percentage >= 0.6) {
+            // >= 60%
+            gif.src = 'https://media.giphy.com/media/3o7TKoWXm3okO1kgHC/giphy.gif';
+            msg.innerText = 'LỜI PHÊ TỪ MS MS Chí Nên: Rất tốt! Con đã nắm bài khá chắc. Hãy xem lại phần giải thích siêu chi tiết của cô ở các câu sai để rút kinh nghiệm nhé! 💪';
+            msg.style.color = '#d97706';
+        } else {
+            // < 60%
+            gif.src = 'https://media.giphy.com/media/l3vR4CdLInmQm2F20/giphy.gif';
+            msg.innerText = 'LỜI PHÊ TỪ MS MS Chí Nên: Không sao đâu, vạn sự khởi đầu nan. Con hãy đọc thật kỹ phần từ vựng và giải thích cô đã soạn, rồi làm lại để nhớ lâu hơn nhé! Cố lên! ❤️';
+            msg.style.color = '#dc2626';
+        }
+
+        modal.style.display = 'flex';
+    }
+</script>
+</body>
+</html>

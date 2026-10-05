@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive English Test | Ms MS Chí Nên</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Righteous&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#15003A; --sky1:#2D0068; --sky2:#8B0056; --hor:#FF006E;
+  --neon1:#FF00FF; --neon2:#00FFFF; --neon3:#FF6EC7; --gold:#FFD60A;
+  --orange:#FF6B35; --correct:#00D26A; --wrong:#FF4757;
+  --text:#F0E6FF; --soft:#9966CC; --card:rgba(45,0,104,0.55);
+  --pur:#C77DFF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Nunito',sans-serif;
+  min-height:100vh;
+  color:var(--text);
+  background:var(--bg);
+  overflow-x:hidden;
+}
+
+/* ── VAPORWAVE BG ── */
+.vw-sky{position:fixed;inset:0;z-index:0; background:linear-gradient(180deg,#0A001F 0%,#2D0068 28%,#8B0056 52%,#FF006E 70%,#FF6B35 82%,#FFD60A 92%,#FFF5A0 100%);}
+.vw-sun{position:fixed;bottom:28%;left:50%;transform:translateX(-50%); width:220px;height:220px;border-radius:50%;z-index:1;pointer-events:none; background:linear-gradient(180deg,#FFD60A 0%,#FF6B35 60%,#FF006E 100%); box-shadow:0 0 80px #FF6B35,0 0 160px rgba(255,0,110,0.4); overflow:hidden;}
+.vw-sun-stripes{position:absolute;bottom:0;left:0;right:0;height:60%; background:repeating-linear-gradient(180deg,transparent 0%,transparent 12%,#FF006E 12%,#FF006E 13%, transparent 13%,transparent 25%,#FF4D00 25%,#FF4D00 26%, transparent 26%,transparent 38%,#FF6B35 38%,#FF6B35 39%, transparent 39%,transparent 51%,#FF8C00 51%,#FF8C00 52%); opacity:0.8;}
+#grid-canvas{position:fixed;bottom:0;left:0;right:0;z-index:1;pointer-events:none;}
+.vw-stars{position:fixed;top:0;left:0;right:0;height:50%;z-index:1;pointer-events:none;}
+#star-canvas{position:absolute;inset:0;}
+
+/* Floating shapes */
+.float-shape{position:fixed;z-index:1;pointer-events:none;opacity:0.25;animation:floatShape ease-in-out infinite alternate;}
+@keyframes floatShape{0%{transform:translateY(0) rotate(0deg);}100%{transform:translateY(-18px) rotate(15deg);}}
+
+/* ── STICKY NOTIFICATION ── */
+.sticky-note { position: fixed; top: 15px; right: 15px; width: 320px; background: rgba(20, 0, 60, 0.85); backdrop-filter: blur(10px); border: 1.5px solid var(--neon1); border-radius: 12px; padding: 14px; z-index: 9999; box-shadow: 0 0 20px rgba(255, 0, 255, 0.3); color: var(--text); font-size: 0.85rem; line-height: 1.5; animation: floatShape 4s infinite alternate;}
+.sticky-note strong { color: var(--gold); display: block; margin-bottom: 6px; font-family: 'Righteous', sans-serif; font-size: 1rem; letter-spacing: 1px; text-transform: uppercase;}
+.sticky-note .hl { color: var(--neon2); font-weight: bold; }
+@media(max-width:768px){ .sticky-note { top: 5px; right: 5px; left: 5px; width: auto; font-size: 0.8rem; } }
+
+/* ── LAYOUT ── */
+.wrapper{position:relative;z-index:10;max-width:920px;margin:0 auto;padding:120px 16px 120px;}
+@media(max-width:768px){ .wrapper { padding-top: 180px; } }
+
+/* ── HEADER ── */
+.hdr{text-align:center;padding:24px 24px 18px;margin-bottom:28px; background:rgba(20,0,60,0.75);backdrop-filter:blur(20px); border:1.5px solid rgba(255,0,255,0.25);border-radius:20px; box-shadow:0 0 40px rgba(255,0,255,0.08),0 8px 40px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,0,255,0.1); position:relative;overflow:hidden;}
+.hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:2.5px; background:linear-gradient(90deg,transparent,#FF00FF,#00FFFF,#FFD60A,#FF006E,transparent);}
+.hdr-title{font-family:'Righteous',sans-serif;font-size:1.8rem; background:linear-gradient(90deg,#FF00FF,#00FFFF,#FFD60A,#FF006E,#FF00FF); background-size:300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; animation:shimmer 5s linear infinite;letter-spacing:2px;margin-bottom:5px;}
+@keyframes shimmer{0%{background-position:0%}100%{background-position:300%}}
+.teacher-tag{display:inline-block;margin-top:7px; background:rgba(0,255,255,0.07);border:1px solid rgba(0,255,255,0.25); border-radius:6px;padding:5px 16px;font-size:0.85rem;color:#80FFFF;font-weight:800;letter-spacing: 1px;}
+
+/* ── QUIZ UI CHÍNH ── */
+.sec-hdr{display:flex;align-items:flex-start;gap:14px;margin:34px 0 16px; padding:14px 20px;background:rgba(10,0,35,0.82);border-radius:12px; backdrop-filter:blur(12px);position:relative;overflow:hidden; border-left:4px solid var(--neon2);}
+.sec-title{font-family:'Righteous',sans-serif;font-size:1.1rem;font-weight:900; color:var(--neon2);margin-bottom:3px;letter-spacing:0.5px; text-shadow:0 0 10px var(--neon2);}
+.sec-desc{font-size:0.9rem;color:var(--soft);font-weight:700;line-height:1.55;}
+
+.q-card{background:var(--card);backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,0.1);border-radius:14px; padding:22px 24px;margin-bottom:20px; box-shadow:0 4px 20px rgba(0,0,0,0.5);transition:all 0.3s;}
+.q-num{font-family:'Righteous',sans-serif;font-size:1rem;font-weight:900; letter-spacing:1px;margin-bottom:12px;color:var(--gold); display:flex;align-items:center;gap:6px;}
+.q-text{font-size:1.15rem;font-weight:700;line-height:1.65;color:var(--text);margin-bottom:18px;}
+
+/* ── TỰ LUẬN (FILL-IN) ── */
+.fill-wrap { display: flex; flex-direction: column; gap: 10px; }
+.starter-txt { font-size: 1.15rem; color: var(--neon2); font-weight: bold; margin-bottom: 5px; }
+.fill-input { width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 14px 15px; font-size: 1.1rem; color: #FFF; font-family: 'Nunito', sans-serif; outline: none; transition: 0.3s; }
+.fill-input:focus { border-color: var(--neon1); box-shadow: 0 0 15px rgba(255,0,255,0.3); }
+.fill-btn { align-self: flex-start; background: linear-gradient(135deg, #FF00FF, #00FFFF); border: none; padding: 12px 25px; border-radius: 8px; color: #000; font-weight: bold; font-size: 1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; margin-top: 5px;}
+.fill-btn:hover { transform: scale(1.05); }
+.fill-input.correct { border-color: var(--correct); background: rgba(0, 210, 106, 0.15); font-weight: bold; }
+.fill-input.wrong { border-color: var(--wrong); background: rgba(255, 71, 87, 0.15); font-weight: bold; }
+
+@keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 50% {transform: translateX(5px);} 75% {transform: translateX(-5px);} }
+
+/* ── GIẢI THÍCH CHI TIẾT ── */
+.exp-box { display: none; background: rgba(0,0,0,0.5); padding: 18px; border-radius: 12px; margin-top: 15px; border-left: 4px solid var(--neon1); font-size: 1.05rem; line-height: 1.7; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+.exp-box.active { display: block; animation: fadeIn 0.5s; }
+@keyframes fadeIn { from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);} }
+.trans-box { background: rgba(255, 107, 53, 0.15); border: 1px solid var(--orange); padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; color: #FFF; }
+.trans-box::before { content: "🇻🇳 Dịch đề: "; color: var(--gold); }
+
+/* BỘ MÀU TỪ VỰNG */
+.p-word { color: #4DA8DA; font-weight: 800; } 
+.p-mean { color: #FF6B35; font-weight: 700; } 
+.p-grammar { text-decoration: underline; text-decoration-color: #FF4757; color: #FFD60A; font-weight: bold; } 
+.hl-green { color: var(--correct); font-weight: 800; } 
+.hl-red { color: var(--wrong); text-decoration: line-through; } 
+.exp-list { margin-left: 20px; margin-bottom: 15px; list-style-type: square; }
+.exp-list li { margin-bottom: 12px; }
+
+/* ── MODAL NỘP BÀI ── */
+.submit-wrap{text-align:center;padding:40px 0 20px; display: flex; justify-content: center;}
+.submit-btn{background:linear-gradient(135deg,rgba(255,0,255,0.18),rgba(0,255,255,0.1)); border:2px solid var(--neon1);border-radius:10px;padding:18px 40px; font-family:'Righteous',sans-serif;font-size:1.2rem;font-weight:900; color:var(--neon1);cursor:pointer;letter-spacing:2px; text-shadow:0 0 10px var(--neon1); box-shadow:0 0 30px rgba(255,0,255,0.15),inset 0 0 20px rgba(255,0,255,0.04); transition:all 0.25s;}
+.submit-btn:hover{background:rgba(255,0,255,0.3);transform:translateY(-3px); box-shadow:0 0 50px rgba(255,0,255,0.4);}
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 10000; }
+.modal-overlay.active { display: flex; }
+.modal-box { background: linear-gradient(145deg, #2D0068, #15003A); border: 2px solid var(--neon2); padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 0 50px rgba(0,255,255,0.3); color: #FFF; }
+.modal-title { font-family: 'Righteous', sans-serif; font-size: 1.8rem; color: var(--neon1); margin-bottom: 20px; text-shadow: 0 0 15px var(--neon1); }
+.modal-input { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5); color: #FFF; font-size: 1.1rem; margin-bottom: 20px; font-family: 'Nunito', sans-serif; text-align: center; }
+.modal-input:focus { outline: none; border-color: var(--neon2); box-shadow: 0 0 15px rgba(0,255,255,0.3); }
+.err-msg { color: var(--wrong); font-weight: bold; font-size: 0.9rem; margin-top: -10px; margin-bottom: 15px; display: none; }
+.modal-btn { background: var(--neon2); border: none; padding: 12px 30px; font-size: 1.2rem; font-family: 'Righteous', sans-serif; border-radius: 8px; cursor: pointer; color: #000; transition: 0.3s; }
+.modal-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--neon2); }
+
+.res-score { font-size: 3rem; font-family: 'Righteous', sans-serif; color: var(--gold); text-shadow: 0 0 20px var(--gold); margin: 10px 0; }
+.res-converted { font-size: 1.2rem; color: var(--correct); font-weight: bold; margin-bottom: 20px; }
+.res-gif { width: 100%; max-height: 250px; object-fit: cover; border-radius: 12px; border: 2px solid var(--neon1); margin-bottom: 20px; }
+
+#cnf{position:fixed;inset:0;pointer-events:none;z-index:9999;}
+</style>
+</head>
+<body>
+
+<div class="vw-sky"></div>
+<div class="vw-sun"><div class="vw-sun-stripes"></div></div>
+<div class="vw-stars"><canvas id="star-canvas"></canvas></div>
+<canvas id="grid-canvas"></canvas>
+<canvas id="cnf"></canvas>
+
+<div class="sticky-note">
+  <strong>📌 LỜI NHẮC TỪ CÔ MS Chí Nên:</strong>
+  <p>💡 Câu hỏi dạng TỰ LUẬN. Hãy đọc kỹ các từ gợi ý, áp dụng đúng cấu trúc ngữ pháp.</p>
+  <p>💡 Tuyệt đối không lười suy nghĩ mà gõ bừa! Tra phát âm trên Cambridge & đọc theo.</p>
+  <p style="color:var(--gold); margin-top:5px; font-weight:bold;">⚠️ BẮT BUỘC: Đọc kỹ giải thích, ghi lại cấu trúc/từ vựng mới vào vở để học mới thực sự giỏi lên.</p>
+</div>
+
+<svg class="float-shape" style="top:8%;left:4%;animation-duration:6s" width="50" height="50" viewBox="0 0 50 50">
+  <polygon points="25,2 48,43 2,43" fill="none" stroke="#FF00FF" stroke-width="2"/>
+</svg>
+<svg class="float-shape" style="top:15%;right:6%;animation-duration:8s;animation-delay:1s" width="40" height="40" viewBox="0 0 40 40">
+  <rect x="5" y="5" width="30" height="30" fill="none" stroke="#00FFFF" stroke-width="2" transform="rotate(20 20 20)"/>
+</svg>
+<svg class="float-shape" style="top:35%;left:2%;animation-duration:7s;animation-delay:2s" width="36" height="36" viewBox="0 0 36 36">
+  <circle cx="18" cy="18" r="15" fill="none" stroke="#FFD60A" stroke-width="2"/>
+</svg>
+
+<div class="wrapper">
+  
+  <div class="hdr">
+    <div class="hdr-title">GLOBAL SUCCESS 9 - REVISION TEST</div>
+    <div class="teacher-tag">Giáo viên tạo: Ms MS Chí Nên</div>
+  </div>
+
+  <div id="contentBody">
+    </div>
+
+  <div class="submit-wrap">
+    <button class="submit-btn" onclick="openNameModal()">🎯 NỘP BÀI & XEM KẾT QUẢ</button>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="nameModal">
+  <div class="modal-box">
+    <div class="modal-title">NHẬP TÊN CỦA CON</div>
+    <p style="margin-bottom: 15px; font-size: 1rem;">Hãy cho cô biết tên của con trước khi xem điểm nhé!</p>
+    <input type="text" id="studentName" class="modal-input" placeholder="Ví dụ: Nguyễn Văn A..." onkeyup="if(event.key === 'Enter') showResult()">
+    <div class="err-msg" id="nameError">⚠️ Con chưa nhập tên kìa!</div>
+    <button class="modal-btn" onclick="showResult()">XEM KẾT QUẢ 🚀</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="resultModal">
+  <div class="modal-box">
+    <div class="modal-title" id="resGreeting">🌟 THIÊN TÀI!</div>
+    <img id="resGif" class="res-gif" src="" alt="Reaction GIF">
+    <div class="res-score" id="resScoreTxt">0/32</div>
+    <div class="res-converted" id="resConvTxt">Quy đổi: 0.0/10 điểm</div>
+    <p style="font-size: 1.05rem; line-height: 1.5;" id="resMessage"></p>
+    <button class="modal-btn" style="margin-top:20px;" onclick="location.reload()">LÀM LẠI BÀI 🔄</button>
+  </div>
+</div>
+
+<script>
+/* ══ 1. AUDIO SETUP ══ */
+const audioNoUrl = 'https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3';
+const audioIntroUrl = 'https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/harry_potter_2.mp3';
+
+const audioNo = new Audio(audioNoUrl);
+const audioIntro = new Audio(audioIntroUrl);
+let introPlayed = false;
+
+document.addEventListener('click', () => {
+  if(!introPlayed) {
+    audioIntro.play().catch(e => console.log('Intro blocked:', e));
+    introPlayed = true;
+  }
+}, {once: true});
+
+let actx;
+function ga(){
+  if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  return actx;
+}
+function playOk(){
+  const c = ga();
+  [[523,0],[659,.1],[784,.2]].forEach(([f,t]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = 'sine'; o.frequency.value = f;
+    g.gain.setValueAtTime(0, c.currentTime + t);
+    g.gain.linearRampToValueAtTime(.11, c.currentTime + t + .04);
+    g.gain.exponentialRampToValueAtTime(.001, c.currentTime + t + .4);
+    o.start(c.currentTime + t); o.stop(c.currentTime + t + .45);
+  });
+}
+function playNo(){
+  audioNo.currentTime = 0;
+  audioNo.play().catch(e => console.log('Wrong sound blocked:', e));
+}
+
+/* ══ 2. DỮ LIỆU ĐỀ BÀI (EXERCISE 21, 22, 23 - FULL CHI TIẾT) ══ */
+const quizData = [
+  // --- EXERCISE 21 ---
+  { section: "Exercise 21: Rearrange the words and phrases to make complete sentences." },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> shouldn't/ visit/ the/ If/ park,/ a/national/ you/feed/ you/wildlife./",
+    starter: "If you visit",
+    ans: "a national park, you shouldn't feed the wildlife",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn đến thăm một công viên quốc gia, bạn không nên cho động vật hoang dã ăn.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you visit a national park, you shouldn't feed the wildlife.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Câu điều kiện loại 1 kết hợp động từ khuyết thiếu mang ý nghĩa khuyên bảo: <b>If + S + V(hiện tại đơn), S + shouldn't + V</b>. <span class="p-word">feed the wildlife</span> (v): cho động vật hoang dã ăn.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> medical/ you/ you' re/ advice./ consider/ should/ unwell,/ seeking/ If/ feeling/",
+    starter: "If you're feeling",
+    ans: "unwell, you should consider seeking medical advice",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn cảm thấy không khỏe, bạn nên cân nhắc việc tìm kiếm lời khuyên y tế.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you're feeling unwell, you should consider seeking medical advice.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Vế điều kiện dùng thì Hiện tại tiếp diễn (you're feeling) để nhấn mạnh trạng thái hiện tại. Cấu trúc <span class="p-grammar">consider + V-ing</span> (cân nhắc làm gì). <span class="p-word">seek medical advice</span>: tìm kiếm lời khuyên từ bác sĩ.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> went to/ John/ the library/ because/ to research/ his science project/he/ wanted/.",
+    starter: "John went to",
+    ans: "the library because he wanted to research his science project",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: John đã đến thư viện bởi vì anh ấy muốn nghiên cứu dự án khoa học của mình.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> John went to the library because he wanted to research his science project.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Mệnh đề chỉ nguyên nhân với liên từ <span class="p-word">because</span> nối giữa hai vế câu. Động từ <b>wanted to + V</b> (muốn làm gì).</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> I/ By the time/ I/ had already/ started/made/high school,/ many new friends/.",
+    starter: "By the time",
+    ans: "I started high school, I had already made many new friends",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Vào lúc tôi bắt đầu vào học cấp 3, tôi đã kết bạn được với rất nhiều người bạn mới rồi.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> By the time I started high school, I had already made many new friends.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Sự kết hợp thì với <span class="p-word">By the time</span> (Vào lúc): <b>By the time + S + V(Quá khứ đơn), S + had + V(P2) (Quá khứ hoàn thành)</b>. Nhấn mạnh việc kết bạn đã xảy ra TRƯỚC khi vào cấp 3.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> have/ due/ it/ trouble/might/or/to/ If/ you/ be/ allergies/breathing,/ asthma./",
+    starter: "If you have",
+    ans: "trouble breathing, it might be due to allergies or asthma",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn bị khó thở, điều đó có thể là do dị ứng hoặc do bệnh hen suyễn.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you have trouble breathing, it might be due to allergies or asthma.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Cấu trúc <span class="p-grammar">have trouble + V-ing</span>: gặp khó khăn trong việc gì. Cụm <span class="p-grammar">due to + Noun</span>: bởi vì, do nguyên nhân gì.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> If/ you/license./ car,/ you/have/drive/ must/a/a/to/ driver's/want/",
+    starter: "If you want",
+    ans: "to drive a car, you must have a driver's license",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn muốn lái xe ô tô, bạn bắt buộc phải có bằng lái xe.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you want to drive a car, you must have a driver's license.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Câu điều kiện loại 1 kết hợp với động từ khuyết thiếu chỉ sự bắt buộc: <span class="p-word">must</span> + V(nguyên thể). <span class="p-word">driver's license</span> (n): bằng lái xe.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> you/ have/ shouldn't/ money,/ If/ it/ you/ don't/ spend/ much/on/unnecessary/things./",
+    starter: "If you don't",
+    ans: "have much money, you shouldn't spend it on unnecessary things",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn không có nhiều tiền, bạn không nên tiêu nó vào những thứ không cần thiết.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you don't have much money, you shouldn't spend it on unnecessary things.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Cấu trúc <span class="p-grammar">spend time/money + on + N/V-ing</span>: dành thời gian/tiền bạc vào việc gì. <span class="p-word">unnecessary</span> (adj): không cần thiết.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> more/ you/ practise/ posture,/ confident./ good/ appear/ If/ you/can/",
+    starter: "If you practise",
+    ans: "good posture, you can appear more confident",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn luyện tập một tư thế tốt (dáng thẳng), bạn có thể trông tự tin hơn.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you practise good posture, you can appear more confident.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Động từ <span class="p-word">appear</span> (v - trông có vẻ) đi kèm với tính từ <span class="p-word">confident</span> (tự tin). <span class="p-word">posture</span> (n): tư thế, dáng điệu.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> smile./ If/teeth/your/have/ regularly,/ you/ may/ you/a/brush/brighter/",
+    starter: "If you brush",
+    ans: "your teeth regularly, you may have a brighter smile",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn chải răng thường xuyên, bạn có thể có một nụ cười rạng rỡ hơn.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you brush your teeth regularly, you may have a brighter smile.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Dùng <span class="p-word">may</span> trong câu điều kiện để chỉ một khả năng có thể xảy ra. <span class="p-word">brighter</span> (adj): sáng hơn, rạng rỡ hơn.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> all night/ studied/ nervous about/ Feeling/ the upcoming exam,/ Emily/.",
+    starter: "Feeling nervous about",
+    ans: "the upcoming exam, Emily studied all night",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Vì cảm thấy lo lắng về kỳ thi sắp tới, Emily đã học bài cả đêm.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> Feeling nervous about the upcoming exam, Emily studied all night.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Mệnh đề phân từ hiện tại (V-ing đứng đầu câu) được dùng để rút gọn mệnh đề nguyên nhân (Bởi vì cô ấy lo lắng...). Hai vế phải có cùng chủ ngữ là "Emily".</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> teenagers/can/for/ many career opportunities/ open up/ Learning to code/.",
+    starter: "Learning to code",
+    ans: "can open up many career opportunities for teenagers",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Việc học lập trình có thể mở ra rất nhiều cơ hội nghề nghiệp cho thanh thiếu niên.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> Learning to code can open up many career opportunities for teenagers.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Danh động từ (V-ing) <span class="p-word">Learning to code</span> đóng vai trò làm Chủ ngữ trong câu. Cụm động từ <span class="p-word">open up</span>: mở ra.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> If/ must/have/a/question,/ you/and/ raise/hand/ask/ you/your/ the/ teacher./",
+    starter: "If you have",
+    ans: "a question, you must raise your hand and ask the teacher",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn có câu hỏi, bạn phải giơ tay lên và hỏi giáo viên.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you have a question, you must raise your hand and ask the teacher.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Hai động từ đi liền nhau sau "must" được nối bằng liên từ "and" (raise and ask). <span class="p-word">raise your hand</span>: giơ tay phát biểu.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> dream of/ Many teenagers/ traveling the world/ when/ finish school/ they/.",
+    starter: "Many teenagers dream",
+    ans: "of traveling the world when they finish school",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nhiều thanh thiếu niên mơ ước được đi du lịch vòng quanh thế giới khi họ học xong.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> Many teenagers dream of traveling the world when they finish school.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Cấu trúc <span class="p-grammar">dream of + V-ing</span>: mơ ước về việc gì đó.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Rearrange:</b> on their phones/ stay up late/ because/ sleep/ often struggle with/ Teenagers/ they/.",
+    starter: "Teenagers often struggle",
+    ans: "with sleep because they stay up late on their phones",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Thanh thiếu niên thường phải vật lộn (gặp khó khăn) với giấc ngủ bởi vì họ thức khuya dùng điện thoại.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> Teenagers often struggle with sleep because they stay up late on their phones.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Cấu trúc <span class="p-grammar">struggle with + Noun/V-ing</span>: gặp rắc rối/vật lộn với vấn đề gì. <span class="p-word">stay up late</span>: thức khuya.</p>`
+  },
+
+  // --- EXERCISE 22 ---
+  { section: "Exercise 22: Write correct sentences using suggested words. Use first conditional with modal verbs." },
+  {
+    type: "fill",
+    q: "<b>Write sentence:</b> you/ finish/test/you/hand/it/and/leave/home/ immediately. (can)",
+    starter: "If you finish",
+    ans: "your test, you can hand it in and leave for home immediately",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn hoàn thành bài kiểm tra, bạn có thể nộp nó và rời đi về nhà ngay lập tức.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you finish your test, you can hand it in and leave for home immediately.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Biến đổi từ khóa thành câu hoàn chỉnh, thêm các mạo từ (your, for, in). <span class="p-grammar">hand in</span>: nộp bài. <span class="p-word">immediately</span> (adv): ngay lập tức.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Write sentence:</b> Linda/win/contest/she/have/ enough money/ go travelling/ Europe. (might)",
+    starter: "If Linda wins",
+    ans: "the contest, she might have enough money to go travelling in Europe",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu Linda chiến thắng cuộc thi, cô ấy có thể có đủ tiền để đi du lịch ở Châu Âu.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If Linda wins the contest, she might have enough money to go travelling in Europe.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Động từ "win" phải chia số ít "wins" vì chủ ngữ Linda. Dùng giới từ "in" cho lục địa (in Europe). Cấu trúc <span class="p-grammar">enough + N + to V</span>: đủ cái gì để làm gì.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Write sentence:</b> you/ want/take/part/contest/you/fill/ this form. (must)",
+    starter: "If you want",
+    ans: "to take part in the contest, you must fill in this form",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn muốn tham gia vào cuộc thi, bạn bắt buộc phải điền vào tờ đơn này.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you want to take part in the contest, you must fill in this form.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> <span class="p-grammar">take part in</span>: tham gia vào. <span class="p-grammar">fill in</span> (hoặc fill out): điền vào (đơn từ).</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Write sentence:</b> they/ want/win/competition/ they/ give/best/ performance. (must)",
+    starter: "If they want",
+    ans: "to win the competition, they must give their best performance",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu họ muốn chiến thắng cuộc thi, họ bắt buộc phải cống hiến màn trình diễn tốt nhất của mình.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If they want to win the competition, they must give their best performance.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Thêm giới từ <span class="p-grammar">to V</span> (want to win). Thêm đại từ sở hữu "their" trước best performance để câu chuẩn xác về mặt ngữ nghĩa.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Write sentence:</b> it/ rain/tomorrow/ we/have/ delay/meeting. (may)",
+    starter: "If it rains",
+    ans: "tomorrow, we may have to delay the meeting",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu trời mưa vào ngày mai, chúng ta có thể sẽ phải hoãn cuộc họp lại.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If it rains tomorrow, we may have to delay the meeting.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Chủ ngữ "it" (trời) ngôi thứ 3 số ít nên động từ rain thêm 's' -> <span class="p-word">rains</span>. Mệnh đề chính kết hợp cả 2 modal verbs để biểu đạt "có thể phải": <span class="p-grammar">may have to + V</span>.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Write sentence:</b> your classmate/ want/sleep/early/he/make/ schedule. (should)",
+    starter: "If your classmate",
+    ans: "wants to sleep early, he should make a schedule",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn cùng lớp của bạn muốn ngủ sớm, cậu ấy nên lập một thời gian biểu.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If your classmate wants to sleep early, he should make a schedule.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> "classmate" là danh từ số ít nên "wants" phải thêm 's'. <span class="p-word">make a schedule</span> (collocation): tạo một lịch trình.</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Write sentence:</b> your brother/get/tired/tomorrow/he/ stay up late/ tonight. (might)",
+    starter: "Your brother might",
+    ans: "get tired tomorrow if he stays up late tonight",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Anh trai bạn có thể sẽ bị mệt vào ngày mai nếu anh ấy thức khuya tối nay.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> Your brother might get tired tomorrow if he stays up late tonight.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Đảo mệnh đề If ra sau nên không có dấu phẩy. Mệnh đề điều kiện "if he stays up late" (thêm 's' vì chủ ngữ he).</p>`
+  },
+  {
+    type: "fill",
+    q: "<b>Write sentence:</b> you/ attend/ formal/event/you/dress/ appropriate/and/ behave/ polite. (should)",
+    starter: "If you attend",
+    ans: "a formal event, you should dress appropriately and behave politely",
+    exp: `<div class="trans-box">Dịch câu hoàn chỉnh: Nếu bạn tham dự một sự kiện trang trọng, bạn nên ăn mặc một cách phù hợp và cư xử thật lịch sự.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you attend a formal event, you should dress appropriately and behave politely.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Điểm mấu chốt của câu này là phải chuyển tính từ "appropriate" và "polite" thành trạng từ (thêm -ly) để bổ nghĩa cho động từ "dress" và "behave" -> <span class="p-word">appropriately</span>, <span class="p-word">politely</span>.</p>`
+  },
+
+  // --- EXERCISE 23 ---
+  { section: "Exercise 23: Complete the second sentence so it has a similar meaning, using 'if'." },
+  {
+    type: "fill",
+    q: "1. Teachers have to work very hard. (will)",
+    starter: "If you're a",
+    ans: "teacher, you will have to work very hard",
+    exp: `<div class="trans-box">Dịch: Giáo viên phải làm việc rất vất vả.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you're a teacher, you will have to work very hard.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Viết lại câu dùng Câu Điều Kiện Loại 1 để diễn tả một giả định có thể xảy ra ở hiện tại: <b>If + S + V(hiện tại đơn), S + will/can/must + V</b>.</p>`
+  },
+  {
+    type: "fill",
+    q: "2. Read more books and you can broaden your knowledge. (can)",
+    starter: "If you read",
+    ans: "more books, you can broaden your knowledge",
+    exp: `<div class="trans-box">Dịch: Hãy đọc nhiều sách hơn VÀ bạn có thể mở rộng kiến thức của mình.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you read more books, you can broaden your knowledge.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Dạng <b>Mệnh lệnh + AND + Mệnh đề kết quả</b>. Khi viết lại với If, ta giữ nguyên mệnh đề mệnh lệnh ở vế If (không dùng phủ định).</p>`
+  },
+  {
+    type: "fill",
+    q: "3. Tuan might fail his English placement test. But he can take it again. (can)",
+    starter: "If Tuan fails",
+    ans: "his English placement test, he can take it again",
+    exp: `<div class="trans-box">Dịch: Tuấn có thể trượt bài kiểm tra xếp lớp tiếng Anh. Nhưng cậu ấy có thể thi lại.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If Tuan fails his English placement test, he can take it again.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Kết nối 2 câu thành 1 câu điều kiện. Động từ "fail" đi với chủ ngữ số ít "Tuan" phải thêm "s" -> <span class="p-word">fails</span>.</p>`
+  },
+  {
+    type: "fill",
+    q: "4. Pay attention to the teacher or you can't understand the lessons. (can't)",
+    starter: "If you don't",
+    ans: "pay attention to the teacher, you can't understand the lessons",
+    exp: `<div class="trans-box">Dịch: Hãy chú ý nghe giáo viên giảng HOẶC bạn sẽ không hiểu bài đâu.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you don't pay attention to the teacher, you can't understand the lessons.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Dạng <b>Mệnh lệnh + OR + Kết quả</b> (Làm gì đó, NẾU KHÔNG THÌ...). Khi viết lại bằng If, bắt buộc vế If phải mang nghĩa phủ định: <b>If you DON'T + V...</b></p>`
+  },
+  {
+    type: "fill",
+    q: "5. People who live in a cold country don't like hot weather. (won't)",
+    starter: "If you live",
+    ans: "in a cold country, you won't like hot weather",
+    exp: `<div class="trans-box">Dịch: Những người sống ở xứ lạnh thì không thích thời tiết nóng.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you live in a cold country, you won't like hot weather.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Biến đổi từ câu miêu tả chung thành câu điều kiện khuyên bảo áp dụng cho người nghe ("you"). Ở mệnh đề chính dùng dự đoán <b>won't like</b>.</p>`
+  },
+  {
+    type: "fill",
+    q: "6. Unless you want to get sick, you should eat more healthily. (should)",
+    starter: "If you don't",
+    ans: "want to get sick, you should eat more healthily",
+    exp: `<div class="trans-box">Dịch: Trừ khi bạn muốn bị ốm, (nếu không) bạn nên ăn uống lành mạnh hơn.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you don't want to get sick, you should eat more healthily.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Công thức chuyển đổi bất di bất dịch: <b>Unless = If ... not</b>. Do đó "Unless you want" sẽ biến thành "If you don't want".</p>`
+  },
+  {
+    type: "fill",
+    q: "7. Don't touch the hot stove or you will burn yourself. (will)",
+    starter: "If you touch",
+    ans: "the hot stove, you will burn yourself",
+    exp: `<div class="trans-box">Dịch: Đừng chạm vào cái bếp đang nóng, nếu không bạn sẽ bị bỏng đấy.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you touch the hot stove, you will burn yourself.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Cấu trúc dùng <b>OR</b> (nếu không thì) nhưng câu gốc lại là câu Mệnh lệnh Phủ định (Don't touch). Viết lại với If, ta dịch ngược logic lại: "Nếu bạn CHẠM (khẳng định), bạn sẽ bị bỏng".</p>`
+  },
+  {
+    type: "fill",
+    q: "8. Save money now and you can reward yourself with a long vacation at the end of the year. (can)",
+    starter: "If you save",
+    ans: "money now, you can reward yourself with a long vacation at the end of the year",
+    exp: `<div class="trans-box">Dịch: Hãy tiết kiệm tiền ngay bây giờ VÀ bạn có thể tự thưởng cho bản thân một kỳ nghỉ dài vào cuối năm.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you save money now, you can reward yourself with a long vacation at the end of the year.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Cấu trúc <b>Mệnh lệnh + AND...</b> -> Viết lại bằng mệnh đề If khẳng định.</p>`
+  },
+  {
+    type: "fill",
+    q: "9. Stop telling lies or no one will trust you anymore. (will)",
+    starter: "If you don't",
+    ans: "stop telling lies, no one will trust you anymore",
+    exp: `<div class="trans-box">Dịch: Hãy ngừng nói dối HOẶC (nếu không thì) sẽ không ai tin bạn nữa đâu.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you don't stop telling lies, no one will trust you anymore.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Cấu trúc <b>Mệnh lệnh khẳng định + OR...</b> -> Viết lại với vế If phải là PHỦ ĐỊNH (giống câu số 4).</p>`
+  },
+  {
+    type: "fill",
+    q: "10. Go to bed early or you will be exhausted the next morning. (will)",
+    starter: "If you don't",
+    ans: "go to bed early, you will be exhausted the next morning",
+    exp: `<div class="trans-box">Dịch: Hãy đi ngủ sớm HOẶC bạn sẽ bị kiệt sức vào sáng hôm sau.</div>
+    <p>1. <span class="hl-green">Đáp án chuẩn:</span> If you don't go to bed early, you will be exhausted the next morning.</p>
+    <p>2. <span class="p-grammar">Giải thích cấu trúc:</span> Giống câu 9, <b>Mệnh lệnh khẳng định + OR</b> -> <b>If you don't + V...</b> Từ vựng: <span class="p-word">exhausted</span> (adj) = very tired (cực kỳ mệt mỏi).</p>`
+  }
+];
+
+/* ══ 3. CORE LOGIC RENDER & GAMIFICATION ══ */
+const contentBody = document.getElementById("contentBody");
+let totalScore = 0;
+let answeredQuestions = 0;
+let totalQs = 0;
+
+function renderQuiz() {
+  contentBody.innerHTML = "";
+  totalQs = quizData.filter(item => item.q).length;
+  let qNumber = 1;
+
+  quizData.forEach((item, index) => {
+    if (item.section) {
+      contentBody.innerHTML += `
+        <div class="sec-hdr">
+          <span class="sec-icon" style="font-size:1.8rem">📖</span>
+          <div class="sec-body">
+            <div class="sec-title">${item.section}</div>
+            <div class="sec-desc">Đọc kỹ yêu cầu và điền phần còn lại của câu vào ô trống. LƯU Ý: Không gõ lại phần chữ màu xanh đã gợi ý nhé!</div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    let cardHTML = `<div class="q-card" id="qcard-${index}">`;
+    cardHTML += `<div class="q-num">◈ CÂU HỎI ${qNumber}</div>`;
+    cardHTML += `<div class="q-text">${item.q}</div>`;
+    
+    // RENDER FILL-IN
+    cardHTML += `
+      <div class="fill-wrap">
+        <div class="starter-txt">${item.starter} <span style="color:var(--text);font-size:0.95rem;font-weight:normal;font-style:italic;">(gõ tiếp đáp án, không gõ lại các chữ màu xanh này nhé)</span></div>
+        <input type="text" class="fill-input" id="fill-${index}" placeholder="Gõ phần còn lại của câu vào đây..." onkeyup="if(event.key === 'Enter') checkFill(${index})">
+        <button class="fill-btn" onclick="checkFill(${index})">KIỂM TRA 🚀</button>
+      </div>
+    `;
+
+    // Khu vực hiển thị giải thích (ẩn ban đầu)
+    cardHTML += `<div class="exp-box" id="exp-${index}">${item.exp}</div>`;
+    cardHTML += `</div>`;
+    
+    contentBody.innerHTML += cardHTML;
+    qNumber++;
+  });
+}
+
+function showExplanation(index) {
+  const expBox = document.getElementById(`exp-${index}`);
+  expBox.classList.add("active");
+}
+
+function checkFill(index) {
+  const inputElem = document.getElementById(`fill-${index}`);
+  const btnElem = inputElem.nextElementSibling;
+  
+  if(inputElem.disabled) return; 
+
+  // Chuẩn hóa dữ liệu: Xóa bỏ mọi dấu phẩy, chấm, hỏi chấm, nháy đơn, nháy kép và khoảng trắng dư
+  let rawAns = inputElem.value;
+  let cleanRegex = /[.,'?!-]/g;
+  let userAns = rawAns.trim().toLowerCase().replace(cleanRegex, "").replace(/\s+/g, ' '); 
+  let correctAns = quizData[index].ans.trim().toLowerCase().replace(cleanRegex, "").replace(/\s+/g, ' ');
+
+  // Trường hợp HS lỡ gõ lại cả phần starter (VD: "If you're a teacher")
+  let lowerStarter = quizData[index].starter.trim().toLowerCase().replace(cleanRegex, "").replace(/\s+/g, ' ');
+  if (userAns.startsWith(lowerStarter)) {
+     userAns = userAns.substring(lowerStarter.length).trim();
+  }
+
+  inputElem.disabled = true;
+  btnElem.disabled = true;
+  btnElem.style.opacity = "0.5";
+
+  if (userAns === correctAns) {
+    inputElem.classList.add("correct");
+    playOk(); confetti();
+    totalScore++;
+  } else {
+    inputElem.classList.add("wrong");
+    // Hiện cho HS xem đáp án gốc full có đầy đủ dấu
+    inputElem.value = `${rawAns} ❌ (Chuẩn: ${quizData[index].ans})`;
+    playNo();
+  }
+
+  showExplanation(index);
+  answeredQuestions++;
+}
+
+/* ══ 4. MODAL KẾT QUẢ & QUY ĐỔI ĐIỂM ══ */
+function openNameModal() {
+  if (answeredQuestions < totalQs) {
+    if(!confirm(`Con mới làm ${answeredQuestions}/${totalQs} câu. Con có chắc chắn muốn nộp bài sớm không?`)) {
+      return;
+    }
+  }
+  document.getElementById("nameModal").classList.add("active");
+  document.getElementById("studentName").focus();
+}
+
+function showResult() {
+  const stuName = document.getElementById("studentName").value.trim();
+  if(!stuName) {
+    document.getElementById("nameError").style.display = "block";
+    return;
+  }
+  document.getElementById("nameError").style.display = "none";
+  document.getElementById("nameModal").classList.remove("active");
+
+  const pct = totalScore / totalQs;
+  const diemHe10 = (pct * 10).toFixed(1); 
+
+  let gifSrc, greeting, msg;
+  if (pct === 1) {
+    gifSrc = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; 
+    greeting = `🏆 XUẤT SẮC TUYỆT ĐỐI!`;
+    msg = `Trời ơi, <b>${stuName}</b> học giỏi quá vậy! Đúng không trật phát nào! Nhớ duy trì phong độ và chép bài cẩn thận nha con!`;
+  } else if (pct >= 0.6) {
+    gifSrc = "https://media.giphy.com/media/3o72FcJmLzIdYJiyQM/giphy.gif"; 
+    greeting = `🔥 KHÁ LẮM ${stuName.toUpperCase()}!`;
+    msg = `Kiến thức ngữ pháp của con khá vững vàng đấy. Tuy nhiên vẫn còn vài câu lừa bịp chưa vượt qua được. Đọc kỹ lại phần cô MS Chí Nên giải thích bên dưới nhé!`;
+  } else {
+    gifSrc = "https://media.giphy.com/media/2rtQMJvhzOnRe/giphy.gif"; 
+    greeting = `🥺 ÔI TRỜI ĐẤT ƠI ${stuName.toUpperCase()}...`;
+    msg = `Sai hơi nhiều rồi nha con yêu! Chắc là chưa nắm chắc cấu trúc ngữ pháp phải không? Nhất định phải mở phần giải thích ra đọc từng chữ và chép vào vở cho cô!`;
+  }
+
+  document.getElementById("resGreeting").innerHTML = greeting;
+  document.getElementById("resScoreTxt").innerText = `${totalScore}/${totalQs}`;
+  document.getElementById("resConvTxt").innerText = `(Quy đổi: ${diemHe10}/10 điểm)`;
+  document.getElementById("resMessage").innerHTML = msg;
+  document.getElementById("resGif").src = gifSrc;
+
+  document.getElementById("resultModal").classList.add("active");
+  if(pct >= 0.6) { confetti(); playOk(); } else { playNo(); }
+}
+
+/* ══ 5. CANVAS BẦU TRỜI SAO & CONFETTI ══ */
+(function(){
+  const sc = document.getElementById('star-canvas'), sctx = sc.getContext('2d');
+  let SW = sc.parentElement.offsetWidth, SH = sc.parentElement.offsetHeight;
+  sc.width = SW; sc.height = SH;
+  
+  const stars = [];
+  for(let i=0; i<150; i++) {
+    stars.push({ x: Math.random(), y: Math.random(), r: Math.random()*1.4 + 0.4, ph: Math.random()*Math.PI*2, sp: Math.random()*0.02 + 0.008 });
+  }
+  
+  function drawStars(){
+    sctx.clearRect(0,0,SW,SH);
+    stars.forEach(s => {
+      s.ph += s.sp;
+      const a = 0.3 + 0.7*Math.abs(Math.sin(s.ph));
+      sctx.fillStyle = `rgba(255,240,255,${a})`;
+      sctx.beginPath(); sctx.arc(s.x*SW, s.y*SH, s.r, 0, Math.PI*2); sctx.fill();
+    });
+    requestAnimationFrame(drawStars);
+  }
+  drawStars();
+
+  const gc = document.getElementById('grid-canvas'), gctx = gc.getContext('2d');
+  let GW, GH;
+  function rsG(){ GW = gc.width = innerWidth; GH = gc.height = Math.min(innerHeight * 0.42, 260); }
+  window.addEventListener('resize', rsG); rsG();
+  
+  let off = 0;
+  function drawGrid(){
+    gctx.clearRect(0,0,GW,GH);
+    off = (off + 0.5) % 60;
+    const vp = {x: GW/2, y: 0};
+    gctx.strokeStyle = 'rgba(255,0,255,0.35)'; gctx.lineWidth = 1;
+    for(let i=0; i<=10; i++){
+      const t = (i/10); const y = GH * t; const perspective = 1 - t * 0.85;
+      const x1 = vp.x - (GW*0.6) / perspective; const x2 = vp.x + (GW*0.6) / perspective;
+      gctx.globalAlpha = 0.1 + t*0.55;
+      gctx.beginPath(); gctx.moveTo(x1, y); gctx.lineTo(x2, y); gctx.stroke();
+    }
+    const numV = 12;
+    for(let i = -numV/2; i <= numV/2; i++){
+      gctx.globalAlpha = 0.25; 
+      gctx.beginPath(); gctx.moveTo(vp.x + (i/numV*2) * GW * 0.5, 0); gctx.lineTo(vp.x + (i/numV*2) * GW * 3, GH); gctx.stroke();
+    }
+    gctx.globalAlpha = 1; 
+    requestAnimationFrame(drawGrid);
+  } 
+  drawGrid();
+})();
+
+function confetti(){
+  const c = document.getElementById('cnf'), ctx = c.getContext('2d');
+  c.width = innerWidth; c.height = innerHeight;
+  const cols = ['#FF00FF','#00FFFF','#FFD60A','#FF006E','#39FF14','#FF6EC7'];
+  const ps = [];
+  
+  for(let i=0; i<65; i++){
+    ps.push({ x: Math.random() * c.width, y: -10, w: Math.random() * 8 + 3, h: Math.random() * 5 + 3, col: cols[Math.floor(Math.random() * cols.length)], r: Math.random() * Math.PI*2, dr: (Math.random() - .5) * .1, dx: Math.random() * 2 - 1, dy: Math.random() * 3 + 1.5, alpha: 1 });
+  }
+  
+  let fr = 0;
+  function loop(){
+    ctx.clearRect(0,0,c.width,c.height);
+    ps.forEach(p => {
+      ctx.save(); ctx.globalAlpha = p.alpha; ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.col; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h); ctx.restore();
+      p.x += p.dx; p.y += p.dy; p.r += p.dr; p.alpha -= .012;
+    });
+    fr++;
+    if(fr < 120) requestAnimationFrame(loop);
+    else ctx.clearRect(0,0,c.width,c.height);
+  }
+  loop();
+}
+
+window.onload = renderQuiz;
+</script>
+</body>
+</html>

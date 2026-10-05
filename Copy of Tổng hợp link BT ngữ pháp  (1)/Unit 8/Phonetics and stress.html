@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luyện Tập Phát Âm & Trọng Âm - Ms MS Chí Nên</title>
+    <!-- Font chữ Nunito cho phong cách thân thiện -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Thư viện Confetti (Pháo giấy) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #8854C0; /* Tím Pastel */
+            --secondary: #00C9A7; /* Xanh ngọc */
+            --background: #F0F4F8;
+            --card-bg: #FFFFFF;
+            --text-main: #2C3E50;
+            --correct: #00D26A; /* Xanh lá */
+            --wrong: #FF4757; /* Đỏ cam */
+            --hover-shadow: 0 8px 0 rgba(0,0,0,0.15);
+            --btn-shadow: 0 4px 0 rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #8EC5FC;
+            background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-bottom: 5px solid var(--primary);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin: 0;
+            font-weight: 800;
+            font-size: 2rem;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        /* Score Board */
+        .score-board {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border: 2px solid white;
+        }
+
+        /* Container */
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+            border: 2px solid #eee;
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .question-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .q-tag {
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+
+        u {
+            text-decoration: none;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 2px;
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Option Button */
+        .option-btn {
+            background: white;
+            border: 2px solid #ddd;
+            border-bottom: 5px solid #ddd;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.1s;
+            text-align: left;
+            position: relative;
+            color: #555;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .option-btn:active {
+            transform: translateY(3px);
+            border-bottom-width: 2px;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            background-color: #f9f9f9;
+            border-color: #ccc;
+        }
+
+        /* States */
+        .option-btn.correct {
+            background-color: var(--correct);
+            color: white;
+            border-color: #00A653;
+            border-bottom-color: #008E47;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong);
+            color: white;
+            border-color: #E63B49;
+            border-bottom-color: #C92D3A;
+            animation: shake 0.5s;
+        }
+
+        .disabled {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            margin-top: 20px;
+            background: #F0F4F8;
+            border-radius: 15px;
+            padding: 20px;
+            display: none; /* Hidden by default */
+            border-left: 5px solid var(--primary);
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .exp-title {
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .exp-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        .vocab-item {
+            display: block;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #ccc;
+        }
+        
+        .vocab-item strong {
+            color: var(--secondary);
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Footer */
+        .footer-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 40px auto;
+            padding: 15px;
+            background: var(--secondary);
+            color: white;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            border: none;
+            border-radius: 50px;
+            box-shadow: 0 6px 0 #009E82;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .footer-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #009E82;
+        }
+        
+        /* Modal Result */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideDown 0.5s;
+        }
+        
+        .result-score {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="score-board">
+        Điểm: <span id="current-score">0</span>/<span id="total-questions">20</span>
+    </div>
+
+    <header>
+        <h1>BÀI KIỂM TRA TIẾNG ANH</h1>
+        <div class="subtitle">Giáo viên: Ms. MS Chí Nên (ULIS)</div>
+        <div style="margin-top:10px; font-size: 0.9em; color: #888;">Phát âm & Trọng âm (20 câu)</div>
+    </header>
+
+    <div class="quiz-container" id="quiz-container">
+        <!-- Questions will be injected here by JavaScript -->
+    </div>
+
+    <button class="footer-btn" onclick="finishQuiz()">NỘP BÀI</button>
+
+    <!-- Result Modal -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <h2 style="color: var(--secondary)">KẾT QUẢ CỦA BẠN</h2>
+            <p>Bạn đã hoàn thành bài kiểm tra!</p>
+            <div class="result-score" id="final-score">0/20</div>
+            <p id="feedback-text" style="font-size: 1.2rem; font-weight: 600;">Xuất sắc!</p>
+            <button class="footer-btn" style="font-size: 1rem; padding: 10px 30px; margin-top: 20px;" onclick="closeModal()">Xem lại bài</button>
+        </div>
+    </div>
+
+    <script>
+        // DATA: Dữ liệu câu hỏi từ yêu cầu
+        const quizData = [
+            // PHONETICS (1-10)
+            {
+                id: 1,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["minor<u>i</u>ty", "m<u>i</u>ss", "b<u>i</u>ll", "conven<u>i</u>ence"],
+                correctIndex: 0,
+                explanation: {
+                    vocab: [
+                        "A. minority (n): thiểu số (/aɪ/)",
+                        "B. miss (v/n): bỏ lỡ, nhớ / cô (/ɪ/)",
+                        "C. bill (n): hóa đơn (/ɪ/)",
+                        "D. convenience (n): sự tiện lợi (/ɪ/)"
+                    ],
+                    detail: "'minority' có phần gạch chân phát âm là nguyên âm đôi <b>/aɪ/</b> (ai). Ba từ còn lại phát âm là âm ngắn <b>/ɪ/</b>."
+                }
+            },
+            {
+                id: 2,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["b<u>a</u>rgain", "m<u>a</u>rket", "l<u>a</u>rge", "r<u>a</u>nge"],
+                correctIndex: 3,
+                explanation: {
+                    vocab: [
+                        "A. bargain (n/v): món hời, mặc cả (/ɑː/)",
+                        "B. market (n): chợ (/ɑː/)",
+                        "C. large (adj): rộng lớn (/ɑː/)",
+                        "D. range (n): phạm vi (/eɪ/)"
+                    ],
+                    detail: "'range' có chữ 'a' phát âm là <b>/eɪ/</b>. Ba từ còn lại phát âm là <b>/ɑː/</b> (a dài)."
+                }
+            },
+            {
+                id: 3,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["ret<u>u</u>rn", "sched<u>u</u>le", "red<u>u</u>ce", "introd<u>u</u>ce"],
+                correctIndex: 0,
+                explanation: {
+                    vocab: [
+                        "A. return (v/n): trở về (/ɜː/)",
+                        "B. schedule (n): lịch trình (/uː/)",
+                        "C. reduce (v): giảm bớt (/uː/)",
+                        "D. introduce (v): giới thiệu (/uː/)"
+                    ],
+                    detail: "'return' có âm 'u' phát âm là <b>/ɜː/</b> (ơ dài). Ba từ còn lại phát âm là <b>/uː/</b> (u dài)."
+                }
+            },
+            {
+                id: 4,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["l<u>ou</u>d", "neighb<u>ou</u>r", "h<u>ou</u>r", "disc<u>ou</u>nt"],
+                correctIndex: 1,
+                explanation: {
+                    vocab: [
+                        "A. loud (adj): ồn ào (/aʊ/)",
+                        "B. neighbour (n): hàng xóm (/ə/)",
+                        "C. hour (n): giờ (/aʊ/)",
+                        "D. discount (n): giảm giá (/aʊ/)"
+                    ],
+                    detail: "'neighbour' là âm không nhấn trọng âm nên 'ou' đọc lướt thành <b>/ə/</b>. Các từ còn lại đọc rõ là <b>/aʊ/</b> (ao)."
+                }
+            },
+            {
+                id: 5,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["pri<u>c</u>e", "spi<u>c</u>y", "<u>c</u>entre", "fa<u>c</u>tory"],
+                correctIndex: 3,
+                explanation: {
+                    vocab: [
+                        "A. price (n): giá cả (/s/)",
+                        "B. spicy (adj): cay (/s/)",
+                        "C. centre (n): trung tâm (/s/)",
+                        "D. factory (n): nhà máy (/k/)"
+                    ],
+                    detail: "Quy tắc: Chữ 'c' đứng trước e, i, y thường đọc là <b>/s/</b>. Trong từ 'factory', chữ 'c' đứng trước phụ âm 't' nên đọc là <b>/k/</b>."
+                }
+            },
+            {
+                id: 6,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["<u>a</u>ccess", "<u>a</u>dvantage", "<u>a</u>ffect", "<u>a</u>ddicted"],
+                correctIndex: 0,
+                explanation: {
+                    vocab: [
+                        "A. access (v/n): truy cập (/æ/)",
+                        "B. advantage (n): lợi thế (/ə/)",
+                        "C. affect (v): ảnh hưởng (/ə/)",
+                        "D. addicted (adj): nghiện (/ə/)"
+                    ],
+                    detail: "'access' nhấn trọng âm 1 nên 'a' đọc là <b>/æ/</b> (e bẹt). Các từ còn lại nhấn âm 2 nên 'a' đầu đọc nhẹ thành <b>/ə/</b>."
+                }
+            },
+            {
+                id: 7,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["cr<u>e</u>dit", "<u>e</u>pisode", "<u>e</u>xpired", "c<u>e</u>ntre"],
+                correctIndex: 2,
+                explanation: {
+                    vocab: [
+                        "A. credit (n): tín dụng (/e/)",
+                        "B. episode (n): tập phim (/e/)",
+                        "C. expired (adj): hết hạn (/ɪ/)",
+                        "D. centre (n): trung tâm (/e/)"
+                    ],
+                    detail: "'expired' đọc là /ɪkˈspaɪəd/ nên chữ 'e' là âm <b>/ɪ/</b>. Các từ còn lại 'e' đọc là <b>/e/</b>."
+                }
+            },
+            {
+                id: 8,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["<u>w</u>ander", "ans<u>w</u>er", "<u>w</u>ell-lit", "<u>w</u>henever"],
+                correctIndex: 1,
+                explanation: {
+                    vocab: [
+                        "A. wander (v): đi lang thang (/w/)",
+                        "B. answer (v): trả lời (âm câm)",
+                        "C. well-lit (adj): đủ sáng (/w/)",
+                        "D. whenever (conj): bất cứ khi nào (/w/)"
+                    ],
+                    detail: "Trong từ 'answer', chữ 'w' là <b>âm câm</b> (không đọc). Các từ còn lại phát âm /w/ bình thường."
+                }
+            },
+            {
+                id: 9,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["shop<u>a</u>holic", "<u>a</u>dvertisement", "displ<u>a</u>y", "doll<u>a</u>r"],
+                correctIndex: 2,
+                explanation: {
+                    vocab: [
+                        "A. shopaholic (n): nghiện mua sắm (/ə/)",
+                        "B. advertisement (n): quảng cáo (/ə/)",
+                        "C. display (v): trưng bày (/eɪ/)",
+                        "D. dollar (n): đô la (/ə/)"
+                    ],
+                    detail: "'display' có âm 'ay' đọc là <b>/eɪ/</b>. Các chữ 'a' trong các từ còn lại đều ở vị trí không nhấn trọng âm nên đọc là <b>/ə/</b>."
+                }
+            },
+            {
+                id: 10,
+                type: "Phonetics",
+                question: "Chọn từ có phần gạch chân phát âm khác:",
+                words: ["sh<u>u</u>ttle", "g<u>u</u>est", "c<u>u</u>stomer", "p<u>u</u>ppy"],
+                correctIndex: 1,
+                explanation: {
+                    vocab: [
+                        "A. shuttle (n): xe trung chuyển (/ʌ/)",
+                        "B. guest (n): khách (âm câm)",
+                        "C. customer (n): khách hàng (/ʌ/)",
+                        "D. puppy (n): cún con (/ʌ/)"
+                    ],
+                    detail: "Trong từ 'guest', chữ 'u' đi với 'g' để giữ âm cứng cho 'e' và bản thân nó bị <b>câm</b>. Các từ còn lại 'u' đọc là <b>/ʌ/</b>."
+                }
+            },
+            // STRESS (11-20)
+            {
+                id: 11,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["reason", "attract", "market", "shopping"],
+                correctIndex: 1,
+                explanation: {
+                    vocab: [
+                        "A. reason (n): lý do (Âm 1)",
+                        "B. attract (v): thu hút (Âm 2)",
+                        "C. market (n): chợ (Âm 1)",
+                        "D. shopping (n): mua sắm (Âm 1)"
+                    ],
+                    detail: "'attract' là động từ 2 âm tiết thường nhấn âm 2. Các từ còn lại là danh từ 2 âm tiết nhấn âm 1."
+                }
+            },
+            {
+                id: 12,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["almost", "awesome", "product", "return"],
+                correctIndex: 3,
+                explanation: {
+                    vocab: [
+                        "A. almost (adv): hầu như (Âm 1)",
+                        "B. awesome (adj): tuyệt vời (Âm 1)",
+                        "C. product (n): sản phẩm (Âm 1)",
+                        "D. return (v/n): trở về (Âm 2)"
+                    ],
+                    detail: "'return' nhấn âm 2. Các từ còn lại nhấn âm 1."
+                }
+            },
+            {
+                id: 13,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["assistant", "yellowish", "condition", "attractive"],
+                correctIndex: 1,
+                explanation: {
+                    vocab: [
+                        "A. assistant (n): trợ lý (Âm 2)",
+                        "B. yellowish (adj): hơi vàng (Âm 1)",
+                        "C. condition (n): điều kiện (Âm 2)",
+                        "D. attractive (adj): hấp dẫn (Âm 2)"
+                    ],
+                    detail: "'yellowish' giữ trọng âm gốc của 'yellow' (âm 1), đuôi -ish không ảnh hưởng. Các từ còn lại nhấn âm 2 (lưu ý đuôi -ion nhấn trước nó)."
+                }
+            },
+            {
+                id: 14,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["backpack", "centre", "avoid", "reason"],
+                correctIndex: 2,
+                explanation: {
+                    vocab: [
+                        "A. backpack (n): ba lô (Âm 1)",
+                        "B. centre (n): trung tâm (Âm 1)",
+                        "C. avoid (v): tránh xa (Âm 2)",
+                        "D. reason (n): lý do (Âm 1)"
+                    ],
+                    detail: "'avoid' là động từ nhấn âm 2. Các từ còn lại là danh từ nhấn âm 1."
+                }
+            },
+            {
+                id: 15,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["decorate", "volunteer", "customer", "exercise"],
+                correctIndex: 1,
+                explanation: {
+                    vocab: [
+                        "A. decorate (v): trang trí (Âm 1)",
+                        "B. volunteer (n): tình nguyện viên (Âm 3)",
+                        "C. customer (n): khách hàng (Âm 1)",
+                        "D. exercise (n/v): bài tập (Âm 1)"
+                    ],
+                    detail: "Quy tắc: Đuôi <b>-eer</b> (trong volunteer) luôn nhận trọng âm. Các từ còn lại nhấn âm 1."
+                }
+            },
+            {
+                id: 16,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["become", "special", "open", "product"],
+                correctIndex: 0,
+                explanation: {
+                    vocab: [
+                        "A. become (v): trở thành (Âm 2)",
+                        "B. special (adj): đặc biệt (Âm 1)",
+                        "C. open (v/adj): mở (Âm 1)",
+                        "D. product (n): sản phẩm (Âm 1)"
+                    ],
+                    detail: "'become' là động từ nhấn âm 2. Các từ còn lại nhấn âm 1."
+                }
+            },
+            {
+                id: 17,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["voucher", "shuttle", "online", "usual"],
+                correctIndex: 2,
+                explanation: {
+                    vocab: [
+                        "A. voucher (n): phiếu giảm giá (Âm 1)",
+                        "B. shuttle (n): xe đưa đón (Âm 1)",
+                        "C. online (adj/adv): trực tuyến (Âm 2)",
+                        "D. usual (adj): thông thường (Âm 1)"
+                    ],
+                    detail: "'online' thường nhấn âm 2. Các từ còn lại nhấn âm 1."
+                }
+            },
+            {
+                id: 18,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["costume", "effect", "advice", "attack"],
+                correctIndex: 0,
+                explanation: {
+                    vocab: [
+                        "A. costume (n): trang phục (Âm 1)",
+                        "B. effect (n): hiệu ứng (Âm 2)",
+                        "C. advice (n): lời khuyên (Âm 2)",
+                        "D. attack (v/n): tấn công (Âm 2)"
+                    ],
+                    detail: "'costume' nhấn âm 1. Ba từ còn lại nhấn âm 2."
+                }
+            },
+            {
+                id: 19,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["pollution", "convenient", "affection", "factory"],
+                correctIndex: 3,
+                explanation: {
+                    vocab: [
+                        "A. pollution (n): ô nhiễm (Âm 2)",
+                        "B. convenient (adj): tiện lợi (Âm 2)",
+                        "C. affection (n): tình cảm (Âm 2)",
+                        "D. factory (n): nhà máy (Âm 1)"
+                    ],
+                    detail: "Các từ có đuôi -ion, -ient nhấn vào âm tiết ngay trước nó (Âm 2). 'factory' nhấn âm 1."
+                }
+            },
+            {
+                id: 20,
+                type: "Stress",
+                question: "Chọn từ có trọng âm chính khác:",
+                words: ["activity", "preparation", "enjoyable", "advantage"],
+                correctIndex: 1,
+                explanation: {
+                    vocab: [
+                        "A. activity (n): hoạt động (Âm 2)",
+                        "B. preparation (n): sự chuẩn bị (Âm 3)",
+                        "C. enjoyable (adj): thú vị (Âm 2)",
+                        "D. advantage (n): lợi thế (Âm 2)"
+                    ],
+                    detail: "'preparation' nhấn âm 3 do quy tắc đuôi -ion. Các từ còn lại nhấn âm 2."
+                }
+            }
+        ];
+
+        let score = 0;
+        let answeredCount = 0;
+        const totalQuestions = quizData.length;
+        document.getElementById('total-questions').innerText = totalQuestions;
+
+        // AUDIO ENGINE (Web Audio API - Không cần file ngoài)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                // Ding sound (High pitch sine wave fade out)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else {
+                // Wrong sound (Low pitch sawtooth slide down)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // RENDER QUIZ
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            
+            quizData.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `card-${index}`;
+                
+                // Header
+                const header = document.createElement('div');
+                header.className = 'question-header';
+                header.innerHTML = `
+                    <span class="q-tag">Question ${index + 1}</span>
+                    <span style="font-weight:bold; color:#888;">${item.type}</span>
+                `;
+                
+                // Text
+                const qText = document.createElement('div');
+                qText.className = 'question-text';
+                qText.innerHTML = item.question;
+                
+                // Options Grid
+                const grid = document.createElement('div');
+                grid.className = 'options-grid';
+                
+                const labels = ['A', 'B', 'C', 'D'];
+                
+                item.words.forEach((word, wIndex) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'option-btn';
+                    btn.innerHTML = `<b>${labels[wIndex]}.</b> ${word}`;
+                    btn.onclick = () => checkAnswer(index, wIndex, btn, item.correctIndex);
+                    grid.appendChild(btn);
+                });
+                
+                // Explanation Box (Hidden initially)
+                const expBox = document.createElement('div');
+                expBox.className = 'explanation-box';
+                expBox.id = `exp-${index}`;
+                
+                // Build Explanation Content
+                let vocabList = item.explanation.vocab.map(v => `<span class="vocab-item">${v}</span>`).join('');
+                
+                expBox.innerHTML = `
+                    <div class="exp-title">
+                        <span>👩‍🏫</span> Cô MS Chí Nên giải thích:
+                    </div>
+                    <div class="exp-content">
+                        <p style="margin-top:0"><b>Phân tích từ vựng:</b></p>
+                        ${vocabList}
+                        <p style="margin-bottom:0; color: var(--primary); margin-top: 10px;">
+                            <b>Tại sao chọn đáp án này?</b><br>
+                            ${item.explanation.detail}
+                        </p>
+                    </div>
+                `;
+
+                card.appendChild(header);
+                card.appendChild(qText);
+                card.appendChild(grid);
+                card.appendChild(expBox);
+                container.appendChild(card);
+            });
+        }
+
+        // CHECK ANSWER LOGIC
+        function checkAnswer(qIndex, selectedIndex, btnElement, correctIndex) {
+            const card = document.getElementById(`card-${qIndex}`);
+            const buttons = card.querySelectorAll('.option-btn');
+            
+            // Prevent re-clicking
+            if (card.classList.contains('answered')) return;
+            card.classList.add('answered');
+            answeredCount++;
+
+            // Disable all buttons
+            buttons.forEach(btn => btn.classList.add('disabled'));
+
+            const expBox = document.getElementById(`exp-${qIndex}`);
+            
+            if (selectedIndex === correctIndex) {
+                // CORRECT
+                btnElement.classList.add('correct');
+                playSound('correct');
+                score++;
+                document.getElementById('current-score').innerText = score;
+                
+                // Confetti Effect
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#00D26A', '#8854C0', '#F1C40F']
+                });
+            } else {
+                // WRONG
+                btnElement.classList.add('wrong');
+                buttons[correctIndex].classList.add('correct'); // Show correct one
+                playSound('wrong');
+            }
+
+            // Show Explanation immediately
+            expBox.style.display = 'block';
+        }
+
+        // FINISH QUIZ
+        function finishQuiz() {
+            const modal = document.getElementById('resultModal');
+            const finalScore = document.getElementById('final-score');
+            const feedback = document.getElementById('feedback-text');
+            
+            finalScore.innerText = `${score}/20`;
+            
+            const percentage = (score / 20) * 100;
+            if (percentage === 100) feedback.innerText = "Tuyệt đối! Em là thiên tài ngôn ngữ! 🌟";
+            else if (percentage >= 80) feedback.innerText = "Giỏi lắm! Chỉ còn một chút nữa thôi! 🔥";
+            else if (percentage >= 50) feedback.innerText = "Khá tốt, nhưng cần ôn thêm từ vựng nhé! 💪";
+            else feedback.innerText = "Đừng buồn, hãy xem kỹ lại phần giải thích nhé! 📚";
+            
+            modal.style.display = 'flex';
+            
+            if (percentage >= 50) {
+                confetti({
+                    particleCount: 200,
+                    spread: 100,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        // Initialize
+        renderQuiz();
+
+    </script>
+</body>
+</html>

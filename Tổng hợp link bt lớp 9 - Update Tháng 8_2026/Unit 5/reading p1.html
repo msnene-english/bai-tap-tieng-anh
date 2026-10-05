@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Practice - Ms MS Chí Nên</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* ================= CƠ BẢN & MÀU NỀN GRADIENT ================= */
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG PATTERN LƠ LỬNG */
+        .pattern-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            /* Emojis: 🏕️ (Camp), 🧭 (Compass), ✈️ (Plane), 🌏 (Earth) */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 100 100'%3E%3Ctext x='10' y='30' font-size='20' opacity='0.3'%3E🏕️%3C/text%3E%3Ctext x='60' y='80' font-size='25' opacity='0.3'%3E✈️%3C/text%3E%3Ctext x='80' y='20' font-size='15' opacity='0.3'%3E🧭%3C/text%3E%3Ctext x='20' y='90' font-size='20' opacity='0.3'%3E🌏%3C/text%3E%3C/svg%3E");
+            z-index: -1;
+        }
+
+        /* ================= HEADER & STICKY BANNERS ================= */
+        .header {
+            position: fixed;
+            top: 10px; right: 20px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .sticky-warning {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 235, 59, 0.9);
+            color: #b71c1c;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            text-align: center;
+            max-width: 600px;
+            border: 2px solid #ffd600;
+            animation: pulseWarning 2s infinite;
+        }
+
+        @keyframes pulseWarning {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.02); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* ================= BỐ CỤC SPLIT SCREEN & GLASSMORPHISM ================= */
+        .layout-container {
+            display: flex;
+            height: 100vh;
+            padding: 80px 20px 20px 20px;
+            gap: 20px;
+        }
+
+        .left-pane, .right-pane {
+            width: 50%;
+            height: 100%;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        /* Tùy chỉnh thanh cuộn (Scrollbar) */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.6); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.9); }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* ================= VĂN BẢN & NÚT BẤM ================= */
+        .reading-text { font-size: 1.15rem; line-height: 1.8; color: #1a1a1a; margin-bottom: 15px; font-weight: 600;}
+        .trans-text { font-size: 1.05rem; line-height: 1.6; color: #0056b3; font-style: italic; display: none; margin-bottom: 15px; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 10px;}
+        
+        .btn-translate {
+            background: linear-gradient(135deg, #6dd5ed, #2193b0);
+            color: white; border: none; padding: 8px 15px; border-radius: 15px;
+            font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(33, 147, 176, 0.3);
+        }
+        .btn-translate:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(33, 147, 176, 0.5); }
+
+        /* Glossary Table */
+        .glossary-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: rgba(255,255,255,0.6); border-radius: 15px; overflow: hidden;}
+        .glossary-table th, .glossary-table td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .glossary-table th { background: rgba(100, 150, 255, 0.3); font-weight: 900; color: #2c3e50;}
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        /* QUIZ ELEMENTS */
+        .question-title { font-size: 1.25rem; font-weight: 800; color: #2c3e50; margin-bottom: 15px; }
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        
+        .option-btn {
+            background: white; border: 2px solid #e0e0e0; padding: 15px;
+            border-radius: 15px; font-size: 1.1rem; font-weight: 700; color: #424242;
+            cursor: pointer; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            text-align: left; white-space: normal; /* Không dùng dấu 3 chấm */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .option-btn:hover:not(:disabled) { border-color: #a1c4fd; background: #f0f4ff; transform: translateY(-2px); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+        
+        /* Hiệu ứng Đúng/Sai */
+        .option-btn.correct { background: #4caf50; border-color: #388e3c; color: white; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4); }
+        .option-btn.wrong { background: #f44336; border-color: #d32f2f; color: white; animation: shake 0.4s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+        }
+
+        /* Lời giải chi tiết (Tuân thủ luật HTML) */
+        .explanation-box {
+            margin-top: 15px; padding: 15px; border-radius: 15px;
+            background: rgba(255,255,255,0.85); display: none; font-size: 1.05rem; line-height: 1.7;
+            border-left: 5px solid #2196F3;
+        }
+
+        .p-word { font-weight: 900; color: #1976D2; background: rgba(25, 118, 210, 0.1); padding: 2px 6px; border-radius: 5px;}
+        .p-phonetic { font-style: italic; color: #7f8c8d; }
+        .p-mean { font-weight: bold; color: #E65100; }
+        .p-grammar { font-weight: bold; color: #8E24AA; background: rgba(142, 36, 170, 0.1); padding: 2px 6px; border-radius: 5px;}
+        .hl-green { font-weight: bold; color: #2E7D32; }
+        .hl-red { font-weight: bold; color: #C62828; }
+
+        /* Submit Button */
+        .btn-submit {
+            display: block; width: 100%; padding: 18px; margin-top: 30px; margin-bottom: 50px;
+            background: linear-gradient(135deg, #f12711, #f5af19);
+            color: white; font-size: 1.4rem; font-weight: 900; border: none;
+            border-radius: 20px; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 8px 20px rgba(241, 39, 17, 0.4); text-transform: uppercase;
+        }
+        .btn-submit:hover { transform: scale(1.02); box-shadow: 0 12px 25px rgba(241, 39, 17, 0.6); }
+
+        /* Overlay Bắt đầu */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .btn-start {
+            background: #ff4081; color: white; border: none; padding: 20px 40px;
+            font-size: 2rem; font-weight: 900; border-radius: 30px; cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 64, 129, 0.8); animation: pulseBtn 1.5s infinite;
+        }
+        @keyframes pulseBtn { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* Modal Kết quả */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 25px; text-align: center;
+            width: 90%; max-width: 500px; box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        .modal input { width: 100%; padding: 15px; font-size: 1.2rem; border: 2px solid #ddd; border-radius: 12px; margin: 20px 0; outline: none;}
+        .modal input:focus { border-color: #6dd5ed; }
+        .score-text { font-size: 3rem; font-weight: 900; color: #ff4081; margin: 15px 0;}
+        .score-scale { font-size: 1.5rem; font-weight: bold; color: #2E7D32; margin-bottom: 15px; }
+        .meme-gif { max-width: 100%; border-radius: 15px; margin: 15px 0; }
+        
+    </style>
+</head>
+<body>
+    <div class="pattern-overlay"></div>
+
+    <audio id="audio-intro" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/mission_impossible.mp3"></audio>
+    <audio id="audio-wrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/oi-ban-oi.mp3"></audio>
+    
+    <div id="start-overlay">
+        <h1 style="color: white; margin-bottom: 20px; font-size: 2.5rem; text-align: center;">SẴN SÀNG CHINH PHỤC BÀI ĐỌC CHƯA?</h1>
+        <button class="btn-start" onclick="startApp()">BẮT ĐẦU NGAY 🚀</button>
+    </div>
+
+    <div class="sticky-warning">
+        ⚠️ LƯU Ý TỪ CÔ MS Chí Nên: Các con tự giác tra cứu từ mới bằng Google/Từ điển để hiểu rõ từng câu. LÀM ĐẾN ĐÂU XEM GIẢI THÍCH ĐẾN ĐÓ! Ghi chép lại từ/cấu trúc mới vào vở để học, tuyệt đối không chọn bừa cho xong!
+    </div>
+
+    <div class="header">Giáo viên tạo: Ms MS Chí Nên</div>
+
+    <div class="layout-container">
+        <div class="left-pane" id="left-pane">
+            <div class="glass-card">
+                <h2 style="color: #ff4081; font-weight: 900; margin-bottom: 20px;">PART I. SUMMER CAMP ADVERTISEMENT</h2>
+                
+                <div class="paragraph-box">
+                    <p class="reading-text">The Teen Adventure Program is a unique and challenging (1)_______ for campers 14 to 16 years of age. Teens participate in a variety of outdoor activities while (2)_______ the beauty of the region and making new friends from around the globe. The Camp California staff, along with the reliable activity specialists, make Teen Adventure the adventure of a lifetime, filled with fun and (3)_______ activities like kayaking, rock climbing, mountain biking, hiking, (4)_______, caving, sailing, and much, much more.</p>
+                    <p class="trans-text">Chương trình Thám hiểm dành cho Thanh thiếu niên là một trải nghiệm độc đáo và đầy thử thách dành cho các trại viên từ 14 đến 16 tuổi. Các thanh thiếu niên tham gia vào nhiều hoạt động ngoài trời khác nhau trong khi khám phá vẻ đẹp của khu vực và kết bạn mới từ khắp nơi trên thế giới. Nhân viên của Trại California, cùng với các chuyên gia hoạt động đáng tin cậy, biến Chương trình Thám hiểm dành cho Thanh thiếu niên thành chuyến phiêu lưu có một không hai trong đời, tràn ngập niềm vui và các hoạt động thú vị như chèo thuyền kayak, leo núi, đạp xe leo núi, đi bộ đường dài, lặn với ống thở, khám phá hang động, chèo thuyền và nhiều, rất nhiều hoạt động khác nữa.</p>
+                    <button class="btn-translate" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                </div>
+
+                <div class="paragraph-box">
+                    <p class="reading-text">The first couple days of Teen Adventure Program give campers the opportunity to get to know each other and their counselors through a variety of (5)_______ challenges. Once on the road, teams of campers and counselors visit a variety of tourist destinations and adventure areas. Teens assist staff with preparing their own meals, as well as (6)_______ and taking down the camp sites each day. Evenings are time to relax around a campfire after the day’s adventure, sing songs, play games, or visit some of the region’s most (7)_______ towns and villages. (8)_______ varies from tents to cabins or dorms, depending on the location and weather.</p>
+                    <p class="trans-text">Vài ngày đầu tiên của Chương trình Thám hiểm Thanh thiếu niên mang đến cho các trại viên cơ hội làm quen với nhau và với các cố vấn của họ thông qua nhiều thử thách xây dựng tinh thần đồng đội. Khi lên đường, các đội trại viên và cố vấn sẽ đến thăm nhiều điểm du lịch và khu vực thám hiểm. Thanh thiếu niên hỗ trợ nhân viên chuẩn bị bữa ăn của riêng họ, cũng như dựng và dọn dẹp khu cắm trại mỗi ngày. Buổi tối là thời gian để thư giãn quanh lửa trại sau chuyến phiêu lưu ban ngày, hát những bài hát, chơi trò chơi hoặc đến thăm một số thị trấn và ngôi làng xinh đẹp nhất trong vùng. Chỗ ở thay đổi từ lều đến cabin hoặc ký túc xá, tùy thuộc vào địa điểm và thời tiết.</p>
+                    <button class="btn-translate" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                </div>
+
+                <h3 style="margin-top: 20px; color: #8E24AA;">📚 Glossary (Từ vựng học thuật)</h3>
+                <table class="glossary-table">
+                    <tr><th>Word</th><th>Part of Speech</th><th>Meaning</th></tr>
+                    <tr><td>unique</td><td>adj</td><td>độc nhất, đặc biệt</td></tr>
+                    <tr><td>challenging</td><td>adj</td><td>đầy thử thách</td></tr>
+                    <tr><td>participate (in)</td><td>v</td><td>tham gia vào</td></tr>
+                    <tr><td>globe</td><td>n</td><td>toàn cầu, thế giới</td></tr>
+                    <tr><td>reliable</td><td>adj</td><td>đáng tin cậy</td></tr>
+                    <tr><td>specialist</td><td>n</td><td>chuyên gia</td></tr>
+                    <tr><td>opportunity</td><td>n</td><td>cơ hội</td></tr>
+                    <tr><td>counselor</td><td>n</td><td>cố vấn, hướng dẫn viên</td></tr>
+                    <tr><td>destination</td><td>n</td><td>điểm đến</td></tr>
+                    <tr><td>dorm (dormitory)</td><td>n</td><td>ký túc xá, phòng ngủ tập thể</td></tr>
+                </table>
+            </div>
+
+            <div class="glass-card">
+                <h2 style="color: #ff4081; font-weight: 900; margin-bottom: 20px;">PART II. TRAVEL MISHAPS</h2>
+                
+                <div class="paragraph-box">
+                    <p class="reading-text">I’ve had my fair share of travel mishaps throughout the years, but my worst travel experience happened during my first solo trip outside of the European Union. My trip to Turkey was amazing, but then things went wrong hours before I was supposed to fly back home.</p>
+                    <p class="trans-text">Tôi đã từng gặp khá nhiều rủi ro khi đi du lịch trong suốt những năm qua, nhưng trải nghiệm du lịch tồi tệ nhất của tôi xảy ra trong chuyến đi một mình đầu tiên bên ngoài Liên minh Châu Âu. Chuyến đi của tôi đến Thổ Nhĩ Kỳ rất tuyệt vời, nhưng sau đó mọi thứ đã diễn ra tồi tệ vài giờ trước khi tôi dự định bay về nhà.</p>
+                    <button class="btn-translate" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                </div>
+
+                <div class="paragraph-box">
+                    <p class="reading-text">After packing my suitcase during the night and just before heading down to the lobby to catch the airport shuttle, I decided to lie on the soft bed one last time. And, of course, I fell asleep. I woke up three hours later and instantly panicked. There was no way I would make it to the airport on time to catch my flight, and I felt helpless. I was terrified of being stuck in Turkey and had no idea what to do.</p>
+                    <p class="trans-text">Sau khi đóng gói vali vào ban đêm và ngay trước khi xuống sảnh để bắt xe đưa đón sân bay, tôi quyết định nằm trên chiếc giường êm ái một lần cuối. Và, tất nhiên, tôi đã ngủ thiếp đi. Tôi thức dậy ba giờ sau đó và ngay lập tức hoảng sợ. Không có cách nào tôi có thể đến sân bay đúng giờ để bắt chuyến bay của mình, và tôi cảm thấy bất lực. Tôi vô cùng sợ hãi khi bị mắc kẹt ở Thổ Nhĩ Kỳ và không biết phải làm gì.</p>
+                    <button class="btn-translate" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                </div>
+
+                <div class="paragraph-box">
+                    <p class="reading-text">After calling my family back home, tears running, I eventually headed down to the lobby. And while the staff could not help me, a local approached me to ask what was wrong. The local proceeded to help me by calling the Turkish hotline of the airline for me. To my dismay, there was nothing they could do. But then the wonderful stranger looked up new flights back home for me.</p>
+                    <p class="trans-text">Sau khi gọi điện cho gia đình ở nhà, nước mắt chảy ròng, cuối cùng tôi cũng đi xuống sảnh. Và trong khi các nhân viên không thể giúp tôi, một người dân địa phương đã tiến lại gần để hỏi có chuyện gì. Người dân địa phương đó tiếp tục giúp tôi bằng cách gọi đến đường dây nóng của hãng hàng không tại Thổ Nhĩ Kỳ giúp tôi. Trước sự thất vọng của tôi, họ không thể làm gì được. Nhưng sau đó, người lạ tuyệt vời này đã tìm kiếm các chuyến bay mới để tôi về nhà.</p>
+                    <button class="btn-translate" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                </div>
+
+                <div class="paragraph-box">
+                    <p class="reading-text">Thanks to the kindness of this stranger, I managed to make it home that very day. And it made me realize that you are never truly alone, even if you are solo traveling. After all, there are amazing people everywhere that are happy to help when you find yourself in a bad situation while traveling.</p>
+                    <p class="trans-text">Nhờ lòng tốt của người lạ này, tôi đã xoay sở để về nhà ngay trong ngày hôm đó. Và điều đó khiến tôi nhận ra rằng bạn không bao giờ thực sự đơn độc, ngay cả khi bạn đang đi du lịch một mình. Rốt cuộc, có những người tuyệt vời ở khắp mọi nơi luôn sẵn lòng giúp đỡ khi bạn thấy mình rơi vào tình huống tồi tệ trong lúc đi du lịch.</p>
+                    <button class="btn-translate" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                </div>
+
+                <h3 style="margin-top: 20px; color: #8E24AA;">📚 Glossary (Từ vựng học thuật)</h3>
+                <table class="glossary-table">
+                    <tr><th>Word</th><th>Part of Speech</th><th>Meaning</th></tr>
+                    <tr><td>mishap</td><td>n</td><td>rủi ro, sự cố không may</td></tr>
+                    <tr><td>solo</td><td>adj/adv</td><td>một mình, đơn độc</td></tr>
+                    <tr><td>instantly</td><td>adv</td><td>ngay lập tức</td></tr>
+                    <tr><td>panic</td><td>v</td><td>hoảng loạn, hoảng sợ</td></tr>
+                    <tr><td>helpless</td><td>adj</td><td>bất lực, không tự lo được</td></tr>
+                    <tr><td>terrified</td><td>adj</td><td>vô cùng sợ hãi</td></tr>
+                    <tr><td>approach</td><td>v</td><td>tiến lại gần, tiếp cận</td></tr>
+                    <tr><td>proceed (to do sth)</td><td>v</td><td>tiếp tục (làm gì đó)</td></tr>
+                    <tr><td>dismay</td><td>n</td><td>sự mất tinh thần, sự thất vọng</td></tr>
+                    <tr><td>manage (to do sth)</td><td>v</td><td>xoay sở, thành công (làm việc khó)</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="right-pane" id="quiz-container">
+            </div>
+    </div>
+
+    <div id="result-modal" class="modal">
+        <div class="modal-content" id="modal-step-1">
+            <h2 style="color: #ff4081;">Hoàn thành xuất sắc! 🎉</h2>
+            <p style="font-weight: bold; margin-top: 10px;">Nhập tên của con để Cô MS Chí Nên lưu điểm nhé:</p>
+            <input type="text" id="student-name" placeholder="VD: Nguyễn Văn A...">
+            <button class="btn-translate" onclick="showFinalResult()" style="width: 100%; font-size: 1.2rem;">XEM ĐIỂM NGAY 🎯</button>
+        </div>
+        
+        <div class="modal-content" id="modal-step-2" style="display: none;">
+            <h2 id="final-name" style="color: #2196F3;"></h2>
+            <div class="score-text" id="final-score"></div>
+            <div class="score-scale" id="scale-score"></div>
+            <img id="meme-img" class="meme-gif" src="" alt="Meme">
+            <p id="teacher-note" style="font-weight: 800; font-size: 1.2rem; color: #E65100; margin-top: 15px;"></p>
+            <button class="btn-translate" onclick="location.reload()" style="margin-top: 20px;">Làm Lại Lần Nữa 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        /* ================= DỮ LIỆU CÂU HỎI & GIẢI THÍCH (100% NHƯ YÊU CẦU) ================= */
+        const quizData = [
+            // PART I (Biến đổi điền khuyết thành trắc nghiệm để Gamification)
+            {
+                id: 1, type: 'part1',
+                question: "Part I. Điền từ vào chỗ trống (1): The Teen Adventure Program is a unique and challenging ________ for campers 14 to 16 years of age.",
+                options: ["experience", "accommodation", "setting up", "exploring"],
+                correctAnswer: "experience",
+                explanation: `
+                    <b>Câu 1</b><br>
+                    <b>Đề bài:</b> Điền từ vào chỗ trống (1).<br>
+                    <b>Dịch đề bài:</b> Chương trình Thám hiểm là một ________ độc đáo và thử thách dành cho...<br>
+                    <b>Các đáp án:</b><br>
+                    * experience ➔ Dịch: <span class='p-mean'>trải nghiệm (n)</span><br>
+                    * accommodation ➔ Dịch: <span class='p-mean'>chỗ ở (n)</span><br>
+                    * setting up ➔ Dịch: <span class='p-mean'>việc thiết lập/dựng lên (v-ing/n)</span><br>
+                    * exploring ➔ Dịch: <span class='p-mean'>việc khám phá (v-ing/n)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>experience</b>. Ở đây ta cần một danh từ số ít đếm được đứng sau mạo từ <span class='p-grammar'>"a"</span> và tính từ <span class='p-word'>unique and challenging</span>. Về mặt ngữ nghĩa, chương trình cắm trại chính là một "trải nghiệm" độc đáo.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "accommodation" (chỗ ở) không hợp lý vì chương trình không phải là "chỗ ở". "setting up" và "exploring" không phù hợp về ngữ pháp và ngữ nghĩa để đóng vai trò danh từ chính miêu tả chương trình.
+                `
+            },
+            {
+                id: 2, type: 'part1',
+                question: "Part I. Điền từ vào chỗ trống (2): Teens participate in a variety of outdoor activities while ________ the beauty of the region...",
+                options: ["exploring", "snorkelling", "team-building", "beautiful"],
+                correctAnswer: "exploring",
+                explanation: `
+                    <b>Câu 2</b><br>
+                    <b>Đề bài:</b> Điền từ vào chỗ trống (2).<br>
+                    <b>Dịch đề bài:</b> Thanh thiếu niên tham gia các hoạt động trong khi ________ vẻ đẹp của khu vực...<br>
+                    <b>Các đáp án:</b><br>
+                    * exploring ➔ Dịch: <span class='p-mean'>khám phá (v-ing)</span><br>
+                    * snorkelling ➔ Dịch: <span class='p-mean'>lặn có ống thở (v-ing/n)</span><br>
+                    * team-building ➔ Dịch: <span class='p-mean'>xây dựng tinh thần đồng đội (n/adj)</span><br>
+                    * beautiful ➔ Dịch: <span class='p-mean'>xinh đẹp (adj)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>exploring</b>. Cấu trúc rút gọn mệnh đề trạng ngữ chỉ thời gian: <span class='p-grammar'>while + V-ing</span> (trong khi đang làm gì). Cụm từ <span class='p-word'>exploring the beauty</span> (khám phá vẻ đẹp) là một collocation hoàn hảo.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "beautiful" sai ngữ pháp (sau while không dùng trực tiếp tính từ ở đây mà thiếu to be). "snorkelling" và "team-building" không tạo thành cụm có nghĩa khi kết hợp với "the beauty of the region" (không thể "lặn vẻ đẹp" hay "xây dựng nhóm vẻ đẹp").
+                `
+            },
+            {
+                id: 3, type: 'part1',
+                question: "Part I. Điền từ vào chỗ trống (3): ...adventure of a lifetime, filled with fun and ________ activities like kayaking, rock climbing...",
+                options: ["exhilarating", "experience", "beautiful", "accommodation"],
+                correctAnswer: "exhilarating",
+                explanation: `
+                    <b>Câu 3</b><br>
+                    <b>Đề bài:</b> Điền từ vào chỗ trống (3).<br>
+                    <b>Dịch đề bài:</b> ...tràn ngập niềm vui và các hoạt động ________ như chèo thuyền kayak, leo núi...<br>
+                    <b>Các đáp án:</b><br>
+                    * exhilarating ➔ Dịch: <span class='p-mean'>làm vui vẻ, thú vị, đầy phấn khích (adj)</span><br>
+                    * experience ➔ Dịch: <span class='p-mean'>trải nghiệm (n)</span><br>
+                    * beautiful ➔ Dịch: <span class='p-mean'>xinh đẹp (adj)</span><br>
+                    * accommodation ➔ Dịch: <span class='p-mean'>chỗ ở (n)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>exhilarating</b>. Vị trí trống đứng trước danh từ <span class='p-word'>activities</span>, nên cần một tính từ để bổ nghĩa. "exhilarating" (đầy phấn khích) rất phù hợp để miêu tả các môn thể thao mạo hiểm như leo núi, chèo kayak.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "experience" và "accommodation" là danh từ, sai ngữ pháp. "beautiful" (xinh đẹp) thường miêu tả phong cảnh/người, không dùng để miêu tả các hoạt động mạo hiểm như "rock climbing".
+                `
+            },
+            {
+                id: 4, type: 'part1',
+                question: "Part I. Điền từ vào chỗ trống (4): ...activities like kayaking, rock climbing, mountain biking, hiking, ________, caving, sailing...",
+                options: ["snorkelling", "exploring", "setting up", "team-building"],
+                correctAnswer: "snorkelling",
+                explanation: `
+                    <b>Câu 4</b><br>
+                    <b>Đề bài:</b> Điền từ vào chỗ trống (4).<br>
+                    <b>Dịch đề bài:</b> ...những hoạt động như chèo thuyền kayak, leo núi, đạp xe, đi bộ đường dài, ________, khám phá hang động, chèo thuyền...<br>
+                    <b>Các đáp án:</b><br>
+                    * snorkelling ➔ Dịch: <span class='p-mean'>môn lặn có ống thở (n)</span><br>
+                    * exploring ➔ Dịch: <span class='p-mean'>khám phá (v-ing)</span><br>
+                    * setting up ➔ Dịch: <span class='p-mean'>thiết lập (v-ing)</span><br>
+                    * team-building ➔ Dịch: <span class='p-mean'>xây dựng đồng đội (n)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>snorkelling</b>. Câu đang liệt kê một loạt các môn thể thao/hoạt động ngoài trời (danh từ/V-ing chỉ môn thể thao). Do đó, cần điền tên một hoạt động tương tự.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "exploring" và "setting up" là động từ thêm đuôi -ing, không phải là tên một môn thể thao cụ thể. "team-building" không cùng trường từ vựng với các môn thể thao mạo hiểm cá nhân được liệt kê xung quanh.
+                `
+            },
+            {
+                id: 5, type: 'part1',
+                question: "Part I. Điền từ vào chỗ trống (5): ...get to know each other and their counselors through a variety of ________ challenges.",
+                options: ["team-building", "beautiful", "exhilarating", "experience"],
+                correctAnswer: "team-building",
+                explanation: `
+                    <b>Câu 5</b><br>
+                    <b>Đề bài:</b> Điền từ vào chỗ trống (5).<br>
+                    <b>Dịch đề bài:</b> ...làm quen với nhau... thông qua nhiều thử thách ________.<br>
+                    <b>Các đáp án:</b><br>
+                    * team-building ➔ Dịch: <span class='p-mean'>xây dựng tinh thần đồng đội (adj/n ghép)</span><br>
+                    * beautiful ➔ Dịch: <span class='p-mean'>xinh đẹp (adj)</span><br>
+                    * exhilarating ➔ Dịch: <span class='p-mean'>phấn khích (adj)</span><br>
+                    * experience ➔ Dịch: <span class='p-mean'>trải nghiệm (n)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>team-building</b>. Ta cần một từ bổ nghĩa cho danh từ <span class='p-word'>challenges</span> (các thử thách). Mục đích của các thử thách này là để "làm quen với nhau" (<span class='p-word'>get to know each other</span>), nên cụm <span class='p-word'>team-building challenges</span> (thử thách xây dựng nhóm) là chính xác tuyệt đối.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "beautiful" (xinh đẹp) không hợp nghĩa với thử thách. "exhilarating" (phấn khích) có thể đúng ngữ pháp nhưng không thể hiện được mục đích "làm quen" như câu trước đề cập. "experience" sai ngữ pháp vì là danh từ độc lập.
+                `
+            },
+            {
+                id: 6, type: 'part1',
+                question: "Part I. Điền từ vào chỗ trống (6): Teens assist staff with preparing their own meals, as well as ________ and taking down the camp sites each day.",
+                options: ["setting up", "exploring", "snorkelling", "accommodation"],
+                correctAnswer: "setting up",
+                explanation: `
+                    <b>Câu 6</b><br>
+                    <b>Đề bài:</b> Điền từ vào chỗ trống (6).<br>
+                    <b>Dịch đề bài:</b> Thanh thiếu niên hỗ trợ... cũng như ________ và dọn dẹp khu cắm trại mỗi ngày.<br>
+                    <b>Các đáp án:</b><br>
+                    * setting up ➔ Dịch: <span class='p-mean'>việc dựng lên, thiết lập (v-ing)</span><br>
+                    * exploring ➔ Dịch: <span class='p-mean'>khám phá (v-ing)</span><br>
+                    * snorkelling ➔ Dịch: <span class='p-mean'>lặn ống thở (n/v-ing)</span><br>
+                    * accommodation ➔ Dịch: <span class='p-mean'>chỗ ở (n)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>setting up</b>. Cấu trúc song song liên kết bởi liên từ <span class='p-grammar'>and</span>: trước "and" phải cùng dạng với sau "and". Phía sau có <span class='p-word'>taking down</span> (dọn đi, tháo dỡ), nên phía trước cần cụm từ mang nghĩa đối lập và cùng dạng V-ing là <span class='p-word'>setting up</span> (dựng lên).<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "exploring" (khám phá) và "snorkelling" (lặn) không đi chung với tân ngữ "the camp sites" (khu cắm trại). "accommodation" là danh từ, sai cấu trúc song song với V-ing phía sau.
+                `
+            },
+            {
+                id: 7, type: 'part1',
+                question: "Part I. Điền từ vào chỗ trống (7): ...visit some of the region’s most ________ towns and villages.",
+                options: ["beautiful", "exhilarating", "experience", "team-building"],
+                correctAnswer: "beautiful",
+                explanation: `
+                    <b>Câu 7</b><br>
+                    <b>Đề bài:</b> Điền từ vào chỗ trống (7).<br>
+                    <b>Dịch đề bài:</b> ...đến thăm một số thị trấn và làng mạc ________ nhất trong vùng.<br>
+                    <b>Các đáp án:</b><br>
+                    * beautiful ➔ Dịch: <span class='p-mean'>xinh đẹp (adj)</span><br>
+                    * exhilarating ➔ Dịch: <span class='p-mean'>phấn khích (adj)</span><br>
+                    * experience ➔ Dịch: <span class='p-mean'>trải nghiệm (n)</span><br>
+                    * team-building ➔ Dịch: <span class='p-mean'>xây dựng nhóm (n)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>beautiful</b>. Vị trí trống đứng trước danh từ <span class='p-word'>towns and villages</span>, lại nằm trong cấu trúc so sánh nhất <span class='p-grammar'>the most + adj dài</span>. Do đó cần một tính từ. "beautiful" miêu tả cảnh quan thị trấn/làng mạc là hoàn toàn hợp lý.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "experience" và "team-building" là danh từ, sai ngữ pháp. "exhilarating" (phấn khích) thường dùng cho hoạt động, cảm giác chứ ít khi dùng để miêu tả một ngôi làng cố định.
+                `
+            },
+            {
+                id: 8, type: 'part1',
+                question: "Part I. Điền từ vào chỗ trống (8): ________ varies from tents to cabins or dorms, depending on the location and weather.",
+                options: ["Accommodation", "Experience", "Snorkelling", "Setting up"],
+                correctAnswer: "Accommodation",
+                explanation: `
+                    <b>Câu 8</b><br>
+                    <b>Đề bài:</b> Điền từ vào chỗ trống (8).<br>
+                    <b>Dịch đề bài:</b> ________ thay đổi từ lều đến cabin hoặc phòng ngủ tập thể, tùy thuộc vào địa điểm và thời tiết.<br>
+                    <b>Các đáp án:</b><br>
+                    * Accommodation ➔ Dịch: <span class='p-mean'>Chỗ ở (n)</span><br>
+                    * Experience ➔ Dịch: <span class='p-mean'>Trải nghiệm (n)</span><br>
+                    * Snorkelling ➔ Dịch: <span class='p-mean'>Lặn (n)</span><br>
+                    * Setting up ➔ Dịch: <span class='p-mean'>Việc thiết lập (n)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>Accommodation</b>. Vị trí cần một danh từ làm chủ ngữ. Phía sau liệt kê "tents" (lều), "cabins" (nhà gỗ nhỏ), "dorms" (phòng tập thể). Đây đều là các hình thức của "chỗ ở" (accommodation).<br>
+                    * <span class='hl-red'>Tại sao sai:</span> Lều hay phòng ngủ không phải là các dạng của "trải nghiệm", "môn lặn" hay "việc thiết lập".
+                `
+            },
+            // PART II
+            {
+                id: 9, type: 'part2',
+                question: "Part II. 1. The writer’s trip to Turkey was ________.",
+                options: [
+                    "unpleasant from the beginning",
+                    "her first solo trip outside of the EU",
+                    "a trip to her hometown",
+                    "the only bad travel experience she had"
+                ],
+                correctAnswer: "her first solo trip outside of the EU",
+                explanation: `
+                    <b>Câu 1</b><br>
+                    <b>Đề bài:</b> The writer’s trip to Turkey was ________.<br>
+                    <b>Dịch đề bài:</b> Chuyến đi của tác giả đến Thổ Nhĩ Kỳ là ________.<br>
+                    <b>Các đáp án:</b><br>
+                    * unpleasant from the beginning ➔ Dịch: <span class='p-mean'>không vui vẻ ngay từ đầu (adj phrase)</span><br>
+                    * her first solo trip outside of the EU ➔ Dịch: <span class='p-mean'>chuyến du lịch một mình đầu tiên của cô ấy bên ngoài Liên minh Châu Âu (noun phrase)</span><br>
+                    * a trip to her hometown ➔ Dịch: <span class='p-mean'>một chuyến đi về quê hương của cô ấy (noun phrase)</span><br>
+                    * the only bad travel experience she had ➔ Dịch: <span class='p-mean'>trải nghiệm du lịch tồi tệ duy nhất mà cô ấy có (noun phrase)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>her first solo trip outside of the EU</b>. Dựa vào câu đầu tiên đoạn 1: <span class='p-word'>"...my worst travel experience happened during my first solo trip outside of the European Union. My trip to Turkey was amazing..."</span>. Điều này xác nhận Thổ Nhĩ Kỳ chính là điểm đến của chuyến đi một mình đầu tiên này.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "unpleasant from the beginning" sai vì bài viết rõ <span class='p-word'>"My trip to Turkey was amazing..."</span> (lúc đầu rất tuyệt vời). "a trip to her hometown" sai vì cuối bài cô ấy phải <span class='p-word'>fly back home</span> (bay về nhà) nên Thổ Nhĩ Kỳ không phải là nhà. "the only bad travel experience" sai vì câu đầu tiên tác giả nói <span class='p-word'>"I’ve had my fair share of travel mishaps"</span> (đã gặp khá nhiều rủi ro rồi).
+                `
+            },
+            {
+                id: 10, type: 'part2',
+                question: "Part II. 2. What happened when the writer woke up from her sleep?",
+                options: [
+                    "She realised it was impossible to catch her flight on time.",
+                    "She packed her suitcase and waited for the airport shuttle.",
+                    "Her flight took off three hours ago.",
+                    "She got lost in Turkey so she got panicked."
+                ],
+                correctAnswer: "She realised it was impossible to catch her flight on time.",
+                explanation: `
+                    <b>Câu 2</b><br>
+                    <b>Đề bài:</b> What happened when the writer woke up from her sleep?<br>
+                    <b>Dịch đề bài:</b> Điều gì đã xảy ra khi tác giả thức dậy sau giấc ngủ?<br>
+                    <b>Các đáp án:</b><br>
+                    * She realised it was impossible to catch her flight on time. ➔ Dịch: <span class='p-mean'>Cô nhận ra rằng không thể nào bắt kịp chuyến bay đúng giờ. (clause)</span><br>
+                    * She packed her suitcase and waited for the airport shuttle. ➔ Dịch: <span class='p-mean'>Cô đóng gói vali và chờ xe đưa đón sân bay. (clause)</span><br>
+                    * Her flight took off three hours ago. ➔ Dịch: <span class='p-mean'>Chuyến bay của cô đã cất cánh ba giờ trước. (clause)</span><br>
+                    * She got lost in Turkey so she got panicked. ➔ Dịch: <span class='p-mean'>Cô bị lạc ở Thổ Nhĩ Kỳ nên cô hoảng loạn. (clause)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>She realised it was impossible to catch her flight on time.</b>. Dẫn chứng ở đoạn 2: <span class='p-word'>"I woke up three hours later... There was no way I would make it to the airport on time to catch my flight..."</span> (Không có cách nào tôi đến sân bay đúng giờ để bắt chuyến bay).<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "packed her suitcase..." sai vì cô ấy đã làm việc này *trước khi* ngủ. "Her flight took off three hours ago" sai, cô ấy ngủ quên 3 tiếng chứ không phải chuyến bay đã bay được 3 tiếng. "She got lost..." sai vì cô ấy hoảng loạn do trễ giờ, không phải do bị lạc.
+                `
+            },
+            {
+                id: 11, type: 'part2',
+                question: "Part II. 3. What did the hotel staff do to help the writer?",
+                options: [
+                    "They called to inform her family back home.",
+                    "They called the airline hotline for her.",
+                    "They couldn't do anything to help her.",
+                    "They approached and asked her what was wrong."
+                ],
+                correctAnswer: "They couldn't do anything to help her.",
+                explanation: `
+                    <b>Câu 3</b><br>
+                    <b>Đề bài:</b> What did the hotel staff do to help the writer?<br>
+                    <b>Dịch đề bài:</b> Nhân viên khách sạn đã làm gì để giúp tác giả?<br>
+                    <b>Các đáp án:</b><br>
+                    * They called to inform her family back home. ➔ Dịch: <span class='p-mean'>Họ gọi điện để báo cho gia đình cô ở nhà. (clause)</span><br>
+                    * They called the airline hotline for her. ➔ Dịch: <span class='p-mean'>Họ gọi vào đường dây nóng của hãng hàng không giúp cô. (clause)</span><br>
+                    * They couldn't do anything to help her. ➔ Dịch: <span class='p-mean'>Họ không thể làm gì để giúp cô ấy. (clause)</span><br>
+                    * They approached and asked her what was wrong. ➔ Dịch: <span class='p-mean'>Họ đến gần và hỏi cô có chuyện gì. (clause)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>They couldn't do anything to help her.</b>. Dẫn chứng ở đoạn 3: <span class='p-word'>"...while the staff could not help me, a local approached me..."</span> (trong khi nhân viên không thể giúp tôi...).<br>
+                    * <span class='hl-red'>Tại sao sai:</span> Việc gọi gia đình là do tác giả tự làm (<span class='p-word'>"After calling my family..."</span>). Việc gọi hotline hay tiếp cận hỏi thăm là do một người dân địa phương làm (<span class='p-word'>"a local approached... calling the Turkish hotline"</span>), không phải nhân viên khách sạn.
+                `
+            },
+            {
+                id: 12, type: 'part2',
+                question: "Part II. 4. The word “dismay” in paragraph 4 can be replaced by ________.",
+                options: [
+                    "happiness",
+                    "excitement",
+                    "embarrassment",
+                    "disappointment"
+                ],
+                correctAnswer: "disappointment",
+                explanation: `
+                    <b>Câu 4</b><br>
+                    <b>Đề bài:</b> The word “dismay” in paragraph 4 can be replaced by ________.<br>
+                    <b>Dịch đề bài:</b> Từ "dismay" trong đoạn 4 có thể được thay thế bằng ________.<br>
+                    <b>Các đáp án:</b><br>
+                    * happiness ➔ Dịch: <span class='p-mean'>sự hạnh phúc (n)</span><br>
+                    * excitement ➔ Dịch: <span class='p-mean'>sự phấn khích (n)</span><br>
+                    * embarrassment ➔ Dịch: <span class='p-mean'>sự bối rối, xấu hổ (n)</span><br>
+                    * disappointment ➔ Dịch: <span class='p-mean'>sự thất vọng (n)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>disappointment</b>. Trong bài viết: <span class='p-word'>"To my dismay, there was nothing they could do."</span> (Hãng hàng không không thể làm gì để giúp). Khi người ta không giúp được mình trong lúc khẩn cấp, cảm giác chắc chắn là thất vọng, buồn bã. Từ "dismay" có nghĩa là sự mất tinh thần/thất vọng.<br>
+                    * <span class='hl-red'>Tại sao sai:</span> Không thể là "happiness" (hạnh phúc) hay "excitement" (phấn khích) trong hoàn cảnh bi đát này. "embarrassment" (xấu hổ) cũng không phù hợp vì việc lỡ chuyến bay gây ra sự lo lắng, tuyệt vọng chứ không phải xấu hổ với người khác.
+                `
+            },
+            {
+                id: 13, type: 'part2',
+                question: "Part II. 5. How did the story end?",
+                options: [
+                    "A local helped her get another flight back home on the same day.",
+                    "There was nothing she could do and she got stuck in Turkey.",
+                    "She was not alone in Turkey so she didn’t feel worried.",
+                    "She called her family and waited for them in the lobby."
+                ],
+                correctAnswer: "A local helped her get another flight back home on the same day.",
+                explanation: `
+                    <b>Câu 5</b><br>
+                    <b>Đề bài:</b> How did the story end?<br>
+                    <b>Dịch đề bài:</b> Câu chuyện kết thúc như thế nào?<br>
+                    <b>Các đáp án:</b><br>
+                    * A local helped her get another flight back home on the same day. ➔ Dịch: <span class='p-mean'>Một người địa phương đã giúp cô có chuyến bay khác về nhà ngay trong ngày. (clause)</span><br>
+                    * There was nothing she could do and she got stuck in Turkey. ➔ Dịch: <span class='p-mean'>Cô không thể làm gì và bị mắc kẹt ở Thổ Nhĩ Kỳ. (clause)</span><br>
+                    * She was not alone in Turkey so she didn’t feel worried. ➔ Dịch: <span class='p-mean'>Cô không một mình ở Thổ Nhĩ Kỳ nên không cảm thấy lo lắng. (clause)</span><br>
+                    * She called her family and waited for them in the lobby. ➔ Dịch: <span class='p-mean'>Cô gọi gia đình và đợi họ ở sảnh. (clause)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>A local helped her get another flight back home on the same day.</b>. Dẫn chứng đoạn cuối: <span class='p-word'>"...the wonderful stranger looked up new flights back home... I managed to make it home that very day."</span> (Người lạ đã tìm chuyến bay mới... tôi đã về được nhà ngay ngày hôm đó).<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "got stuck in Turkey" sai vì cô ấy đã về được nhà. "was not alone... didn't feel worried" sai vì cô ấy đi "solo trip" (đi 1 mình) và thực sự đã rất lo lắng, khóc lóc. "waited for them in the lobby" sai vì gia đình không bay sang đón cô ấy.
+                `
+            },
+            {
+                id: 14, type: 'part2',
+                question: "Part II. 6. Which of the following statements is true?",
+                options: [
+                    "The writer was calm even though she couldn’t make it to the airport on time.",
+                    "The writer overslept and missed her flight home.",
+                    "Turkish airline cancelled the ticket and required her to buy a new one.",
+                    "She learned a lesson that she should never travel alone again."
+                ],
+                correctAnswer: "The writer overslept and missed her flight home.",
+                explanation: `
+                    <b>Câu 6</b><br>
+                    <b>Đề bài:</b> Which of the following statements is true?<br>
+                    <b>Dịch đề bài:</b> Câu nào dưới đây là ĐÚNG?<br>
+                    <b>Các đáp án:</b><br>
+                    * The writer was calm even though she couldn’t make it to the airport on time. ➔ Dịch: <span class='p-mean'>Tác giả vẫn bình tĩnh dù không kịp đến sân bay. (clause)</span><br>
+                    * The writer overslept and missed her flight home. ➔ Dịch: <span class='p-mean'>Tác giả ngủ quên và lỡ chuyến bay về nhà. (clause)</span><br>
+                    * Turkish airline cancelled the ticket and required her to buy a new one. ➔ Dịch: <span class='p-mean'>Hãng hàng không hủy vé và bắt mua vé mới. (clause)</span><br>
+                    * She learned a lesson that she should never travel alone again. ➔ Dịch: <span class='p-mean'>Cô học được bài học là không bao giờ đi du lịch một mình nữa. (clause)</span><br>
+                    <b>Giải thích chi tiết:</b><br>
+                    * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>The writer overslept and missed her flight home.</b>. Đây là nguyên nhân cốt lõi của câu chuyện: <span class='p-word'>"I fell asleep. I woke up three hours later... There was no way I would make it to the airport on time"</span> (Tôi ngủ thiếp đi... Không có cách nào đến kịp).<br>
+                    * <span class='hl-red'>Tại sao sai:</span> "was calm" sai vì cô ấy hoảng loạn (<span class='p-word'>instantly panicked</span>) và khóc (<span class='p-word'>tears running</span>). Hãng hàng không không "cancelled the ticket" (không tự hủy vé), mà do cô ấy trễ giờ nên họ không giúp được. "never travel alone again" sai hoàn toàn vì câu cuối chốt lại ý nghĩa tích cực: <span class='p-word'>"you are never truly alone... amazing people everywhere"</span> (bạn không hề đơn độc... luôn có người tốt giúp đỡ).
+                `
+            }
+        ];
+
+        /* ================= BIẾN TOÀN CỤC & HÀM TIỆN ÍCH ================= */
+        let currentScore = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = quizData.length;
+
+        // Shuffle Array
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Bắt đầu ứng dụng, phát âm thanh
+        function startApp() {
+            document.getElementById('start-overlay').style.display = 'none';
+            const introAudio = document.getElementById('audio-intro');
+            introAudio.volume = 0.5;
+            introAudio.play().catch(e => console.log("Trình duyệt chặn autoplay"));
+            renderQuiz();
+        }
+
+        // Ẩn/Hiện dịch
+        function toggleTrans(btn) {
+            const transText = btn.previousElementSibling;
+            if (transText.style.display === "block") {
+                transText.style.display = "none";
+                btn.innerHTML = "Mở dịch đoạn này 🌟";
+            } else {
+                transText.style.display = "block";
+                btn.innerHTML = "Đóng dịch 🙈";
+            }
+        }
+
+        // Web Audio API cho âm thanh "Ding" (Chính xác)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Note A5
+            osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
+            gain.gain.setValueAtTime(1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playWrong() {
+            const wrongAudio = document.getElementById('audio-wrong');
+            wrongAudio.currentTime = 0;
+            wrongAudio.play();
+        }
+
+        // Hiệu ứng pháo hoa
+        function triggerConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff']
+            });
+        }
+
+        /* ================= RENDER BÀI TẬP ================= */
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+
+            quizData.forEach((q, index) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'glass-card';
+                qDiv.id = `q-card-${index}`;
+
+                const title = document.createElement('div');
+                title.className = 'question-title';
+                title.innerHTML = q.question;
+
+                const grid = document.createElement('div');
+                grid.className = 'options-grid';
+
+                let shuffledOptions = shuffle([...q.options]);
+
+                shuffledOptions.forEach(optText => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.innerHTML = optText;
+                    btn.onclick = () => handleAnswer(btn, optText, q.correctAnswer, index, grid);
+                    grid.appendChild(btn);
+                });
+
+                const explDiv = document.createElement('div');
+                explDiv.className = 'explanation-box';
+                explDiv.id = `expl-${index}`;
+                explDiv.innerHTML = q.explanation;
+
+                qDiv.appendChild(title);
+                qDiv.appendChild(grid);
+                qDiv.appendChild(explDiv);
+                container.appendChild(qDiv);
+            });
+
+            // Nút Nộp Bài
+            const submitBtn = document.createElement('button');
+            submitBtn.className = 'btn-submit';
+            submitBtn.innerHTML = '🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ';
+            submitBtn.onclick = showNameModal;
+            container.appendChild(submitBtn);
+        }
+
+        /* ================= XỬ LÝ CHỌN ĐÁP ÁN ================= */
+        function handleAnswer(btn, selected, correct, qIndex, grid) {
+            // Vô hiệu hóa các nút khác
+            const buttons = grid.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true);
+            answeredQuestions++;
+
+            if (selected === correct) {
+                btn.classList.add('correct');
+                playDing();
+                triggerConfetti();
+                currentScore++;
+            } else {
+                btn.classList.add('wrong');
+                playWrong();
+                // Highlight đáp án đúng
+                buttons.forEach(b => {
+                    if (b.innerHTML === correct) {
+                        b.classList.add('correct');
+                        b.style.boxShadow = '0 0 15px #4caf50';
+                    }
+                });
+            }
+
+            // Hiện giải thích
+            document.getElementById(`expl-${qIndex}`).style.display = 'block';
+        }
+
+        /* ================= XỬ LÝ NỘP BÀI & KẾT QUẢ ================= */
+        function showNameModal() {
+            if (answeredQuestions < totalQuestions) {
+                alert(`Con mới làm ${answeredQuestions}/${totalQuestions} câu. Hãy làm hết trước khi nộp bài nhé!`);
+                return;
+            }
+            document.getElementById('result-modal').style.display = 'flex';
+        }
+
+        function showFinalResult() {
+            const name = document.getElementById('student-name').value.trim();
+            if (!name) {
+                alert("Con quên nhập tên rồi kìa!");
+                return;
+            }
+
+            // Tính điểm
+            const tenPointScale = ((currentScore / totalQuestions) * 10).toFixed(2);
+            const percentage = (currentScore / totalQuestions) * 100;
+
+            document.getElementById('modal-step-1').style.display = 'none';
+            document.getElementById('modal-step-2').style.display = 'block';
+
+            document.getElementById('final-name').innerText = `Học sinh: ${name}`;
+            document.getElementById('final-score').innerText = `${currentScore} / ${totalQuestions}`;
+            document.getElementById('scale-score').innerText = `Điểm quy đổi: ${tenPointScale} / 10`;
+
+            const img = document.getElementById('meme-img');
+            const note = document.getElementById('teacher-note');
+
+            if (percentage === 100) {
+                img.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; // Bá đạo
+                note.innerText = "Thiên tài xuất chúng! Cô MS Chí Nên tự hào về con! 💖";
+                triggerConfetti();
+            } else if (percentage >= 60) {
+                img.src = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; // High five
+                note.innerText = "Rất tốt! Con hãy đọc lại giải thích để đạt 100% nhé! 💪";
+            } else {
+                img.src = "https://media.giphy.com/media/2rtQMJvhzOnRe/giphy.gif"; // Khóc/Động viên
+                note.innerText = "Chưa tốt lắm! Con hãy ghi chú từ mới và làm lại nhé, cố lên! 🥺";
+            }
+        }
+    </script>
+</body>
+</html>

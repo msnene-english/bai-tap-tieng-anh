@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Form Mastery - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #00C9A7;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --bg-light: #F0F4F8;
+            --text-dark: #2D3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-light);
+            background-image: radial-gradient(#d1d8e0 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-weight: 900;
+            margin: 0;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 0px white;
+        }
+
+        .instructor {
+            font-size: 1rem;
+            color: #636e72;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 700px;
+            perspective: 1000px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.1);
+            border: 4px solid var(--primary);
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 15px;
+            background: #dfe6e9;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 2px solid #b2bec3;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--correct));
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 500px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+
+        .btn-option {
+            background: white;
+            border: 3px solid #dfe6e9;
+            border-radius: 18px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 0 #dfe6e9;
+            position: relative;
+            top: 0;
+        }
+
+        .btn-option:hover:not(:disabled) {
+            transform: scale(1.03);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-option:active:not(:disabled) {
+            top: 4px;
+            box-shadow: 0 2px 0 #dfe6e9;
+        }
+
+        .btn-option.correct {
+            background-color: var(--correct) !important;
+            border-color: #009432 !important;
+            color: white !important;
+            box-shadow: 0 6px 0 #006322 !important;
+        }
+
+        .btn-option.wrong {
+            background-color: var(--wrong) !important;
+            border-color: #b33939 !important;
+            color: white !important;
+            box-shadow: 0 6px 0 #822727 !important;
+        }
+
+        /* Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .shake { animation: shake 0.3s ease-in-out 2; }
+
+        .explanation-box {
+            margin-top: 25px;
+            padding: 20px;
+            background: #F9F7FF;
+            border-radius: 15px;
+            border-left: 8px solid var(--primary);
+            display: none;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .explanation-box h3 {
+            margin-top: 0;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .next-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            display: none;
+        }
+
+        .btn-next {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #00967d;
+            transition: all 0.2s;
+        }
+
+        .btn-next:hover { transform: scale(1.05); background: #00e0ba; }
+        .btn-next:active { transform: translateY(4px); box-shadow: 0 2px 0 #00967d; }
+
+        /* Result Popup */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            border: 6px solid var(--secondary);
+        }
+
+        .modal-content h2 { font-size: 2.5rem; color: var(--primary); margin-bottom: 10px; }
+        .score-large { font-size: 4rem; font-weight: 900; color: var(--secondary); margin: 20px 0; }
+        .feedback-text { font-size: 1.2rem; margin-bottom: 30px; font-weight: 700; }
+
+        .btn-restart {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #573280;
+        }
+
+        .vocabulary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+
+        .vocabulary-table th, .vocabulary-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .vocabulary-table th {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .highlight { font-weight: 700; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>WORD FORM MASTERY</h1>
+        <div class="instructor">Giáo viên tạo: Ms MS Chí Nên 🎓</div>
+    </div>
+
+    <div class="game-container">
+        <div class="stats">
+            <span id="question-counter">Câu hỏi: 1/31</span>
+            <span id="score-counter">Điểm: 0</span>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <div class="card" id="question-card">
+            <div id="game-ui">
+                <div class="question-text" id="question-text">Đang tải câu hỏi...</div>
+                
+                <div class="options-grid" id="options-grid">
+                    <!-- Options will be here -->
+                </div>
+
+                <div class="explanation-box" id="explanation-box">
+                    <h3><span id="exp-icon">💡</span> Giải thích từ Cô MS Chí Nên:</h3>
+                    <div id="explanation-content"></div>
+                </div>
+
+                <div class="next-container" id="next-container">
+                    <button class="btn-next" onclick="nextQuestion()">TIẾP THEO ➔</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Kết Quả -->
+    <div class="modal" id="result-modal">
+        <div class="modal-content">
+            <h2>HOÀN THÀNH!</h2>
+            <div class="score-large" id="final-score">0/31</div>
+            <div class="feedback-text" id="feedback-text">Tuyệt vời ông mặt trời!</div>
+            <button class="btn-restart" onclick="restartGame()">LÀM LẠI BÀI TEST</button>
+        </div>
+    </div>
+
+    <!-- Audio Elements (Using royalty free sounds) -->
+    <audio id="snd-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="snd-wrong" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+
+    <script>
+        const rawData = [
+    {
+      "question": "My teacher ________ announces that we will do the final examination next Monday. (RELIABLE)",
+      "options": ["reliably", "reliable", "rely", "reliability"],
+      "correctIndex": 0,
+      "analysis": [
+        "reliably (adv): một cách đáng tin cậy/chắc chắn.",
+        "reliable (adj): đáng tin cậy.",
+        "rely (v): tin cậy (thường đi với 'on').",
+        "reliability (n): sự đáng tin cậy."
+      ],
+      "translation": "Giáo viên của tôi thông báo một cách chắc chắn rằng chúng tôi sẽ làm bài thi cuối kỳ vào thứ Hai tới.",
+      "whyCorrect": "Cần một trạng từ (adv) đứng trước động từ 'announces' để bổ nghĩa cho hành động thông báo.",
+      "whyIncorrect": "Các từ khác không đúng chức năng ngữ pháp (tính từ, động từ, danh từ) để bổ nghĩa cho động từ thường."
+    },
+    {
+      "question": "During a traffic jam, all cars move very ________. (SLOW)",
+      "options": ["slowly", "slow", "slowness", "slower"],
+      "correctIndex": 0,
+      "analysis": [
+        "slowly (adv): một cách chậm chạp.",
+        "slow (adj): chậm.",
+        "slowness (n): sự chậm chạp.",
+        "slower (adj-so sánh): chậm hơn."
+      ],
+      "translation": "Trong lúc kẹt xe, tất cả ô tô di chuyển rất chậm.",
+      "whyCorrect": "Sau động từ thường 'move' và trạng từ chỉ mức độ 'very', ta cần một trạng từ chỉ cách thức.",
+      "whyIncorrect": "Tính từ (slow) không đứng sau động từ thường để chỉ cách thức hành động."
+    },
+    {
+      "question": "Lucas doesn't like snorkeling. He thinks it's ________. (DANGER)",
+      "options": ["dangerous", "danger", "dangerously", "endanger"],
+      "correctIndex": 0,
+      "analysis": [
+        "dangerous (adj): nguy hiểm.",
+        "danger (n): sự nguy hiểm.",
+        "dangerously (adv): một cách nguy hiểm.",
+        "endanger (v): gây nguy hiểm."
+      ],
+      "translation": "Lucas không thích lặn ống thở. Anh ấy nghĩ nó nguy hiểm.",
+      "whyCorrect": "Sau cấu trúc 'thinks it is' (to be), ta cần một tính từ để miêu tả đặc điểm của sự vật.",
+      "whyIncorrect": "Danh từ hay trạng từ không đứng sau 'is' để miêu tả trực tiếp tính chất của chủ ngữ 'it'."
+    },
+    {
+      "question": "There are plenty of ________ at the tourist attraction. (SIGHTSEE)",
+      "options": ["sightseers", "sightseeing", "sights", "sightseen"],
+      "correctIndex": 0,
+      "analysis": [
+        "sightseers (n-số nhiều): khách tham quan (người).",
+        "sightseeing (n/v-ing): việc tham quan ngắm cảnh.",
+        "sights (n): cảnh đẹp/tầm nhìn.",
+        "sightseen (không tồn tại dạng này)."
+      ],
+      "translation": "Có rất nhiều khách tham quan tại địa điểm du lịch.",
+      "whyCorrect": "Cụm 'plenty of' (nhiều) yêu cầu một danh từ số nhiều. Tại điểm du lịch thì người tham quan là phù hợp nhất.",
+      "whyIncorrect": "Sightseeing là việc ngắm cảnh, không phù hợp khi nói về số lượng đếm được ở một địa điểm."
+    },
+    {
+      "question": "When cycling on the roads, remember: ________ first. (safe)",
+      "options": ["safety", "safe", "safely", "save"],
+      "correctIndex": 0,
+      "analysis": [
+        "safety (n): sự an toàn.",
+        "safe (adj): an toàn.",
+        "safely (adv): một cách an toàn.",
+        "save (v): cứu/tiết kiệm."
+      ],
+      "translation": "Khi đạp xe trên đường, hãy nhớ: an toàn là trên hết.",
+      "whyCorrect": "'Safety first' là một thành ngữ/khẩu hiệu cố định, trong đó Safety đóng vai trò danh từ chủ ngữ.",
+      "whyIncorrect": "Tính từ 'safe' không đứng một mình làm tiêu đề khẩu hiệu như vậy được."
+    },
+    {
+        "question": "One of my son's favorite dishes is ________ rice. (FRY)",
+        "options": ["fried", "fry", "frying", "fries"],
+        "correctIndex": 0,
+        "analysis": [
+            "fried (adj/V-ed): đã được chiên/rang.",
+            "fry (v): chiên/rán.",
+            "frying (v-ing): đang chiên.",
+            "fries (n): khoai tây chiên."
+        ],
+        "translation": "Một trong những món ăn yêu thích của con trai tôi là cơm rang.",
+        "whyCorrect": "Ta dùng quá khứ phân từ 'fried' đóng vai trò như tính từ để chỉ trạng thái của sự vật (cơm đã được rang).",
+        "whyIncorrect": "Fry là động từ nguyên mẫu, không thể bổ nghĩa cho danh từ 'rice' phía sau."
+    },
+    {
+        "question": "I took part in a park ________ yesterday. (CLEAN)",
+        "options": ["clean-up", "cleaning", "cleaner", "clean"],
+        "correctIndex": 0,
+        "analysis": [
+            "clean-up (n): buổi dọn dẹp vệ sinh.",
+            "cleaning (n): việc dọn dẹp.",
+            "cleaner (n): người dọn dẹp/máy hút bụi.",
+            "clean (adj/v): sạch sẽ/làm sạch."
+        ],
+        "translation": "Tôi đã tham gia một buổi dọn dẹp công viên ngày hôm qua.",
+        "whyCorrect": "'Park clean-up' là một danh từ ghép chỉ một sự kiện/chiến dịch dọn dẹp cụ thể.",
+        "whyIncorrect": "'Cleaning' mang nghĩa việc dọn dẹp nói chung, không phổ biến bằng 'clean-up' khi nói về một sự kiện cộng đồng."
+    },
+    {
+        "question": "All the ________ were taken so I had to stand. (SIT)",
+        "options": ["seats", "seat", "sit", "seating"],
+        "correctIndex": 0,
+        "analysis": [
+            "seats (n-số nhiều): những chỗ ngồi.",
+            "seat (n-số ít): chỗ ngồi.",
+            "sit (v): ngồi.",
+            "seating (n): sự sắp xếp chỗ ngồi."
+        ],
+        "translation": "Tất cả các chỗ ngồi đều đã kín nên tôi phải đứng.",
+        "whyCorrect": "Cụm 'All the' đi kèm với động từ 'were' (số nhiều) nên cần danh từ đếm được số nhiều 'seats'.",
+        "whyIncorrect": "Sit là động từ, không thể làm chủ ngữ sau mạo từ 'the'."
+    },
+    {
+        "question": "The school was ________ very small. (originate)",
+        "options": ["originally", "original", "origin", "originate"],
+        "correctIndex": 0,
+        "analysis": [
+            "originally (adv): ban đầu/nguyên bản.",
+            "original (adj): thuộc về bản gốc.",
+            "origin (n): nguồn gốc.",
+            "originate (v): bắt nguồn từ."
+        ],
+        "translation": "Ngôi trường ban đầu rất nhỏ.",
+        "whyCorrect": "Trạng từ 'originally' dùng để bổ nghĩa cho toàn bộ trạng thái của câu hoặc tính từ 'small' phía sau.",
+        "whyIncorrect": "Tính từ 'original' không mang nghĩa 'vào thời điểm ban đầu' trong ngữ cảnh này."
+    },
+    {
+        "question": "If we ________ grocery bags, there will be less plastic rubbish. (USE)",
+        "options": ["reuse", "use", "useless", "useful"],
+        "correctIndex": 0,
+        "analysis": [
+            "reuse (v): tái sử dụng.",
+            "use (v): sử dụng.",
+            "useless (adj): vô dụng.",
+            "useful (adj): hữu ích."
+        ],
+        "translation": "Nếu chúng ta tái sử dụng túi đi chợ, sẽ có ít rác thải nhựa hơn.",
+        "whyCorrect": "Dựa vào ngữ cảnh 'less plastic rubbish', việc 'dùng lại' (reuse) là hành động chính xác để giảm rác.",
+        "whyIncorrect": "Dùng từ 'use' (sử dụng) không làm bật rõ ý nghĩa của việc bảo vệ môi trường như 'reuse'."
+    },
+    {
+        "question": "I will come and ask the lady if those ________ are free. (SIT)",
+        "options": ["seats", "seat", "sit", "seating"],
+        "correctIndex": 0,
+        "analysis": [
+            "seats (n-số nhiều): những chỗ ngồi.",
+            "seat (n-số ít): chỗ ngồi.",
+            "sit (v): ngồi.",
+            "seating (n): sự sắp xếp chỗ ngồi."
+        ],
+        "translation": "Tôi sẽ đến và hỏi người phụ nữ xem những chỗ ngồi kia có trống không.",
+        "whyCorrect": "'Those' là đại từ chỉ định cho danh từ số nhiều, đi kèm với động từ 'are'.",
+        "whyIncorrect": "Seat (số ít) không đi với 'those' và 'are'."
+    },
+    {
+        "question": "Paul Walker has won Oscar for the best ________. (act)",
+        "options": ["actor", "actress", "acting", "act"],
+        "correctIndex": 0,
+        "analysis": [
+            "actor (n): nam diễn viên.",
+            "actress (n): nữ diễn viên.",
+            "acting (n): sự diễn xuất.",
+            "act (v/n): diễn/hành động."
+        ],
+        "translation": "Paul Walker đã giành giải Oscar cho nam diễn viên xuất sắc nhất.",
+        "whyCorrect": "Paul Walker là nam giới, nên ta dùng danh từ chỉ người 'actor'.",
+        "whyIncorrect": "Actress chỉ dành cho nữ giới. Acting là sự diễn xuất (thường là tên giải thưởng 'Best Acting' nhưng ở đây là 'best actor' phổ biến hơn cho cá nhân)."
+    },
+    {
+        "question": "Traveling by train is clean, ________ and punctual. (COMFORT)",
+        "options": ["comfortable", "comfort", "comfortably", "uncomfortable"],
+        "correctIndex": 0,
+        "analysis": [
+            "comfortable (adj): thoải mái.",
+            "comfort (n/v): sự thoải mái/an ủi.",
+            "comfortably (adv): một cách thoải mái.",
+            "uncomfortable (adj): không thoải mái."
+        ],
+        "translation": "Đi tàu hỏa thì sạch sẽ, thoải mái và đúng giờ.",
+        "whyCorrect": "Cấu trúc song song (Parallel structure): 'clean' và 'punctual' là tính từ, nên từ ở giữa cũng phải là tính từ.",
+        "whyIncorrect": "Comfort là danh từ, không cùng loại với các tính từ còn lại trong chuỗi liệt kê."
+    },
+    {
+        "question": "The first time I went zorbing, I felt really ________. (SCARE)",
+        "options": ["scared", "scary", "scare", "scarily"],
+        "correctIndex": 0,
+        "analysis": [
+            "scared (adj): bị sợ hãi (cảm xúc người).",
+            "scary (adj): gây sợ hãi (tính chất vật).",
+            "scare (v/n): làm sợ/sự sợ hãi.",
+            "scarily (adv): một cách đáng sợ."
+        ],
+        "translation": "Lần đầu tiên tôi chơi zorbing, tôi cảm thấy thực sự sợ hãi.",
+        "whyCorrect": "Sau động từ chỉ cảm giác 'felt', ta dùng tính từ đuôi -ed để diễn tả cảm xúc của con người.",
+        "whyIncorrect": "Scary dùng để miêu tả bản chất của trò chơi (The game is scary), không dùng cho cảm xúc của người."
+    },
+    {
+        "question": "This is a ________ story, you shouldn't read it alone. (frighten)",
+        "options": ["frightening", "frightened", "fright", "frighten"],
+        "correctIndex": 0,
+        "analysis": [
+            "frightening (adj): đáng sợ (tính chất).",
+            "frightened (adj): bị hoảng sợ (cảm xúc).",
+            "fright (n): sự hoảng sợ.",
+            "frighten (v): làm hoảng sợ."
+        ],
+        "translation": "Đây là một câu chuyện đáng sợ, bạn không nên đọc nó một mình.",
+        "whyCorrect": "Bổ nghĩa cho danh từ 'story' (vật) chỉ tính chất gây ra cho người khác, ta dùng tính từ đuôi -ing.",
+        "whyIncorrect": "Frightened chỉ dùng cho người khi bị tác động bởi thứ gì đó."
+    },
+    {
+        "question": "The three-hour ________ exam was a real challenge. (ENTER)",
+        "options": ["entrance", "enter", "entry", "entering"],
+        "correctIndex": 0,
+        "analysis": [
+            "entrance (n): sự đi vào/lối vào.",
+            "enter (v): đi vào.",
+            "entry (n): sự ghi vào/lối vào.",
+            "entering (v-ing): đang vào."
+        ],
+        "translation": "Kỳ thi đầu vào kéo dài ba giờ là một thử thách thực sự.",
+        "whyCorrect": "'Entrance exam' là một cụm danh từ cố định (compound noun) nghĩa là kỳ thi tuyển sinh/đầu vào.",
+        "whyIncorrect": "Entry exam không phải là thuật ngữ phổ biến để chỉ kỳ thi tuyển sinh trường học."
+    },
+    {
+        "question": "The ________ from Ho Chi Minh City to Ha Noi takes two hours. (FLY)",
+        "options": ["flight", "fly", "flying", "flyer"],
+        "correctIndex": 0,
+        "analysis": [
+            "flight (n): chuyến bay.",
+            "fly (v): bay.",
+            "flying (n): việc bay.",
+            "flyer (n): tờ rơi/người lái máy bay."
+        ],
+        "translation": "Chuyến bay từ TP.HCM ra Hà Nội mất khoảng hai giờ.",
+        "whyCorrect": "Sau mạo từ 'The' và làm chủ ngữ của động từ 'takes', ta cần danh từ chỉ chuyến đi bằng đường hàng không.",
+        "whyIncorrect": "Fly là động từ. Flyer mang nghĩa khác không phù hợp ngữ cảnh."
+    },
+    {
+        "question": "When ________ air conditioners, keep them at 28 degrees. (USE)",
+        "options": ["using", "use", "used", "usage"],
+        "correctIndex": 0,
+        "analysis": [
+            "using (v-ing): đang sử dụng.",
+            "use (v): sử dụng.",
+            "used (v-ed): đã sử dụng.",
+            "usage (n): cách dùng/lượng dùng."
+        ],
+        "translation": "Khi sử dụng máy điều hòa, hãy giữ nhiệt độ ở mức khoảng 28 độ C.",
+        "whyCorrect": "Cấu trúc rút gọn mệnh đề trạng ngữ (When you use -> When using) khi hai mệnh đề cùng chủ ngữ ngầm định.",
+        "whyIncorrect": "Usage là danh từ, không đứng sau 'When' để tạo mệnh đề rút gọn hành động."
+    },
+    {
+        "question": "She played the piano and sang this song ________. (art)",
+        "options": ["artistically", "artistic", "art", "artist"],
+        "correctIndex": 0,
+        "analysis": [
+            "artistically (adv): một cách đầy nghệ thuật.",
+            "artistic (adj): có tính nghệ thuật.",
+            "art (n): nghệ thuật.",
+            "artist (n): nghệ sĩ."
+        ],
+        "translation": "Cô ấy chơi piano và hát bài hát này một cách đầy nghệ thuật.",
+        "whyCorrect": "Cần một trạng từ (adv) đứng cuối câu để bổ nghĩa cho các động từ 'played' và 'sang'.",
+        "whyIncorrect": "Artistic là tính từ, chỉ dùng trước danh từ hoặc sau to-be."
+    },
+    {
+        "question": "Nuclear energy can be ________ and causes harm. (DANGER)",
+        "options": ["dangerous", "danger", "dangerously", "endanger"],
+        "correctIndex": 0,
+        "analysis": [
+            "dangerous (adj): nguy hiểm.",
+            "danger (n): sự nguy hiểm.",
+            "dangerously (adv): một cách nguy hiểm.",
+            "endanger (v): gây nguy hiểm."
+        ],
+        "translation": "Năng lượng hạt nhân có thể nguy hiểm và gây hại cho sức khỏe.",
+        "whyCorrect": "Sau 'can be' (động từ khuyết thiếu + be) ta cần một tính từ để nêu đặc điểm của chủ ngữ.",
+        "whyIncorrect": "Danger là danh từ, không miêu tả trực tiếp tính chất của energy trong cấu trúc này."
+    },
+    {
+        "question": "The price of ________ has gone up again. (electric)",
+        "options": ["electricity", "electric", "electrical", "electrician"],
+        "correctIndex": 0,
+        "analysis": [
+            "electricity (n): điện năng.",
+            "electric (adj): chạy bằng điện.",
+            "electrical (adj): thuộc về ngành điện.",
+            "electrician (n): thợ điện."
+        ],
+        "translation": "Giá điện lại tăng rồi.",
+        "whyCorrect": "'Price of + N' (Giá của cái gì đó). Electricity là danh từ chỉ năng lượng điện.",
+        "whyIncorrect": "Electric và electrical là tính từ, không thể đứng sau giới từ 'of' làm tân ngữ danh từ."
+    },
+    {
+        "question": "She has a ________ smile. (beauty)",
+        "options": ["beautiful", "beauty", "beautifully", "beautify"],
+        "correctIndex": 0,
+        "analysis": [
+            "beautiful (adj): xinh đẹp.",
+            "beauty (n): vẻ đẹp.",
+            "beautifully (adv): một cách xinh đẹp.",
+            "beautify (v): làm đẹp."
+        ],
+        "translation": "Cô ấy có một nụ cười đẹp.",
+        "whyCorrect": "Cần tính từ đứng trước danh từ 'smile' để miêu tả nụ cười.",
+        "whyIncorrect": "Beauty là danh từ, không đứng trước danh từ khác để làm tính từ miêu tả trong trường hợp này."
+    },
+    {
+        "question": "We help the ________ with housework and gardening. (old)",
+        "options": ["elderly", "old", "older", "oldest"],
+        "correctIndex": 0,
+        "analysis": [
+            "elderly (n-số nhiều): người cao tuổi (trang trọng).",
+            "old (adj): già.",
+            "older (adj-so sánh): già hơn.",
+            "oldest (adj-so sánh nhất): già nhất."
+        ],
+        "translation": "Chúng tôi giúp đỡ người cao tuổi làm việc nhà và làm vườn.",
+        "whyCorrect": "'The elderly' là cụm danh từ chỉ nhóm người cao tuổi một cách lịch sự.",
+        "whyIncorrect": "Old là tính từ, mặc dù 'the old' cũng có thể dùng nhưng 'the elderly' là đáp án chuẩn nhất trong các kỳ thi tiếng Anh."
+    },
+    {
+        "question": "The nightlife in Berlin is so ________. (AMAZE)",
+        "options": ["amazing", "amazed", "amaze", "amazement"],
+        "correctIndex": 0,
+        "analysis": [
+            "amazing (adj): tuyệt vời (tính chất vật).",
+            "amazed (adj): bị ngạc nhiên (cảm xúc người).",
+            "amaze (v): làm ngạc nhiên.",
+            "amazement (n): sự ngạc nhiên."
+        ],
+        "translation": "Cuộc sống về đêm ở Berlin thật tuyệt vời.",
+        "whyCorrect": "Chủ ngữ 'nightlife' là vật, nên ta dùng tính từ đuôi -ing để miêu tả tính chất của nó.",
+        "whyIncorrect": "Amazed chỉ dùng khi con người cảm thấy ngạc nhiên về điều gì đó."
+    },
+    {
+        "question": "Take part in community ________. You can pick up rubbish. (CLEAN)",
+        "options": ["clean-ups", "cleaning", "cleaner", "clean"],
+        "correctIndex": 0,
+        "analysis": [
+            "clean-ups (n-số nhiều): các buổi dọn dẹp.",
+            "cleaning (n): việc dọn dẹp.",
+            "cleaner (n): người dọn dẹp.",
+            "clean (adj): sạch."
+        ],
+        "translation": "Hãy tham gia các buổi dọn dẹp cộng đồng. Bạn có thể nhặt rác trên đường phố...",
+        "whyCorrect": "'Community clean-ups' là thuật ngữ chỉ các chiến dịch dọn dẹp vì cộng đồng (số nhiều vì là lời khuyên chung).",
+        "whyIncorrect": "Cleaning là hành động làm sạch nói chung, không mang tính sự kiện như clean-ups."
+    },
+    {
+        "question": "Air ________ affects almost all regions in the world. (POLLUTE)",
+        "options": ["pollution", "polluted", "pollute", "pollutant"],
+        "correctIndex": 0,
+        "analysis": [
+            "pollution (n): sự ô nhiễm.",
+            "polluted (adj): bị ô nhiễm.",
+            "pollute (v): gây ô nhiễm.",
+            "pollutant (n): chất gây ô nhiễm."
+        ],
+        "translation": "Ô nhiễm không khí ảnh hưởng đến hầu hết các khu vực trên thế giới.",
+        "whyCorrect": "'Air pollution' (ô nhiễm không khí) là một danh từ ghép đóng vai trò chủ ngữ.",
+        "whyIncorrect": "Polluted là tính từ, không thể đứng sau Air để làm danh từ chính trong câu này."
+    },
+    {
+        "question": "The lyrics are catchy and the ________ are talented. (SING)",
+        "options": ["singers", "singer", "singing", "song"],
+        "correctIndex": 0,
+        "analysis": [
+            "singers (n-số nhiều): các ca sĩ.",
+            "singer (n-số ít): ca sĩ.",
+            "singing (n): việc ca hát.",
+            "song (n): bài hát."
+        ],
+        "translation": "Lời bài hát bắt tai và các ca sĩ thì tài năng.",
+        "whyCorrect": "Động từ 'are' cho thấy chủ ngữ phải là danh từ số nhiều. 'Talented' thường dùng cho người (ca sĩ).",
+        "whyIncorrect": "Singer (số ít) không đi với 'are'. Singing và Song không phù hợp với tính từ 'talented' (tài năng)."
+    },
+    {
+        "question": "Everyone should ________ obey traffic rules. (strict)",
+        "options": ["strictly", "strict", "strictness", "stricter"],
+        "correctIndex": 0,
+        "analysis": [
+            "strictly (adv): một cách nghiêm chỉnh.",
+            "strict (adj): nghiêm khắc.",
+            "strictness (n): sự nghiêm khắc.",
+            "stricter (adj-so sánh): nghiêm khắc hơn."
+        ],
+        "translation": "Mọi người nên tuân thủ nghiêm chỉnh luật giao thông vì sự an toàn của chính họ.",
+        "whyCorrect": "Trạng từ 'strictly' bổ nghĩa cho động từ 'obey' (tuân thủ thế nào? -> tuân thủ nghiêm chỉnh).",
+        "whyIncorrect": "Strict là tính từ, không bổ nghĩa cho động từ thường."
+    },
+    {
+        "question": "She's going to hospital for a ________ check-up. (MEDICINE)",
+        "options": ["medical", "medicine", "medically", "medic"],
+        "correctIndex": 0,
+        "analysis": [
+            "medical (adj): thuộc về y tế/y khoa.",
+            "medicine (n): thuốc/ngành y.",
+            "medically (adv): về mặt y tế.",
+            "medic (n): bác sĩ/nhân viên cứu thương."
+        ],
+        "translation": "Cô ấy đang đến bệnh viện để kiểm tra sức khỏe.",
+        "whyCorrect": "'Medical check-up' là cụm danh từ cố định nghĩa là khám sức khỏe.",
+        "whyIncorrect": "Medicine là thuốc, không ghép được với check-up để tạo thành nghĩa khám sức khỏe."
+    },
+    {
+        "question": "Some pieces of music are really ________. (EXCITE)",
+        "options": ["exciting", "excited", "excitement", "excite"],
+        "correctIndex": 0,
+        "analysis": [
+            "exciting (adj): thú vị/hào hứng (tính chất).",
+            "excited (adj): hào hứng (cảm xúc).",
+            "excitement (n): sự phấn khích.",
+            "excite (v): làm phấn khích."
+        ],
+        "translation": "Một số bản nhạc thực sự rất thú vị.",
+        "whyCorrect": "Chủ ngữ là 'music' (vật), nên dùng tính từ đuôi -ing để miêu tả đặc điểm cuốn dẫn của âm nhạc.",
+        "whyIncorrect": "Excited là cảm xúc của người khi nghe nhạc, không dùng cho bản thân bản nhạc đó."
+    },
+    {
+        "question": "One of the ________ of solar energy is that it's expensive. (ADVANTAGE)",
+        "options": ["disadvantages", "advantages", "disadvantage", "advantageous"],
+        "correctIndex": 0,
+        "analysis": [
+            "disadvantages (n-số nhiều): những bất lợi.",
+            "advantages (n-số nhiều): những lợi ích.",
+            "disadvantage (n-số ít): sự bất lợi.",
+            "advantageous (adj): có lợi."
+        ],
+        "translation": "Một trong những bất lợi của năng lượng mặt trời là các tấm pin rất đắt.",
+        "whyCorrect": "Cấu trúc 'One of the + N(số nhiều)'. Ngữ cảnh nói về việc 'đắt' (expensive) nên phải dùng nghĩa tiêu cực 'disadvantages'.",
+        "whyIncorrect": "Advantages là lợi ích, trái ngược với nội dung 'expensive' phía sau."
+    }
+];
+
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let canAnswer = true;
+
+        // Shuffle Function
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function initGame() {
+            // Clone and Shuffle questions
+            questions = shuffle([...rawData]).map(q => {
+                // Shuffle options for each question
+                const optionsWithMeta = q.options.map((opt, idx) => ({
+                    text: opt,
+                    isCorrect: idx === q.correctIndex,
+                    analysis: q.analysis[idx]
+                }));
+                const shuffledOpts = shuffle([...optionsWithMeta]);
+                return {
+                    ...q,
+                    shuffledOptions: shuffledOpts
+                };
+            });
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            updateStats();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            canAnswer = true;
+            const q = questions[currentQuestionIndex];
+            const card = document.getElementById('question-card');
+            card.classList.remove('shake');
+            
+            document.getElementById('question-text').innerText = `${currentQuestionIndex + 1}. ${q.question}`;
+            document.getElementById('next-container').style.display = 'none';
+            document.getElementById('explanation-box').style.display = 'none';
+            
+            const optionsGrid = document.getElementById('options-grid');
+            optionsGrid.innerHTML = '';
+            
+            q.shuffledOptions.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerText = opt.text;
+                btn.onclick = () => handleAnswer(index, btn);
+                optionsGrid.appendChild(btn);
+            });
+
+            updateStats();
+        }
+
+        function handleAnswer(selectedIndex, btn) {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            const q = questions[currentQuestionIndex];
+            const isCorrect = q.shuffledOptions[selectedIndex].isCorrect;
+            
+            // Highlight buttons
+            const buttons = document.querySelectorAll('.btn-option');
+            buttons.forEach((b, idx) => {
+                if (q.shuffledOptions[idx].isCorrect) {
+                    b.classList.add('correct');
+                } else if (idx === selectedIndex) {
+                    b.classList.add('wrong');
+                }
+                b.disabled = true;
+            });
+
+            if (isCorrect) {
+                score++;
+                playSound('snd-correct');
+                triggerConfetti();
+            } else {
+                playSound('snd-wrong');
+                document.getElementById('question-card').classList.add('shake');
+            }
+
+            showExplanation(isCorrect);
+            document.getElementById('next-container').style.display = 'flex';
+            updateStats();
+        }
+
+        function showExplanation(isCorrect) {
+            const q = questions[currentQuestionIndex];
+            const expBox = document.getElementById('explanation-box');
+            const expContent = document.getElementById('explanation-content');
+            const icon = document.getElementById('exp-icon');
+            
+            icon.innerText = isCorrect ? '🎉 Tuyệt vời!' : '💪 Đừng bỏ cuộc!';
+            
+            let html = `
+                <div style="margin-bottom: 15px;">
+                    <p><strong>1. Phân tích 4 đáp án:</strong></p>
+                    <ul style="padding-left: 20px;">
+                        ${q.analysis.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <p><strong>2. Dịch nghĩa toàn câu:</strong></p>
+                    <p style="font-style: italic; color: #444;">"${q.translation}"</p>
+                </div>
+                <div>
+                    <p><strong>3. Tại sao chọn đáp án này?</strong></p>
+                    <p>${q.whyCorrect}</p>
+                    <p><strong>4. Tại sao các đáp án khác sai?</strong></p>
+                    <p>${q.whyIncorrect}</p>
+                </div>
+            `;
+            
+            expContent.innerHTML = html;
+            expBox.style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showFinalResult();
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('question-counter').innerText = `Câu hỏi: ${currentQuestionIndex + 1}/${questions.length}`;
+            document.getElementById('score-counter').innerText = `Điểm: ${score}`;
+            const progress = ((currentQuestionIndex) / questions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        function triggerConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#8854C0', '#00C9A7', '#FFD93D']
+            });
+        }
+
+        function playSound(id) {
+            const audio = document.getElementById(id);
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log("Sound blocked by browser"));
+        }
+
+        function showFinalResult() {
+            document.getElementById('result-modal').style.display = 'flex';
+            document.getElementById('final-score').innerText = `${score}/${questions.length}`;
+            
+            let feedback = "";
+            if (score === questions.length) feedback = "Hết nước chấm! Con là thiên tài Word Form! 🏆";
+            else if (score >= 25) feedback = "Xuất sắc! Ms MS Chí Nên rất tự hào về con! 🌟";
+            else if (score >= 15) feedback = "Khá lắm! Cố gắng luyện tập thêm chút nữa nhé! 👍";
+            else feedback = "Đừng nản chí! Hãy xem kỹ phần giải thích và làm lại nhé! 💪";
+            
+            document.getElementById('feedback-text').innerText = feedback;
+            document.getElementById('progress-bar').style.width = `100%`;
+        }
+
+        function restartGame() {
+            document.getElementById('result-modal').style.display = 'none';
+            initGame();
+        }
+
+        // Start the game on load
+        window.onload = initGame;
+    </script>
+</body>
+</html>

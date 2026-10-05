@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juan Sala – Underwater Scientist - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* === DYNAMIC THEME & BASE STYLES === */
+        :root {
+            --primary-color: #00C9A7; /* Teal pastel */
+            --secondary-color: #4FACFE; /* Light Blue pastel */
+            --accent-color: #FF9A9E; /* Pink pastel */
+            --correct-color: #00D26A;
+            --wrong-color: #FF4757;
+            
+            /* Glassmorphism Pastel Colors (No solid white) */
+            --pane-glass: rgba(255, 255, 255, 0.25);
+            --reading-glass: rgba(0, 201, 167, 0.15); /* Pastel teal trong suốt */
+            --question-glass: rgba(79, 172, 254, 0.15); /* Pastel blue trong suốt */
+            --option-glass: rgba(255, 255, 255, 0.45);
+            --glossary-glass: rgba(255, 154, 158, 0.15); /* Pastel pink trong suốt */
+            
+            --text-main: #1e272e;
+            --border-glass: rgba(255, 255, 255, 0.6);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        /* SVG Background with animated gradient */
+        body {
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text-main);
+            /* Animated gradient background */
+            background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #00C9A7, #e0c3fc);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* The dynamic SVG Emoji Pattern layer */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><text x="50" y="50" font-size="30">🌊</text><text x="250" y="150" font-size="30">🐟</text><text x="100" y="300" font-size="30">🐢</text><text x="350" y="350" font-size="30">🐠</text><text x="200" y="50" font-size="30">🤿</text></svg>');
+            background-repeat: repeat;
+            opacity: 0.4;
+            animation: floatPattern 60s linear infinite;
+        }
+
+        @keyframes floatPattern {
+            from { background-position: 0 0; }
+            to { background-position: 400px 400px; }
+        }
+
+        /* === TOP CONTROL BAR === */
+        .top-bar {
+            height: 70px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            z-index: 10;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .creator-info {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #0984e3;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border-glass);
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #time-display {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #2d3436;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 5px 20px;
+            border-radius: 15px;
+            border: 1px solid var(--border-glass);
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #00C9A7, #00b894);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #009980;
+            transition: all 0.1s;
+        }
+        .btn-start:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #009980;
+        }
+
+        /* === SPLIT SCREEN LAYOUT === */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .left-pane, .right-pane {
+            flex: 1;
+            background: var(--pane-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid var(--border-glass);
+            border-radius: 25px;
+            padding: 30px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.5); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.8); }
+
+        /* === READING PANE STYLES === */
+        .reading-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #009980;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
+            text-align: center;
+        }
+        .test-level {
+            text-align: center;
+            font-weight: 800;
+            color: #d63031;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .paragraph-block {
+            margin-bottom: 25px;
+            background: var(--reading-glass);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid var(--border-glass);
+            border-left: 6px solid #00C9A7;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
+        }
+        .paragraph-block:hover {
+            transform: translateY(-2px);
+        }
+
+        .english-text {
+            font-size: 1.15rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .btn-translate {
+            background: rgba(255, 219, 88, 0.4);
+            color: #d35400;
+            border: 1px solid rgba(255, 219, 88, 0.8);
+            padding: 8px 15px;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-translate:hover { background: rgba(255, 219, 88, 0.7); transform: scale(1.05); }
+
+        .vietnamese-text {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px dashed rgba(255,255,255,0.6);
+            font-size: 1.05rem;
+            color: #192a56;
+            font-style: italic;
+            font-weight: 600;
+            line-height: 1.5;
+            animation: fadeIn 0.3s;
+        }
+
+        /* Glossary Table */
+        .glossary-wrapper {
+            background: var(--glossary-glass);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .glossary-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #e84393;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.05rem;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.4);
+        }
+        th { 
+            background: rgba(255,255,255,0.4); 
+            color: #d63031; 
+            font-weight: 900; 
+            border-radius: 10px 10px 0 0;
+        }
+        .word-col { font-weight: 800; color: #2d3436; }
+        .pos-col { color: #6c5ce7; font-style: italic; font-weight: 700;}
+
+        /* === EXERCISE PANE STYLES === */
+        .question-card {
+            background: var(--question-glass);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-glass);
+            border-left: 6px solid #4FACFE;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.04);
+            transition: transform 0.2s;
+        }
+        .question-card:hover { transform: translateY(-2px); }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: var(--option-glass);
+            border: 2px solid rgba(255,255,255,0.6);
+            padding: 15px 20px;
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #2d3436;
+            border-radius: 15px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 0 rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            transform: scale(1.02) translateY(-2px);
+            border-color: #4FACFE;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 6px 0 rgba(79, 172, 254, 0.4);
+        }
+
+        .option-btn:active:not(.disabled) {
+            transform: scale(0.98) translateY(2px);
+            box-shadow: 0 2px 0 rgba(79, 172, 254, 0.4);
+        }
+
+        .option-btn.correct {
+            background: var(--correct-color);
+            color: white;
+            border-color: #00b35a;
+            box-shadow: 0 4px 0 #00b35a;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-color);
+            color: white;
+            border-color: #e84118;
+            box-shadow: 0 4px 0 #e84118;
+        }
+
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .option-letter {
+            background: rgba(255,255,255,0.8);
+            color: #0984e3;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            margin-right: 15px;
+            font-weight: 900;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .option-btn.correct .option-letter, .option-btn.wrong .option-letter {
+            color: #333;
+        }
+
+        /* Explanations */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.6);
+            border-left: 5px solid var(--correct-color);
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1rem;
+            color: #2c3e50;
+            line-height: 1.6;
+            animation: slideDown 0.4s ease;
+        }
+        .explanation-box h4 { color: #d63031; margin-bottom: 10px; font-size: 1.1rem; font-weight: 900;}
+        .explanation-box .highlight { background: rgba(255, 219, 88, 0.6); padding: 2px 5px; border-radius: 4px; font-weight: 800; }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, #FF9A9E, #FECFEF);
+            color: #d63031;
+            border: 2px solid #fff;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #ff7979;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 11px 0 #ff7979; }
+        .btn-submit:active { transform: translateY(5px); box-shadow: 0 3px 0 #ff7979; }
+
+        /* Result Modal */
+        #result-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #fff;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        }
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00C9A7, #4FACFE);
+            color: white;
+            font-size: 3rem;
+            font-weight: 900;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 20px rgba(0,201,167,0.4);
+            border: 4px solid #fff;
+        }
+        .modal-msg { font-size: 1.5rem; font-weight: 900; color: #2d3436; margin-bottom: 20px; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .shake { animation: shake 0.4s; }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="top-bar">
+        <div class="creator-info">👩‍🏫 Ms MS Chí Nên</div>
+        <div class="timer-container">
+            <div id="time-display">10:00</div>
+            <button class="btn-start" id="btn-timer">BẮT ĐẦU TÍNH GIỜ</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        
+        <div class="left-pane">
+            <h1 class="reading-title">Juan Sala – underwater scientist!</h1>
+            <div class="test-level">A2 English Reading Test</div>
+
+            <div class="paragraph-block">
+                <div class="english-text">
+                    When Juan Sala was young, he lived with his family just five minutes from a quiet beach in the south of Spain. He spent all day in his summer holidays swimming and snorkelling there. He loved watching television programmes about underwater adventurers in the evenings. Even then, he dreamed of filming and studying unusual fish and other interesting creatures under the sea. But he didn’t actually begin to do that until he was in his twenties.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vietnamese-text">
+                    Khi Juan Sala còn nhỏ, anh sống cùng gia đình chỉ cách một bãi biển yên tĩnh ở miền nam Tây Ban Nha năm phút đi bộ. Anh đã dành trọn cả ngày trong những kỳ nghỉ hè để bơi lội và lặn với ống thở ở đó. Vào các buổi tối, anh rất thích xem các chương trình truyền hình về những nhà thám hiểm dưới đáy biển. Ngay từ lúc đó, anh đã mơ ước được quay phim và nghiên cứu những loài cá độc đáo cùng các sinh vật thú vị khác dưới biển sâu. Nhưng thực tế, anh không bắt đầu công việc đó cho đến khi bước vào độ tuổi hai mươi.
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                <div class="english-text">
+                    Juan describes a normal work day on his 45-metre boat: ‘I get up before everyone else. I have breakfast and jump in the sea as soon as I can. I usually work underwater three or four times a day. I collect and film anything that looks interesting.’
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vietnamese-text">
+                    Juan mô tả một ngày làm việc bình thường trên chiếc thuyền dài 45 mét của mình: "Tôi thức dậy trước tất cả mọi người. Tôi ăn sáng và nhảy xuống biển ngay khi có thể. Tôi thường làm việc dưới nước ba hoặc bốn lần một ngày. Tôi thu thập và quay phim bất cứ thứ gì trông có vẻ thú vị."
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                <div class="english-text">
+                    ‘After that, I make notes about my work on my laptop and have a meal. After dinner, I’m usually so tired I immediately go to bed. My friends sometimes invite me to go to a party, but I’m always asleep by the time the fun starts.’
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vietnamese-text">
+                    "Sau đó, tôi ghi chép lại về công việc của mình trên máy tính xách tay và dùng bữa. Sau bữa tối, tôi thường quá mệt mỏi nên đi ngủ ngay lập tức. Bạn bè thỉnh thoảng mời tôi đi dự tiệc, nhưng tôi luôn ngủ say vào lúc cuộc vui bắt đầu."
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                <div class="english-text">
+                    ‘I work hard, but I don’t need holidays. I have such fun every day! My friends often say that they would like to have a job like mine. They need to pay a lot of money to spend their holiday in interesting places, but they don’t get the chance to see so many unusual creatures.’
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vietnamese-text">
+                    "Tôi làm việc chăm chỉ, nhưng tôi không cần những ngày nghỉ lễ. Mỗi ngày của tôi đều ngập tràn niềm vui! Bạn bè tôi thường nói rằng họ rất muốn có một công việc như của tôi. Họ phải trả rất nhiều tiền để dành kỳ nghỉ của mình ở những nơi thú vị, nhưng họ lại không có cơ hội được chiêm ngưỡng nhiều sinh vật kỳ lạ đến vậy."
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                <div class="english-text">
+                    Juan is planning to do some underwater filming in the Queensmen Islands soon. ‘I’ve never visited those islands, but I know a lot about them,’ he says. ‘I’ve always wanted to go there. I’d like to study the strange plants and creatures that live underwater in that part of the world. It’ll be a very exciting project!’
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                <div class="vietnamese-text">
+                    Sắp tới, Juan dự định sẽ thực hiện một số cảnh quay dưới nước tại Quần đảo Queensmen. Anh chia sẻ: "Tôi chưa từng đến những hòn đảo đó, nhưng tôi biết rất nhiều về chúng. Tôi luôn muốn đến đó. Tôi muốn nghiên cứu những loài thực vật và sinh vật kỳ lạ sống dưới nước ở khu vực đó của thế giới. Đó sẽ là một dự án vô cùng hào hứng!"
+                </div>
+            </div>
+
+            <div class="glossary-wrapper">
+                <div class="glossary-title">📚 Glossary (Từ vựng học thuật B1-C2)</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Từ vựng</th>
+                            <th>Loại từ</th>
+                            <th>Nghĩa Tiếng Việt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="word-col">underwater</td><td class="pos-col">adj/adv</td><td>dưới mặt nước, ngầm dưới nước</td></tr>
+                        <tr><td class="word-col">scientist</td><td class="pos-col">noun</td><td>nhà khoa học</td></tr>
+                        <tr><td class="word-col">snorkelling</td><td class="pos-col">noun</td><td>môn lặn có ống thở</td></tr>
+                        <tr><td class="word-col">adventurer</td><td class="pos-col">noun</td><td>nhà thám hiểm, người phiêu lưu</td></tr>
+                        <tr><td class="word-col">creature</td><td class="pos-col">noun</td><td>sinh vật (động vật, quái vật)</td></tr>
+                        <tr><td class="word-col">actually</td><td class="pos-col">adv</td><td>thực sự, trên thực tế</td></tr>
+                        <tr><td class="word-col">immediately</td><td class="pos-col">adv</td><td>ngay lập tức, tức thì</td></tr>
+                        <tr><td class="word-col">chance</td><td class="pos-col">noun</td><td>cơ hội, sự tình cờ</td></tr>
+                        <tr><td class="word-col">unusual</td><td class="pos-col">adj</td><td>kỳ lạ, khác thường, hiếm có</td></tr>
+                        <tr><td class="word-col">exciting</td><td class="pos-col">adj</td><td>gây hứng thú, thú vị, hào hứng</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="right-pane" id="quiz-container">
+            <button class="btn-submit" onclick="submitQuiz()">NỘP BÀI 🎉</button>
+        </div>
+    </div>
+
+    <div id="result-modal">
+        <div class="modal-content">
+            <div class="score-circle" id="final-score">0/5</div>
+            <div class="modal-msg" id="modal-msg">Tuyệt vời!</div>
+            <button class="btn-start" onclick="location.reload()">Làm lại bài thi 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        /* === DATA CÂU HỎI === */
+        const quizData = [
+            {
+                id: 1,
+                question: "1. How old was Juan when he made his first underwater film?",
+                options: [
+                    { text: "He was a young boy.", isCorrect: false, letter: 'A' },
+                    { text: "He was a young adult.", isCorrect: true, letter: 'B' },
+                    { text: "He hasn’t made a film yet.", isCorrect: false, letter: 'C' }
+                ],
+                explanation: `
+                    <h4>📝 GIẢI THÍCH CHI TIẾT:</h4>
+                    <b>1. Dịch câu hỏi:</b> Juan bao nhiêu tuổi khi anh ấy làm bộ phim dưới nước đầu tiên?<br>
+                    <b>2. Dẫn chứng trong bài:</b> Đoạn 1 có câu: <span class="highlight">"But he didn’t actually begin to do that until he was in his twenties."</span> (Nhưng thực tế anh ấy không bắt đầu làm việc đó cho đến khi bước vào độ tuổi hai mươi - 20-29 tuổi).<br>
+                    <b>3. Phân tích:</b> 
+                    <ul>
+                        <li>A. Cậu bé nhỏ tuổi (Sai, vì lúc nhỏ anh chỉ "dreamed" - mơ ước).</li>
+                        <li><b>B. Thanh niên / Người trẻ tuổi (Đúng, vì "in his twenties" tương đương với "young adult").</b></li>
+                        <li>C. Chưa làm phim nào (Sai, vì bài văn nói về công việc hiện tại của anh).</li>
+                    </ul>
+                `
+            },
+            {
+                id: 2,
+                question: "2. During his work day, Juan",
+                options: [
+                    { text: "watches films about unusual fish.", isCorrect: false, letter: 'A' },
+                    { text: "spends three or four hours underwater.", isCorrect: false, letter: 'B' },
+                    { text: "looks for interesting things to film.", isCorrect: true, letter: 'C' }
+                ],
+                explanation: `
+                    <h4>📝 GIẢI THÍCH CHI TIẾT:</h4>
+                    <b>1. Dịch câu hỏi:</b> Trong ngày làm việc của mình, Juan...<br>
+                    <b>2. Dẫn chứng trong bài:</b> Đoạn 2: <span class="highlight">"I collect and film anything that looks interesting."</span> (Tôi thu thập và quay phim bất cứ thứ gì trông có vẻ thú vị).<br>
+                    <b>3. Phân tích:</b>
+                    <ul>
+                        <li>A. xem phim về cá lạ (Sai, anh ấy tự quay phim chứ không ngồi xem).</li>
+                        <li>B. dành 3-4 GIỜ dưới nước (Sai bẫy từ vựng: Trong bài ghi "three or four <b>times</b> a day" - 3-4 <b>LẦN</b>, chứ không phải <b>HOURS</b> - GIỜ).</li>
+                        <li><b>C. tìm kiếm những thứ thú vị để quay phim (Đúng hoàn toàn với dẫn chứng).</b></li>
+                    </ul>
+                `
+            },
+            {
+                id: 3,
+                question: "3. What does Juan do in the evening?",
+                options: [
+                    { text: "He eats and then goes to sleep.", isCorrect: true, letter: 'A' },
+                    { text: "He has fun at a party with his friends.", isCorrect: false, letter: 'B' },
+                    { text: "He invites his friends for dinner and then goes to bed early.", isCorrect: false, letter: 'C' }
+                ],
+                explanation: `
+                    <h4>📝 GIẢI THÍCH CHI TIẾT:</h4>
+                    <b>1. Dịch câu hỏi:</b> Juan làm gì vào buổi tối?<br>
+                    <b>2. Dẫn chứng:</b> Đoạn 3: <span class="highlight">"After dinner, I’m usually so tired I immediately go to bed... I’m always asleep by the time the fun starts."</span> (Sau bữa tối, tôi thường quá mệt nên đi ngủ ngay... tôi luôn ngủ say khi cuộc vui bắt đầu).<br>
+                    <b>3. Phân tích:</b>
+                    <ul>
+                        <li><b>A. Ăn xong và đi ngủ. (Đúng chuẩn xác).</b></li>
+                        <li>B. Vui vẻ ở bữa tiệc (Sai, vì lúc đó anh ấy đã ngủ "always asleep").</li>
+                        <li>C. Mời bạn đến ăn tối (Sai, bài không hề nhắc đến việc mời bạn đến ăn tối).</li>
+                    </ul>
+                `
+            },
+            {
+                id: 4,
+                question: "4. How does Juan feel about holidays?",
+                options: [
+                    { text: "He often takes holidays because he works so hard.", isCorrect: false, letter: 'A' },
+                    { text: "He only goes on expensive holidays with his friends.", isCorrect: false, letter: 'B' },
+                    { text: "He isn’t interested in holidays.", isCorrect: true, letter: 'C' }
+                ],
+                explanation: `
+                    <h4>📝 GIẢI THÍCH CHI TIẾT:</h4>
+                    <b>1. Dịch câu hỏi:</b> Juan cảm thấy thế nào về những kỳ nghỉ?<br>
+                    <b>2. Dẫn chứng:</b> Đoạn 4: <span class="highlight">"I work hard, but I don’t need holidays. I have such fun every day!"</span> (Tôi làm việc chăm chỉ, nhưng tôi không cần ngày nghỉ. Mỗi ngày đều quá vui rồi!).<br>
+                    <b>3. Phân tích:</b>
+                    <ul>
+                        <li>A. Thường đi nghỉ vì làm việc vất vả (Sai, "don't need" - không cần).</li>
+                        <li>B. Chỉ đi nghỉ đắt tiền với bạn (Sai, bài nói bạn anh ấy phải trả nhiều tiền "pay a lot of money", không phải anh ấy).</li>
+                        <li><b>C. Anh ấy không hứng thú/không màng tới kỳ nghỉ. (Đúng vì công việc mỗi ngày của anh đã như một kỳ nghỉ thú vị).</b></li>
+                    </ul>
+                `
+            },
+            {
+                id: 5,
+                question: "5. Juan is excited about his next job",
+                options: [
+                    { text: "because he loves going to the Queensmen Islands.", isCorrect: false, letter: 'A' },
+                    { text: "because it will be a new experience for him.", isCorrect: true, letter: 'B' },
+                    { text: "because he doesn’t know anything about that part of the world.", isCorrect: false, letter: 'C' }
+                ],
+                explanation: `
+                    <h4>📝 GIẢI THÍCH CHI TIẾT:</h4>
+                    <b>1. Dịch câu hỏi:</b> Juan rất hào hứng với công việc tiếp theo...<br>
+                    <b>2. Dẫn chứng:</b> Đoạn cuối: <span class="highlight">"I’ve never visited those islands... I’d like to study the strange plants and creatures... It’ll be a very exciting project!"</span> (Tôi chưa từng đến đó... Tôi muốn nghiên cứu sinh vật và cây cối kỳ lạ... Sẽ là dự án rất thú vị!).<br>
+                    <b>3. Phân tích:</b>
+                    <ul>
+                        <li>A. vì yêu thích đi đến quần đảo đó (Chưa chính xác vì anh ấy "never visited" - chưa từng đến, nên dùng từ "loves going" - ám chỉ thói quen đi lại là sai).</li>
+                        <li><b>B. vì đó sẽ là một trải nghiệm mới với anh ấy (Đúng, vì anh ấy chưa từng đến và muốn nghiên cứu những thứ mới lạ).</b></li>
+                        <li>C. vì không biết gì về nơi đó (Sai, bài ghi rõ "but I know a lot about them" - nhưng tôi biết rất nhiều về chúng).</li>
+                    </ul>
+                `
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = 0;
+
+        /* === AUDIO API (Tạo âm thanh) === */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playWrong() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        /* === RENDER QUIZ & SHUFFLE === */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        const quizContainer = document.getElementById('quiz-container');
+
+        // Render questions (ĐÃ SỬA LỖI Ở ĐÂY)
+        quizData.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `q-${index}`;
+
+            let html = `<div class="question-text">${q.question}</div><div class="options-grid">`;
+            
+            // Xáo trộn đáp án
+            let shuffledOptions = shuffleArray([...q.options]);
+            
+            shuffledOptions.forEach((opt) => {
+                html += `
+                    <div class="option-btn" onclick="checkAnswer(this, ${index}, ${opt.isCorrect})">
+                        <div class="option-letter">${opt.letter}</div>
+                        <div>${opt.text}</div>
+                    </div>
+                `;
+            });
+
+            html += `</div>
+                <div class="explanation-box" id="exp-${index}">
+                    ${q.explanation}
+                </div>
+            `;
+            
+            // Lệnh quan trọng bị thiếu ở bản trước: Gán nội dung HTML vào thẻ card
+            card.innerHTML = html;
+            
+            // Chèn vào trước nút Nộp bài
+            quizContainer.insertBefore(card, quizContainer.lastElementChild);
+        });
+
+        /* === LOGIC TRẢ LỜI CÂU HỎI === */
+        function checkAnswer(element, questionIndex, isCorrect) {
+            const card = document.getElementById(`q-${questionIndex}`);
+            // Nếu đã trả lời rồi thì bỏ qua
+            if (card.classList.contains('answered')) return;
+            
+            card.classList.add('answered');
+            answeredQuestions++;
+            
+            const allOptions = card.querySelectorAll('.option-btn');
+            
+            if (isCorrect) {
+                element.classList.add('correct');
+                playDing();
+                fireConfetti();
+                score++;
+            } else {
+                element.classList.add('wrong');
+                element.classList.add('shake');
+                playWrong();
+                // Tìm và bôi xanh đáp án đúng
+                const correctOptIndex = quizData[questionIndex].options.findIndex(o => o.isCorrect);
+                const correctLetter = quizData[questionIndex].options[correctOptIndex].letter;
+                
+                allOptions.forEach(opt => {
+                    if(opt.querySelector('.option-letter').innerText === correctLetter) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+
+            // Disable các nút còn lại
+            allOptions.forEach(opt => {
+                if(!opt.classList.contains('correct') && !opt.classList.contains('wrong')) {
+                    opt.classList.add('disabled');
+                }
+            });
+
+            // Hiện giải thích chi tiết
+            document.getElementById(`exp-${questionIndex}`).style.display = 'block';
+        }
+
+        /* === TIỆN ÍCH KHÁC === */
+        function toggleTranslation(btn) {
+            const transText = btn.nextElementSibling;
+            if (transText.style.display === 'block') {
+                transText.style.display = 'none';
+                btn.innerHTML = 'Mở dịch đoạn này 🌟';
+            } else {
+                transText.style.display = 'block';
+                btn.innerHTML = 'Đóng bản dịch ❌';
+            }
+        }
+
+        /* === ĐỒNG HỒ ĐẾM NGƯỢC === */
+        let timerInterval;
+        let timeLeft = 600; // 10 minutes
+        let isRunning = false;
+        
+        document.getElementById('btn-timer').addEventListener('click', function() {
+            if(!isRunning) {
+                this.innerHTML = "TẠM DỪNG ⏸️";
+                this.style.background = "linear-gradient(135deg, #FF9F43, #E67E22)";
+                this.style.boxShadow = "0 6px 0 #d35400";
+                isRunning = true;
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    let m = Math.floor(timeLeft / 60);
+                    let s = timeLeft % 60;
+                    document.getElementById('time-display').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+                    
+                    if(timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                    }
+                }, 1000);
+            } else {
+                this.innerHTML = "TIẾP TỤC ▶️";
+                this.style.background = "linear-gradient(135deg, #00C9A7, #00b894)";
+                this.style.boxShadow = "0 6px 0 #009980";
+                isRunning = false;
+                clearInterval(timerInterval);
+            }
+        });
+
+        /* === HIỆU ỨNG PHÁO GIẤY (CONFETTI) === */
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+
+        function fireConfetti() {
+            for(let i=0; i<50; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: -10,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 4 - 2,
+                    dy: Math.random() * 5 + 2,
+                    color: `hsl(${Math.random()*360}, 100%, 50%)`
+                });
+            }
+            if(particles.length <= 50) animateConfetti();
+        }
+
+        function animateConfetti() {
+            requestAnimationFrame(animateConfetti);
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            particles.forEach((p, index) => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                p.x += p.dx;
+                p.y += p.dy;
+                if(p.y > canvas.height) particles.splice(index, 1);
+            });
+        }
+
+        /* === NỘP BÀI === */
+        function submitQuiz() {
+            if(answeredQuestions < 5) {
+                if(!confirm("Bạn chưa hoàn thành tất cả câu hỏi! Vẫn muốn nộp bài chứ?")) return;
+            }
+            
+            clearInterval(timerInterval);
+            const modal = document.getElementById('result-modal');
+            const scoreDisplay = document.getElementById('final-score');
+            const msgDisplay = document.getElementById('modal-msg');
+            
+            scoreDisplay.innerText = `${score}/5`;
+            
+            if(score === 5) {
+                msgDisplay.innerText = "🏆 THIÊN TÀI! Bạn đã đúng tuyệt đối!";
+                msgDisplay.style.color = "#00b894";
+                fireConfetti(); fireConfetti(); fireConfetti();
+            } else if(score >= 3) {
+                msgDisplay.innerText = "🌟 LÀM TỐT LẮM! Tiếp tục phát huy nhé!";
+                msgDisplay.style.color = "#0984e3";
+            } else {
+                msgDisplay.innerText = "💪 CỐ LÊN NHÉ! Hãy đọc kỹ giải thích để tiến bộ hơn!";
+                msgDisplay.style.color = "#d63031";
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Xử lý Resize Canvas
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+    </script>
+</body>
+</html>

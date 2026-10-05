@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Form Quiz - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #00C9A7;
+            --bg: #F0F4F8;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --text: #2D3436;
+            --card-bg: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            background-image: radial-gradient(#8854c022 1px, transparent 0);
+            background-size: 30px 30px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .teacher-name {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 1.8rem;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 700px;
+            perspective: 1000px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border-bottom: 8px solid #ddd;
+            transition: transform 0.3s;
+        }
+
+        .question-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 12px;
+            background: #E0E0E0;
+            border-radius: 10px;
+            margin-right: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), #55efc4);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .score-badge {
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .word-clue {
+            color: var(--primary);
+            font-style: italic;
+            background: #f1f0ff;
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 500px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #E0E0E0;
+            border-radius: 18px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0 #E0E0E0;
+            position: relative;
+            text-align: left;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 0 #E0E0E0;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #E0E0E0;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct) !important;
+            border-color: #00b359 !important;
+            color: white !important;
+            box-shadow: 0 4px 0 #00b359 !important;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong) !important;
+            border-color: #d63031 !important;
+            color: white !important;
+            box-shadow: 0 4px 0 #d63031 !important;
+        }
+
+        .explanation {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 15px;
+            background: #F9F9F9;
+            border-left: 5px solid var(--primary);
+            display: none;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .shake { animation: shake 0.3s ease-in-out 2; }
+
+        .explanation h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .explanation p {
+            margin: 5px 0;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .nav-buttons {
+            margin-top: 25px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .next-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #00a88c;
+            display: none;
+        }
+
+        .next-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .next-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 #00a88c;
+        }
+
+        .summary-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .summary-score {
+            font-size: 4rem;
+            color: var(--primary);
+            font-weight: 800;
+            margin: 20px 0;
+        }
+
+        .summary-msg {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: var(--text);
+        }
+
+        .restart-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Sound Toggle */
+        .sound-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #ddd;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="sound-toggle" onclick="toggleSound()" title="Tắt/Mở âm thanh">🔊</button>
+
+    <header>
+        <div class="teacher-name">Giáo viên tạo: Ms MS Chí Nên</div>
+        <h1>Word Form Challenge (32-50)</h1>
+    </header>
+
+    <div class="quiz-container">
+        <div class="card" id="quiz-card">
+            <div class="question-meta">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="score-badge">Câu <span id="current-q-num">1</span>/19</div>
+            </div>
+
+            <div class="question-text" id="question-text">
+                Đang tải câu hỏi...
+            </div>
+
+            <div class="options-grid" id="options-grid">
+                <!-- Options will be injected here -->
+            </div>
+
+            <div class="explanation" id="explanation-box">
+                <!-- Explanation will be injected here -->
+            </div>
+
+            <div class="nav-buttons">
+                <button class="next-btn" id="next-btn" onclick="nextQuestion()">Tiếp tục →</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="summary-overlay" id="summary-overlay">
+        <div class="summary-card">
+            <h2>🎉 HOÀN THÀNH! 🎉</h2>
+            <div class="summary-score" id="final-score">0/19</div>
+            <div class="summary-msg" id="final-msg"></div>
+            <button class="restart-btn" onclick="location.reload()">Làm lại thử thách</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                num: 32,
+                q: "Do you know what this flower ________? (SYMBOL)",
+                options: ["symbolizes", "symbol", "symbolic", "symbolism"],
+                correct: "symbolizes",
+                analysis: [
+                    "A. symbol (n): biểu tượng",
+                    "B. symbolizes (v): tượng trưng cho",
+                    "C. symbolic (adj): mang tính tượng trưng",
+                    "D. symbolism (n): chủ nghĩa tượng trưng"
+                ],
+                translation: "Bạn có biết loài hoa này tượng trưng cho điều gì không?",
+                why: "Đây là mệnh đề danh ngữ 'what this flower...'. Vì 'this flower' là chủ ngữ số ít nên cần động từ chia ngôi thứ 3 số ít."
+            },
+            {
+                num: 33,
+                q: "The pineapple was sweet and ________. (juice)",
+                options: ["juicy", "juice", "juices", "juicily"],
+                correct: "juicy",
+                analysis: [
+                    "A. juicy (adj): mọng nước",
+                    "B. juice (n): nước ép",
+                    "C. juices (n): các loại nước ép",
+                    "D. juicily (adv): một cách mọng nước"
+                ],
+                translation: "Quả dứa thì ngọt và mọng nước.",
+                why: "Cấu trúc song song: 'sweet' là tính từ nên sau 'and' cũng cần một tính từ để miêu tả quả dứa."
+            },
+            {
+                num: 34,
+                q: "The black rhino is a(n) ________ species. There are very few of them left in the wild. (DANGER)",
+                options: ["endangered", "dangerous", "danger", "endanger"],
+                correct: "endangered",
+                analysis: [
+                    "A. endangered (adj): có nguy cơ tuyệt chủng",
+                    "B. dangerous (adj): nguy hiểm",
+                    "C. danger (n): sự nguy hiểm",
+                    "D. endanger (v): gây nguy hiểm"
+                ],
+                translation: "Tê giác đen là một loài đang bị đe dọa tuyệt chủng.",
+                why: "Cụm từ 'endangered species' là thuật ngữ chỉ các loài sắp tuyệt chủng. Ngữ cảnh 'rất ít cá thể còn lại' xác nhận đáp án này."
+            },
+            {
+                num: 35,
+                q: "I loved the ________ this night. (perform)",
+                options: ["performance", "performer", "perform", "performing"],
+                correct: "performance",
+                analysis: [
+                    "A. performance (n): màn trình diễn",
+                    "B. performer (n): người biểu diễn",
+                    "C. perform (v): biểu diễn",
+                    "D. performing (v-ing): việc biểu diễn"
+                ],
+                translation: "Tôi rất thích màn trình diễn tối nay.",
+                why: "Sau mạo từ 'the' cần một danh từ. Ở đây nói về sự kiện nên chọn performance."
+            },
+            {
+                num: 36,
+                q: "Limit car trips by relying on biking, walking, public ________. (transport)",
+                options: ["transport", "transporter", "transported", "transporting"],
+                correct: "transport",
+                analysis: [
+                    "A. transport (n): giao thông/vận tải",
+                    "B. transporter (n): người vận chuyển",
+                    "C. transported (v-ed): đã vận chuyển",
+                    "D. transporting (v-ing): việc vận chuyển"
+                ],
+                translation: "Hạn chế đi xe hơi bằng cách đi xe đạp, đi bộ hoặc phương tiện công cộng.",
+                why: "Cụm danh từ cố định: 'public transport' (phương tiện công cộng)."
+            },
+            {
+                num: 37,
+                q: "Energy is used to ________ a lot of electrical things. (product)",
+                options: ["produce", "product", "production", "productive"],
+                correct: "produce",
+                analysis: [
+                    "A. produce (v): sản xuất",
+                    "B. product (n): sản phẩm",
+                    "C. production (n): sự sản xuất",
+                    "D. productive (adj): năng suất"
+                ],
+                translation: "Năng lượng được dùng để sản xuất rất nhiều đồ điện tử.",
+                why: "Cấu trúc 'be used to + V-infinitive' chỉ mục đích: được dùng để làm gì."
+            },
+            {
+                num: 38,
+                q: "Although I prepared carefully, I got nervous when giving my ________. (PRESENT)",
+                options: ["presentation", "present", "presenter", "presence"],
+                correct: "presentation",
+                analysis: [
+                    "A. presentation (n): bài thuyết trình",
+                    "B. present (v): trình bày",
+                    "C. presenter (n): người thuyết trình",
+                    "D. presence (n): sự hiện diện"
+                ],
+                translation: "Mặc dù chuẩn bị kỹ, tôi vẫn lo lắng khi làm bài thuyết trình.",
+                why: "Sau tính từ sở hữu 'my' cần danh từ. Cụm 'give a presentation' nghĩa là thuyết trình."
+            },
+            {
+                num: 39,
+                q: "Air ________ is a serious problem in big cities like Tokyo or Shanghai. (POLLUTE)",
+                options: ["pollution", "polluted", "pollute", "pollutant"],
+                correct: "pollution",
+                analysis: [
+                    "A. pollution (n): sự ô nhiễm",
+                    "B. polluted (adj): bị ô nhiễm",
+                    "C. pollute (v): làm ô nhiễm",
+                    "D. pollutant (n): chất gây ô nhiễm"
+                ],
+                translation: "Ô nhiễm không khí là vấn đề nghiêm trọng ở các thành phố lớn.",
+                why: "Cụm danh từ 'Air pollution' đóng vai trò chủ ngữ chính trong câu."
+            },
+            {
+                num: 40,
+                q: "Make a ________ to charity projects. (DONATE)",
+                options: ["donation", "donate", "donor", "donating"],
+                correct: "donation",
+                analysis: [
+                    "A. donation (n): sự quyên góp",
+                    "B. donate (v): quyên góp",
+                    "C. donor (n): người quyên góp",
+                    "D. donating (v-ing): việc quyên góp"
+                ],
+                translation: "Hãy thực hiện một khoản quyên góp cho các dự án từ thiện.",
+                why: "Sau mạo từ 'a' cần danh từ. Cụm 'make a donation' = donate (quyên góp)."
+            },
+            {
+                num: 41,
+                q: "Just by wearing a virtual ________ headset, gamers feel as if they are actually in a new environment. (real)",
+                options: ["reality", "real", "really", "realize"],
+                correct: "reality",
+                analysis: [
+                    "A. reality (n): thực tế",
+                    "B. real (adj): thật",
+                    "C. really (adv): thực sự",
+                    "D. realize (v): nhận ra"
+                ],
+                translation: "Chỉ cần đeo kính thực tế ảo, người chơi cảm thấy như đang ở môi trường mới.",
+                why: "Cụm danh từ cố định: 'Virtual Reality' (VR) - Thực tế ảo."
+            },
+            {
+                num: 42,
+                q: "My classmate is very ________. She talks all the time and often gets into trouble. (TALK)",
+                options: ["talkative", "talker", "talking", "talk"],
+                correct: "talkative",
+                analysis: [
+                    "A. talkative (adj): hay nói/lắm lời",
+                    "B. talker (n): người nói",
+                    "C. talking (v-ing): đang nói",
+                    "D. talk (v): nói"
+                ],
+                translation: "Bạn cùng lớp của tôi rất hay nói.",
+                why: "Sau 'is very' cần một tính từ chỉ tính cách. 'Talks all the time' dẫn đến đáp án talkative."
+            },
+            {
+                num: 43,
+                q: "Most of the audience left in the middle of the ________ movie. (INTEREST)",
+                options: ["uninteresting", "interesting", "interested", "interest"],
+                correct: "uninteresting",
+                analysis: [
+                    "A. uninteresting (adj): không thú vị/chán",
+                    "B. interesting (adj): thú vị",
+                    "C. interested (adj): quan tâm (dùng cho người)",
+                    "D. interest (n): sự quan tâm"
+                ],
+                translation: "Hầu hết khán giả bỏ về giữa chừng bộ phim tẻ nhạt đó.",
+                why: "Khán giả bỏ về (left) chứng tỏ phim dở. Cần tính từ mang nghĩa phủ định 'uninteresting'."
+            },
+            {
+                num: 44,
+                q: "I went to bed too late, and I have been so ________ all morning. (SLEEP)",
+                options: ["sleepy", "sleeping", "sleepless", "sleep"],
+                correct: "sleepy",
+                analysis: [
+                    "A. sleepy (adj): buồn ngủ",
+                    "B. sleeping (v-ing): đang ngủ",
+                    "C. sleepless (adj): mất ngủ",
+                    "D. sleep (v): ngủ"
+                ],
+                translation: "Tôi đi ngủ muộn quá nên cả sáng nay cứ buồn ngủ.",
+                why: "Tính từ chỉ trạng thái cơ thể: 'feel/be sleepy' (buồn ngủ)."
+            },
+            {
+                num: 45,
+                q: "We took the children to a ________ show. (puppetry)",
+                options: ["puppet", "puppetry", "puppeteer", "puppets"],
+                correct: "puppet",
+                analysis: [
+                    "A. puppet (n): con rối",
+                    "B. puppetry (n): nghệ thuật múa rối",
+                    "C. puppeteer (n): nghệ nhân múa rối",
+                    "D. puppets (n): những con rối"
+                ],
+                translation: "Chúng tôi đưa lũ trẻ đi xem một buổi diễn múa rối.",
+                why: "Cụm danh từ ghép: 'puppet show' (buổi diễn múa rối). Danh từ đứng trước bổ nghĩa cho danh từ sau."
+            },
+            {
+                num: 46,
+                q: "Mike couldn't sleep. Today he was tired, so he fell ________ in math class. (SLEEP)",
+                options: ["asleep", "sleepy", "sleeping", "sleep"],
+                correct: "asleep",
+                analysis: [
+                    "A. asleep (adj): trạng thái đang ngủ",
+                    "B. sleepy (adj): buồn ngủ",
+                    "C. sleeping (v-ing): việc ngủ",
+                    "D. sleep (v): ngủ"
+                ],
+                translation: "Mike mệt quá nên đã ngủ thiếp đi trong giờ Toán.",
+                why: "Cụm từ cố định: 'fall asleep' (ngủ thiếp đi/ngủ gật)."
+            },
+            {
+                num: 47,
+                q: "That young man is ________. He often lies to his parents and teachers. (HONEST)",
+                options: ["dishonest", "honest", "honestly", "honesty"],
+                correct: "dishonest",
+                analysis: [
+                    "A. dishonest (adj): không trung thực",
+                    "B. honest (adj): trung thực",
+                    "C. honestly (adv): một cách trung thực",
+                    "D. honesty (n): sự trung thực"
+                ],
+                translation: "Chàng trai đó không trung thực. Anh ta hay nói dối.",
+                why: "Dựa vào hành động 'often lies' (hay nói dối), ta cần tính từ mang nghĩa trái ngược với honest."
+            },
+            {
+                num: 48,
+                q: "The weather in Vietnam is completely ________ from the weather in London. (differ)",
+                options: ["different", "difference", "differ", "differently"],
+                correct: "different",
+                analysis: [
+                    "A. different (adj): khác biệt",
+                    "B. difference (n): sự khác biệt",
+                    "C. differ (v): khác nhau",
+                    "D. differently (adv): một cách khác biệt"
+                ],
+                translation: "Thời tiết Việt Nam hoàn toàn khác với thời tiết ở London.",
+                why: "Cấu trúc: 'be different from something' (khác với cái gì)."
+            },
+            {
+                num: 49,
+                q: "He is ________ about his sister's performance because she was sick. (anxiety)",
+                options: ["anxious", "anxiety", "anxiously", "anxiousness"],
+                correct: "anxious",
+                analysis: [
+                    "A. anxious (adj): lo lắng",
+                    "B. anxiety (n): sự lo lắng",
+                    "C. anxiously (adv): một cách lo lắng",
+                    "D. anxiousness (n): nỗi lo"
+                ],
+                translation: "Anh ấy lo lắng về phần trình diễn của em gái.",
+                why: "Cấu trúc: 'be anxious about something' (lo lắng về điều gì)."
+            },
+            {
+                num: 50,
+                q: "You can't use this library card anymore until you have ________ it. (NEW)",
+                options: ["renewed", "renew", "new", "news"],
+                correct: "renewed",
+                analysis: [
+                    "A. renewed (v-p2): đã gia hạn",
+                    "B. renew (v): gia hạn",
+                    "C. new (adj): mới",
+                    "D. news (n): tin tức"
+                ],
+                translation: "Bạn không thể dùng thẻ thư viện cho tới khi bạn gia hạn nó.",
+                why: "Thì Hiện tại hoàn thành: 'have + V3/ed'. Gia hạn thẻ là 'renew', dạng quá khứ phân từ là 'renewed'."
+            }
+        ];
+
+        let currentQ = 0;
+        let score = 0;
+        let isAnswered = false;
+        let soundEnabled = true;
+
+        // Shuffle logic
+        const shuffledQuiz = [...quizData].sort(() => Math.random() - 0.5);
+        shuffledQuiz.forEach(item => {
+            item.options = [...item.options].sort(() => Math.random() - 0.5);
+        });
+
+        // Audio Context for Gamification sounds
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (!soundEnabled) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(110, audioCtx.currentTime); // A2
+                osc.frequency.linearRampToValueAtTime(55, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.querySelector('.sound-toggle').innerText = soundEnabled ? '🔊' : '🔈';
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            const data = shuffledQuiz[currentQ];
+            document.getElementById('current-q-num').innerText = currentQ + 1;
+            document.getElementById('progress-fill').style.width = `${((currentQ) / shuffledQuiz.length) * 100}%`;
+            
+            // Format question text
+            const formattedQ = data.q.replace(/\((.*?)\)/, '<span class="word-clue">($1)</span>');
+            document.getElementById('question-text').innerHTML = formattedQ;
+            
+            const optionsGrid = document.getElementById('options-grid');
+            optionsGrid.innerHTML = '';
+            
+            data.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt, btn);
+                optionsGrid.appendChild(btn);
+            });
+
+            document.getElementById('explanation-box').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('quiz-card').classList.remove('shake');
+        }
+
+        function checkAnswer(selected, btn) {
+            if (isAnswered) return;
+            isAnswered = true;
+            
+            const data = shuffledQuiz[currentQ];
+            const explanationBox = document.getElementById('explanation-box');
+            
+            // Mark correct/wrong
+            if (selected === data.correct) {
+                btn.classList.add('correct');
+                score++;
+                playSound('correct');
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#8854C0', '#00C9A7', '#FFD700']
+                });
+            } else {
+                btn.classList.add('wrong');
+                document.getElementById('quiz-card').classList.add('shake');
+                playSound('wrong');
+                // Highlight the correct one
+                Array.from(document.querySelectorAll('.option-btn')).forEach(b => {
+                    if (b.innerText === data.correct) b.classList.add('correct');
+                });
+            }
+
+            // Show explanation
+            explanationBox.innerHTML = `
+                <h3>Cô MS Chí Nên giải thích:</h3>
+                <p><strong>1. Phân tích 4 đáp án:</strong></p>
+                ${data.analysis.map(line => `<p style="margin-left: 10px;">• ${line}</p>`).join('')}
+                <p><strong>2. Dịch nghĩa:</strong> "${data.translation}"</p>
+                <p><strong>3. Tại sao chọn đáp án này?</strong> ${data.why}</p>
+            `;
+            explanationBox.style.display = 'block';
+            document.getElementById('next-btn').style.display = 'block';
+            
+            // Scroll to explanation
+            setTimeout(() => {
+                explanationBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        function nextQuestion() {
+            currentQ++;
+            if (currentQ < shuffledQuiz.length) {
+                loadQuestion();
+            } else {
+                showSummary();
+            }
+        }
+
+        function showSummary() {
+            document.getElementById('summary-overlay').style.display = 'flex';
+            document.getElementById('final-score').innerText = `${score}/${shuffledQuiz.length}`;
+            
+            let msg = "";
+            const percent = (score / shuffledQuiz.length) * 100;
+            if (percent === 100) msg = "SIÊU ĐỈNH! Bạn là thiên tài Word Form rồi đấy! 🌟";
+            else if (percent >= 80) msg = "Tuyệt vời! Kiến thức của bạn rất vững chắc. 🔥";
+            else if (percent >= 50) msg = "Khá tốt! Hãy ôn lại các lỗi sai một chút nhé. 👍";
+            else msg = "Đừng nản chí! Đọc kỹ giải thích của cô để tiến bộ hơn nhé. 💪";
+            
+            document.getElementById('final-msg').innerText = msg;
+        }
+
+        // Init
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>

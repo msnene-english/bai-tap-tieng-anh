@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học Tiếng Anh cùng Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --p-word: #3b82f6;      /* Xanh dương: Từ vựng */
+            --p-mean: #a34223;      /* Đất nung: Nghĩa tiếng Việt */
+            --p-grammar: #ef4444;   /* Đỏ gạch chân: Ngữ pháp */
+            --hl-green: #16a34a;    /* Xanh lá: Đáp án đúng/Từ khóa chính */
+            --hl-red: #991b1b;      /* Đỏ sậm: Lỗi sai/Bẫy */
+            --glass: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.5);
+        }
+
+        * { box-sizing: border-box; font-family: 'Quicksand', sans-serif; }
+
+        body {
+            margin: 0; padding: 0; height: 100vh; overflow: hidden;
+            background: linear-gradient(-45deg, #ffafcc, #bde0fe, #ffc8dd, #a2d2ff);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex; flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Tương tác nổi Emoji SVG */
+        .bg-pattern {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none;
+        }
+
+        /* Ghi chú Cố định - Sticky Warning */
+        .sticky-warning {
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(255, 243, 205, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px; text-align: center; font-weight: 700; font-size: 0.9rem;
+            color: #856404; border-bottom: 2px solid #ffeeba; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        header { text-align: center; padding: 10px; flex-shrink: 0; }
+        header h5 { margin: 0; font-size: 0.85rem; color: #444; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;}
+        header h1 { margin: 5px 0; font-family: 'Comfortaa', cursive; font-size: 1.8rem; color: #2d3436; text-shadow: 1px 1px 3px rgba(255,255,255,0.7); }
+
+        .main-layout {
+            display: flex; flex: 1; overflow: hidden; padding: 10px 20px 20px; gap: 20px;
+        }
+
+        /* Glassmorphism Panels */
+        .column {
+            flex: 1; overflow-y: auto; scroll-behavior: smooth;
+            background: var(--glass);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border); border-radius: 25px;
+            padding: 30px; box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+        }
+        
+        .column::-webkit-scrollbar { width: 8px; }
+        .column::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.6); border-radius: 10px; }
+
+        /* Reading Section */
+        .passage h2 { color: #1e293b; border-left: 6px solid #ffafcc; padding-left: 15px; font-size: 1.4rem; margin-top: 0; }
+        .paragraph { margin-bottom: 25px; line-height: 1.8; font-size: 1.1rem; color: #0f172a; font-weight: 500; }
+        
+        .trans-btn {
+            background: linear-gradient(135deg, #a2d2ff, #bde0fe); border: 1px solid white;
+            padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;
+            cursor: pointer; margin-top: 8px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #333;
+        }
+        .trans-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 10px rgba(0,0,0,0.1); }
+        .trans-content {
+            display: none; margin-top: 15px; padding: 15px;
+            background: rgba(255,255,255,0.5); border-left: 4px solid #ffafcc;
+            border-radius: 10px; font-style: italic; color: #334155; line-height: 1.6;
+        }
+
+        /* Glossary Table */
+        .glossary-title { color: #1e293b; border-left: 6px solid #a2d2ff; padding-left: 15px; font-size: 1.4rem; margin-top: 40px; }
+        .glossary { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.4); border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .glossary th { background: #ffc8dd; padding: 12px; text-align: left; font-size: 1rem; color: #333; }
+        .glossary td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.95rem; font-weight: 500; color: #1e293b; }
+        .glossary tr:last-child td { border-bottom: none; }
+
+        /* Quiz Section */
+        .q-card {
+            background: rgba(255,255,255,0.5); padding: 25px; border-radius: 20px;
+            margin-bottom: 30px; box-shadow: 0 6px 20px rgba(0,0,0,0.04);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        .q-text { font-weight: 700; font-size: 1.2rem; margin-bottom: 20px; color: #0f172a; line-height: 1.5; }
+        .options { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .opt-btn {
+            background: white; border: 2px solid transparent; padding: 14px 20px; border-radius: 15px;
+            text-align: left; font-weight: 600; font-size: 1.05rem; cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.05); color: #334155;
+        }
+        .opt-btn:hover:not(.disabled) { transform: translateY(-3px); background: #f8fafc; border-color: #cbd5e1; }
+        .opt-btn.correct { background: #4ade80 !important; color: white; box-shadow: 0 4px 0 #166534; border-color: #4ade80; }
+        .opt-btn.wrong { background: #fb7185 !important; color: white; box-shadow: 0 4px 0 #991b1b; border-color: #fb7185; animation: shake 0.4s; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* Giải thích Master */
+        .exp-box {
+            display: none; margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.85);
+            border-radius: 15px; border-left: 5px solid #3b82f6; font-size: 1.05rem; line-height: 1.7;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .p-word { color: var(--p-word); font-weight: normal; } /* Chữ tiếng Anh không bôi đậm */
+        .p-mean { color: var(--p-mean); font-weight: 700; }    /* Nghĩa tiếng Việt bôi đậm */
+        .p-grammar { text-decoration: underline wavy var(--p-grammar); font-weight: 700; }
+        .hl-green { color: var(--hl-green); font-weight: 700; }
+        .hl-red { color: var(--hl-red); font-weight: 700; }     /* Đã bỏ gạch ngang, chỉ giữ màu đỏ và in đậm */
+        .quote-box { background: #f1f5f9; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #94a3b8; font-family: Georgia, serif; font-style: italic;}
+
+        .submit-all {
+            width: 100%; padding: 18px; background: linear-gradient(135deg, #4ade80, #22c55e); color: white;
+            border: none; border-radius: 20px; font-size: 1.3rem; font-weight: 800; cursor: pointer;
+            box-shadow: 0 6px 0 #15803d; margin-top: 10px; transition: 0.2s;
+        }
+        .submit-all:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #15803d; }
+        .submit-all:active { transform: translateY(4px); box-shadow: 0 2px 0 #15803d; }
+
+        /* Popup */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(8px); }
+        .popup { background: white; padding: 40px; border-radius: 30px; text-align: center; width: 90%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .popup h2 { margin-top: 0; color: #1e293b; font-family: 'Comfortaa', cursive; }
+        .popup input { width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #cbd5e1; margin: 20px 0; font-size: 1.1rem; outline: none; transition: 0.3s; }
+        .popup input:focus { border-color: #a2d2ff; box-shadow: 0 0 0 4px rgba(162, 210, 255, 0.3); }
+        .score-num { font-size: 3.5rem; font-weight: 800; color: #22c55e; margin: 5px 0; }
+        .scale-10 { font-size: 1.5rem; font-weight: 700; color: #ef4444; margin-bottom: 20px; background: #fee2e2; padding: 5px 15px; border-radius: 20px; display: inline-block; }
+        .meme-img { width: 100%; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .comment { font-size: 1.1rem; font-weight: 600; color: #475569; margin-bottom: 20px; line-height: 1.5; }
+
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; overflow-y: auto; }
+            .column { overflow-y: visible; flex: none; }
+            body { overflow: auto; height: auto; min-height: 100vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG Floating Patterns -->
+    <svg class="bg-pattern" viewBox="0 0 100 100">
+        <text x="10" y="15" font-size="6" opacity="0.4" transform="rotate(-15, 10, 15)">📖</text>
+        <text x="85" y="25" font-size="8" opacity="0.4" transform="rotate(20, 85, 25)">✈️</text>
+        <text x="15" y="85" font-size="7" opacity="0.4" transform="rotate(10, 15, 85)">📺</text>
+        <text x="80" y="80" font-size="9" opacity="0.4" transform="rotate(-10, 80, 80)">🌏</text>
+        <text x="50" y="50" font-size="10" opacity="0.2">🚀</text>
+    </svg>
+
+    <!-- Bảng nhắc nhở Sticky -->
+    <div class="sticky-warning">
+        ⚠️ Lời nhắc từ Ms MS Chí Nên: Tự giác tra cứu từ mới để hiểu rõ nội dung từng câu hỏi bằng Google Dịch/Cambridge. Chỉ có đọc kỹ giải thích, ghi lại từ/cấu trúc mới vào vở để học thì mới thực sự giỏi lên. Làm lướt cho xong là tốn thời gian vô ích! 🎯
+    </div>
+
+    <header>
+        <h5>Giáo viên tạo: Ms MS Chí Nên</h5>
+        <h1>Đấu Trường Ngôn Ngữ Master 🏆</h1>
+    </header>
+
+    <div class="main-layout">
+        <!-- CỘT BÊN TRÁI: BÀI ĐỌC -->
+        <div class="column passage">
+            <h2>Part I: Fill in the blank with a word from the box.</h2>
+            <div style="background: rgba(255,255,255,0.6); padding: 15px; border-radius: 15px; margin-bottom: 20px; font-weight: bold; color: #d97706; text-align: center; word-spacing: 10px;">
+                [ models &nbsp; by &nbsp; through &nbsp; origami &nbsp; together &nbsp; upstream &nbsp; folding &nbsp; schools ]
+            </div>
+            <div class="paragraph">
+                Origami is the Japanese word for paper (1) ____. ORI means to fold and KAMI means paper. (2) ____, they form the word, "origami". It is an art form that has been handed down from parent to child (3) ____ many generations.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Origami là từ tiếng Nhật có nghĩa là gấp giấy. ORI nghĩa là gấp và KAMI nghĩa là giấy. Khi kết hợp cùng nhau, chúng tạo thành từ "origami". Đây là một loại hình nghệ thuật được truyền từ cha mẹ sang con cái xuyên suốt nhiều thế hệ.</div>
+            </div>
+            
+            <div class="paragraph">
+                Origami involves the creation of paper forms usually entirely (4) ____ folding. Animals, birds, fish, geometric shapes, puppets, toys and masks are among the (5) ____ that even very young children can learn to make in just one sitting.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Origami bao gồm việc sáng tạo ra các hình thể bằng giấy thường hoàn toàn bằng cách gấp. Động vật, chim, cá, các hình khối hình học, con rối, đồ chơi và mặt nạ nằm trong số những mô hình mà ngay cả trẻ em rất nhỏ cũng có thể học làm chỉ trong một lần ngồi.</div>
+            </div>
+
+            <div class="paragraph">
+                In Japan, at one time origami was taught in (6) ____ but today, children are generally taught origami at home. Holidays are celebrated with colorful (7) ____ decorations made by the family. On children’s day (formerly boy’s day), children make colorful carp: a fish that swims (8) ____, against the current. This symbolizes strength.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Ở Nhật Bản, đã từng có thời origami được dạy trong trường học, nhưng ngày nay, trẻ em thường được dạy origami tại nhà. Các ngày lễ được ăn mừng với những đồ trang trí origami đầy màu sắc do gia đình làm. Vào ngày thiếu nhi (trước đây là ngày của bé trai), trẻ em làm những con cá chép nhiều màu: một loài cá bơi ngược dòng, chống lại dòng nước. Điều này tượng trưng cho sức mạnh.</div>
+            </div>
+
+            <h2>Part II: Leisure in the UK</h2>
+            <div class="paragraph">
+                The British spend their free time in different ways. People generally use it to relax, but many people also do voluntary work, especially for charities.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Người Anh dành thời gian rảnh rỗi của họ theo nhiều cách khác nhau. Mọi người thường dùng nó để thư giãn, nhưng cũng có nhiều người làm công việc tình nguyện, đặc biệt là cho các tổ chức từ thiện.</div>
+            </div>
+
+            <div class="paragraph">
+                A lot of free time is spent in the home, where the most popular leisure activity is watching television, the average viewing time being 25 hours per week. Reading is also a favourite way of spending leisure time. The British spend a lot of time reading newspapers and magazines. In the summer gardening is popular, and in winter it is often replaced by ‘do-it-yourself’, when people spend time improving or repairing their homes.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Rất nhiều thời gian rảnh được dành ở nhà, nơi hoạt động giải trí phổ biến nhất là xem tivi, thời gian xem trung bình là 25 giờ mỗi tuần. Đọc sách cũng là một cách yêu thích để tiêu khiển. Người Anh dành nhiều thời gian để đọc báo và tạp chí. Vào mùa hè, làm vườn rất phổ biến, và vào mùa đông nó thường được thay thế bằng việc 'tự tay làm (DIY)', khi mọi người dành thời gian cải tạo hoặc sửa chữa nhà cửa của họ.</div>
+            </div>
+
+            <div class="paragraph">
+                Some leisure activities are mostly or entirely social. Inviting friends for a drink or a meal at home is the most usual one. Sometimes people join friends for a drink in a pub, or have dinner in a restaurant.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Một số hoạt động giải trí hầu như hoặc hoàn toàn mang tính xã hội (giao lưu). Mời bạn bè đến nhà uống nước hoặc dùng bữa là hoạt động phổ biến nhất. Đôi khi mọi người tụ tập với bạn bè để uống rượu ở quán rượu, hoặc ăn tối ở nhà hàng.</div>
+            </div>
+
+            <div class="paragraph">
+                The extra time available at weekends means that some leisure activities, many of them to do with sport, normally take place only then. Traditional spectator sports include football, cricket, horse racing, motor racing and motorcycle racing. Popular forms of exercise are swimming, tennis, ice skating or roller-skating, cycling, climbing, and hill or country walking.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Thời gian dư dả vào cuối tuần đồng nghĩa với việc một số hoạt động giải trí, nhiều trong số đó liên quan đến thể thao, thường chỉ diễn ra vào lúc đó. Các môn thể thao có khán giả truyền thống bao gồm bóng đá, cricket, đua ngựa, đua xe ô tô và đua xe máy. Các hình thức tập thể dục phổ biến là bơi lội, quần vợt, trượt băng hoặc trượt patin, đạp xe, leo núi, và đi bộ trên đồi hoặc vùng nông thôn.</div>
+            </div>
+
+            <div class="paragraph">
+                Families often have a ‘day out’ at the weekend, especially in summer, with a visit to a local event such as a festival, fair or show. Young people especially go to clubs and discos, while people of all ages go to the theatre, the cinema, art exhibitions and concerts.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Các gia đình thường có một 'ngày ra ngoài' vào cuối tuần, đặc biệt là vào mùa hè, với chuyến tham quan một sự kiện địa phương như lễ hội, hội chợ hoặc buổi biểu diễn. Những người trẻ tuổi đặc biệt hay đến các câu lạc bộ và vũ trường, trong khi mọi người ở mọi lứa tuổi đều đến nhà hát, rạp chiếu phim, triển lãm nghệ thuật và các buổi hòa nhạc.</div>
+            </div>
+
+            <h3 class="glossary-title">Bảng Từ Vựng Học Thuật (Glossary)</h3>
+            <table class="glossary">
+                <tr><th>English Word</th><th>Type</th><th>Vietnamese Meaning</th></tr>
+                <tr><td>Generation</td><td>n.</td><td>Thế hệ</td></tr>
+                <tr><td>Geometric</td><td>adj.</td><td>Thuộc về hình học</td></tr>
+                <tr><td>Puppet</td><td>n.</td><td>Con rối</td></tr>
+                <tr><td>Upstream</td><td>adv.</td><td>Ngược dòng nước</td></tr>
+                <tr><td>Symbolize</td><td>v.</td><td>Tượng trưng cho</td></tr>
+                <tr><td>Voluntary</td><td>adj.</td><td>Tình nguyện, tự nguyện</td></tr>
+                <tr><td>Charity</td><td>n.</td><td>Tổ chức từ thiện</td></tr>
+                <tr><td>Leisure</td><td>n.</td><td>Thời gian rảnh rỗi, sự thư giãn</td></tr>
+                <tr><td>Spectator</td><td>n.</td><td>Khán giả (xem thể thao ngoài trời)</td></tr>
+                <tr><td>Exhibition</td><td>n.</td><td>Cuộc triển lãm</td></tr>
+            </table>
+        </div>
+
+        <!-- CỘT BÊN PHẢI: BÀI TẬP -->
+        <div class="column" id="quiz-area">
+            <!-- JS sẽ tự động bơm 18 câu hỏi vào đây -->
+        </div>
+    </div>
+
+    <!-- POPUPS -->
+    <div class="overlay" id="name-overlay">
+        <div class="popup">
+            <h2>Nhập tên để nộp bài ✍️</h2>
+            <input type="text" id="student-name" placeholder="Tên của con là (VD: Nguyễn Văn A)..." autocomplete="off">
+            <button class="submit-all" onclick="finishTest()">XEM ĐIỂM & ĐÁNH GIÁ 🚀</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="result-overlay">
+        <div class="popup">
+            <h2 id="final-name"></h2>
+            <div class="score-num" id="final-score">0/18</div>
+            <div class="scale-10" id="grade-10">Điểm hệ 10: 0.0</div>
+            <img src="" class="meme-img" id="meme">
+            <div class="comment" id="comment"></div>
+            <button class="submit-all" onclick="location.reload()">🔄 LÀM LẠI ĐỂ ĐẠT ĐIỂM CAO HƠN</button>
+        </div>
+    </div>
+
+    <!-- AUDIO FILES -->
+    <audio id="s-ding" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" preload="auto"></audio>
+    <audio id="s-wrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Am_thanh_meme_Oi_doi_oi_huan_hoa_hong-www_tiengdong_com.mp3" preload="auto"></audio>
+    <audio id="s-intro" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_7wcKV5pKUrQYWyi7XgktJM.mp3" preload="auto"></audio>
+
+    <script>
+        const quizData = [
+            // === PART I ===
+            { id: 1, q: "Câu (1): Origami is the Japanese word for paper ____.", options: ["folding", "models", "together", "origami"], correct: "folding", 
+              exp: "Dịch câu hỏi: Origami là từ tiếng Nhật chỉ việc ____ giấy.<br>A. <span class='p-word'>folding</span> (<span class='p-mean'>n. việc gấp</span>) ✅ <span class='hl-green'>Đúng vì Origami là nghệ thuật gấp giấy.</span><br>B. <span class='p-word'>models</span> (<span class='p-mean'>n. mô hình</span>) ❌ Sai ngữ nghĩa.<br>C. <span class='p-word'>together</span> (<span class='p-mean'>adv. cùng nhau</span>) ❌ Sai loại từ.<br>D. <span class='p-word'>origami</span> ❌ Sai vì lặp lại chính từ vựng đang giải thích.<br><div class='quote-box'>🔍 Dẫn chứng: 'ORI means to fold and KAMI means paper.'</div>👉 Dịch bằng chứng: 'ORI có nghĩa là <span class='hl-red'>gấp</span> và KAMI có nghĩa là giấy.'" },
+            { id: 2, q: "Câu (2): ____, they form the word, 'origami'.", options: ["Together", "Through", "By", "Models"], correct: "Together",
+              exp: "Dịch câu hỏi: ____, chúng tạo thành từ 'origami'.<br>A. <span class='p-word'>Together</span> (<span class='p-mean'>adv. Cùng với nhau</span>) ✅ <span class='hl-green'>Đúng. Ghép 2 chữ ORI và KAMI lại cùng nhau.</span><br>B. <span class='p-word'>Through</span> (<span class='p-mean'>prep. Xuyên qua</span>) ❌ Sai ngữ nghĩa.<br>C. <span class='p-word'>By</span> (<span class='p-mean'>prep. Bởi</span>) ❌ Sai ngữ nghĩa.<br>D. <span class='p-word'>Models</span> (<span class='p-mean'>n. Mô hình</span>) ❌ Sai loại từ, cần trạng từ ở đầu câu.<br><div class='quote-box'>🔍 Phân tích: Từ câu trước giải thích 2 thành phần 'ORI' và 'KAMI'. Khi đặt chúng <span class='hl-green'>cùng nhau (together)</span> sẽ tạo ra chữ ghép.</div>" },
+            { id: 3, q: "Câu (3): handed down from parent to child ____ many generations.", options: ["through", "by", "with", "upstream"], correct: "through",
+              exp: "Dịch câu hỏi: được truyền lại từ cha mẹ sang con cái ____ nhiều thế hệ.<br>A. <span class='p-word'>through</span> (<span class='p-mean'>prep. qua, xuyên suốt</span>) ✅ <span class='hl-green'>Đúng. Đi kèm với thời gian tạo thành cụm <span class='p-grammar'>through many generations</span> (trải qua nhiều thế hệ).</span><br>B, C, D ❌ Sai giới từ hoặc ngữ nghĩa.<br><div class='quote-box'>🔍 Dẫn chứng: 'handed down from parent to child through many generations.'</div>👉 Dịch: 'được truyền từ cha mẹ sang con cái <span class='hl-red'>qua</span> nhiều thế hệ.'" },
+            { id: 4, q: "Câu (4): creation of paper forms usually entirely ____ folding.", options: ["by", "through", "schools", "together"], correct: "by",
+              exp: "Dịch câu hỏi: sự sáng tạo ra các hình thể bằng giấy thường hoàn toàn ____ việc gấp.<br>A. <span class='p-word'>by</span> (<span class='p-mean'>prep. bằng cách</span>) ✅ <span class='hl-green'>Đúng. Cấu trúc chỉ phương pháp: <span class='p-grammar'>by + V-ing/N</span> (bằng cách làm gì đó).</span><br>B. <span class='p-word'>through</span> ❌ 'through' thường chỉ phương tiện/quá trình, nhưng 'by folding' là collocation (cụm cố định) tự nhiên hơn cho hành động thủ công.<br><div class='quote-box'>🔍 Dẫn chứng: 'creation of paper forms usually entirely by folding.'</div>👉 Dịch: 'sáng tạo ra các hình thể bằng giấy thường hoàn toàn <span class='hl-red'>bằng cách</span> gấp.'" },
+            { id: 5, q: "Câu (5): Animals, birds... are among the ____ that even very young children can learn...", options: ["models", "schools", "origami", "folding"], correct: "models",
+              exp: "Dịch câu hỏi: Động vật, chim chóc... nằm trong số các ____ mà trẻ nhỏ cũng có thể học...<br>A. <span class='p-word'>models</span> (<span class='p-mean'>n. mô hình</span>) ✅ <span class='hl-green'>Đúng vì động vật, chim, cá làm từ giấy được gọi chung là các mô hình.</span><br>B, C, D ❌ Sai hoàn toàn ngữ nghĩa.<br><div class='quote-box'>🔍 Dẫn chứng: 'Animals, birds, fish, geometric shapes... are among the models'</div>👉 Dịch: 'Động vật, chim, cá... nằm trong số các <span class='hl-red'>mô hình</span>...'" },
+            { id: 6, q: "Câu (6): at one time origami was taught in ____ but today... at home.", options: ["schools", "models", "folding", "upstream"], correct: "schools",
+              exp: "Dịch câu hỏi: đã từng có thời origami được dạy ở ____ nhưng ngày nay... tại nhà.<br>A. <span class='p-word'>schools</span> (<span class='p-mean'>n. trường học</span>) ✅ <span class='hl-green'>Đúng. Tạo sự tương phản đối lập hoàn hảo với 'at home' (tại nhà) ở vế sau.</span><br>B, C, D ❌ Không tạo được logic câu.<br><div class='quote-box'>🔍 Dẫn chứng: 'origami was taught in schools but today, children are generally taught origami at home.'</div>👉 Dịch: 'origami từng được dạy ở <span class='hl-red'>trường học</span> nhưng ngày nay... được dạy ở nhà.'" },
+            { id: 7, q: "Câu (7): Holidays are celebrated with colorful ____ decorations.", options: ["origami", "folding", "paper", "schools"], correct: "origami",
+              exp: "Dịch câu hỏi: Các ngày lễ được ăn mừng với các đồ trang trí ____ đầy màu sắc.<br>A. <span class='p-word'>origami</span> (<span class='p-mean'>n. gấp giấy nghệ thuật</span>) ✅ <span class='hl-green'>Đúng. Bổ nghĩa cho danh từ decorations. (Lưu ý: trong box từ không có chữ paper để điền chỗ này, nên origami là lựa chọn duy nhất đúng).</span><br>B, C, D ❌ Sai logic hoặc không có trong danh sách từ cho sẵn hợp lý.<br><div class='quote-box'>🔍 Dẫn chứng: 'celebrated with colorful origami decorations'</div>👉 Dịch: 'ăn mừng với các đồ trang trí <span class='hl-red'>origami</span> đầy màu sắc.'" },
+            { id: 8, q: "Câu (8): a fish that swims ____, against the current.", options: ["upstream", "together", "models", "through"], correct: "upstream",
+              exp: "Dịch câu hỏi: một loài cá bơi ____, ngược lại với dòng nước.<br>A. <span class='p-word'>upstream</span> (<span class='p-mean'>adv. ngược dòng</span>) ✅ <span class='hl-green'>Đúng. Cụm từ này đồng nghĩa và bổ trợ bổ sung ý nghĩa cho 'against the current' (chống lại dòng nước).</span><br>B, C, D ❌ Sai ngữ nghĩa.<br><div class='quote-box'>🔍 Dẫn chứng: 'a fish that swims upstream, against the current.'</div>👉 Dịch: 'một loài cá bơi <span class='hl-red'>ngược dòng</span>, chống lại dòng nước.'" },
+
+            // === PART II: T/F ===
+            { id: 9, q: "Task A - Q1: Many British people use their free time to help people in need.", options: ["True", "False"], correct: "True",
+              exp: "Dịch câu hỏi: Nhiều người Anh dùng thời gian rảnh để giúp đỡ những người gặp khó khăn.<br>✅ <span class='hl-green'>True (Đúng)</span>. ❌ <span class='hl-red'>False (Sai)</span>.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 1): 'many people also do voluntary work, especially for charities.'</div>👉 Dịch: 'nhiều người cũng làm công việc tình nguyện, đặc biệt là cho <span class='hl-red'>các tổ chức từ thiện (nơi giúp đỡ người khó khăn)</span>.'" },
+            { id: 10, q: "Task A - Q2: In the summer, the British prefer indoor activities.", options: ["True", "False"], correct: "False",
+              exp: "Dịch câu hỏi: Vào mùa hè, người Anh thích các hoạt động TRONG NHÀ (indoor).<br>✅ <span class='hl-green'>False (Sai)</span>. ❌ <span class='hl-red'>True (Đúng)</span>.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 2): 'In the summer gardening is popular...'</div>👉 Dịch: 'Vào mùa hè, <span class='hl-red'>làm vườn (đây là hoạt động OUTDOOR - ngoài trời)</span> lại rất phổ biến.' -> Câu đề bài nói indoor là sai sự thật." },
+            { id: 11, q: "Task A - Q3: All free time activities are individual activities.", options: ["True", "False"], correct: "False",
+              exp: "Dịch câu hỏi: TẤT CẢ các hoạt động thời gian rảnh đều là hoạt động cá nhân (individual).<br>✅ <span class='hl-green'>False (Sai)</span>. ❌ <span class='hl-red'>True (Đúng)</span>.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 3): 'Some leisure activities are mostly or entirely social.'</div>👉 Dịch: 'Một số hoạt động giải trí hầu như hoặc hoàn toàn mang tính <span class='hl-red'>xã hội/tập thể (social)</span>.' -> Chữ ALL trong câu hỏi là cái bẫy tuyệt đối." },
+            { id: 12, q: "Task A - Q4: Sometimes people go with their friends to a pub or restaurant.", options: ["True", "False"], correct: "True",
+              exp: "Dịch câu hỏi: Thỉnh thoảng người ta cùng bạn bè đến quán rượu (pub) hoặc nhà hàng (restaurant).<br>✅ <span class='hl-green'>True (Đúng)</span>. ❌ <span class='hl-red'>False (Sai)</span>.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 3): 'Sometimes people join friends for a drink in a pub, or have dinner in a restaurant.'</div>👉 Dịch: 'Thỉnh thoảng mọi người tụ tập bạn bè để uống ở <span class='hl-red'>quán rượu</span>, hoặc ăn tối ở <span class='hl-red'>nhà hàng</span>.'" },
+            { id: 13, q: "Task A - Q5: Most British people watch or do sports at the weekend.", options: ["True", "False"], correct: "True",
+              exp: "Dịch câu hỏi: Hầu hết người Anh xem hoặc chơi thể thao vào cuối tuần.<br>✅ <span class='hl-green'>True (Đúng)</span>. ❌ <span class='hl-red'>False (Sai)</span>.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 4): 'The extra time available at weekends means that some leisure activities, many of them to do with sport, normally take place only then.'</div>👉 Dịch: 'Thời gian dư dả vào cuối tuần đồng nghĩa với việc nhiều hoạt động, rất nhiều trong số đó <span class='hl-red'>liên quan đến thể thao</span>, thường chỉ diễn ra vào lúc đó.'" },
+            { id: 14, q: "Task A - Q6: British young people don’t like going to the movies.", options: ["True", "False"], correct: "False",
+              exp: "Dịch câu hỏi: Giới trẻ Anh KHÔNG THÍCH đi xem phim.<br>✅ <span class='hl-green'>False (Sai)</span>. ❌ <span class='hl-red'>True (Đúng)</span>.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 5): 'while people of all ages go to the theatre, the cinema...'</div>👉 Dịch: 'trong khi mọi người ở <span class='hl-red'>mọi lứa tuổi (tức là có bao gồm giới trẻ)</span> đều đi xem kịch, đi <span class='hl-red'>rạp chiếu phim</span>...'" },
+
+            // === PART II: MCQs (Chuyển từ tự luận) ===
+            { id: 15, q: "Task B - Q1: What’s the most popular free time activity in the UK?", options: ["Watching television", "Reading newspapers", "Doing DIY", "Gardening"], correct: "Watching television",
+              exp: "Dịch câu hỏi: Hoạt động rảnh rỗi PHỔ BIẾN NHẤT ở Anh là gì?<br>A. <span class='p-word'>Watching television</span> (<span class='p-mean'>Xem tivi</span>) ✅ <span class='hl-green'>Đúng.</span><br>B, C, D ❌ Sai vì các hoạt động này tuy có phổ biến nhưng không phải là 'nhất'.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 2): 'the most popular leisure activity is watching television'</div>👉 Dịch: 'hoạt động giải trí phổ biến NHẤT là <span class='hl-red'>xem tivi</span>.'" },
+            { id: 16, q: "Task B - Q2: How many hours a week do the British watch TV?", options: ["About 25 hours", "About 15 hours", "About 35 hours", "About 20 hours"], correct: "About 25 hours",
+              exp: "Dịch câu hỏi: Người Anh xem TV bao nhiêu giờ một tuần?<br>A. <span class='p-word'>About 25 hours</span> (<span class='p-mean'>Khoảng 25 giờ</span>) ✅ <span class='hl-green'>Đúng.</span><br>B, C, D ❌ Sai số liệu trong bài đọc cung cấp.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 2): 'the average viewing time being 25 hours per week.'</div>👉 Dịch: 'thời gian xem trung bình là <span class='hl-red'>25 giờ</span> mỗi tuần.'" },
+            { id: 17, q: "Task B - Q3: In winter, what do the British often do in their spare time?", options: ["DIY / improving or repairing their homes", "Gardening", "Going for a walk", "Playing cricket"], correct: "DIY / improving or repairing their homes",
+              exp: "Dịch câu hỏi: Vào mùa ĐÔNG, người Anh thường làm gì trong thời gian rảnh rỗi?<br>A. <span class='p-word'>DIY / improving or repairing their homes</span> (<span class='p-mean'>Tự làm đồ / cải tạo hoặc sửa chữa nhà cửa</span>) ✅ <span class='hl-green'>Đúng.</span><br>B. <span class='p-word'>Gardening</span> ❌ Sai bẫy mùa (làm vườn là vào mùa hè).<br>C, D ❌ Không được đề cập làm vào mùa đông.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 2): 'in winter it is often replaced by ‘do-it-yourself’, when people spend time improving or repairing their homes.'</div>👉 Dịch: 'vào mùa đông, nó thường được thay thế bằng <span class='hl-red'>‘tự tay làm (DIY)’</span>, khi mọi người dành thời gian cải tạo hoặc <span class='hl-red'>sửa chữa nhà cửa</span>.'" },
+            { id: 18, q: "Task B - Q4: Which sports do many British people enjoy WATCHING?", options: ["Football, cricket, horse racing, motor racing and motorcycle racing.", "Tennis, ice skating, climbing.", "Swimming, cycling, walking.", "Basketball, volleyball, badminton."], correct: "Football, cricket, horse racing, motor racing and motorcycle racing.",
+              exp: "Dịch câu hỏi: Người Anh thích XEM những môn thể thao nào? (Từ khóa: WATCHING = Spectator sports).<br>A. <span class='p-word'>Football, cricket...</span> (<span class='p-mean'>Bóng đá, cricket...</span>) ✅ <span class='hl-green'>Đúng.</span><br>B, C. ❌ Sai bẫy: Đây là các hình thức ĐỂ TẬP (forms of exercise), chứ không phải để XEM.<br>D. ❌ Không có thông tin trong bài.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 4): 'Traditional spectator sports include football, cricket, horse racing, motor racing and motorcycle racing.'</div>👉 Dịch: 'Các môn thể thao có khán giả truyền thống (để xem) bao gồm <span class='hl-red'>bóng đá, cricket, đua ngựa, đua xe ô tô và đua xe máy</span>.'" }
+        ];
+
+        let score = 0;
+        let answeredQuestions = 0;
+        let hasPlayedIntro = false;
+
+        // Shuffle thuật toán xáo trộn mảng
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Ẩn/Hiện dịch đoạn văn
+        function toggleT(btn) {
+            const content = btn.nextElementSibling;
+            if(content.style.display === "block") {
+                content.style.display = "none";
+                btn.innerText = "Mở dịch đoạn này 🌟";
+                btn.style.background = "linear-gradient(135deg, #a2d2ff, #bde0fe)";
+            } else {
+                content.style.display = "block";
+                btn.innerText = "Thu gọn dịch ❌";
+                btn.style.background = "#ffc8dd";
+            }
+        }
+
+        // Khởi tạo bài tập
+        function initQuiz() {
+            const quizArea = document.getElementById('quiz-area');
+            
+            quizData.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'q-card';
+                
+                // Trộn đáp án để chống học vẹt (Gamification)
+                const shuffledOptions = shuffleArray([...item.options]);
+                
+                let optionsHTML = '';
+                shuffledOptions.forEach(opt => {
+                    // Truyền chuỗi an toàn bằng cách dùng escape quotes hoặc dataset. Ở đây truyền cứng vào hàm.
+                    // Xử lý chuỗi nháy đơn bên trong đáp án (nếu có)
+                    const safeOpt = opt.replace(/'/g, "\\'");
+                    optionsHTML += `<button class="opt-btn" onclick="checkAnswer(this, ${item.id}, '${safeOpt}')">${opt}</button>`;
+                });
+
+                card.innerHTML = `
+                    <div class="q-text">💡 ${item.q}</div>
+                    <div class="options" id="opts-${item.id}">
+                        ${optionsHTML}
+                    </div>
+                    <div class="exp-box" id="exp-${item.id}"></div>
+                `;
+                quizArea.appendChild(card);
+            });
+
+            const submitBtn = document.createElement('button');
+            submitBtn.className = 'submit-all';
+            submitBtn.innerHTML = "🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ";
+            submitBtn.onclick = () => {
+                if (answeredQuestions < quizData.length) {
+                    alert("⚠️ Cảnh báo từ Ms MS Chí Nên: Con chưa làm hết bài! Hãy hoàn thành toàn bộ 18 câu trước khi nộp nhé!");
+                    return;
+                }
+                document.getElementById('name-overlay').style.display = 'flex';
+                document.getElementById('student-name').focus();
+            };
+            quizArea.appendChild(submitBtn);
+
+            // Bắt sự kiện click đầu tiên vào trang để phát Intro Audio
+            document.body.addEventListener('click', () => {
+                if(!hasPlayedIntro) {
+                    const introAudio = document.getElementById('s-intro');
+                    introAudio.play().catch(e => console.log("Trình duyệt chặn autoplay audio"));
+                    hasPlayedIntro = true;
+                }
+            });
+        }
+
+        // Xử lý khi chọn đáp án
+        function checkAnswer(btn, qId, selectedOption) {
+            const questionData = quizData.find(q => q.id === qId);
+            const optContainer = document.getElementById(`opts-${qId}`);
+            const allButtons = optContainer.querySelectorAll('.opt-btn');
+            const expBox = document.getElementById(`exp-${qId}`);
+
+            // Chống click nhiều lần
+            if (btn.classList.contains('disabled')) return;
+
+            // Khóa tất cả nút trong câu này
+            allButtons.forEach(b => {
+                b.classList.add('disabled');
+                b.style.cursor = 'not-allowed';
+            });
+
+            // Kiểm tra đúng sai
+            if (selectedOption === questionData.correct) {
+                btn.classList.add('correct');
+                document.getElementById('s-ding').currentTime = 0;
+                document.getElementById('s-ding').play();
+                score++;
+                
+                // Hiệu ứng pháo hoa Confetti
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#4ade80', '#fbbf24', '#ffafcc']
+                });
+            } else {
+                btn.classList.add('wrong');
+                document.getElementById('s-wrong').currentTime = 0;
+                document.getElementById('s-wrong').play();
+                
+                // Tự động highlight đáp án đúng
+                allButtons.forEach(b => {
+                    if (b.innerText === questionData.correct) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            // Hiện khung giải thích siêu chi tiết
+            expBox.innerHTML = `<strong>👩‍🏫 Ms MS Chí Nên giải thích chi tiết:</strong><br><br>${questionData.exp}`;
+            expBox.style.display = "block";
+            
+            // Cuộn mượt đến phần giải thích
+            expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            answeredQuestions++;
+        }
+
+        // Xử lý nộp bài
+        function finishTest() {
+            const studentName = document.getElementById('student-name').value.trim();
+            if (!studentName) {
+                alert("Con phải nhập tên thật của mình vào ô trống để Ms MS Chí Nên ghi sổ điểm nhé!");
+                return;
+            }
+
+            // Tính toán điểm số hệ 10
+            const totalQuestions = quizData.length;
+            const scoreScale10 = ((score / totalQuestions) * 10).toFixed(2);
+
+            // Cập nhật UI kết quả
+            document.getElementById('name-overlay').style.display = 'none';
+            document.getElementById('result-overlay').style.display = 'flex';
+            
+            document.getElementById('final-name').innerText = `Bảng Điểm Của: ${studentName.toUpperCase()} 🌟`;
+            document.getElementById('final-score').innerText = `${score} / ${totalQuestions}`;
+            document.getElementById('grade-10').innerText = `Điểm hệ 10: ${scoreScale10} / 10`;
+
+            // Logic thay đổi Meme & Lời phê theo chuẩn Gamification
+            const memeImg = document.getElementById('meme');
+            const commentTxt = document.getElementById('comment');
+
+            if (scoreScale10 == 10) {
+                memeImg.src = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHJmZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqJmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/l41lI4bYusHOOCY2k/giphy.gif"; // Thiên tài
+                commentTxt.innerHTML = "Tuyệt đỉnh xuất chúng! 🔥 Con chính là thiên tài tiếng Anh! Ms MS Chí Nên cực kỳ tự hào về con. 100 điểm không có nhưng!";
+            } else if (scoreScale10 >= 8) {
+                memeImg.src = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJmZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqJmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/3o7abKhOpuMGPtYW40/giphy.gif"; // Rất tốt, high five
+                commentTxt.innerHTML = "Rất xuất sắc! 👏 Con đã nắm bắt từ vựng và ngữ pháp rất chắc chắn. Hãy ghi lại vài lỗi sai nhỏ vào vở để lần sau đạt điểm tuyệt đối nhé!";
+            } else if (scoreScale10 >= 5) {
+                memeImg.src = "https://media.giphy.com/media/l3q2XhfQ8oCkm1Ts4/giphy.gif"; // Khá, vỗ tay động viên
+                commentTxt.innerHTML = "Làm tốt lắm nhưng vẫn có thể tốt hơn! 🤔 Con cần chú ý đọc kỹ các giải thích màu đỏ của cô để tránh rơi vào bẫy từ vựng nhé. Cố lên!";
+            } else {
+                memeImg.src = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJmZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqJmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/OPU6wUKARAOAnE2oR/giphy.gif"; // Khóc hài hước
+                commentTxt.innerHTML = "Ôi dồi ôi! 😭 Con đã làm bài hơi vội vàng rồi đúng không? Đừng buồn, hãy đọc lại bảng giải thích chi tiết của cô MS Chí Nên, tra từ điển và làm lại bài lần nữa nhé. Không có gì là không thể!";
+            }
+            
+            // Bắn pháo hoa liên tục nếu điểm cao
+            if (scoreScale10 >= 8) {
+                let duration = 3 * 1000;
+                let animationEnd = Date.now() + duration;
+                let defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 3000 };
+                let interval = setInterval(function() {
+                    let timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) { return clearInterval(interval); }
+                    let particleCount = 50 * (timeLeft / duration);
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+                }, 250);
+            }
+        }
+
+        function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+        // Khởi chạy khi load trang
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>

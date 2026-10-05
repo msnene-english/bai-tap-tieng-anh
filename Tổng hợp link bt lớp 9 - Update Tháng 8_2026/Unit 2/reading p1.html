@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài tập Tiếng Anh - Gamification</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* ================= CƠ BẢN & MÀU SẮC ================= */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.7);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --primary-pastel: #ff9a9e;
+            --text-dark: #333;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Nền Floating Emojis */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* ================= BỐ CỤC CHUNG ================= */
+        .header {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            z-index: 100;
+            text-align: center;
+            pointer-events: none;
+        }
+        
+        .header h3 {
+            margin: 5px;
+            font-size: 14px;
+            color: #555;
+            text-shadow: 1px 1px 2px #fff;
+        }
+
+        .sticky-notice {
+            position: fixed;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 800px;
+            z-index: 99;
+            padding: 10px 15px;
+            font-size: 13px;
+            line-height: 1.4;
+            text-align: center;
+            pointer-events: auto;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .split-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            padding-top: 75px; 
+            box-sizing: border-box;
+            gap: 15px;
+            padding-left: 15px;
+            padding-right: 15px;
+            padding-bottom: 15px;
+        }
+
+        .pane {
+            flex: 1;
+            overflow-y: auto;
+            border-radius: 20px;
+            padding: 25px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .pane::-webkit-scrollbar { width: 8px; }
+        .pane::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        /* ================= PHẦN READING (BÊN TRÁI) ================= */
+        .text-section {
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        
+        .text-title {
+            font-size: 22px;
+            color: #e83e8c;
+            margin-top: 0;
+            border-bottom: 2px dashed #e83e8c;
+            padding-bottom: 10px;
+        }
+
+        .paragraph-box { margin-bottom: 15px; }
+        
+        .para-en {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .para-vi {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #444;
+            background: rgba(255, 218, 185, 0.4);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #ff9a9e;
+            display: none;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .btn-translate {
+            background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .btn-translate:hover { transform: scale(1.05); }
+
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            border: 1px solid rgba(0,0,0,0.05);
+            text-align: left;
+        }
+        .glossary-table th { background: rgba(161, 196, 253, 0.6); }
+
+        /* ================= PHẦN EXERCISE (BÊN PHẢI) ================= */
+        .question-card {
+            background: rgba(255,255,255,0.6);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .question-card:hover { transform: translateY(-3px); }
+
+        .q-text { 
+            font-size: 19px; 
+            font-weight: bold; 
+            margin-bottom: 15px; 
+            color: #d81b60;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-option {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid transparent;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .btn-option:hover { border-color: #a1c4fd; background: #fff; }
+        .btn-option:disabled { cursor: not-allowed; opacity: 0.8; }
+        
+        .btn-option.correct {
+            background: #d4edda !important;
+            border-color: #28a745 !important;
+            color: #155724;
+            transform: scale(1.02);
+        }
+        
+        .btn-option.wrong {
+            background: #f8d7da !important;
+            border-color: #dc3545 !important;
+            color: #721c24;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* ================= GIẢI THÍCH CHI TIẾT (EXPLANATION) ================= */
+        .explanation-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 10px;
+            border-left: 5px solid #ff9a9e;
+            font-size: 15px;
+            display: none;
+            line-height: 1.6;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Các class bắt buộc cho giải thích */
+        .p-word { color: #007bff; font-weight: bold; }
+        .p-mean { color: #E2725B; font-style: italic; font-weight: 600; }
+        .p-grammar { color: #dc3545; text-decoration: underline; font-weight: bold; }
+        .hl-green { color: #28a745; font-weight: bold; }
+        .hl-red { color: #8b0000; text-decoration: line-through; }
+        
+        .exp-line { margin-bottom: 8px; }
+        .exp-quote {
+            background: #f1f8ff;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #007bff;
+            margin-top: 10px;
+            font-size: 14.5px;
+        }
+
+        /* ================= PHẦN NỘP BÀI ================= */
+        .submit-section { text-align: center; margin-top: 30px; padding-bottom: 20px;}
+        .btn-submit {
+            background: linear-gradient(45deg, #ff9a9e, #fecfef);
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #d81b60;
+            box-shadow: 0 5px 15px rgba(216, 27, 96, 0.3);
+            transition: all 0.3s;
+        }
+        .btn-submit:hover { transform: translateY(-3px) scale(1.05); }
+
+        /* Modal Kết quả */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: #fff; padding: 30px; border-radius: 20px;
+            text-align: center; max-width: 400px; width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal-content h2 { color: #e83e8c; margin-top: 0; }
+        .modal-content input {
+            width: 80%; padding: 10px; margin: 15px 0;
+            border: 2px solid #a1c4fd; border-radius: 10px; font-size: 16px; text-align: center;
+            outline: none;
+        }
+        .modal-content img { width: 100%; border-radius: 10px; margin-top: 15px; }
+        .score-display { font-size: 28px; font-weight: bold; color: #28a745; margin: 10px 0; }
+        .btn-close-modal {
+            background: #333; color: #fff; border: none; padding: 10px 20px;
+            border-radius: 10px; margin-top: 15px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <svg class="bg-pattern" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="grad1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                <stop offset="0%" style="stop-color:rgba(255,255,255,0.4); stop-opacity:1" />
+                <stop offset="100%" style="stop-color:rgba(255,255,255,0); stop-opacity:1" />
+            </radialGradient>
+        </defs>
+        <circle cx="20%" cy="30%" r="150" fill="url(#grad1)" />
+        <circle cx="80%" cy="70%" r="200" fill="url(#grad1)" />
+        <text x="10%" y="20%" font-size="50" opacity="0.4">🏙️</text>
+        <text x="85%" y="15%" font-size="60" opacity="0.4">🌳</text>
+        <text x="75%" y="85%" font-size="45" opacity="0.4">🚗</text>
+        <text x="15%" y="80%" font-size="55" opacity="0.4">📖</text>
+        <text x="50%" y="50%" font-size="70" opacity="0.3">✨</text>
+    </svg>
+
+    <div class="header">
+        <h3>Giáo viên tạo: Ms MS Chí Nên</h3>
+    </div>
+
+    <div class="sticky-notice">
+        <strong>⚠️ LƯU Ý TỪ CÔ MS Chí Nên:</strong> Hãy tự giác tra cứu từ mới bằng Google Dịch/AI để hiểu nội dung. KHÔNG ĐƯỢC CHỌN BỪA! Nghe phát âm qua từ điển Cambridge và luyện đọc theo. <strong>CHỈ CÓ ĐỌC KỸ GIẢI THÍCH VÀ GHI CHÉP TỪ/CẤU TRÚC MỚI VÀO VỞ</strong> các em mới thực sự giỏi lên. Làm cho xong mà không ghi chép thì tốn thời gian vô ích! 🌟 (Chạm vào bất kỳ đâu để bật Audio nhắc nhở ban đầu)
+    </div>
+
+    <div class="split-container">
+        <div class="pane" id="reading-pane">
+            </div>
+
+        <div class="pane" id="exercise-pane">
+            <div class="submit-section">
+                <button class="btn-submit" onclick="showSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="submitModal">
+        <div class="modal-content" id="modal-step-1">
+            <h2>Hoàn thành bài tập! 🎉</h2>
+            <p>Nhập tên của em để xem điểm nhé:</p>
+            <input type="text" id="studentName" placeholder="Ví dụ: Nguyễn Văn A">
+            <button class="btn-submit" onclick="processSubmit()">Xem Kết Quả</button>
+        </div>
+        <div class="modal-content" id="modal-step-2" style="display:none;">
+            <h2 id="result-name"></h2>
+            <div class="score-display" id="result-score"></div>
+            <div style="font-size: 20px; font-weight: bold; color: #d81b60; margin-bottom: 10px;" id="result-score-10"></div>
+            <p id="result-comment" style="font-weight: bold;"></p>
+            <img id="result-gif" src="" alt="Meme">
+            <button class="btn-close-modal" onclick="closeModal()">Đóng</button>
+        </div>
+    </div>
+
+    <script>
+        // ================= DỮ LIỆU ĐỀ BÀI =================
+        const appData = [
+            // BÀI ĐỌC 1: BIG CITIES
+            {
+                title: "Passage 1: City Nightlife & Lifestyle",
+                paragraphs: [
+                    {
+                        en: "There is a saying that big cities never sleep. This is true for some cities in which the nightlife begins just when people in other cities are ready to go to bed. Big cities like New York, Madrid, London and Paris have vibrant nightlife.",
+                        vi: "Có một câu nói rằng các thành phố lớn không bao giờ ngủ. Điều này đúng với một số thành phố nơi mà cuộc sống về đêm bắt đầu đúng lúc người dân ở các thành phố khác chuẩn bị đi ngủ. Các thành phố lớn như New York, Madrid, London và Paris có cuộc sống về đêm rất sôi động."
+                    },
+                    {
+                        en: "People can still find (1) ___ to dine out or go shopping into the early hours.",
+                        vi: "Mọi người vẫn có thể tìm thấy (1) ___ để đi ăn ngoài hoặc đi mua sắm đến tận những giờ đầu buổi sáng (khuya)."
+                    },
+                    {
+                        en: "City dwellers are usually more diverse and there are (2) ___ communities that hold social events or parties, which provide interesting opportunities for social interactions and social networking.",
+                        vi: "Cư dân thành phố thường đa dạng hơn và có (2) ___ cộng đồng tổ chức các sự kiện xã hội hoặc các bữa tiệc, điều này cung cấp những cơ hội thú vị cho các tương tác xã hội và xây dựng mạng lưới quan hệ."
+                    },
+                    {
+                        en: "The social interactions allow you to learn about other cultures and share interests (3) ___ people from different backgrounds, which make you more open minded and able to understand individuals.",
+                        vi: "Những tương tác xã hội cho phép bạn tìm hiểu về các nền văn hóa khác và chia sẻ sở thích (3) ___ những người từ các nền tảng khác nhau, điều này giúp bạn cởi mở hơn và có khả năng thấu hiểu từng cá nhân."
+                    },
+                    {
+                        en: "On the other hand, the social networking helps you to broaden not only personal but also professional relationships.",
+                        vi: "Mặt khác, mạng lưới xã hội giúp bạn mở rộng không chỉ các mối quan hệ cá nhân mà còn cả các mối quan hệ chuyên môn (công việc)."
+                    },
+                    {
+                        en: "All in all, living in big cities is more (4) ___ because of the complete facilities provided.",
+                        vi: "Nhìn chung, sống ở các thành phố lớn thì (4) ___ hơn bởi vì các cơ sở vật chất đầy đủ được cung cấp."
+                    },
+                    {
+                        en: "The advanced transportation system enables the citizens (5) ___ public facilities easier, cheaper and faster.",
+                        vi: "Hệ thống giao thông tiên tiến cho phép người dân (5) ___ các cơ sở hạ tầng công cộng dễ dàng, rẻ và nhanh chóng hơn."
+                    },
+                    {
+                        en: "Big cities also provide better education and health service. In addition, city life is more fun and exciting because there is a wide range of entertainment to enjoy and a lot of social events to attend.",
+                        vi: "Các thành phố lớn cũng cung cấp dịch vụ giáo dục và y tế tốt hơn. Thêm vào đó, cuộc sống thành thị thú vị và hào hứng hơn vì có rất nhiều loại hình giải trí để thưởng thức và nhiều sự kiện xã hội để tham gia."
+                    }
+                ],
+                glossary: [
+                    { w: "vibrant", pos: "adj", m: "sôi động, đầy sức sống" },
+                    { w: "dweller", pos: "n", m: "cư dân" },
+                    { w: "diverse", pos: "adj", m: "đa dạng" },
+                    { w: "community", pos: "n", m: "cộng đồng" },
+                    { w: "interact", pos: "v", m: "tương tác" },
+                    { w: "background", pos: "n", m: "nền tảng (văn hóa, gia đình)" },
+                    { w: "professional", pos: "adj", m: "chuyên môn, nghề nghiệp" },
+                    { w: "facility", pos: "n", m: "cơ sở vật chất" },
+                    { w: "advanced", pos: "adj", m: "tiên tiến, cao cấp" },
+                    { w: "access", pos: "v", m: "tiếp cận, truy cập" }
+                ],
+                questions: [
+                    {
+                        qVi: "Ngữ cảnh: Mọi người vẫn có thể tìm thấy (1) ___ để đi ăn ngoài hoặc mua sắm đến tận khuya.",
+                        options: [
+                            { t: "entertain", c: false, exp: "<span class='p-word'>entertain</span> (<span class='p-mean'>v</span>): giải trí. ❌ <span class='hl-red'>Sai từ loại. Sau động từ 'find' cần một danh từ làm tân ngữ</span>." },
+                            { t: "entertaining", c: false, exp: "<span class='p-word'>entertaining</span> (<span class='p-mean'>adj</span>): có tính giải trí. ❌ <span class='hl-red'>Sai từ loại</span>." },
+                            { t: "entertainment", c: true, exp: "<span class='p-word'>entertainment</span> (<span class='p-mean'>n</span>): sự giải trí, hình thức giải trí. ✅ <span class='hl-green'>Đúng. Phù hợp cả về nghĩa và ngữ pháp</span>. <span class='p-grammar'>Cấu trúc: find + Noun (tìm kiếm cái gì)</span>." },
+                            { t: "entertainingly", c: false, exp: "<span class='p-word'>entertainingly</span> (<span class='p-mean'>adv</span>): một cách thú vị. ❌ <span class='hl-red'>Sai từ loại</span>." }
+                        ],
+                        evEn: "People can still find (1) entertainment to dine out or go shopping into the early hours.",
+                        evVi: "Mọi người vẫn có thể tìm thấy <span class='hl-green'>các hình thức giải trí</span> để đi ăn ngoài hoặc đi mua sắm đến tận những giờ đầu buổi sáng (khuya)."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: ...có (2) ___ cộng đồng tổ chức các sự kiện xã hội...",
+                        options: [
+                            { t: "little", c: false, exp: "<span class='p-word'>little</span> (<span class='p-mean'>adj</span>): rất ít (gần như không có). ❌ <span class='hl-red'>Sai ngữ pháp vì 'little' đi với danh từ KHÔNG đếm được, trong khi 'communities' là số nhiều đếm được</span>." },
+                            { t: "many", c: true, exp: "<span class='p-word'>many</span> (<span class='p-mean'>adj</span>): nhiều. ✅ <span class='hl-green'>Đúng. 'many' đi với danh từ đếm được số nhiều 'communities' (các cộng đồng)</span>." },
+                            { t: "most", c: false, exp: "<span class='p-word'>most</span> (<span class='p-mean'>adj</span>): hầu hết. ❌ <span class='hl-red'>Sai nghĩa trong ngữ cảnh này, người ta muốn nói 'có rất nhiều cộng đồng' chứ không phải 'có hầu hết cộng đồng'</span>." },
+                            { t: "much", c: false, exp: "<span class='p-word'>much</span> (<span class='p-mean'>adj</span>): nhiều. ❌ <span class='hl-red'>Sai vì 'much' cộng với danh từ không đếm được</span>." }
+                        ],
+                        evEn: "...there are (2) many communities that hold social events...",
+                        evVi: "...có <span class='hl-green'>nhiều</span> cộng đồng tổ chức các sự kiện xã hội..."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: ...cho phép bạn tìm hiểu về các nền văn hóa khác và chia sẻ sở thích (3) ___ những người từ các nền tảng khác nhau...",
+                        options: [
+                            { t: "with", c: true, exp: "<span class='p-word'>with</span> (<span class='p-mean'>prep</span>): với. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Cấu trúc: share something with somebody (chia sẻ cái gì với ai)</span>." },
+                            { t: "to", c: false, exp: "<span class='p-word'>to</span> (<span class='p-mean'>prep</span>): tới. ❌ <span class='hl-red'>Sai cấu trúc của động từ 'share'</span>." },
+                            { t: "for", c: false, exp: "<span class='p-word'>for</span> (<span class='p-mean'>prep</span>): cho. ❌ <span class='hl-red'>Sai cấu trúc</span>." },
+                            { t: "by", c: false, exp: "<span class='p-word'>by</span> (<span class='p-mean'>prep</span>): bởi. ❌ <span class='hl-red'>Sai cấu trúc</span>." }
+                        ],
+                        evEn: "...share interests (3) with people from different backgrounds...",
+                        evVi: "...chia sẻ sở thích <span class='hl-green'>với</span> những người từ các nền tảng khác nhau..."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: Nhìn chung, sống ở thành phố lớn thì (4) ___ hơn vì cơ sở vật chất đầy đủ được cung cấp.",
+                        options: [
+                            { t: "convenient", c: true, exp: "<span class='p-word'>convenient</span> (<span class='p-mean'>adj</span>): tiện lợi. ✅ <span class='hl-green'>Đúng. Cơ sở vật chất đầy đủ (complete facilities) làm cho cuộc sống 'tiện lợi' hơn</span>." },
+                            { t: "affordable", c: false, exp: "<span class='p-word'>affordable</span> (<span class='p-mean'>adj</span>): có thể chi trả được, giá cả phải chăng. ❌ <span class='hl-red'>Sai vì thành phố lớn thường đắt đỏ chứ không rẻ</span>." },
+                            { t: "expensive", c: false, exp: "<span class='p-word'>expensive</span> (<span class='p-mean'>adj</span>): đắt đỏ. ❌ <span class='hl-red'>Sai vì vế sau dùng từ mang nghĩa tích cực 'complete facilities' (cơ sở vật chất đầy đủ) làm lý do, nên chỗ trống phải là một tính từ tích cực</span>." },
+                            { t: "suitable", c: false, exp: "<span class='p-word'>suitable</span> (<span class='p-mean'>adj</span>): phù hợp. ❌ <span class='hl-red'>Sai vì 'suitable' thường đi kèm 'for sb' (phù hợp với ai), không tự nhiên khi nói 'cuộc sống phù hợp hơn vì có cơ sở vật chất'</span>." }
+                        ],
+                        evEn: "living in big cities is more (4) convenient because of the complete facilities provided.",
+                        evVi: "sống ở các thành phố lớn thì <span class='hl-green'>tiện lợi</span> hơn bởi vì các cơ sở vật chất đầy đủ được cung cấp."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: Hệ thống giao thông tiên tiến cho phép người dân (5) ___ các cơ sở hạ tầng công cộng dễ dàng hơn...",
+                        options: [
+                            { t: "accessed", c: false, exp: "<span class='p-word'>accessed</span> (<span class='p-mean'>v-ed</span>). ❌ <span class='hl-red'>Sai cấu trúc</span>." },
+                            { t: "accessing", c: false, exp: "<span class='p-word'>accessing</span> (<span class='p-mean'>v-ing</span>). ❌ <span class='hl-red'>Sai cấu trúc</span>." },
+                            { t: "to access", c: true, exp: "<span class='p-word'>to access</span> (<span class='p-mean'>to V</span>): tiếp cận. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Cấu trúc: enable somebody to do something (cho phép/giúp ai có thể làm gì)</span>." },
+                            { t: "access", c: false, exp: "<span class='p-word'>access</span> (<span class='p-mean'>v-inf</span>). ❌ <span class='hl-red'>Sai cấu trúc vì thiếu 'to'</span>." }
+                        ],
+                        evEn: "The advanced transportation system enables the citizens (5) to access public facilities easier...",
+                        evVi: "Hệ thống giao thông tiên tiến cho phép người dân <span class='hl-green'>tiếp cận</span> các cơ sở hạ tầng công cộng dễ dàng hơn..."
+                    }
+                ]
+            },
+
+            // BÀI ĐỌC 2: TREES IN HANOI
+            {
+                title: "Passage 2: Trees Bring Hanoians Closer to Nature",
+                paragraphs: [
+                    {
+                        en: "City planners have claimed trees play an important role in an urban environment. Children growing up close to nature have better health, while walking in parks reduce blood pressure, stress and obesity.",
+                        vi: "Các nhà quy hoạch thành phố đã khẳng định cây cối đóng vai trò quan trọng trong môi trường đô thị. Trẻ em lớn lên gần gũi với thiên nhiên có sức khỏe tốt hơn, trong khi đi bộ trong công viên giúp giảm huyết áp, căng thẳng và béo phì."
+                    },
+                    {
+                        en: "The problem is to select the right trees and (1) ___ them.",
+                        vi: "Vấn đề là phải chọn đúng loại cây và (1) ___ chúng."
+                    },
+                    {
+                        en: "Ha Noi is considered one of the greenest cities in Viet Nam thanks to its beautiful and precious trees. Ancient trees in Ha Noi are frequently mentioned in poems. Each street can be represented by a tree.",
+                        vi: "Hà Nội được coi là một trong những thành phố xanh nhất Việt Nam nhờ những cây cối xinh đẹp và quý giá. Cây cổ thụ ở Hà Nội thường xuyên được nhắc đến trong các bài thơ. Mỗi con phố có thể được đại diện bởi một loài cây."
+                    },
+                    {
+                        en: "To local residents, the hundred-year old trees that line the streets are more than just beautiful, they are a part of the city's identity.",
+                        vi: "Đối với người dân địa phương, những hàng cây trăm tuổi dọc các con phố không chỉ đẹp, chúng còn là một phần bản sắc của thành phố."
+                    },
+                    {
+                        en: "(2) ___ the treasured place the trees have in the heart of the local resident, Hanoians seem to have a lot of concern when construction workers chop them down.",
+                        vi: "(2) ___ vị trí quý giá mà cây cối có được trong lòng người dân địa phương, người Hà Nội dường như có rất nhiều mối quan ngại khi công nhân xây dựng chặt hạ chúng."
+                    },
+                    {
+                        en: "Workers get away with digging around the trees without much care, and even leave the trees without enough earth to grow - making them vulnerable to storms.",
+                        vi: "Công nhân thoải mái đào bới quanh gốc cây mà không quan tâm nhiều, và thậm chí để lại cây mà không đủ đất để phát triển - khiến chúng dễ bị tổn thương trước những cơn bão."
+                    },
+                    {
+                        en: "To (3) ___ the problem, Ha Noi's authorities have started a project of replanting trees: each of the capital's streets (4) ___ with two or three sorts of trees.",
+                        vi: "Để (3) ___ vấn đề này, chính quyền Hà Nội đã khởi động một dự án trồng lại cây: mỗi con phố của thủ đô (4) ___ với hai hoặc ba loại cây."
+                    },
+                    {
+                        en: "Moreover, more people should be made aware (5) ___ the importance of protecting trees in communities.",
+                        vi: "Hơn nữa, cần làm cho nhiều người nhận thức được (5) ___ tầm quan trọng của việc bảo vệ cây xanh trong các cộng đồng."
+                    }
+                ],
+                glossary: [
+                    { w: "claim", pos: "v", m: "khẳng định, tuyên bố" },
+                    { w: "urban", pos: "adj", m: "thuộc về đô thị" },
+                    { w: "obesity", pos: "n", m: "bệnh béo phì" },
+                    { w: "precious", pos: "adj", m: "quý giá" },
+                    { w: "ancient", pos: "adj", m: "cổ kính, cổ thụ" },
+                    { w: "identity", pos: "n", m: "bản sắc, danh tính" },
+                    { w: "treasured", pos: "adj", m: "được trân trọng" },
+                    { w: "vulnerable", pos: "adj", m: "dễ bị tổn thương" },
+                    { w: "authority", pos: "n", m: "chính quyền, nhà chức trách" },
+                    { w: "aware", pos: "adj", m: "có nhận thức, có ý thức" }
+                ],
+                questions: [
+                    {
+                        qVi: "Ngữ cảnh: Vấn đề là chọn đúng loại cây và (1) ___ chúng.",
+                        options: [
+                            { t: "maintain", c: true, exp: "<span class='p-word'>maintain</span> (<span class='p-mean'>v</span>): duy trì, bảo dưỡng (chăm sóc). ✅ <span class='hl-green'>Đúng. Sau khi chọn cây thì cần phải 'duy trì/chăm sóc' chúng</span>." },
+                            { t: "service", c: false, exp: "<span class='p-word'>service</span> (<span class='p-mean'>n/v</span>): phục vụ/dịch vụ. ❌ <span class='hl-red'>Sai nghĩa, không dùng 'service trees'</span>." },
+                            { t: "provide", c: false, exp: "<span class='p-word'>provide</span> (<span class='p-mean'>v</span>): cung cấp. ❌ <span class='hl-red'>Sai nghĩa, ta không 'cung cấp cây' sau khi đã chọn chúng ra</span>." },
+                            { t: "care", c: false, exp: "<span class='p-word'>care</span> (<span class='p-mean'>v</span>): quan tâm, chăm sóc. ❌ <span class='hl-red'>Sai cấu trúc vì 'care' phải đi với giới từ 'for' hoặc 'about' (care for them), không đứng trực tiếp trước tân ngữ 'them'</span>." }
+                        ],
+                        evEn: "The problem is to select the right trees and (1) maintain them.",
+                        evVi: "Vấn đề là phải chọn đúng loại cây và <span class='hl-green'>chăm sóc/duy trì</span> chúng."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: (2) ___ vị trí quý giá mà cây cối có được trong lòng người dân địa phương...",
+                        options: [
+                            { t: "Because", c: false, exp: "<span class='p-word'>Because</span> (<span class='p-mean'>conj</span>): Bởi vì. ❌ <span class='hl-red'>Sai ngữ pháp vì 'Because' phải cộng với một Mệnh đề (Clause: S + V), trong khi cụm phía sau là một Cụm danh từ (Noun phrase)</span>." },
+                            { t: "However", c: false, exp: "<span class='p-word'>However</span> (<span class='p-mean'>adv</span>): Tuy nhiên. ❌ <span class='hl-red'>Sai ngữ pháp vì 'However' thường đứng đầu câu và có dấu phẩy đi kèm, không dùng liền trước cụm danh từ để nối mệnh đề</span>." },
+                            { t: "Due to", c: true, exp: "<span class='p-word'>Due to</span> (<span class='p-mean'>prep</span>): Bởi vì. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Cấu trúc: Due to + Noun/V-ing. Ở đây 'the treasured place...' là một cụm danh từ</span>." },
+                            { t: "Although", c: false, exp: "<span class='p-word'>Although</span> (<span class='p-mean'>conj</span>): Mặc dù. ❌ <span class='hl-red'>Sai ngữ pháp (cần mệnh đề) và sai nghĩa</span>." }
+                        ],
+                        evEn: "(2) Due to the treasured place the trees have in the heart of the local resident...",
+                        evVi: "<span class='hl-green'>Bởi vì</span> vị trí quý giá mà cây cối có được trong lòng người dân địa phương..."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: Để (3) ___ vấn đề này, chính quyền Hà Nội đã khởi động một dự án...",
+                        options: [
+                            { t: "deal with", c: true, exp: "<span class='p-word'>deal with</span> (<span class='p-mean'>phrasal verb</span>): giải quyết, đối phó. ✅ <span class='hl-green'>Đúng. Đi với 'the problem' tạo thành cụm 'giải quyết vấn đề'</span>." },
+                            { t: "cut down on", c: false, exp: "<span class='p-word'>cut down on</span> (<span class='p-mean'>phrasal verb</span>): cắt giảm. ❌ <span class='hl-red'>Sai nghĩa, không ai 'cắt giảm vấn đề'</span>." },
+                            { t: "come up with", c: false, exp: "<span class='p-word'>come up with</span> (<span class='p-mean'>phrasal verb</span>): nảy ra (ý tưởng). ❌ <span class='hl-red'>Sai nghĩa</span>." },
+                            { t: "make up", c: false, exp: "<span class='p-word'>make up</span> (<span class='p-mean'>phrasal verb</span>): bịa đặt / trang điểm. ❌ <span class='hl-red'>Sai nghĩa</span>." }
+                        ],
+                        evEn: "To (3) deal with the problem, Ha Noi's authorities have started a project...",
+                        evVi: "Để <span class='hl-green'>giải quyết</span> vấn đề này, chính quyền Hà Nội đã khởi động một dự án..."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: ...mỗi con phố của thủ đô (4) ___ với hai hoặc ba loại cây.",
+                        options: [
+                            { t: "planted", c: false, exp: "<span class='p-word'>planted</span> (<span class='p-mean'>v-ed</span>): đã trồng (chủ động). ❌ <span class='hl-red'>Sai vì con phố không thể tự trồng cây, phải dùng bị động</span>." },
+                            { t: "will be planted", c: true, exp: "<span class='p-word'>will be planted</span> (<span class='p-mean'>passive voice</span>): sẽ được trồng. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Thể bị động của thì Tương lai đơn (will be + V3/ed). Phù hợp vì đây là một dự án mới (có từ 'have started' ở trước) nên việc trồng sẽ diễn ra trong tương lai, và mang nghĩa bị động</span>." },
+                            { t: "had been planted", c: false, exp: "<span class='p-word'>had been planted</span> (<span class='p-mean'>passive voice</span>): đã được trồng. ❌ <span class='hl-red'>Sai thì, Quá khứ hoàn thành dùng cho việc đã xảy ra trước một việc khác trong quá khứ, không hợp ngữ cảnh dự án mới bắt đầu</span>." },
+                            { t: "will plant", c: false, exp: "<span class='p-word'>will plant</span> (<span class='p-mean'>v</span>): sẽ trồng. ❌ <span class='hl-red'>Sai thể chủ động, đường phố không tự trồng cây</span>." }
+                        ],
+                        evEn: "...each of the capital's streets (4) will be planted with two or three sorts of trees.",
+                        evVi: "...mỗi con phố của thủ đô <span class='hl-green'>sẽ được trồng</span> hai hoặc ba loại cây."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: ...nhiều người cần được làm cho nhận thức được (5) ___ tầm quan trọng của việc bảo vệ cây xanh...",
+                        options: [
+                            { t: "of", c: true, exp: "<span class='p-word'>of</span> (<span class='p-mean'>prep</span>): của/về. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Cấu trúc cố định: to be aware OF something (nhận thức được điều gì)</span>." },
+                            { t: "in", c: false, exp: "<span class='p-word'>in</span> (<span class='p-mean'>prep</span>): trong. ❌ <span class='hl-red'>Sai giới từ</span>." },
+                            { t: "for", c: false, exp: "<span class='p-word'>for</span> (<span class='p-mean'>prep</span>): cho. ❌ <span class='hl-red'>Sai giới từ</span>." },
+                            { t: "with", c: false, exp: "<span class='p-word'>with</span> (<span class='p-mean'>prep</span>): với. ❌ <span class='hl-red'>Sai giới từ</span>." }
+                        ],
+                        evEn: "...more people should be made aware (5) of the importance of protecting trees in communities.",
+                        evVi: "...nhiều người cần được làm cho nhận thức được <span class='hl-green'>về</span> tầm quan trọng của việc bảo vệ cây xanh trong các cộng đồng."
+                    }
+                ]
+            },
+
+            // BÀI ĐỌC 3: DISADVANTAGES OF CITY LIFE
+            {
+                title: "Passage 3: Disadvantages of City Life",
+                paragraphs: [
+                    {
+                        en: "In spite of its many (1) ___, living in the city also brings lots of disadvantages.",
+                        vi: "Mặc dù có nhiều (1) ___, sống ở thành phố cũng mang lại rất nhiều bất lợi."
+                    },
+                    {
+                        en: "The first problem is that citizens have to deal with traffic congestions every day. This problem is even worse (2) ___ the rush hour when so many people run out to work and are stuck on streets for hours.",
+                        vi: "Vấn đề đầu tiên là người dân phải đối phó với tắc nghẽn giao thông mỗi ngày. Vấn đề này thậm chí còn tệ hơn (2) ___ giờ cao điểm khi có rất nhiều người chạy đổ ra đường đi làm và bị kẹt trên phố hàng giờ."
+                    },
+                    {
+                        en: "Moreover, ambulance and fire engine sometimes can't get in time to complete duty, which makes a lot of serious loss.",
+                        vi: "Hơn nữa, xe cứu thương và xe cứu hỏa đôi khi không thể đến kịp thời để hoàn thành nhiệm vụ, điều này gây ra nhiều tổn thất nghiêm trọng."
+                    },
+                    {
+                        en: "High cost of living is also a serious issue in the city, especially in metropolitan cities. More and more people find (3) ___ difficult to live on their modest salaries when prices are going up all the time.",
+                        vi: "Chi phí sinh hoạt cao cũng là một vấn đề nghiêm trọng ở thành phố, đặc biệt là ở các đô thị lớn. Ngày càng có nhiều người cảm thấy (3) ___ khó khăn để sống dựa trên mức lương khiêm tốn của họ khi giá cả liên tục tăng cao."
+                    },
+                    {
+                        en: "Financial pressure makes city dwellers become constantly stressed and tired.",
+                        vi: "Áp lực tài chính khiến cư dân thành phố trở nên liên tục căng thẳng và mệt mỏi."
+                    },
+                    {
+                        en: "Another drawback of the city life is the (4) ___ air caused by exhaust emissions from millions of vehicles, construction dust and the lack of green trees. This negatively affects residents' health.",
+                        vi: "Một mặt trái khác của cuộc sống thành phố là không khí (4) ___ bị gây ra bởi khí thải từ hàng triệu phương tiện, bụi xây dựng và sự thiếu hụt cây xanh. Điều này ảnh hưởng tiêu cực đến sức khỏe cư dân."
+                    },
+                    {
+                        en: "(5) ___ people suffer from respiratory problems such as lung cancer, sore throat or asthma.",
+                        vi: "(5) ___ người bị mắc các bệnh về hô hấp như ung thư phổi, viêm họng hay hen suyễn."
+                    }
+                ],
+                glossary: [
+                    { w: "disadvantage", pos: "n", m: "sự bất lợi, nhược điểm" },
+                    { w: "congestion", pos: "n", m: "sự tắc nghẽn" },
+                    { w: "ambulance", pos: "n", m: "xe cứu thương" },
+                    { w: "metropolitan", pos: "adj", m: "thuộc đô thị lớn" },
+                    { w: "modest", pos: "adj", m: "khiêm tốn, nhỏ bé" },
+                    { w: "constant", pos: "adj", m: "liên tục, không ngừng" },
+                    { w: "drawback", pos: "n", m: "mặt hạn chế, điểm yếu" },
+                    { w: "emission", pos: "n", m: "khí thải, sự phát ra" },
+                    { w: "respiratory", pos: "adj", m: "thuộc về hô hấp" },
+                    { w: "asthma", pos: "n", m: "bệnh hen suyễn" }
+                ],
+                questions: [
+                    {
+                        qVi: "Ngữ cảnh: Mặc dù có nhiều (1) ___, sống ở thành phố cũng mang lại nhiều bất lợi.",
+                        options: [
+                            { t: "profits", c: false, exp: "<span class='p-word'>profits</span> (<span class='p-mean'>n</span>): lợi nhuận (tiền bạc). ❌ <span class='hl-red'>Sai ngữ cảnh, sống ở thành phố mang lại lợi ích chung chứ không phải lợi nhuận kinh doanh</span>." },
+                            { t: "benefits", c: true, exp: "<span class='p-word'>benefits</span> (<span class='p-mean'>n</span>): lợi ích. ✅ <span class='hl-green'>Đúng. Cấu trúc đối lập 'In spite of' chỉ ra một mặt tốt (benefits - lợi ích) đối ngược với mặt xấu ở vế sau (disadvantages - bất lợi)</span>." },
+                            { t: "drawbacks", c: false, exp: "<span class='p-word'>drawbacks</span> (<span class='p-mean'>n</span>): hạn chế. ❌ <span class='hl-red'>Sai logic vì vế sau đã là 'disadvantages', vế trước In spite of phải là từ trái nghĩa</span>." },
+                            { t: "difficulties", c: false, exp: "<span class='p-word'>difficulties</span> (<span class='p-mean'>n</span>): khó khăn. ❌ <span class='hl-red'>Sai logic (tương tự C)</span>." }
+                        ],
+                        evEn: "In spite of its many (1) benefits, living in the city also brings lots of disadvantages.",
+                        evVi: "Mặc dù có nhiều <span class='hl-green'>lợi ích</span>, sống ở thành phố cũng mang lại rất nhiều bất lợi."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: Vấn đề này thậm chí còn tệ hơn (2) ___ giờ cao điểm...",
+                        options: [
+                            { t: "on", c: false, exp: "<span class='p-word'>on</span> (<span class='p-mean'>prep</span>): trên. ❌ <span class='hl-red'>Sai giới từ</span>." },
+                            { t: "in", c: true, exp: "<span class='p-word'>in</span> (<span class='p-mean'>prep</span>): trong. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Cụm từ cố định chỉ thời gian: in the rush hour (trong giờ cao điểm). ('at rush hour' không có 'the' cũng đúng, nhưng đề có chữ 'the' nên dùng 'in')</span>." },
+                            { t: "at", c: false, exp: "<span class='p-word'>at</span> (<span class='p-mean'>prep</span>): tại. ❌ <span class='hl-red'>Sai vì nếu dùng 'at' thường nói 'at rush hour' chứ ít dùng 'at the rush hour' trong ngữ cảnh này (in the rush hour phổ biến hơn)</span>." },
+                            { t: "by", c: false, exp: "<span class='p-word'>by</span> (<span class='p-mean'>prep</span>): bởi. ❌ <span class='hl-red'>Sai giới từ</span>." }
+                        ],
+                        evEn: "This problem is even worse (2) in the rush hour...",
+                        evVi: "Vấn đề này thậm chí còn tệ hơn <span class='hl-green'>trong</span> giờ cao điểm..."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: Ngày càng nhiều người cảm thấy (3) ___ khó khăn để sống nhờ mức lương khiêm tốn...",
+                        options: [
+                            { t: "it", c: true, exp: "<span class='p-word'>it</span> (<span class='p-mean'>pronoun</span>): nó. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Cấu trúc giả tân ngữ: find + IT + adj + to V (cảm thấy điều gì đó như thế nào khi làm gì)</span>." },
+                            { t: "them", c: false, exp: "<span class='p-word'>them</span> (<span class='p-mean'>pronoun</span>): chúng/họ. ❌ <span class='hl-red'>Sai cấu trúc, không dùng 'them' làm chủ ngữ giả/tân ngữ giả ở đây</span>." },
+                            { t: "their", c: false, exp: "<span class='p-word'>their</span> (<span class='p-mean'>adj</span>): của họ. ❌ <span class='hl-red'>Sai từ loại</span>." },
+                            { t: "they", c: false, exp: "<span class='p-word'>they</span> (<span class='p-mean'>pronoun</span>): họ. ❌ <span class='hl-red'>Sai vị trí tân ngữ (sau find phải là tân ngữ)</span>." }
+                        ],
+                        evEn: "More and more people find (3) it difficult to live on their modest salaries...",
+                        evVi: "Ngày càng có nhiều người cảm thấy <span class='hl-green'>điều đó là</span> khó khăn để sống dựa trên mức lương khiêm tốn của họ..."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: Một hạn chế khác của cuộc sống thành phố là không khí (4) ___ bị gây ra bởi khí thải...",
+                        options: [
+                            { t: "pollutant", c: false, exp: "<span class='p-word'>pollutant</span> (<span class='p-mean'>n</span>): chất gây ô nhiễm. ❌ <span class='hl-red'>Sai từ loại, trước danh từ 'air' cần tính từ</span>." },
+                            { t: "pollute", c: false, exp: "<span class='p-word'>pollute</span> (<span class='p-mean'>v</span>): làm ô nhiễm. ❌ <span class='hl-red'>Sai từ loại</span>." },
+                            { t: "polluted", c: true, exp: "<span class='p-word'>polluted</span> (<span class='p-mean'>adj</span>): bị ô nhiễm. ✅ <span class='hl-green'>Đúng. Tính từ 'polluted' bổ nghĩa cho danh từ 'air' tạo thành 'không khí bị ô nhiễm'</span>." },
+                            { t: "pollution", c: false, exp: "<span class='p-word'>pollution</span> (<span class='p-mean'>n</span>): sự ô nhiễm. ❌ <span class='hl-red'>Sai từ loại, 'pollution air' không đúng cấu trúc (phải là 'air pollution')</span>." }
+                        ],
+                        evEn: "Another drawback of the city life is the (4) polluted air caused by exhaust emissions...",
+                        evVi: "Một mặt trái khác của cuộc sống thành phố là không khí <span class='hl-green'>bị ô nhiễm</span> bị gây ra bởi khí thải..."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: (5) ___ người bị mắc các bệnh về hô hấp...",
+                        options: [
+                            { t: "A little", c: false, exp: "<span class='p-word'>A little</span> (<span class='p-mean'>adj</span>): một chút. ❌ <span class='hl-red'>Sai vì 'A little' đi với danh từ không đếm được, trong khi 'people' đếm được số nhiều</span>." },
+                            { t: "A lot", c: false, exp: "<span class='p-word'>A lot</span> (<span class='p-mean'>adv/pronoun</span>): nhiều. ❌ <span class='hl-red'>Sai vì để đứng trước danh từ phải là 'A lot OF', ở đây thiếu 'of'</span>." },
+                            { t: "Few", c: false, exp: "<span class='p-word'>Few</span> (<span class='p-mean'>adj</span>): rất ít. ❌ <span class='hl-red'>Sai logic bài khóa, bài đang nhấn mạnh mặt xấu nên phải có 'nhiều' người mắc bệnh chứ không phải 'rất ít'</span>." },
+                            { t: "Many", c: true, exp: "<span class='p-word'>Many</span> (<span class='p-mean'>adj</span>): nhiều. ✅ <span class='hl-green'>Đúng. 'Many' + Danh từ đếm được số nhiều (people), hợp lý về mặt ý nghĩa ngữ cảnh</span>." }
+                        ],
+                        evEn: "(5) Many people suffer from respiratory problems...",
+                        evVi: "<span class='hl-green'>Nhiều</span> người bị mắc các bệnh về hô hấp..."
+                    }
+                ]
+            },
+
+            // BÀI ĐỌC 4: URBANIZATION & JOBS
+            {
+                title: "Passage 4: Urbanization & Job Opportunities",
+                paragraphs: [
+                    {
+                        en: "It is reported that there is a rising (1) ___ of people living in urban areas.",
+                        vi: "Có báo cáo cho rằng đang có sự gia tăng về (1) ___ người sống ở các khu vực đô thị."
+                    },
+                    {
+                        en: "Big cities provide both a significant amount of (2) ___ and higher average salaries. With so many companies and factories, it is easy for city dwellers to find work.",
+                        vi: "Các thành phố lớn cung cấp cả một lượng đáng kể (2) ___ và mức lương trung bình cao hơn. Với rất nhiều công ty và nhà máy, cư dân thành phố rất dễ tìm việc làm."
+                    },
+                    {
+                        en: "Statistics from New York City show that people here have ten times more job opportunities than those (3) ___ the neighboring suburbs and smaller towns.",
+                        vi: "Thống kê từ thành phố New York cho thấy người dân ở đây có cơ hội việc làm gấp mười lần so với những người ở (3) ___ các vùng ngoại ô lân cận và các thị trấn nhỏ hơn."
+                    },
+                    {
+                        en: "Additionally, greater earnings are also another reason why workers are attracted to large cities. High-skilled workers tend to concentrate in urban centers because they can (4) ___ valuable experiences that are not available in other places.",
+                        vi: "Ngoài ra, thu nhập cao hơn cũng là một lý do khác tại sao người lao động bị thu hút đến các thành phố lớn. Những công nhân có tay nghề cao có xu hướng tập trung ở các trung tâm đô thị vì họ có thể (4) ___ những kinh nghiệm quý giá không có sẵn ở những nơi khác."
+                    },
+                    {
+                        en: "This skilled workforce is, of course, hunted by companies which are often willing (5) ___ higher wages.",
+                        vi: "Lực lượng lao động có tay nghề này, dĩ nhiên, bị săn đón bởi các công ty vốn thường sẵn sàng (5) ___ mức lương cao hơn."
+                    }
+                ],
+                glossary: [
+                    { w: "significant", pos: "adj", m: "đáng kể, quan trọng" },
+                    { w: "average", pos: "adj", m: "trung bình" },
+                    { w: "suburb", pos: "n", m: "vùng ngoại ô" },
+                    { w: "earnings", pos: "n", m: "thu nhập, tiền kiếm được" },
+                    { w: "concentrate", pos: "v", m: "tập trung" },
+                    { w: "valuable", pos: "adj", m: "có giá trị, quý giá" },
+                    { w: "available", pos: "adj", m: "có sẵn, có thể dùng được" },
+                    { w: "workforce", pos: "n", m: "lực lượng lao động" },
+                    { w: "hunt", pos: "v", m: "săn bắn, săn tìm (tuyển dụng)" },
+                    { w: "wage", pos: "n", m: "tiền lương (theo tuần/tháng)" }
+                ],
+                questions: [
+                    {
+                        qVi: "Ngữ cảnh: Có báo cáo cho rằng đang có một (1) ___ đang tăng lên số người sống ở các khu vực đô thị.",
+                        options: [
+                            { t: "amount", c: false, exp: "<span class='p-word'>amount</span> (<span class='p-mean'>n</span>): lượng. ❌ <span class='hl-red'>Sai vì 'amount' dùng cho danh từ KHÔNG đếm được, trong khi 'people' đếm được</span>." },
+                            { t: "number", c: true, exp: "<span class='p-word'>number</span> (<span class='p-mean'>n</span>): số lượng. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Cấu trúc: A number of + Danh từ đếm được số nhiều (people)</span>." },
+                            { t: "sum", c: false, exp: "<span class='p-word'>sum</span> (<span class='p-mean'>n</span>): tổng số tiền / tổng cộng (toán học). ❌ <span class='hl-red'>Sai ngữ cảnh</span>." },
+                            { t: "group", c: false, exp: "<span class='p-word'>group</span> (<span class='p-mean'>n</span>): nhóm. ❌ <span class='hl-red'>Sai nghĩa, không nói 'có một nhóm đang tăng lên những người...'</span>." }
+                        ],
+                        evEn: "It is reported that there is a rising (1) number of people living in urban areas.",
+                        evVi: "Có báo cáo cho rằng đang có <span class='hl-green'>số lượng</span> ngày càng tăng người sống ở các khu vực đô thị."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: Các thành phố lớn cung cấp cả một lượng đáng kể (2) ___ và mức lương trung bình cao hơn.",
+                        options: [
+                            { t: "employ", c: false, exp: "<span class='p-word'>employ</span> (<span class='p-mean'>v</span>): thuê mướn. ❌ <span class='hl-red'>Sai từ loại, sau giới từ 'of' cần Danh từ</span>." },
+                            { t: "employed", c: false, exp: "<span class='p-word'>employed</span> (<span class='p-mean'>adj</span>): có việc làm. ❌ <span class='hl-red'>Sai từ loại</span>." },
+                            { t: "unemployment", c: false, exp: "<span class='p-word'>unemployment</span> (<span class='p-mean'>n</span>): nạn thất nghiệp. ❌ <span class='hl-red'>Sai logic vì vế sau là 'higher average salaries' (lương cao), thành phố cung cấp việc làm chứ không phải cung cấp 'thất nghiệp'</span>." },
+                            { t: "employment", c: true, exp: "<span class='p-word'>employment</span> (<span class='p-mean'>n</span>): công ăn việc làm. ✅ <span class='hl-green'>Đúng. Phù hợp cả về từ loại (Danh từ) và ngữ nghĩa</span>." }
+                        ],
+                        evEn: "Big cities provide both a significant amount of (2) employment and higher average salaries.",
+                        evVi: "Các thành phố lớn cung cấp cả một lượng đáng kể <span class='hl-green'>công ăn việc làm</span> và mức lương trung bình cao hơn."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: ...cơ hội hơn so với những người ở (3) ___ vùng ngoại ô lân cận...",
+                        options: [
+                            { t: "in", c: true, exp: "<span class='p-word'>in</span> (<span class='p-mean'>prep</span>): ở trong. ✅ <span class='hl-green'>Đúng. Cụm từ chỉ địa điểm: in the suburbs (ở vùng ngoại ô)</span>." },
+                            { t: "on", c: false, exp: "<span class='p-word'>on</span> (<span class='p-mean'>prep</span>): trên. ❌ <span class='hl-red'>Sai giới từ</span>." },
+                            { t: "at", c: false, exp: "<span class='p-word'>at</span> (<span class='p-mean'>prep</span>): tại (địa điểm nhỏ cụ thể). ❌ <span class='hl-red'>Sai vì suburb là vùng rộng lớn, phải dùng 'in'</span>." },
+                            { t: "by", c: false, exp: "<span class='p-word'>by</span> (<span class='p-mean'>prep</span>): bởi/cạnh. ❌ <span class='hl-red'>Sai giới từ</span>." }
+                        ],
+                        evEn: "...opportunities than those (3) in the neighboring suburbs...",
+                        evVi: "...cơ hội hơn so với những người <span class='hl-green'>ở</span> các vùng ngoại ô lân cận..."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: ...bởi vì họ có thể (4) ___ những kinh nghiệm quý giá...",
+                        options: [
+                            { t: "achieve", c: false, exp: "<span class='p-word'>achieve</span> (<span class='p-mean'>v</span>): đạt được (thành tựu, mục tiêu). ❌ <span class='hl-red'>Không đi với 'experiences' (kinh nghiệm)</span>." },
+                            { t: "make", c: false, exp: "<span class='p-word'>make</span> (<span class='p-mean'>v</span>): tạo ra. ❌ <span class='hl-red'>Sai cụm từ</span>." },
+                            { t: "take", c: false, exp: "<span class='p-word'>take</span> (<span class='p-mean'>v</span>): lấy. ❌ <span class='hl-red'>Sai cụm từ</span>." },
+                            { t: "gain", c: true, exp: "<span class='p-word'>gain</span> (<span class='p-mean'>v</span>): thu được, kiếm được. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Cụm từ cố định (Collocation): gain experience (thu được/tích lũy kinh nghiệm)</span>." }
+                        ],
+                        evEn: "...because they can (4) gain valuable experiences...",
+                        evVi: "...bởi vì họ có thể <span class='hl-green'>thu được</span> những kinh nghiệm quý giá..."
+                    },
+                    {
+                        qVi: "Ngữ cảnh: ...các công ty vốn thường sẵn lòng (5) ___ mức lương cao hơn.",
+                        options: [
+                            { t: "to pay", c: true, exp: "<span class='p-word'>to pay</span> (<span class='p-mean'>to V</span>): trả tiền. ✅ <span class='hl-green'>Đúng</span>. <span class='p-grammar'>Cấu trúc: to be willing TO DO something (sẵn lòng làm việc gì)</span>." },
+                            { t: "pay", c: false, exp: "<span class='p-word'>pay</span> (<span class='p-mean'>v-inf</span>). ❌ <span class='hl-red'>Sai cấu trúc (thiếu to)</span>." },
+                            { t: "paying", c: false, exp: "<span class='p-word'>paying</span> (<span class='p-mean'>v-ing</span>). ❌ <span class='hl-red'>Sai cấu trúc</span>." },
+                            { t: "to be paid", c: false, exp: "<span class='p-word'>to be paid</span> (<span class='p-mean'>passive</span>): được trả tiền. ❌ <span class='hl-red'>Sai vì công ty là người 'trả lương' (chủ động) chứ không phải 'được trả lương'</span>." }
+                        ],
+                        evEn: "...companies which are often willing (5) to pay higher wages.",
+                        evVi: "...các công ty vốn thường sẵn sàng <span class='hl-green'>trả</span> mức lương cao hơn."
+                    }
+                ]
+            }
+        ];
+
+        // ================= BIẾN TOÀN CỤC & ÂM THANH =================
+        let totalQuestions = 0;
+        let answeredQuestions = 0;
+        let score = 0;
+        let introAudioPlayed = false;
+
+        const wrongAudio = new Audio("https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3");
+        const introAudio = new Audio("https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_7wcKV5pKUrQYWyi7XgktJM.mp3");
+
+        function playDing() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.5);
+            } catch(e) { console.log("AudioContext not supported"); }
+        }
+
+        // ================= RENDER GIAO DIỆN =================
+        function initApp() {
+            const readingPane = document.getElementById('reading-pane');
+            const exercisePane = document.getElementById('exercise-pane');
+            let qIndexGlobal = 0;
+
+            appData.forEach((textData, textIdx) => {
+                // 1. RENDER READING PANE
+                let htmlReading = `<div class="text-section"><h2 class="text-title">${textData.title}</h2>`;
+                
+                textData.paragraphs.forEach((p, pIdx) => {
+                    htmlReading += `
+                    <div class="paragraph-box">
+                        <div class="para-en">${p.en}</div>
+                        <div class="para-vi" id="vi-${textIdx}-${pIdx}">${p.vi}</div>
+                        <button class="btn-translate" onclick="toggleTranslation(${textIdx}, ${pIdx})">Mở dịch đoạn này 🌟</button>
+                    </div>`;
+                });
+
+                htmlReading += `<table class="glossary-table">
+                                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>`;
+                textData.glossary.forEach(item => {
+                    htmlReading += `<tr><td><strong>${item.w}</strong></td><td><em>${item.pos}</em></td><td>${item.m}</td></tr>`;
+                });
+                htmlReading += `</table></div>`;
+                
+                readingPane.insertAdjacentHTML('beforeend', htmlReading);
+
+                // 2. RENDER EXERCISE PANE
+                textData.questions.forEach((q, qIdx) => {
+                    qIndexGlobal++;
+                    totalQuestions++;
+                    
+                    // Gắn index gốc để tham chiếu sau khi xáo trộn
+                    let optionsWithOriginalIdx = q.options.map((opt, origIdx) => ({ ...opt, origIdx }));
+                    let shuffledOptions = optionsWithOriginalIdx.sort(() => Math.random() - 0.5);
+                    
+                    // Xóa phần hiển thị câu trích dẫn tiếng anh, yêu cầu tự dò trên bài đọc
+                    let htmlExercise = `
+                    <div class="question-card" id="q-card-${qIndexGlobal}">
+                        <div class="q-text">Câu ${qIndexGlobal}: Select the best answer</div>
+                        <div class="options-grid">
+                    `;
+                    
+                    // Truyền index để tránh lỗi cú pháp dấu nháy khi nối chuỗi
+                    shuffledOptions.forEach((opt) => {
+                        htmlExercise += `<button class="btn-option" data-correct="${opt.c}" onclick="checkAnswer(this, ${qIndexGlobal}, ${textIdx}, ${qIdx}, ${opt.origIdx})">${opt.t}</button>`;
+                    });
+
+                    htmlExercise += `
+                        </div>
+                        <div class="explanation-box" id="exp-${qIndexGlobal}"></div>
+                    </div>`;
+                    
+                    document.querySelector('.submit-section').insertAdjacentHTML('beforebegin', htmlExercise);
+                });
+            });
+            
+            document.body.addEventListener('click', () => {
+                if(!introAudioPlayed) {
+                    introAudio.play().catch(e => console.log("Auto-play prevented"));
+                    introAudioPlayed = true;
+                }
+            }, {once: true});
+        }
+
+        // ================= CÁC HÀM XỬ LÝ (LOGIC) =================
+        function toggleTranslation(textIdx, pIdx) {
+            const el = document.getElementById(`vi-${textIdx}-${pIdx}`);
+            if (el.style.display === "none" || el.style.display === "") {
+                el.style.display = "block";
+            } else {
+                el.style.display = "none";
+            }
+        }
+
+        function checkAnswer(btn, globalQId, textIdx, qIdx, optOrigIdx) {
+            // Lấy data chuẩn từ object ngầm (không qua HTML String)
+            const questionData = appData[textIdx].questions[qIdx];
+            const selectedOption = questionData.options[optOrigIdx];
+            const isCorrect = selectedOption.c;
+
+            const container = document.getElementById(`q-card-${globalQId}`);
+            const buttons = container.querySelectorAll('.btn-option');
+            buttons.forEach(b => b.disabled = true);
+            
+            const expBox = document.getElementById(`exp-${globalQId}`);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playDing();
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                score++;
+            } else {
+                btn.classList.add('wrong');
+                wrongAudio.currentTime = 0;
+                wrongAudio.play();
+                
+                // Tự động highlight đáp án đúng
+                buttons.forEach(b => {
+                    if (b.getAttribute('data-correct') === 'true') {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            // Hiển thị khung giải thích
+            let expHtml = `<div class="exp-line"><strong>📝 Dịch ngữ cảnh:</strong> <span style="color:#e83e8c;">${questionData.qVi}</span></div>`;
+            expHtml += `<div class="exp-line"><strong>🔍 Phân tích các đáp án:</strong></div>`;
+            
+            questionData.options.forEach(o => {
+                expHtml += `<div style="margin-left: 10px; margin-bottom: 5px;">- ${o.t}: ${o.exp}</div>`;
+            });
+            
+            expHtml += `<div class="exp-quote"><strong>📖 Dẫn chứng trong bài:</strong><br/>"${questionData.evEn}"<br/>👉 <strong>Dịch:</strong> "${questionData.evVi}"</div>`;
+            
+            expBox.innerHTML = expHtml;
+            expBox.style.display = "block";
+            answeredQuestions++;
+        }
+
+        // ================= KẾT QUẢ & NỘP BÀI =================
+        function showSubmitModal() {
+            document.getElementById('submitModal').style.display = "flex";
+            document.getElementById('modal-step-1').style.display = "block";
+            document.getElementById('modal-step-2').style.display = "none";
+        }
+
+        function processSubmit() {
+            const nameInput = document.getElementById('studentName').value.trim();
+            if(nameInput === "") {
+                alert("Em vui lòng nhập tên trước khi nộp bài nhé!");
+                return;
+            }
+            if(answeredQuestions < totalQuestions) {
+                const cf = confirm(`Em mới làm ${answeredQuestions}/${totalQuestions} câu. Em có chắc chắn muốn nộp bài luôn không?`);
+                if(!cf) return;
+            }
+
+            const percentage = score / totalQuestions;
+            const score10 = ((score / totalQuestions) * 10).toFixed(1);
+            
+            let gifUrl = "";
+            let comment = "";
+
+            if (percentage === 1) {
+                gifUrl = "https://media.giphy.com/media/l4pTfx2qLszoacZRS/giphy.gif"; 
+                comment = "Tuyệt đỉnh! Em đúng là thiên tài Tiếng Anh! 🏆";
+            } else if (percentage >= 0.6) {
+                gifUrl = "https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif"; 
+                comment = "Rất xuất sắc! Chúc mừng em đã nắm bài rất tốt! 🌟";
+            } else {
+                gifUrl = "https://media.giphy.com/media/2UIcmK4pn7rYNLRboG/giphy.gif"; 
+                comment = "Không sao đâu, hãy đọc kỹ giải thích của cô và cố gắng lần sau nhé! 💪";
+            }
+
+            document.getElementById('modal-step-1').style.display = "none";
+            document.getElementById('modal-step-2').style.display = "block";
+            
+            document.getElementById('result-name').innerText = `Học sinh: ${nameInput}`;
+            document.getElementById('result-score').innerText = `Số câu đúng: ${score}/${totalQuestions}`;
+            document.getElementById('result-score-10').innerText = `Điểm quy đổi: ${score10}/10 điểm`;
+            document.getElementById('result-comment').innerText = comment;
+            document.getElementById('result-gif').src = gifUrl;
+        }
+
+        function closeModal() {
+            document.getElementById('submitModal').style.display = "none";
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>

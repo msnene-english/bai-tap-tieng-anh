@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listening Practice - Giáo viên tạo: Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Theme Du lịch/Châu Âu: Sky Blue & Aqua */
+            --primary: #0984E3; 
+            --secondary: #00CEC9; 
+            --correct: #00B894;
+            --wrong: #D63031;
+            --text-dark: #2d3436;
+            --text-light: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.3);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            /* Dynamic Theme: Gradient Bầu trời kết hợp Pattern SVG nhúng Base64 chứa Emoji lơ lửng */
+            background: 
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" opacity="0.4"><text x="40" y="60" font-size="35" opacity="0.6">✈️</text><text x="280" y="120" font-size="40" opacity="0.5">🌏</text><text x="120" y="260" font-size="30" opacity="0.4">🎒</text><text x="320" y="320" font-size="35" opacity="0.7">🎁</text><text x="80" y="360" font-size="30" opacity="0.5">📸</text></svg>'),
+                radial-gradient(circle at top right, #74B9FF 0%, #81ECEC 100%);
+            background-attachment: fixed;
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* --- MODAL BẢO MẬT & NAME POPUP --- */
+        #password-modal, #name-modal, #result-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+            text-align: center;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .modal-content input:focus {
+            box-shadow: 0 0 15px rgba(9, 132, 227, 0.4);
+        }
+
+        .modal-content button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #0652DD;
+            transition: all 0.2s;
+        }
+
+        .modal-content button:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: var(--wrong) !important;
+            color: var(--wrong) !important;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* --- GIAO DIỆN CHÍNH --- */
+        #main-app {
+            display: none;
+            width: 100%;
+            max-width: 850px;
+            margin: 20px auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .audio-container {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.4);
+        }
+
+        audio {
+            width: 100%;
+            max-width: 400px;
+            outline: none;
+            border-radius: 30px;
+        }
+
+        /* --- BẢNG OPTIONS MATCHING --- */
+        .options-reference {
+            padding: 20px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .options-reference div {
+            background: rgba(9, 132, 227, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: left;
+            border: 1px solid rgba(9, 132, 227, 0.2);
+        }
+
+        .options-reference span {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            border-radius: 50%;
+            line-height: 25px;
+            margin-right: 5px;
+        }
+
+        /* --- CARD CÂU HỎI (MATCHING) --- */
+        .question-card {
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .question-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .matching-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .country-label {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .question-number {
+            background: var(--secondary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .select-answer {
+            padding: 12px 20px;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            outline: none;
+            cursor: pointer;
+            background: white;
+            color: var(--text-dark);
+            min-width: 200px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 0 rgba(9, 132, 227, 0.2);
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%230984E3%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 12px auto;
+        }
+
+        .select-answer:focus {
+            box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.3);
+        }
+
+        .select-answer.correct {
+            background-color: var(--correct);
+            color: white;
+            border-color: var(--correct);
+            box-shadow: 0 4px 0 #00997A;
+            background-image: none; /* Hide arrow on correct */
+        }
+
+        .select-answer.wrong {
+            background-color: var(--wrong);
+            color: white;
+            border-color: var(--wrong);
+            box-shadow: 0 4px 0 #B33939;
+            background-image: none;
+        }
+
+        /* --- KHUNG GIẢI THÍCH (SIÊU CHI TIẾT) --- */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 5px solid var(--secondary);
+            border-radius: 0 15px 15px 0;
+            font-size: 15px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .exp-section { margin-bottom: 15px; }
+        .exp-title { font-weight: 800; color: var(--primary); margin-bottom: 5px; text-transform: uppercase; font-size: 13px;}
+        .transcript { background: #f8f9fa; padding: 12px; border-radius: 8px; font-style: italic; color: #444; margin-bottom: 8px; border: 1px solid #eee;}
+        .highlight { color: var(--wrong); font-weight: bold; background: #ffeaa7; padding: 2px 4px; border-radius: 4px;}
+        .reason-true { color: #00B894; font-weight: bold; }
+        .reason-false { color: #d35400; font-weight: bold; }
+
+        /* --- NÚT NỘP BÀI --- */
+        .submit-btn {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-size: 22px;
+            font-weight: 800;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #0652DD;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #0652DD;
+        }
+
+        .submit-btn:active {
+            transform: translateY(8px);
+            box-shadow: none;
+        }
+
+        /* --- RESULT MODAL --- */
+        .meme-img {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 15px;
+            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            object-fit: contain;
+        }
+
+        #error-msg {
+            color: var(--wrong);
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            z-index: 10000;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="password-modal">
+        <div class="modal-content glass">
+            <h2>🔒 Nhập Mật Khẩu</h2>
+            <p style="margin-bottom: 15px; color: #555;">Dành riêng cho học sinh của Ms. MS Chí Nên</p>
+            <input type="password" id="pass-input" placeholder="Nhập mật khẩu...">
+            <button onclick="checkPassword()">MỞ KHÓA BÀI THI</button>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="header glass">
+            <h3>Listening Practice - Giáo viên tạo: Ms MS Chí Nên</h3>
+            <h1>🌍 ROUND EUROPE TRIP 🌍</h1>
+            <p>You will hear a boy talking to a friend about the presents he bought during a family trip round Europe.<br><strong>What present did he buy in each country?</strong></p>
+        </div>
+
+        <div class="audio-container glass">
+            <audio id="exam-audio" controls controlsList="nodownload"></audio>
+        </div>
+
+        <div class="options-reference glass">
+            <div><span>A</span> backpack (ba lô)</div>
+            <div><span>B</span> calendar (lịch)</div>
+            <div><span>C</span> dictionary (từ điển)</div>
+            <div><span>D</span> guidebook (sách HD)</div>
+            <div><span>E</span> kite (con diều)</div>
+            <div><span>F</span> mug (cái cốc)</div>
+            <div><span>G</span> photo album (album)</div>
+            <div><span>H</span> postcards (bưu thiếp)</div>
+        </div>
+
+        <div id="quiz-container">
+            </div>
+
+        <button class="submit-btn" onclick="openNamePrompt()">🎯 Nộp Bài & Xem Kết Quả</button>
+    </div>
+
+    <div id="name-modal" style="display:none;">
+        <div class="modal-content glass">
+            <h2>📝 Nhập tên của bạn</h2>
+            <input type="text" id="student-name" placeholder="Ví dụ: Nguyễn Văn A..." onkeypress="handleNameEnter(event)">
+            <p id="error-msg">⚠️ Vui lòng nhập tên trước khi xem điểm nhé!</p>
+            <button onclick="submitQuiz()">XÁC NHẬN NỘP BÀI</button>
+        </div>
+    </div>
+
+    <div id="result-modal" style="display:none;">
+        <div class="modal-content glass" style="max-width: 500px;">
+            <h2 id="result-title">🌟 KẾT QUẢ 🌟</h2>
+            <h1 id="result-score" style="color: var(--primary); font-size: 40px; margin: 10px 0;">0/5</h1>
+            <img id="result-meme" class="meme-img" src="" alt="Result Meme">
+            <p id="result-feedback" style="font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #333;"></p>
+            <button onclick="location.reload()">LÀM LẠI BÀI</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. BẢO MẬT & MÃ HÓA ---
+        const securePass = [99, 111, 109, 97, 105, 97, 110, 117, 108, 105, 115];
+        // Base64 Audio Link (Part 5)
+        const audioBase64 = "aHR0cHM6Ly9lbmdsaXNocHJhY3RpY2V0ZXN0Lm5ldC93cC1jb250ZW50L3VwbG9hZHMvMjAyMS8xMS9rZXQtcHJhY3RpY2UtbGlzdGVuaW5nLXRlc3QtMDQtcGFydC01Lm1wMw==";
+
+        function checkPassword() {
+            const input = document.getElementById('pass-input');
+            const target = securePass.map(c => String.fromCharCode(c)).join('');
+            
+            if(input.value === target) {
+                document.getElementById('password-modal').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                document.getElementById('exam-audio').src = atob(audioBase64);
+            } else {
+                input.classList.add('shake');
+                input.value = '';
+                input.placeholder = 'Sai mật khẩu!';
+                setTimeout(() => input.classList.remove('shake'), 400);
+            }
+        }
+
+        document.getElementById('pass-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+
+        // --- 2. DỮ LIỆU BÀI TẬP MATCHING (SIÊU CHI TIẾT) ---
+        const optionsList = [
+            { letter: "A", text: "backpack" },
+            { letter: "B", text: "calendar" },
+            { letter: "C", text: "dictionary" },
+            { letter: "D", text: "guidebook" },
+            { letter: "E", text: "kite" },
+            { letter: "F", text: "mug" },
+            { letter: "G", text: "photo album" },
+            { letter: "H", text: "postcards" }
+        ];
+
+        const matchData = [
+            {
+                id: 21,
+                country: "Poland",
+                correctLetter: "G",
+                explanation: {
+                    transcript: "Yes, I bought this for my Aunt Steph. She can put all the pictures she’s taken with her new camera in it. I also sent her a postcard of a lake that she loved.",
+                    viTranscript: "Đúng vậy, tớ mua cái này cho Dì Steph. Dì ấy có thể đặt tất cả những bức <span class='highlight'>ảnh (pictures)</span> dì mới chụp bằng máy ảnh mới <span class='highlight'>vào trong đó (put... in it)</span>. Tớ cũng gửi cho dì một tấm bưu thiếp về cái hồ mà dì rất thích.",
+                    whyTrue: "Cậu bé nhắc đến việc 'put pictures in it' (đặt các bức ảnh vào trong đó). Vật dùng để cất giữ ảnh chính là 'Photo album' (G).",
+                    whyFalse: "Bẫy từ vựng: Cậu bé có nhắc đến từ 'postcard' (bưu thiếp - H), nhưng đó là thứ cậu ấy ĐÃ GỬI (sent her), còn câu hỏi hỏi về MÓN QUÀ CẬU MUA (bought) ở Ba Lan."
+                }
+            },
+            {
+                id: 22,
+                country: "Switzerland",
+                correctLetter: "B",
+                explanation: {
+                    transcript: "Girl: Then you went to Switzerland, right?<br>Boy: Yeah, my cousin likes writing down what she’s doing on each date. So she can put this on her kitchen wall.",
+                    viTranscript: "Nữ: Sau đó cậu đến Thụy Sĩ đúng không?<br>Nam: Ừ, em họ tớ thích ghi chép lại những việc ẻm làm <span class='highlight'>vào mỗi ngày (each date)</span>. Nên ẻm có thể <span class='highlight'>treo cái này lên tường</span> bếp.",
+                    whyTrue: "Từ khóa 'writing down... on each date' (ghi chú vào từng ngày) và 'put this on her kitchen wall' (treo lên tường). Đồ vật thỏa mãn cả 2 yếu tố này là 'Calendar' (Lịch - B).",
+                    whyFalse: "Bẫy (Distractor): Ngay sau đó bạn nữ nói 'The photos look like ones in guidebooks!' (Nhìn ảnh cứ như trong sách hướng dẫn du lịch ấy). Nếu nghe không kỹ, bạn sẽ vội vàng chọn D (Guidebook)."
+                }
+            },
+            {
+                id: 23,
+                country: "Italy",
+                correctLetter: "C",
+                explanation: {
+                    transcript: "Then we went to Italy. My uncle’s studying Italian, so he can look up words in this.",
+                    viTranscript: "Sau đó bọn tớ đến Ý. Chú của tớ đang học tiếng Ý, nên chú có thể <span class='highlight'>tra cứu từ vựng (look up words)</span> trong cái này.",
+                    whyTrue: "Cụm từ quyết định: 'look up words' (tra cứu từ vựng). Đồ vật dùng để tra từ vựng chắc chắn là 'Dictionary' (Từ điển - C).",
+                    whyFalse: "Câu này khá thẳng thắn (straightforward), học sinh chỉ cần bắt được Collocation (cụm từ đi liền) 'look up words' là chọn được ngay, không có bẫy."
+                }
+            },
+            {
+                id: 24,
+                country: "Spain",
+                correctLetter: "F",
+                explanation: {
+                    transcript: "Girl: Did you buy any presents in Spain?<br>Boy: My neighbour’s always drinking tea and hasn’t got enough cups. This has got her name written on it!",
+                    viTranscript: "Nữ: Cậu có mua quà gì ở Tây Ban Nha không?<br>Nam: Hàng xóm của tớ lúc nào cũng <span class='highlight'>uống trà (drinking tea)</span> và cô ấy không có đủ <span class='highlight'>cốc (cups)</span>. Cái này còn có khắc tên cô ấy trên đó nữa!",
+                    whyTrue: "Cậu bé nhắc đến 'drinking tea' và 'cups' (những chiếc cốc). Từ đồng nghĩa với 'cup' trong các lựa chọn chính là 'Mug' (Cái cốc to có quai - F).",
+                    whyFalse: "Câu này kiểm tra kỹ năng nghe hiểu từ đồng nghĩa (Synonyms/Paraphrase): cup = mug."
+                }
+            },
+            {
+                id: 25,
+                country: "Portugal",
+                correctLetter: "A",
+                explanation: {
+                    transcript: "Girl: Where did you get this?<br>Boy: In Portugal. It’s actually a present for me. I can put my school books and things in it.",
+                    viTranscript: "Nữ: Cậu mua cái này ở đâu thế?<br>Nam: Ở Bồ Đào Nha. Thật ra đó là quà tớ tự mua cho mình. Tớ có thể <span class='highlight'>đựng sách vở (put my school books)</span> và đồ đạc vào trong đó.",
+                    whyTrue: "Từ khóa: 'put my school books and things in it' (đựng sách vở và đồ đạc học tập). Vật dụng phù hợp nhất để mang sách tới trường là 'Backpack' (Ba lô - A).",
+                    whyFalse: "Tuy cậu bé nhắc đến 'books' nhưng không phải là mua Guidebook (D) hay Dictionary (C), mà là mua một vật chứa để đựng sách vở cá nhân."
+                }
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = 0;
+
+        // Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playTeoTeo() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.4);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        function createConfetti(x, y) {
+            for (let i = 0; i < 30; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = x + 'px';
+                conf.style.top = y + 'px';
+                conf.style.backgroundColor = ['#0984E3', '#00CEC9', '#00B894', '#FFEAA7', '#FF7675'][Math.floor(Math.random() * 5)];
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 50 + Math.random() * 100;
+                conf.style.transition = 'all 1s cubic-bezier(.37,0,.63,1)';
+                document.body.appendChild(conf);
+                setTimeout(() => {
+                    conf.style.transform = `translate(${Math.cos(angle)*velocity}px, ${Math.sin(angle)*velocity + 200}px) rotate(720deg)`;
+                    conf.style.opacity = '0';
+                }, 10);
+                setTimeout(() => conf.remove(), 1000);
+            }
+        }
+
+        // Render UI
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            
+            matchData.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.classList.add('question-card');
+                
+                // Tạo thẻ Select
+                let optionsHtml = `<option value="">-- Chọn món quà --</option>`;
+                optionsList.forEach(opt => {
+                    optionsHtml += `<option value="${opt.letter}">${opt.letter} - ${opt.text}</option>`;
+                });
+
+                let html = `
+                <div class="matching-row">
+                    <div class="country-label">
+                        <span class="question-number">${q.id}</span>
+                        <span>${q.country}</span>
+                    </div>
+                    <select class="select-answer" id="select-${index}" onchange="checkMatchingAnswer(${index}, event)">
+                        ${optionsHtml}
+                    </select>
+                </div>
+                `;
+                
+                // Khung Giải Thích
+                html += `
+                <div class="explanation-box" id="exp-${index}">
+                    <div class="exp-section">
+                        <div class="exp-title">🎧 Audio Script (Trích đoạn):</div>
+                        <div class="transcript">${q.explanation.transcript}</div>
+                        <div class="transcript" style="background: #fff; border-color: #ddd;">${q.explanation.viTranscript}</div>
+                    </div>
+                    <div class="exp-section">
+                        <div class="exp-title">✅ Tại sao chọn đáp án ${q.correctLetter}?</div>
+                        <div class="reason-true">${q.explanation.whyTrue}</div>
+                    </div>
+                    <div class="exp-section">
+                        <div class="exp-title">⚠️ Bẫy (Distractors):</div>
+                        <div class="reason-false">${q.explanation.whyFalse}</div>
+                    </div>
+                </div>`;
+                
+                card.innerHTML = html;
+                container.appendChild(card);
+            });
+        }
+
+        // Logic Check Dropdown
+        function checkMatchingAnswer(index, event) {
+            const selectElement = document.getElementById(`select-${index}`);
+            const expBox = document.getElementById(`exp-${index}`);
+            const selectedVal = selectElement.value;
+            
+            if (!selectedVal) return; // Không làm gì nếu chọn lại "-- Chọn --"
+
+            const qData = matchData[index];
+            
+            // Khóa Select sau khi chọn
+            selectElement.disabled = true;
+
+            if (selectedVal === qData.correctLetter) {
+                selectElement.classList.add('correct');
+                score++;
+                playDing();
+                
+                // Vị trí chuột để thả pháo giấy
+                const rect = selectElement.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                createConfetti(x, y);
+            } else {
+                selectElement.classList.add('wrong');
+                selectElement.classList.add('shake');
+                playTeoTeo();
+                
+                // Tự động chuyển text hiển thị để học sinh biết đáp án đúng
+                const correctOpt = optionsList.find(o => o.letter === qData.correctLetter);
+                selectElement.options[selectElement.selectedIndex].text = `❌ Sai (Đáp án: ${correctOpt.letter} - ${correctOpt.text})`;
+            }
+            
+            answeredQuestions++;
+            expBox.style.display = 'block';
+        }
+
+        // --- 4. TÍNH NĂNG NỘP BÀI & KẾT QUẢ ---
+        function openNamePrompt() {
+            if (answeredQuestions < matchData.length) {
+                if(!confirm("Em chưa nối xong tất cả các quốc gia. Em có chắc chắn muốn nộp bài?")) return;
+            }
+            document.getElementById('name-modal').style.display = 'flex';
+            document.getElementById('student-name').focus();
+        }
+
+        function handleNameEnter(e) {
+            if (e.key === 'Enter') submitQuiz();
+        }
+
+        function submitQuiz() {
+            const nameInput = document.getElementById('student-name');
+            const errorMsg = document.getElementById('error-msg');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                nameInput.classList.add('shake');
+                errorMsg.style.display = 'block';
+                setTimeout(() => nameInput.classList.remove('shake'), 400);
+                return;
+            }
+
+            document.getElementById('name-modal').style.display = 'none';
+            showResultModal(name);
+        }
+
+        function showResultModal(name) {
+            const modal = document.getElementById('result-modal');
+            const title = document.getElementById('result-title');
+            const scoreDisplay = document.getElementById('result-score');
+            const meme = document.getElementById('result-meme');
+            const feedback = document.getElementById('result-feedback');
+
+            const percentage = (score / matchData.length) * 100;
+            scoreDisplay.innerText = `${score} / ${matchData.length}`;
+
+            modal.style.display = 'flex';
+
+            if (percentage === 100) {
+                title.innerText = `🌟 THIÊN TÀI! ${name.toUpperCase()} XUẤT SẮC TUYỆT ĐỐI! 🌟`;
+                meme.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; 
+                feedback.innerText = "Cô MS Chí Nên siêu tự hào về em! Kỹ năng né bẫy (Distractors) của em quá đỉnh!";
+                feedback.style.color = "var(--correct)";
+            } else if (percentage >= 60) {
+                title.innerText = `👍 KHÁ LẮM ${name.toUpperCase()}! 👍`;
+                meme.src = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; 
+                feedback.innerText = "Điểm số rất ổn! Nhưng nhớ phải cẩn thận nghe hết câu chứ đừng bắt mỗi Keyword rồi chọn ngay nhé!";
+                feedback.style.color = "var(--primary)";
+            } else {
+                title.innerText = `😅 CẦN CỐ GẮNG HƠN ${name.toUpperCase()} ƠI! 😅`;
+                meme.src = "https://media.giphy.com/media/ISOckXUydVj2g/giphy.gif"; 
+                feedback.innerText = "Bài Matching này khá lắt léo đúng không? Xem kỹ lại phần Audio Script cô đã bôi đỏ nhé!";
+                feedback.style.color = "var(--wrong)";
+            }
+        }
+
+        // Khởi tạo
+        renderQuiz();
+
+    </script>
+</body>
+</html>

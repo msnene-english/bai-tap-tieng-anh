@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms MS Chí Nên - Reading Challenge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #00C9A7;
+            --accent: #FDCB6E;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --text-dark: #2d3436;
+            --bg-light: rgba(255, 255, 255, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            overflow: hidden;
+            color: var(--text-dark);
+            /* Dynamic animated gradient background */
+            background: linear-gradient(-45deg, #FF9A9E, #FECFEF, #a8cbf0, #b8e6d1);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Pattern Overlay with emojis: City, Music, Bus */
+        .pattern-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ctext x='20' y='50' font-size='30'%3E🏙️%3C/text%3E%3Ctext x='120' y='140' font-size='35'%3E🎤%3C/text%3E%3Ctext x='150' y='60' font-size='25'%3E🚌%3C/text%3E%3Ctext x='40' y='160' font-size='20'%3E✨%3C/text%3E%3C/svg%3E");
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+            animation: floatPattern 40s linear infinite;
+        }
+
+        @keyframes floatPattern {
+            from { background-position: 0 0; }
+            to { background-position: 400px 400px; }
+        }
+
+        /* Top Bar */
+        header {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-bottom: 4px solid var(--primary);
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-action {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.15);
+        }
+
+        .btn-start {
+            background-color: var(--accent);
+            color: #d35400;
+        }
+
+        .btn-start:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+
+        #timer-display {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary);
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* Split Screen Layout */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 75px);
+            position: relative;
+            z-index: 5;
+        }
+
+        .panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            scroll-behavior: smooth;
+        }
+
+        .left-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            border-right: 3px dashed var(--primary);
+        }
+
+        .right-panel {
+            background: transparent;
+        }
+
+        /* Reading Content Styling */
+        .passage-title {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.8);
+        }
+
+        .paragraph-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+            border: 2px solid #eee;
+            font-size: 1.2rem;
+            line-height: 1.7;
+        }
+
+        .btn-translate {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: 700;
+            margin-top: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #00967d;
+            transition: 0.2s;
+        }
+        .btn-translate:active { transform: translateY(4px); box-shadow: none; }
+
+        .translation-text {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #e8f8f5;
+            border-left: 5px solid var(--secondary);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            color: #16a085;
+            font-weight: 600;
+        }
+
+        /* Glossary Table */
+        .glossary-wrapper {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 40px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+            border: 3px solid var(--primary);
+        }
+        .glossary-title {
+            color: var(--primary);
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 800;
+        }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+
+        /* Quiz Styling */
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.08);
+            border: 3px solid #eee;
+            transition: transform 0.3s;
+        }
+        .question-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 3px solid #dfe6e9;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2d3436;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 6px 0 #dfe6e9;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 6px 0 var(--primary);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+
+        .option-btn.correct {
+            background: var(--correct);
+            border-color: #00b85c;
+            color: white;
+            box-shadow: 0 6px 0 #00b85c;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong);
+            border-color: #e03c4a;
+            color: white;
+            box-shadow: 0 6px 0 #e03c4a;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .shake { animation: shake 0.5s; }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #fdf2e9;
+            border: 3px solid #e67e22;
+            border-radius: 15px;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .explanation-box h4 {
+            color: #d35400;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .explanation-box p, .explanation-box ul {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        .explanation-box .highlight {
+            background: #ffeaa7;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            display: block;
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 900;
+            padding: 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #6c4298;
+            margin-top: 30px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-submit:hover { transform: scale(1.02); }
+        .btn-submit:active { transform: translateY(8px); box-shadow: none; }
+
+        /* Modal Result */
+        #result-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+            border: 5px solid var(--accent);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 900;
+            color: white;
+            margin: 0 auto 20px;
+            border: 8px solid #f39c12;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 12px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6c4298; }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="pattern-overlay"></div>
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>
+        <div class="header-title">✨ Ms MS Chí Nên | Reading Challenge</div>
+        <div class="timer-container">
+            <div id="timer-display">10:00</div>
+            <button class="btn-action btn-start" id="btn-timer" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="panel left-panel">
+            <h1 class="passage-title">🏙️ My City</h1>
+            <p style="text-align: center; font-style: italic; margin-bottom: 20px;">Pop singer Charlotte Bond talks about living in London.</p>
+
+            <div class="paragraph-box">
+                <p>I live in the centre of London. I love it because there’s always something happening and there are people around whatever time it is. Famous people like it too – they often come here for the restaurants and shops.</p>
+                <button class="btn-translate" onclick="toggleTranslation(this)">BẢN DỊCH ĐẦY ĐỦ</button>
+                <div class="translation-text">Tôi sống ở trung tâm thủ đô Luân Đôn. Tôi yêu nơi này vì luôn có các sự kiện diễn ra và luôn có người xung quanh bất kể là lúc nào. Những người nổi tiếng cũng thích nơi này – họ thường đến đây vì các nhà hàng và cửa hiệu.</div>
+            </div>
+
+            <div class="paragraph-box">
+                <p>I’ve lived here all my life. When I was little, I had singing lessons at a place near where I live now. I was afraid of the teacher at first, and some of the songs we did together were quite hard to learn. But she was good at what she did and I learned a lot of things that have helped me in my career.</p>
+                <button class="btn-translate" onclick="toggleTranslation(this)">BẢN DỊCH ĐẦY ĐỦ</button>
+                <div class="translation-text">Tôi đã sống ở đây suốt cả cuộc đời. Khi còn nhỏ, tôi từng học hát ở một nơi gần chỗ tôi sống hiện tại. Lúc đầu tôi khá sợ cô giáo, và một vài bài hát chúng tôi luyện tập cùng nhau khá là khó học. Nhưng cô ấy rất giỏi chuyên môn và tôi đã học được rất nhiều điều giúp ích cho sự nghiệp của mình.</div>
+            </div>
+
+            <div class="paragraph-box">
+                <p>When friends visit me now, I enjoy taking them sightseeing. You can get a bus around the city, but we prefer to walk. I’ve got a little car and I love driving, but there’s so much traffic here, and it’s hard to find parking spaces.</p>
+                <button class="btn-translate" onclick="toggleTranslation(this)">BẢN DỊCH ĐẦY ĐỦ</button>
+                <div class="translation-text">Bây giờ khi bạn bè đến thăm, tôi thích đưa họ đi ngắm cảnh. Bạn có thể bắt xe buýt đi quanh thành phố, nhưng chúng tôi thích đi bộ hơn. Tôi có một chiếc ô tô nhỏ và tôi thích lái xe, nhưng ở đây xe cộ đông đúc quá, và rất khó để tìm được chỗ đậu xe.</div>
+            </div>
+
+            <div class="paragraph-box">
+                <p>One building I love is the Natural History Museum. They sometimes hold parties there, and last December my band and I played at one. I’ll never forget it. When I go to exhibitions at the museum with my friends, I tell them all about that night and how amazing it was.</p>
+                <button class="btn-translate" onclick="toggleTranslation(this)">BẢN DỊCH ĐẦY ĐỦ</button>
+                <div class="translation-text">Một tòa nhà mà tôi vô cùng yêu thích là Bảo tàng Lịch sử Tự nhiên. Đôi khi họ tổ chức tiệc ở đó, và tháng 12 năm ngoái ban nhạc của tôi và tôi đã biểu diễn tại một bữa tiệc như vậy. Tôi sẽ không bao giờ quên điều đó. Khi tôi đến các buổi triển lãm ở bảo tàng cùng bạn bè, tôi kể cho họ nghe tất cả về đêm hôm đó và nó tuyệt vời như thế nào.</div>
+            </div>
+
+            <div class="paragraph-box">
+                <p>Soon I’ll be leaving London to go on tour with my band. We’re playing in lots of new cities and I can’t wait to explore them. We’ve sold lots of tickets, which is great. I’ll be away from my family for six months, but they’re coming to see me sing, so it’s fine.</p>
+                <button class="btn-translate" onclick="toggleTranslation(this)">BẢN DỊCH ĐẦY ĐỦ</button>
+                <div class="translation-text">Sắp tới, tôi sẽ rời Luân Đôn để đi lưu diễn cùng ban nhạc của mình. Chúng tôi sẽ chơi ở nhiều thành phố mới và tôi rất nóng lòng được khám phá chúng. Chúng tôi đã bán được rất nhiều vé, điều đó thật tuyệt. Tôi sẽ phải xa gia đình trong sáu tháng, nhưng họ sẽ đến xem tôi hát nên mọi chuyện vẫn ổn.</div>
+            </div>
+
+            <div class="glossary-wrapper">
+                <h3 class="glossary-title">📚 Magical Vocabulary (B1-C2)</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Từ vựng</th>
+                            <th>Loại từ</th>
+                            <th>Nghĩa Tiếng Việt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1. Centre</td><td>Noun (Danh từ)</td><td>Trung tâm</td></tr>
+                        <tr><td>2. Sightseeing</td><td>Noun (Danh từ)</td><td>Sự tham quan, ngắm cảnh</td></tr>
+                        <tr><td>3. Prefer (+ to V/ V-ing)</td><td>Verb (Động từ)</td><td>Thích ... hơn</td></tr>
+                        <tr><td>4. Traffic</td><td>Noun (Danh từ)</td><td>Giao thông, lượng xe cộ</td></tr>
+                        <tr><td>5. Exhibition</td><td>Noun (Danh từ)</td><td>Cuộc triển lãm</td></tr>
+                        <tr><td>6. Amazing</td><td>Adjective (Tính từ)</td><td>Kinh ngạc, tuyệt vời (B1)</td></tr>
+                        <tr><td>7. Explore</td><td>Verb (Động từ)</td><td>Khám phá, thám hiểm (B1)</td></tr>
+                        <tr><td>8. Career</td><td>Noun (Danh từ)</td><td>Sự nghiệp</td></tr>
+                        <tr><td>9. Whatever</td><td>Pronoun (Đại từ)</td><td>Bất cứ điều gì / Bất kể</td></tr>
+                        <tr><td>10. On tour</td><td>Phrase (Cụm từ)</td><td>Đi lưu diễn</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel right-panel">
+            <div id="quiz-container">
+                </div>
+            <button class="btn-submit" onclick="submitQuiz()">🎉 NỘP BÀI THÔI! 🎉</button>
+        </div>
+    </div>
+
+    <div id="result-modal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary); font-size: 2rem; margin-bottom: 20px;">KẾT QUẢ CỦA BẠN</h2>
+            <div class="score-circle" id="final-score">0/5</div>
+            <h3 id="feedback-msg" style="color: #2c3e50; margin-bottom: 20px; font-size: 1.5rem;"></h3>
+            <p style="color: #7f8c8d; margin-bottom: 30px;">Nhớ xem lại các câu sai ở phần giải thích siêu chi tiết nhé!</p>
+            <button class="btn-action btn-start" onclick="location.reload()" style="width: 100%;">LÀM LẠI BÀI</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. QUIZ DATA & LOGIC ---
+        const quizData = [
+            {
+                id: 1,
+                question: "1. What does Charlotte love about the centre of London?",
+                options: [
+                    { text: "It is always busy.", isCorrect: true, label: "A" },
+                    { text: "Famous people often visit.", isCorrect: false, label: "B" },
+                    { text: "The shops are very good.", isCorrect: false, label: "C" }
+                ],
+                explanation: `
+                    <h4>Phân tích chi tiết Câu 1:</h4>
+                    <ul>
+                        <li><strong>Dịch câu hỏi:</strong> Charlotte yêu thích điều gì ở trung tâm Luân Đôn?</li>
+                        <li><strong>Tại sao chọn đáp án đúng:</strong> Dựa vào câu trong bài: <span class="highlight">"I love it because there’s always something happening and there are people around whatever time it is."</span> (Tôi yêu nơi này vì luôn có các sự kiện diễn ra và luôn có người xung quanh bất kể là lúc nào). Điều này đồng nghĩa với việc nơi đây "always busy" (luôn bận rộn/tấp nập).</li>
+                        <li><strong>Loại các đáp án sai:</strong>
+                            <br>- B (Người nổi tiếng thường ghé thăm): Sai. Bài đọc có nói người nổi tiếng thích nơi này, nhưng <b>KHÔNG</b> phải là lý do Charlotte yêu nó.
+                            <br>- C (Các cửa hàng rất tuyệt): Sai. Cô ấy nói người nổi tiếng đến vì cửa hàng, chứ không phải lý do của bản thân cô ấy.
+                        </li>
+                    </ul>
+                `
+            },
+            {
+                id: 2,
+                question: "2. How does Charlotte feel about the singing lessons she had?",
+                options: [
+                    { text: "She’s surprised she can remember them.", isCorrect: false, label: "A" },
+                    { text: "She’s sorry she didn’t try harder.", isCorrect: false, label: "B" },
+                    { text: "She’s glad she did them.", isCorrect: true, label: "C" }
+                ],
+                explanation: `
+                    <h4>Phân tích chi tiết Câu 2:</h4>
+                    <ul>
+                        <li><strong>Dịch câu hỏi:</strong> Charlotte cảm thấy thế nào về những bài học hát mà cô từng học?</li>
+                        <li><strong>Tại sao chọn đáp án đúng:</strong> Dựa vào câu: <span class="highlight">"...I learned a lot of things that have helped me in my career."</span> (...tôi đã học được rất nhiều điều giúp ích cho sự nghiệp của mình). Việc học được kỹ năng giúp ích cho sự nghiệp chứng tỏ cô ấy rất vui/hài lòng vì đã học ("glad she did them").</li>
+                        <li><strong>Loại các đáp án sai:</strong>
+                            <br>- A (Ngạc nhiên vì còn nhớ): Sai. Cô ấy chỉ nói bài hát khó học chứ không nói ngạc nhiên vì nhớ được.
+                            <br>- B (Tiếc vì không cố gắng hơn): Sai. Mặc dù ban đầu sợ giáo viên và bài khó, nhưng cô ấy đã học được nhiều điều chứ không hề hối tiếc.
+                        </li>
+                    </ul>
+                `
+            },
+            {
+                id: 3,
+                question: "3. What does Charlotte think is the best way to see the city?",
+                options: [
+                    { text: "by car", isCorrect: false, label: "A" },
+                    { text: "on foot", isCorrect: true, label: "B" },
+                    { text: "by bus", isCorrect: false, label: "C" }
+                ],
+                explanation: `
+                    <h4>Phân tích chi tiết Câu 3:</h4>
+                    <ul>
+                        <li><strong>Dịch câu hỏi:</strong> Charlotte nghĩ cách tốt nhất để ngắm thành phố là gì?</li>
+                        <li><strong>Tại sao chọn đáp án đúng:</strong> Trong bài viết: <span class="highlight">"You can get a bus around the city, but we prefer to walk."</span> (...nhưng chúng tôi thích đi bộ hơn). "Walk" chính là "on foot" (đi bộ).</li>
+                        <li><strong>Loại các đáp án sai:</strong>
+                            <br>- A (bằng ô tô): Sai. Cô ấy thích lái xe, nhưng đường quá đông (too much traffic) và khó tìm chỗ đỗ (hard to find parking spaces).
+                            <br>- C (bằng xe buýt): Sai. Cô ấy có nhắc đến xe buýt, nhưng nhấn mạnh rằng mình thích đi bộ hơn (prefer to walk).
+                        </li>
+                    </ul>
+                `
+            },
+            {
+                id: 4,
+                question: "4. Why does Charlotte love the Natural History Museum?",
+                options: [
+                    { text: "She had a special experience there.", isCorrect: true, label: "A" },
+                    { text: "She thinks the building is beautiful.", isCorrect: false, label: "B" },
+                    { text: "She enjoys visiting the exhibitions.", isCorrect: false, label: "C" }
+                ],
+                explanation: `
+                    <h4>Phân tích chi tiết Câu 4:</h4>
+                    <ul>
+                        <li><strong>Dịch câu hỏi:</strong> Tại sao Charlotte lại yêu thích Bảo tàng Lịch sử Tự nhiên?</li>
+                        <li><strong>Tại sao chọn đáp án đúng:</strong> Tác giả kể lại: <span class="highlight">"...last December my band and I played at one. I’ll never forget it."</span> (Tháng 12 năm ngoái ban nhạc của tôi đã biểu diễn... Tôi sẽ không bao giờ quên). Đây chính là một "special experience" (trải nghiệm đặc biệt).</li>
+                        <li><strong>Loại các đáp án sai:</strong>
+                            <br>- B (Tòa nhà đẹp): Sai. Dù cô nói "One building I love is...", nhưng cô không hề miêu tả vẻ đẹp kiến trúc của nó làm lý do.
+                            <br>- C (Thích đi xem triển lãm): Sai. Cô ấy có đi xem triển lãm với bạn, nhưng mục đích kể ra là để khoe/ôn lại kỷ niệm diễn nhạc tối hôm đó, chứ không phải vì thích bản thân các cuộc triển lãm.
+                        </li>
+                    </ul>
+                `
+            },
+            {
+                id: 5,
+                question: "5. What does Charlotte say about going on tour with her band?",
+                options: [
+                    { text: "She hopes lots of people will buy tickets for her shows.", isCorrect: false, label: "A" },
+                    { text: "She feels excited about seeing new places.", isCorrect: true, label: "B" },
+                    { text: "She’s worried she’ll miss her family.", isCorrect: false, label: "C" }
+                ],
+                explanation: `
+                    <h4>Phân tích chi tiết Câu 5:</h4>
+                    <ul>
+                        <li><strong>Dịch câu hỏi:</strong> Charlotte nói gì về chuyến lưu diễn cùng ban nhạc?</li>
+                        <li><strong>Tại sao chọn đáp án đúng:</strong> Dựa vào câu: <span class="highlight">"We’re playing in lots of new cities and I can’t wait to explore them."</span> (Tôi rất nóng lòng được khám phá chúng). Cụm "can't wait to" thể hiện sự hào hứng (excited) về việc đến những nơi mới (new places).</li>
+                        <li><strong>Loại các đáp án sai:</strong>
+                            <br>- A (Hy vọng nhiều người mua vé): Sai. Cô ấy nói "We've sold lots of tickets" (Chúng tôi ĐÃ bán được nhiều vé rồi).
+                            <br>- C (Lo lắng nhớ gia đình): Sai. Cô ấy nói phải đi xa 6 tháng "but they're coming to see me sing, so it's fine" (nhưng họ sẽ đến xem tôi hát, nên mọi chuyện ỔN). Tức là không hề lo lắng.
+                        </li>
+                    </ul>
+                `
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = new Set();
+
+        // Xáo trộn mảng (Shuffle array)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Render câu hỏi
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+
+            quizData.forEach((q, index) => {
+                // Xáo trộn đáp án trước khi hiển thị
+                const shuffledOptions = shuffleArray([...q.options]);
+
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `question-${index}`;
+
+                const questionText = document.createElement('div');
+                questionText.className = 'question-text';
+                questionText.innerText = q.question;
+                card.appendChild(questionText);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = 'options-grid';
+
+                shuffledOptions.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    // Hiển thị đầy đủ chữ thay vì chỉ A, B, C
+                    btn.innerHTML = `<span>${opt.text}</span>`;
+                    
+                    btn.onclick = () => handleAnswer(btn, opt.isCorrect, index, q.explanation, optionsGrid);
+                    optionsGrid.appendChild(btn);
+                });
+
+                card.appendChild(optionsGrid);
+
+                // Hộp giải thích (ẩn đi ban đầu)
+                const explBox = document.createElement('div');
+                explBox.className = 'explanation-box';
+                explBox.id = `expl-${index}`;
+                explBox.innerHTML = q.explanation;
+                card.appendChild(explBox);
+
+                container.appendChild(card);
+            });
+        }
+
+        // --- 2. TƯƠNG TÁC ÂM THANH & HIỆU ỨNG ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else {
+                // Wrong sound: Téo tèo tèo
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        function handleAnswer(btn, isCorrect, qIndex, explanationHTML, grid) {
+            if (answeredQuestions.has(qIndex)) return; // Không cho click lại
+
+            answeredQuestions.add(qIndex);
+            initAudio();
+
+            // Disable tất cả các nút trong câu này
+            const allBtns = grid.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playSound('correct');
+                fireConfetti();
+                score++;
+            } else {
+                btn.classList.add('wrong');
+                btn.classList.add('shake');
+                playSound('wrong');
+                
+                // Hiển thị đáp án đúng
+                quizData[qIndex].options.forEach(opt => {
+                    if (opt.isCorrect) {
+                        Array.from(allBtns).forEach(b => {
+                            if (b.innerText === opt.text) {
+                                b.classList.add('correct');
+                                b.style.opacity = '0.7';
+                            }
+                        });
+                    }
+                });
+
+                // Hiện giải thích chi tiết ngay lập tức
+                document.getElementById(`expl-${qIndex}`).style.display = 'block';
+            }
+        }
+
+        // --- 3. ĐẾM NGƯỢC THỜI GIAN ---
+        let timerInterval;
+        let timeLeft = 600; // 10 minutes
+        let isTimerRunning = false;
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            document.getElementById('timer-display').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer');
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                btn.innerText = "TIẾP TỤC LÀM BÀI";
+                btn.style.backgroundColor = "#FDCB6E";
+            } else {
+                btn.innerText = "TẠM DỪNG";
+                btn.style.backgroundColor = "#e74c3c";
+                btn.style.color = "white";
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                    }
+                }, 1000);
+            }
+            isTimerRunning = !isTimerRunning;
+        }
+
+        // --- 4. TÍNH NĂNG DỊCH THUẬT ---
+        function toggleTranslation(btn) {
+            const translationDiv = btn.nextElementSibling;
+            if (translationDiv.style.display === 'block') {
+                translationDiv.style.display = 'none';
+                btn.innerText = "BẢN DỊCH ĐẦY ĐỦ";
+            } else {
+                translationDiv.style.display = 'block';
+                btn.innerText = "ĐÓNG BẢN DỊCH";
+            }
+        }
+
+        // --- 5. NỘP BÀI & TỔNG KẾT ---
+        function submitQuiz() {
+            if (answeredQuestions.size < quizData.length) {
+                const cf = confirm("Bạn chưa làm hết các câu hỏi. Bạn có chắc chắn muốn nộp bài không?");
+                if (!cf) return;
+            }
+
+            clearInterval(timerInterval); // Dừng thời gian
+            const modal = document.getElementById('result-modal');
+            const scoreDisplay = document.getElementById('final-score');
+            const feedbackMsg = document.getElementById('feedback-msg');
+
+            scoreDisplay.innerText = `${score}/${quizData.length}`;
+            
+            if (score === 5) {
+                feedbackMsg.innerText = "🏆 THIÊN TÀI READING ĐÂY RỒI! 🏆\nEm làm xuất sắc lắm!";
+                for(let i=0; i<3; i++) setTimeout(fireConfetti, i*300);
+            } else if (score >= 3) {
+                feedbackMsg.innerText = "✨ LÀM TỐT LẮM! ✨\nChỉ cần cẩn thận chút xíu nữa là hoàn hảo!";
+                fireConfetti();
+            } else {
+                feedbackMsg.innerText = "💪 CỐ LÊN NHÉ! 💪\nHãy đọc kỹ phần giải thích chi tiết để rút kinh nghiệm nha!";
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        // --- 6. HIỆU ỨNG PHÁO GIẤY (CONFETTI) ---
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let confettis = [];
+        const colors = ['#00D26A', '#FDCB6E', '#FF4757', '#00C9A7', '#8854C0'];
+
+        function fireConfetti() {
+            for (let i = 0; i < 100; i++) {
+                confettis.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 100,
+                    r: Math.random() * 6 + 4,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * -15 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.floor(Math.random() * 10) - 10,
+                    tiltAngleInc: (Math.random() * 0.07) + 0.05,
+                    tiltAngle: 0
+                });
+            }
+            if(confettis.length <= 100) animateConfetti();
+        }
+
+        function animateConfetti() {
+            requestAnimationFrame(animateConfetti);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            confettis.forEach((c, index) => {
+                c.tiltAngle += c.tiltAngleInc;
+                c.y += (Math.cos(c.tiltAngle) + 1 + c.r / 2) / 2;
+                c.x += Math.sin(c.tiltAngle) * 2;
+                c.dy += 0.2; // gravity
+                c.y += c.dy;
+
+                ctx.beginPath();
+                ctx.lineWidth = c.r;
+                ctx.strokeStyle = c.color;
+                ctx.moveTo(c.x + c.tilt + c.r, c.y);
+                ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r);
+                ctx.stroke();
+
+                if (c.y > canvas.height) confettis.splice(index, 1);
+            });
+        }
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Khởi tạo bài khi tải trang
+        window.onload = () => {
+            renderQuiz();
+        };
+    </script>
+</body>
+</html>

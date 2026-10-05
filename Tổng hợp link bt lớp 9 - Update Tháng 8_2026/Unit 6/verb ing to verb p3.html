@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 Template Giao Diện Học Tập | Ms MS Chí Nên</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* =========================================
+   CORE THEME & ANIMATIONS
+========================================= */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;min-height:100vh;background:#06000f;color:#e0ccff;overflow-x:hidden}
+.bg-anim{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#06000f 0%,#0b0020 30%,#00100a 60%,#06000f 100%);background-size:400% 400%;animation:bgShift 22s ease infinite;z-index:-3}
+@keyframes bgShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.grid-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;pointer-events:none;background-image:linear-gradient(rgba(0,255,200,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,200,.025) 1px,transparent 1px);background-size:55px 55px;animation:gridMove 30s linear infinite}
+@keyframes gridMove{from{background-position:0 0}to{background-position:55px 55px}}
+#fxCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.floats{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;overflow:hidden}
+.fobj{position:absolute;user-select:none;filter:drop-shadow(0 0 6px rgba(0,255,200,.3));animation:floatY ease-in-out infinite}
+@keyframes floatY{0%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-20px) rotate(5deg)}75%{transform:translateY(12px) rotate(-5deg)}100%{transform:translateY(0) rotate(0deg)}}
+.pbar{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,#ff00cc,#00f5ff,#ffe600,#00ff88);z-index:60;transition:width .5s ease;box-shadow:0 0 10px rgba(0,245,255,.7)}
+
+/* =========================================
+   LAYOUT COMPONENTS
+========================================= */
+.header{text-align:center;padding:12px 18px 9px;background:rgba(6,0,15,.8);backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,255,200,.1);position:sticky;top:0;z-index:40}
+.header h1{font-family:'Orbitron',sans-serif;font-size:1.12rem;font-weight:900;background:linear-gradient(90deg,#ff00cc,#00f5ff,#ffe600,#00ff88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:.5px}
+.header p{font-size:.68rem;color:rgba(200,180,255,.35);margin-top:2px; font-weight: bold;}
+.container{max-width:870px;margin:0 auto;padding:20px 14px 150px;position:relative;z-index:1}
+
+/* =========================================
+   QUESTION CARD STYLES
+========================================= */
+.qcard{background:rgba(6,0,20,.5);backdrop-filter:blur(16px);border:1px solid rgba(0,245,255,.1);border-radius:20px;padding:20px;margin-bottom:20px;position:relative;overflow:hidden;transition:border-color .3s}
+.qcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#ff00cc,#00f5ff,#00ff88)}
+.qbadge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,0,204,.08);border:1px solid rgba(255,0,204,.25);color:#ff00cc;font-weight:800;font-size:.73rem;padding:3px 10px;border-radius:20px;margin-bottom:10px;letter-spacing:.3px}
+.qtext{font-size:1.08rem;font-weight:700;color:#d8c8ff;line-height:1.6;margin-bottom:18px;padding:12px 16px;background:rgba(0,0,30,.3);border-left:3px solid #00f5ff;border-radius:0 10px 10px 0}
+.qtext u{text-decoration:underline;text-decoration-color:#ffe600;color:#ffe600;font-weight:800}
+
+/* =========================================
+   OPTIONS GRID & BUTTONS (THÊM MỚI VÀO THEME NÀY)
+========================================= */
+.opt-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 15px; }
+@media(max-width: 600px) { .opt-grid { grid-template-columns: 1fr; } }
+.opt-btn { background: rgba(0, 245, 255, 0.05); border: 2px solid rgba(0, 245, 255, 0.25); border-radius: 14px; padding: 15px; font-size: 1.05rem; font-weight: 800; color: #d8c8ff; outline: none; box-shadow: inset 0 0 10px rgba(0,255,200,0.05); transition:all .2s; cursor:pointer; font-family:'Nunito',sans-serif; }
+.opt-btn:hover:not(:disabled) { background: rgba(0, 245, 255, 0.15); border-color: #00f5ff; transform: scale(1.02) translateY(-2px); box-shadow: 0 5px 15px rgba(0,245,255,0.2); }
+.opt-btn.correct { background: rgba(0, 210, 106, 0.2); border-color: #00D26A; color: #00D26A; box-shadow: 0 0 20px rgba(0, 210, 106, 0.4); transform: translateY(2px); }
+.opt-btn.wrong { background: rgba(255, 71, 87, 0.2); border-color: #FF4757; color: #FF4757; box-shadow: 0 0 20px rgba(255, 71, 87, 0.4); transform: translateY(2px); animation: shake 0.45s ease-in-out; }
+.opt-btn:disabled { cursor: not-allowed; opacity: 0.85; }
+
+@keyframes shake{0%,100%{transform:translateX(0) translateY(2px)}20%{transform:translateX(-9px) translateY(2px)}40%{transform:translateX(9px) translateY(2px)}60%{transform:translateX(-6px) translateY(2px)}80%{transform:translateX(6px) translateY(2px)}}
+.shake{animation:shake .45s ease}
+
+/* =========================================
+   EXPLANATION COMPONENTS
+========================================= */
+.expl{background:rgba(0,0,40,.3);border:1px solid rgba(255,0,204,.15);border-radius:12px;padding:15px 17px;margin-top:12px;display:none;font-size:.88rem;line-height:1.78;color:#a898c8}
+.expl.show{display:block;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.etitle{font-size:.88rem;font-weight:800;color:#00f5ff;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.step{margin-bottom:12px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04)}
+.slabel{display:block;font-weight:800;font-size:.82rem;color:#00ff88;margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase}
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(0,245,255,0.15); }
+@media(max-width: 600px) { .grid2 { grid-template-columns: 1fr; } }
+.grid2 div { padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.08); font-size: 0.95rem; }
+.grid2 div:last-child, .grid2 div:nth-last-child(2) { border-bottom: none; }
+
+.p-word{color:#3b82f6;font-weight:bold;} 
+.wt { background: rgba(255,255,255,0.15); padding: 3px 7px; border-radius: 6px; font-size: 0.8rem; font-style: italic; margin: 0 5px; color: #E0E0E0; }
+.p-phonetic{background:rgba(167,139,250,.2);color:#c4b5fd;padding:1px 6px;border-radius:5px;font-family:monospace;font-size:.9em;} 
+.p-mean{color:#d97706;font-weight:bold;} 
+.p-grammar{text-decoration:underline;text-decoration-color:#ef4444;text-underline-offset:3px;color:#fca5a5;font-weight:bold;} 
+.hl-green{color:#22c55e;font-weight:bold;} 
+.hl-red{color:#ef4444;font-weight:bold;} 
+.vn-s{background:rgba(251,191,36,.1);border-left:4px solid #ffe600;padding:12px 14px;border-radius:8px;font-style:italic;margin:4px 0 12px;color:#fde68a;font-weight:600;display:block; font-size:1.02rem; text-shadow: 0 1px 3px rgba(0,0,0,0.5);}
+
+/* =========================================
+   REMINDER POPUP
+========================================= */
+.reminder{position:fixed;bottom:14px;right:12px;width:280px;z-index:100;animation:remGlow 3s ease-in-out infinite alternate}
+@keyframes remGlow{from{filter:drop-shadow(0 0 8px rgba(255,0,204,.4))}to{filter:drop-shadow(0 0 22px rgba(0,245,255,.5))}}
+.rem-in{background:rgba(6,0,20,.95);backdrop-filter:blur(12px);border:2px solid rgba(255,0,204,.4);border-radius:16px;padding:14px}
+.rem-icons{display:flex;gap:6px;margin-bottom:7px}
+.ri{font-size:1.1rem;animation:bob 2s ease-in-out infinite}
+.ri:nth-child(2){animation-delay:.25s}.ri:nth-child(3){animation-delay:.5s}.ri:nth-child(4){animation-delay:.75s}.ri:nth-child(5){animation-delay:1s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.rem-title{font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:900;color:#ff00cc;margin-bottom:6px;text-shadow:0 0 8px rgba(255,0,204,.5)}
+.rem-msg{font-size:.8rem;color:rgba(200,180,255,.9);line-height:1.55;min-height:58px;transition:opacity .45s}
+.rem-close{position:absolute;top:8px;right:9px;background:none;border:none;color:rgba(200,180,255,.4);cursor:pointer;font-size:1rem; font-weight: bold;}
+.rem-close:hover{color:#ff00cc}
+.rem-dots{display:flex;gap:4px;margin-top:8px;justify-content:center}
+.rdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.15);transition:background .4s}
+.rdot.active{background:#ff00cc}
+
+/* =========================================
+   SUBMIT BUTTON & MODALS
+========================================= */
+.sub-area{text-align:center;padding:24px 15px}
+.sub-btn{background:linear-gradient(135deg,#ff00cc,#00f5ff);border:none;border-radius:50px;padding:16px 45px;color:#fff;font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:1px;box-shadow:0 8px 28px rgba(255,0,204,.45);animation:subPulse 3s ease-in-out infinite;transition:transform .25s}
+@keyframes subPulse{0%,100%{box-shadow:0 8px 28px rgba(255,0,204,.45)}50%{box-shadow:0 8px 45px rgba(0,245,255,.55),0 0 40px rgba(255,0,204,.3)}}
+.sub-btn:hover{transform:scale(1.06) translateY(-3px)}
+
+.moverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center}
+.moverlay.show{display:flex}
+.mbox{background:linear-gradient(160deg,rgba(6,0,20,.97),rgba(0,10,30,.97));border:2px solid rgba(255,0,204,.35);border-radius:24px;padding:30px 26px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(255,0,204,.3),0 0 80px rgba(0,245,255,.1);animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.mbox h2{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;background:linear-gradient(90deg,#ff00cc,#00f5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px}
+.mbox p{color:rgba(200,180,255,.7);margin-bottom:14px;font-size:.9rem}
+.minput{width:100%;background:rgba(0,0,30,.5);border:2px solid rgba(255,0,204,.22);border-radius:12px;padding:14px;color:#e0d0ff;font-family:'Nunito',sans-serif;font-size:1rem;margin-bottom:7px;outline:none;transition:border-color .3s; text-align: center;}
+.minput:focus{border-color:#ff00cc; box-shadow: inset 0 0 10px rgba(255,0,204,0.2);}
+.minput.err{border-color:#ff0064;animation:shake .45s ease}
+.mbtn{background:linear-gradient(135deg,#ff00cc,#00f5ff);border:none;border-radius:50px;padding:14px 35px;color:#fff;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;transition:transform .2s;margin-top:8px; width: 100%;}
+.mbtn:hover{transform:scale(1.04)}
+.errmsg{color:#ff0064;font-size:.8rem;margin:-4px 0 8px;display:none}
+
+.rgreet{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;color:#ff00cc;text-shadow:0 0 12px rgba(255,0,204,.5);margin-bottom:7px;line-height:1.35}
+.rscore{font-size:3rem;font-weight:900;background:linear-gradient(90deg,#ff00cc,#00f5ff,#ffe600);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:8px 0 3px}
+.r10{font-size:1.1rem;color:#a8c8ff;margin-bottom:12px;font-weight:700; background: rgba(0, 245, 255, 0.1); display: inline-block; padding: 6px 15px; border-radius: 10px; border: 1px solid rgba(0,245,255,0.3);}
+.rgif{width:100%; height:180px;object-fit:cover;border-radius:12px;margin:10px auto 15px;display:block;border:2px solid rgba(255,0,204,.25)}
+.rbtn{background:linear-gradient(135deg,#ffe600,#ff9500);border:none;border-radius:50px;padding:14px 35px;color:#000;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:900;cursor:pointer;transition:transform .2s; width: 100%;}
+.rbtn:hover{transform:scale(1.04)}
+</style>
+</head>
+<body>
+
+<div class="bg-anim"></div>
+<div class="grid-layer"></div>
+<canvas id="fxCanvas"></canvas>
+<div class="floats" id="floatDiv"></div>
+<div class="pbar" id="pbar" style="width:0%"></div>
+
+<div class="header">
+  <h1>🎮 BÀI TẬP TRẮC NGHIỆM ĐỘNG TỪ (To V / V-ing)</h1>
+  <p>👩‍🏫 Giáo viên tạo: Ms MS Chí Nên</p>
+</div>
+
+<div class="reminder" id="remBanner">
+  <div class="rem-in" style="position:relative">
+    <button class="rem-close" onclick="this.closest('.reminder').style.display='none'">✕</button>
+    <div class="rem-icons"><span class="ri">✏️</span><span class="ri">📒</span><span class="ri">🎮</span><span class="ri">🌟</span><span class="ri">🎯</span></div>
+    <div class="rem-title">💡 GÓC NHẮC NHỞ TỪ CÔ MS Chí Nên</div>
+    <div class="rem-msg" id="remMsg"></div>
+    <div class="rem-dots" id="remDots"></div>
+  </div>
+</div>
+
+<div class="container" id="mainDiv"></div>
+
+<div class="sub-area">
+  <button class="sub-btn" onclick="openName()">🎯 NỘP BÀI & XEM KẾT QUẢ</button>
+</div>
+
+<div class="moverlay" id="nameModal">
+  <div class="mbox">
+    <h2>🎮 NHẬP TÊN CỦA BẠN</h2>
+    <p>Nhập tên để hệ thống lưu điểm số nhé! 🕹️</p>
+    <input class="minput" id="nameIn" placeholder="Ví dụ: Nguyễn Văn A..." maxlength="50" onkeydown="if(event.key==='Enter')doSubmit()">
+    <div class="errmsg" id="nameErr">⚠️ Vui lòng nhập tên của bạn!</div>
+    <button class="mbtn" onclick="doSubmit()">✅ Xác Nhận Nộp Bài</button>
+  </div>
+</div>
+
+<div class="moverlay" id="resModal">
+  <div class="mbox">
+    <div class="rgreet" id="rg"></div>
+    <div class="rscore" id="rs"></div>
+    <div class="r10" id="r10"></div>
+    <img class="rgif" id="rgif" src="" alt="Meme">
+    <button class="rbtn" onclick="location.reload()">🔄 Làm Lại Từ Đầu</button>
+  </div>
+</div>
+
+<audio id="introAudio" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/File%20nghe%20Ket%20A2/ti%E1%BA%BFng%20%C4%91%E1%BB%8Dc%20kh%C3%ADch%20l%E1%BB%87%20p1.mp3" preload="auto"></audio>
+<audio id="wrongAudio" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/oi-ban-oi.mp3" preload="auto"></audio>
+
+<script>
+// ====================================================
+//  DỮ LIỆU CÂU HỎI TRẮC NGHIỆM (33 Câu)
+// ====================================================
+// Cấu trúc: [ Câu hỏi, Dịch, [[Lựa chọn, Từ loại, Dịch nghĩa, isCorrect],...], Giải thích Đúng, Giải thích Sai ]
+const qData = [
+  ["Young Vietnamese people want _______ in modern apartments instead of traditional houses.", "Người Việt trẻ muốn sống trong các căn hộ hiện đại thay vì những ngôi nhà truyền thống.", [["to live", "to V", "để sống", 1], ["living", "V-ing", "việc sống", 0], ["live", "V-bare", "sống", 0], ["lived", "V-ed", "đã sống", 0]], "Cấu trúc: want + to V (muốn làm gì).", "Không dùng V-ing, V-bare hay V-ed sau động từ want."],
+  ["In the past, children enjoyed _______ traditional games like bamboo dancing.", "Trong quá khứ, trẻ em thích chơi các trò chơi truyền thống như nhảy sạp.", [["playing", "V-ing", "việc chơi", 1], ["to play", "to V", "để chơi", 0], ["play", "V-bare", "chơi", 0], ["played", "V-ed", "đã chơi", 0]], "Cấu trúc: enjoy + V-ing (thích thú/tận hưởng việc làm gì).", "Động từ enjoy luôn bắt buộc đi kèm với danh động từ (V-ing)."],
+  ["My grandmother decided _______ her traditional weaving skills to me.", "Bà tôi đã quyết định dạy lại kỹ năng dệt truyền thống của bà cho tôi.", [["to teach", "to V", "để dạy", 1], ["teaching", "V-ing", "việc dạy", 0], ["teach", "V-bare", "dạy", 0], ["taught", "V-ed", "đã dạy", 0]], "Cấu trúc: decide + to V (quyết định làm gì).", "Không dùng danh động từ (V-ing) hay V-bare sau decide."],
+  ["Vietnamese teenagers avoid _______ about sensitive topics with their parents.", "Thanh thiếu niên Việt Nam tránh nói chuyện về các chủ đề nhạy cảm với cha mẹ.", [["talking", "V-ing", "việc nói chuyện", 1], ["to talk", "to V", "để nói", 0], ["talk", "V-bare", "nói", 0], ["talked", "V-ed", "đã nói", 0]], "Cấu trúc: avoid + V-ing (tránh làm việc gì).", "Tránh sử dụng to V hoặc các dạng khác sau động từ avoid."],
+  ["Many families promised _______ their ancestral traditions alive.", "Nhiều gia đình đã hứa sẽ giữ gìn các truyền thống tổ tiên của họ.", [["to keep", "to V", "để giữ gìn", 1], ["keeping", "V-ing", "việc giữ", 0], ["keep", "V-bare", "giữ", 0], ["kept", "V-ed", "đã giữ", 0]], "Cấu trúc: promise + to V (hứa hẹn làm gì).", "Không bao giờ kết hợp promise với V-ing."],
+  ["Young people look forward to _______ Tet with their families every year.", "Người trẻ tuổi mong đợi được đón Tết cùng gia đình mỗi năm.", [["celebrating", "V-ing", "việc ăn mừng", 1], ["to celebrate", "to V", "để ăn mừng (bẫy)", 0], ["celebrate", "V-bare", "ăn mừng", 0], ["celebrated", "V-ed", "đã ăn mừng", 0]], "Cấu trúc: look forward to + V-ing (mong đợi điều gì). Chữ 'to' ở đây là giới từ.", "Học sinh rất hay nhầm dùng to V ở đây. Phải dùng V-ing sau 'to' trong cụm này."],
+  ["Rural children learned _______ buffalo at a very young age.", "Trẻ em nông thôn đã học cưỡi trâu từ khi còn rất nhỏ.", [["to ride", "to V", "để cưỡi", 1], ["riding", "V-ing", "việc cưỡi", 0], ["ride", "V-bare", "cưỡi", 0], ["rode", "V-ed", "đã cưỡi", 0]], "Cấu trúc: learn + to V (học cách làm gì).", "Trong ngữ cảnh học một kỹ năng, learn không đi trực tiếp với V-ing."],
+  ["Vietnamese students don't mind _______ uniforms to school.", "Học sinh Việt Nam không cảm thấy phiền khi mặc đồng phục đến trường.", [["wearing", "V-ing", "việc mặc", 1], ["to wear", "to V", "để mặc", 0], ["wear", "V-bare", "mặc", 0], ["wore", "V-ed", "đã mặc", 0]], "Cấu trúc: mind + V-ing (cảm thấy phiền khi làm gì).", "Sau mind bắt buộc phải là danh động từ (V-ing), không dùng to V."],
+  ["Modern families prefer _______ in nuclear households rather than extended ones.", "Các gia đình hiện đại thích sống trong các hộ gia đình hạt nhân hơn là đại gia đình.", [["to live", "to V", "để sống", 1], ["living", "V-ing", "việc sống", 0], ["live", "V-bare", "sống", 0], ["lived", "V-ed", "đã sống", 0]], "Cấu trúc: prefer + to V (thích làm gì hơn). Đặc biệt thường đi kèm với 'rather than'.", "Trong trường hợp này, việc sử dụng to V là chuẩn xác nhất so với các lựa chọn khác."],
+  ["The government plans _______ more modern infrastructure in rural areas.", "Chính phủ lên kế hoạch xây dựng nhiều cơ sở hạ tầng hiện đại hơn ở các vùng nông thôn.", [["to build", "to V", "để xây dựng", 1], ["building", "V-ing", "việc xây", 0], ["build", "V-bare", "xây", 0], ["built", "V-ed", "đã xây", 0]], "Cấu trúc: plan + to V (dự định, lên kế hoạch làm gì).", "Không dùng V-ing hay các dạng khác sau plan."],
+  ["Children in the countryside are used to _______ early in the morning.", "Trẻ em ở vùng nông thôn quen với việc thức dậy sớm vào buổi sáng.", [["getting up", "V-ing", "việc thức dậy", 1], ["to get up", "to V", "để thức dậy (bẫy)", 0], ["get up", "V-bare", "thức dậy", 0], ["got up", "V-ed", "đã thức dậy", 0]], "Cấu trúc: be used to + V-ing (đã quen với việc gì). 'To' ở đây đóng vai trò giới từ.", "Đừng nhầm lẫn với cấu trúc 'used to V' (đã từng làm gì trong quá khứ)."],
+  ["Many old people agreed _______ modern technology slowly.", "Nhiều người già đã đồng ý tiếp nhận công nghệ hiện đại một cách từ từ.", [["to accept", "to V", "để tiếp nhận", 1], ["accepting", "V-ing", "việc tiếp nhận", 0], ["accept", "V-bare", "tiếp nhận", 0], ["accepted", "V-ed", "đã nhận", 0]], "Cấu trúc: agree + to V (đồng ý làm gì).", "Không dùng V-ing sau động từ agree."],
+  ["Vietnamese families love _______ time together during festivals.", "Các gia đình Việt Nam yêu thích việc dành thời gian bên nhau trong các dịp lễ hội.", [["spending", "V-ing", "việc dành thời gian", 1], ["to spend", "to V", "để dành (bẫy đề gốc)", 0], ["spend", "V-bare", "dành", 0], ["spent", "V-ed", "đã dành", 0]], "Cấu trúc: love + V-ing (yêu thích/tận hưởng một thói quen).", "Động từ love có thể đi với to V nhưng ở đây V-ing là đáp án được thiết kế chuẩn xác nhất."],
+  ["Young people suggest _______ traditional customs in modern ways.", "Người trẻ đề xuất bảo tồn các phong tục truyền thống theo những cách hiện đại.", [["preserving", "V-ing", "việc bảo tồn", 1], ["to preserve", "to V", "để bảo tồn", 0], ["preserve", "V-bare", "bảo tồn", 0], ["preserved", "V-ed", "đã bảo tồn", 0]], "Cấu trúc: suggest + V-ing (đề xuất/gợi ý làm việc gì).", "Rất nhiều bạn sai khi dùng to V sau suggest, điều này hoàn toàn sai ngữ pháp."],
+  ["My parents hope _______ me get married soon.", "Cha mẹ tôi hy vọng sẽ sớm thấy tôi kết hôn.", [["to see", "to V", "để thấy", 1], ["seeing", "V-ing", "việc thấy", 0], ["see", "V-bare", "thấy", 0], ["saw", "V-ed", "đã thấy", 0]], "Cấu trúc: hope + to V (hy vọng sẽ thực hiện điều gì).", "Hope không bao giờ đi liền với danh động từ (V-ing)."],
+  ["Students finish _______ homework before watching TV.", "Học sinh hoàn thành việc làm bài tập về nhà trước khi xem tivi.", [["doing", "V-ing", "việc làm", 1], ["to do", "to V", "để làm", 0], ["do", "V-bare", "làm", 0], ["did", "V-ed", "đã làm", 0]], "Cấu trúc: finish + V-ing (hoàn thành việc đang làm).", "Đã hoàn thành thì việc đó phải ở dạng quá trình (V-ing), không dùng to V."],
+  ["Many teenagers refuse _______ arranged marriages nowadays.", "Nhiều thanh thiếu niên từ chối các cuộc hôn nhân sắp đặt ngày nay.", [["to accept", "to V", "để chấp nhận", 1], ["accepting", "V-ing", "việc chấp nhận", 0], ["accept", "V-bare", "chấp nhận", 0], ["accepted", "V-ed", "đã chấp nhận", 0]], "Cấu trúc: refuse + to V (từ chối thực hiện điều gì).", "Không kết hợp refuse với danh động từ (V-ing)."],
+  ["Vietnamese people fancy _______ coffee in the morning.", "Người Việt Nam yêu thích/hứng thú với việc uống cà phê vào buổi sáng.", [["drinking", "V-ing", "việc uống", 1], ["to drink", "to V", "để uống", 0], ["drink", "V-bare", "uống", 0], ["drunk", "V-ed", "đã uống", 0]], "Cấu trúc: fancy + V-ing (yêu thích/hứng thú việc gì).", "Tương tự như enjoy/love, fancy yêu cầu một V-ing đi kèm."],
+  ["Rural families need _______ their income through various jobs.", "Các gia đình nông thôn cần cải thiện thu nhập của họ thông qua nhiều công việc khác nhau.", [["to improve", "to V", "để cải thiện", 1], ["improving", "V-ing", "việc cải thiện", 0], ["improve", "V-bare", "cải thiện", 0], ["improved", "V-ed", "đã cải thiện", 0]], "Cấu trúc chủ động: need + to V (ai đó cần làm gì).", "Need + V-ing chỉ dùng cho dạng bị động (Vật cần được làm gì)."],
+  ["Children hate _______ traditional clothes to school every day.", "Trẻ em ghét việc phải mặc trang phục truyền thống đến trường mỗi ngày.", [["wearing", "V-ing", "việc mặc", 1], ["to wearing", "to V-ing", "sai cấu trúc", 0], ["wear", "V-bare", "mặc", 0], ["wore", "V-ed", "đã mặc", 0]], "Cấu trúc: hate + V-ing (ghét thói quen/việc phải làm).", "'to wearing' là một cấu trúc sai hoàn toàn, không tồn tại trong ngữ cảnh này."],
+  ["The elderly expect young people _______ them with respect.", "Người cao tuổi mong đợi người trẻ tuổi đối xử với họ một cách tôn trọng.", [["to treat", "to V", "để đối xử", 1], ["treating", "V-ing", "việc đối xử", 0], ["treat", "V-bare", "đối xử", 0], ["treated", "V-ed", "đã đối xử", 0]], "Cấu trúc: expect sb to V (mong đợi ai đó làm gì).", "Không dùng V-ing hay V-bare sau tân ngữ của expect."],
+  ["Vietnamese families keep _______ ancestor worship traditions.", "Các gia đình Việt Nam duy trì việc thực hành các truyền thống thờ cúng tổ tiên.", [["practicing", "V-ing", "việc thực hành", 1], ["to practice", "to V", "để thực hành", 0], ["practice", "V-bare", "thực hành", 0], ["practiced", "V-ed", "đã thực hành", 0]], "Cấu trúc: keep + V-ing (tiếp tục/duy trì làm việc gì).", "Keep không kết hợp với to V để chỉ sự duy trì hành động."],
+  ["Modern couples choose _______ before having children.", "Các cặp đôi hiện đại chọn chờ đợi ổn định trước khi sinh con.", [["to wait", "to V", "để chờ đợi", 1], ["waiting", "V-ing", "việc chờ", 0], ["wait", "V-bare", "chờ", 0], ["to waiting", "to V-ing", "sai cấu trúc", 0]], "Cấu trúc: choose + to V (lựa chọn làm việc gì).", "Không dùng V-ing hay cụm 'to waiting' sai ngữ pháp."],
+  ["My grandmother is used to _______ betel nuts after meals.", "Bà tôi đã quen với việc nhai trầu sau bữa ăn.", [["chewing", "V-ing", "việc nhai", 1], ["to chew", "to V", "để nhai (bẫy)", 0], ["chew", "V-bare", "nhai", 0], ["chewed", "V-ed", "đã nhai", 0]], "Cấu trúc: be used to + V-ing (quen với việc gì). Chữ 'to' là giới từ.", "Nhớ kỹ: be used to / get used to luôn luôn đi với V-ing/Noun."],
+  ["Young adults attempt _______ financially independent early.", "Thanh niên nỗ lực để trở nên độc lập về tài chính từ sớm.", [["to become", "to V", "để trở nên", 1], ["becoming", "V-ing", "việc trở nên", 0], ["become", "V-bare", "trở nên", 0], ["became", "V-ed", "đã trở nên", 0]], "Cấu trúc: attempt + to V (nỗ lực/cố gắng làm gì).", "Không dùng V-ing hay V-bare ở cấu trúc này."],
+  ["Traditional craftsmen continue _______ on their skills to younger generations.", "Các nghệ nhân truyền thống tiếp tục truyền lại kỹ năng của họ cho các thế hệ trẻ hơn.", [["passing", "V-ing", "việc truyền lại", 1], ["to pass", "to V", "để truyền", 0], ["pass", "V-bare", "truyền", 0], ["passed", "V-ed", "đã truyền", 0]], "Cấu trúc: continue + V-ing/to V. Ở đây dạng V-ing nhấn mạnh vào sự liên tục của quá trình truyền đạt.", "Mặc dù to pass cũng đúng, nhưng theo dữ liệu câu này V-ing là đáp án ưu tiên nhấn mạnh sự tiếp diễn."],
+  ["Parents encourage their children _______ higher education.", "Cha mẹ khuyến khích con cái họ theo đuổi giáo dục bậc cao.", [["to pursue", "to V", "để theo đuổi", 1], ["pursuing", "V-ing", "việc theo đuổi", 0], ["pursue", "V-bare", "theo đuổi", 0], ["pursued", "V-ed", "đã theo đuổi", 0]], "Cấu trúc: encourage sb to V (khuyến khích ai đó làm gì).", "Không dùng V-ing ngay sau tân ngữ trong cấu trúc encourage."],
+  ["Vietnamese people can't imagine _______ without rice.", "Người Việt Nam không thể tưởng tượng được cuộc sống mà không có gạo/cơm.", [["living", "V-ing", "việc sống", 1], ["to live", "to V", "để sống", 0], ["live", "V-bare", "sống", 0], ["lived", "V-ed", "đã sống", 0]], "Cấu trúc: imagine + V-ing (tưởng tượng ra việc gì đó).", "Tuyệt đối không dùng to V sau động từ imagine."],
+  ["The government offered _______ poor students by providing scholarships.", "Chính phủ đã đề nghị giúp đỡ các học sinh nghèo bằng cách cung cấp học bổng.", [["to help", "to V", "để giúp đỡ", 1], ["helping", "V-ing", "việc giúp", 0], ["help", "V-bare", "giúp", 0], ["helped", "V-ed", "đã giúp", 0]], "Cấu trúc: offer + to V (đề nghị thực hiện hành động/giúp đỡ).", "Không dùng danh động từ (V-ing) sau offer."],
+  ["Many families postpone _______ new houses due to high prices.", "Nhiều gia đình hoãn việc mua nhà mới do giá cả cao.", [["buying", "V-ing", "việc mua", 1], ["to buy", "to V", "để mua", 0], ["buy", "V-bare", "mua", 0], ["bought", "V-ed", "đã mua", 0]], "Cấu trúc: postpone + V-ing (trì hoãn việc gì lại).", "Không bao giờ được phép dùng to V sau động từ postpone."],
+  ["Young Vietnamese seem _______ more Western food nowadays.", "Giới trẻ Việt Nam dường như thích đồ ăn phương Tây hơn ngày nay.", [["to prefer", "to V", "để thích hơn", 1], ["preferring", "V-ing", "việc thích", 0], ["prefer", "V-bare", "thích", 0], ["preferred", "V-ed", "đã thích", 0]], "Cấu trúc: seem + to V (dường như/có vẻ như làm gì).", "Không sử dụng V-ing với cấu trúc seem."],
+  ["Traditional musicians practise _______ folk songs every day.", "Các nhạc công truyền thống thực hành hát các bài dân ca mỗi ngày.", [["singing", "V-ing", "việc hát", 1], ["to sing", "to V", "để hát", 0], ["sing", "V-bare", "hát", 0], ["sang", "V-ed", "đã hát", 0]], "Cấu trúc: practise + V-ing (thực hành/tập luyện việc gì).", "Học sinh hay nhầm dùng to V, hãy nhớ kỹ practice/practise phải đi với V-ing."],
+  ["Rural communities struggle _______ their traditional way of life.", "Các cộng đồng nông thôn đấu tranh/chật vật để duy trì lối sống truyền thống của họ.", [["to maintain", "to V", "để duy trì", 1], ["maintaining", "V-ing", "việc duy trì", 0], ["maintain", "V-bare", "duy trì", 0], ["maintained", "V-ed", "đã duy trì", 0]], "Cấu trúc: struggle + to V (đấu tranh nỗ lực để làm gì).", "Không dùng V-ing hay V-bare ở vị trí này."]
+];
+
+let score = 0;
+let answered = new Array(qData.length).fill(false);
+let isSubmitted = false;
+
+// ====================================================
+//  RENDER CÂU HỎI & LOGIC
+// ====================================================
+function renderQuiz() {
+  const container = document.getElementById('mainDiv');
+  let html = '';
+  
+  qData.forEach((q, i) => {
+    // Xáo trộn ngẫu nhiên 4 đáp án
+    let shuffledOpts = [...q[2]].sort(() => Math.random() - 0.5);
+    let optsHTML = '';
+    let gridHTML = '';
+    
+    shuffledOpts.forEach((opt, j) => {
+      optsHTML += `<button class="opt-btn" onclick="checkAns(this, ${i}, ${opt[3]})">${opt[0]}</button>`;
+    });
+    
+    q[2].forEach(opt => {
+      let wClass = opt[3] ? 'hl-green' : 'p-word';
+      gridHTML += `<div><span class='${wClass}'>${opt[0]}</span> <span class='wt'>${opt[1]}</span> = <span class='p-mean'>${opt[2]}</span></div>`;
+    });
+
+    html += `
+    <div class="qcard" id="q-${i}">
+      <div class="qbadge">◈ CÂU ${i+1}</div>
+      <div class="qtext">${q[0]}</div>
+      <div class="opt-grid" id="opts-${i}">${optsHTML}</div>
+      
+      <div class="expl" id="expl-${i}">
+        <div class="vn-s">💬 Dịch: ${q[1]}</div>
+        <div class="etitle">✨ PHÂN TÍCH ĐÁP ÁN:</div>
+        <div class="grid2" style="margin-bottom: 15px;">${gridHTML}</div>
+        <div class="step"><span class="slabel">✅ TẠI SAO ĐÚNG?</span> <span class="p-grammar">${q[3]}</span></div>
+        <div class="step"><span class="slabel hl-red">❌ TẠI SAO SAI?</span> <span class="p-grammar">${q[4]}</span></div>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+renderQuiz();
+
+function checkAns(btn, qIdx, isCorrect) {
+  if(answered[qIdx] || isSubmitted) return;
+  answered[qIdx] = true;
+  
+  const allBtns = document.getElementById(`opts-${qIdx}`).querySelectorAll('.opt-btn');
+  allBtns.forEach(b => b.disabled = true);
+
+  if(isCorrect) {
+    btn.classList.add('correct');
+    score++;
+    playCorrect();
+  } else {
+    btn.classList.add('wrong');
+    playWrong();
+    // Highlight câu đúng
+    allBtns.forEach(b => {
+      let correctText = qData[qIdx][2].find(o => o[3] === 1)[0];
+      if(b.innerText === correctText) {
+        b.style.boxShadow = "0 0 15px #00D26A";
+        b.style.borderColor = "#00D26A";
+        b.style.color = "#00D26A";
+      }
+    });
+  }
+  
+  document.getElementById(`expl-${qIdx}`).classList.add('show');
+  
+  // Cập nhật thanh tiến trình
+  let totalAnswered = answered.filter(x => x).length;
+  updatePbar((totalAnswered / qData.length) * 100);
+}
+
+// ====================================================
+//  UI EFFECTS: CANVAS PARTICLES
+// ====================================================
+function initCanvas(){
+  const cv=document.getElementById('fxCanvas');
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const ctx=cv.getContext('2d');
+  const pts=Array.from({length:120},()=>({
+    x:Math.random()*cv.width,y:Math.random()*cv.height,
+    r:Math.random()*1.5+.3,al:Math.random(),
+    sp:Math.random()*.018+.004,dir:1,
+    col:`hsl(${[300,180,60,120][Math.floor(Math.random()*4)]},100%,70%)`
+  }));
+  const draw=()=>{
+    ctx.clearRect(0,0,cv.width,cv.height);
+    pts.forEach(p=>{
+      p.al+=p.sp*p.dir;if(p.al>=1||p.al<=0)p.dir*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.col;ctx.globalAlpha=Math.abs(p.al)*.65;ctx.fill();ctx.globalAlpha=1;
+    });
+    requestAnimationFrame(draw);
+  };draw();
+  window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight});
+}
+
+// ====================================================
+//  UI EFFECTS: FLOATING OBJECTS
+// ====================================================
+function initFloats(){
+  const c=document.getElementById('floatDiv');
+  const objs=[
+    {e:'🎮',sz:50,x:3,y:12,dur:24},{e:'🕹️',sz:38,x:88,y:22,dur:20},
+    {e:'🎵',sz:30,x:75,y:70,dur:26},{e:'🎧',sz:36,x:6,y:60,dur:22},
+    {e:'🎯',sz:28,x:48,y:6,dur:16},{e:'⭐',sz:22,x:65,y:82,dur:18},
+    {e:'💫',sz:24,x:20,y:86,dur:20},{e:'🎸',sz:32,x:93,y:48,dur:28},
+    {e:'🌟',sz:20,x:38,y:18,dur:14},{e:'🎬',sz:26,x:82,y:10,dur:23},
+    {e:'🏆',sz:28,x:12,y:35,dur:19},{e:'🎲',sz:22,x:58,y:48,dur:17}
+  ];
+  objs.forEach(o=>{
+    const d=document.createElement('div');
+    d.className='fobj';
+    d.style.cssText=`left:${o.x}%;top:${o.y}%;font-size:${o.sz}px;opacity:.1;animation-duration:${o.dur}s;animation-timing-function:ease-in-out;animation-iteration-count:infinite`;
+    d.textContent=o.e;c.appendChild(d);
+  });
+}
+
+// ====================================================
+//  AUDIO ENGINE
+// ====================================================
+let aCtx;
+function getACtx(){if(!aCtx)aCtx=new(window.AudioContext||window.webkitAudioContext)();return aCtx}
+function playCorrect(){
+  try{const c=getACtx();
+    [[523,.05],[659,.2],[784,.32],[1047,.44]].forEach(([f,t])=>{
+      const o=c.createOscillator(),g=c.createGain();
+      o.connect(g);g.connect(c.destination);o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(.24,c.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+t+.36);
+      o.start(c.currentTime+t);o.stop(c.currentTime+t+.4);
+    });}catch(e){}
+}
+function playWrong(){try{const a=document.getElementById('wrongAudio');a.currentTime=0;a.play().catch(()=>{})}catch(e){}}
+function tryIntro(){
+  const a=document.getElementById('introAudio');
+  a.play().catch(()=>{const go=()=>{a.play().catch(()=>{});document.removeEventListener('click',go);document.removeEventListener('touchstart',go)};document.addEventListener('click',go,{once:true});document.addEventListener('touchstart',go,{once:true})});
+}
+
+// ====================================================
+//  UI EFFECTS: CONFETTI
+// ====================================================
+function doConfetti(){
+  const cv=document.createElement('canvas');
+  cv.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999';
+  document.body.appendChild(cv);
+  const ctx=cv.getContext('2d');cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const cols=['#ff00cc','#00f5ff','#ffe600','#00ff88','#ff80ab','#7effff'];
+  const ps=Array.from({length:75},()=>({
+    x:Math.random()*cv.width,y:Math.random()*cv.height-cv.height,
+    w:Math.random()*10+4,h:Math.random()*5+2,
+    c:cols[Math.floor(Math.random()*cols.length)],
+    sp:Math.random()*3+1.5,ang:Math.random()*Math.PI*2,rot:Math.random()*.2-.1,vx:Math.random()*2-1
+  }));
+  let fr=0;
+  const an=()=>{ctx.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.y+=p.sp;p.x+=p.vx;p.ang+=p.rot;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.ang);ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore()});if(++fr<150)requestAnimationFrame(an);else cv.remove()};an();
+}
+
+function updatePbar(percent){
+  document.getElementById('pbar').style.width = percent + '%';
+}
+
+// ====================================================
+//  REMINDER POPUP
+// ====================================================
+const remMsgs=[
+  '1️⃣ Tự giác tra cứu từ mới bằng Google Dịch/AI. <b>Tuyệt đối không chọn bừa!</b>',
+  '2️⃣ Tra phát âm trên Cambridge, <b>nghe máy đọc & đọc theo!</b>',
+  '⚠️ CHÚ Ý: Bắt buộc đọc kỹ giải thích & <b>ghi cấu trúc/từ vựng mới vào vở</b>. Làm bài cho xong mà không ghi chép thì chỉ tốn thời gian vô ích!'
+];
+let remI=0;
+function initReminder(){
+  const dots=document.getElementById('remDots');
+  dots.innerHTML=remMsgs.map((_,i)=>`<div class="rdot${i===0?' active':''}" id="rd${i}"></div>`).join('');
+  document.getElementById('remMsg').innerHTML=remMsgs[0];
+  setInterval(()=>{
+    document.getElementById('remMsg').style.opacity='0';
+    setTimeout(()=>{remI=(remI+1)%remMsgs.length;document.getElementById('remMsg').innerHTML=remMsgs[remI];document.getElementById('remMsg').style.opacity='1';
+    remMsgs.forEach((_,i)=>document.getElementById('rd'+i).classList.toggle('active',i===remI));},430);
+  },7000);
+}
+
+// ====================================================
+//  MODALS & SUBMIT LOGIC
+// ====================================================
+function openName(){
+  document.getElementById('nameModal').classList.add('show');
+  setTimeout(()=>document.getElementById('nameIn').focus(),100);
+}
+
+function doSubmit(){
+  const nm=document.getElementById('nameIn').value.trim();
+  if(!nm){
+    const inp=document.getElementById('nameIn');
+    inp.classList.add('err');
+    document.getElementById('nameErr').style.display='block';
+    setTimeout(()=>inp.classList.remove('err'),460);
+    return;
+  }
+  document.getElementById('nameModal').classList.remove('show');
+  isSubmitted = true;
+  
+  // Khóa tất cả câu hỏi và hiện đáp án các câu chưa làm
+  qData.forEach((q, i) => {
+    if(!answered[i]) {
+      const allBtns = document.getElementById(`opts-${i}`).querySelectorAll('.opt-btn');
+      allBtns.forEach(b => {
+        b.disabled = true;
+        let correctText = qData[i][2].find(o => o[3] === 1)[0];
+        if(b.innerText === correctText) {
+          b.style.borderColor = "gray";
+          b.style.color = "gray";
+        }
+      });
+      document.getElementById(`expl-${i}`).classList.add('show');
+    }
+  });
+
+  updatePbar(100);
+  showResult(nm);
+}
+
+function showResult(nm){
+  const total = qData.length;
+  const pct = score / total;
+  const scale10 = (score / total * 10).toFixed(2);
+
+  document.getElementById('rg').innerHTML=`🌟 XUẤT SẮC ${nm.toUpperCase()}!`;
+  document.getElementById('rs').textContent=`${score}/${total}`;
+  document.getElementById('r10').innerHTML=`Quy đổi: ${scale10} / 10 Điểm`;
+  
+  const gifEl = document.getElementById('rgif');
+  if(pct === 1) gifEl.src = 'https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif';
+  else if(pct >= 0.6) gifEl.src = 'https://media.giphy.com/media/ely3apij36O71xNO92/giphy.gif';
+  else gifEl.src = 'https://media.giphy.com/media/2rtQMJvhzOnRe/giphy.gif';
+
+  document.getElementById('resModal').classList.add('show');
+  if(pct >= 0.5) doConfetti();
+}
+
+window.addEventListener('load',()=>{
+  initCanvas();
+  initFloats();
+  initReminder();
+  setTimeout(tryIntro,700);
+});
+</script>
+</body>
+</html>

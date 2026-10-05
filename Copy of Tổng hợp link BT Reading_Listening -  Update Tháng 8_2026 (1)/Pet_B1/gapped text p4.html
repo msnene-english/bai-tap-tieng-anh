@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms MS Chí Nên - The Giant Piano Challenge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Dynamic Theme: Music/Piano */
+            --primary-color: #6c5ce7; /* Tím sáng tạo */
+            --secondary-color: #a29bfe; /* Tím nhạt */
+            --accent-color: #ffeaa7; /* Vàng nhạt */
+            --text-color: #2d3436;
+            --success-color: #00b894; /* Xanh lá */
+            --error-color: #ff7675; /* Đỏ cam */
+            --card-bg: #ffffff;
+            --font-main: 'Nunito', sans-serif;
+        }
+
+        /* SVG Background Generation using Data URI */
+        body {
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--secondary-color);
+            /* SVG Background with Emojis: Piano, Note, Score */
+            background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.1'%3E%3Ctext x='10' y='40' font-size='30'%3E🎹%3C/text%3E%3Ctext x='70' y='90' font-size='30'%3E🎵%3C/text%3E%3Ctext x='80' y='30' font-size='30'%3E🎼%3C/text%3E%3C/g%3E%3C/svg%3E"), 
+            radial-gradient(circle at center, #a29bfe 0%, #6c5ce7 100%);
+            color: var(--text-color);
+        }
+
+        /* HEADER */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            position: relative;
+            height: 60px;
+        }
+
+        .teacher-brand {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .teacher-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+        }
+
+        /* TIMER CONTROL */
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #fff;
+            padding: 5px 15px;
+            border-radius: 30px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 4px 0 var(--primary-color);
+        }
+
+        #timer-display {
+            font-weight: 900;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-family: 'Quicksand', sans-serif;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .control-btn {
+            background: var(--accent-color);
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        .control-btn:hover { transform: scale(1.1); }
+
+        /* MAIN LAYOUT: SPLIT SCREEN */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px); /* Minus header */
+            gap: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            padding: 25px;
+            position: relative;
+        }
+
+        /* SCROLLBAR CUSTOMIZATION */
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb { background: var(--secondary-color); border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
+
+        /* LEFT PANEL: READING */
+        h1.title {
+            color: var(--primary-color);
+            font-family: 'Quicksand', sans-serif;
+            text-align: center;
+            margin-top: 0;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+
+        .reading-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #444;
+        }
+
+        .gap-marker {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin: 0 5px;
+            box-shadow: 0 3px 0 #4834d4;
+        }
+
+        .trans-btn {
+            background: #dfe6e9;
+            border: none;
+            color: #636e72;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-top: 5px;
+            display: block;
+            width: fit-content;
+            transition: all 0.2s;
+        }
+        .trans-btn:hover { background: var(--primary-color); color: white; }
+
+        .trans-content {
+            display: none;
+            background: #f0fdf4;
+            padding: 10px;
+            border-left: 4px solid var(--success-color);
+            border-radius: 5px;
+            margin-top: 5px;
+            font-style: italic;
+            color: #2d3436;
+            font-size: 0.95rem;
+        }
+
+        /* GLOSSARY */
+        .glossary-box {
+            margin-top: 30px;
+            border: 2px dashed var(--primary-color);
+            border-radius: 15px;
+            padding: 15px;
+            background: #fdfbff;
+        }
+        .glossary-title {
+            text-align: center;
+            color: var(--primary-color);
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        .gloss-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .gloss-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .word { font-weight: 700; color: #d63031; }
+        .type { font-size: 0.8rem; color: #636e72; font-style: italic; background: #eee; padding: 2px 5px; border-radius: 4px;}
+
+        /* RIGHT PANEL: EXERCISES */
+        .question-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 25px;
+            border: 1px solid #eee;
+            position: relative;
+        }
+
+        .q-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .q-number {
+            background: var(--primary-color);
+            color: white;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-weight: 900;
+            box-shadow: 0 3px 0 #4834d4;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        /* GAMIFICATION BUTTONS */
+        .option-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 12px 15px;
+            border-radius: 12px;
+            text-align: left;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            box-shadow: 0 4px 0 #dcdcdc;
+            color: #555;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            transform: scale(1.02);
+            border-color: var(--primary-color);
+        }
+
+        .option-btn:active:not(.disabled) {
+            top: 4px;
+            box-shadow: 0 0 0 #dcdcdc;
+        }
+
+        /* STATE CLASSES */
+        .option-btn.correct {
+            background: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+            box-shadow: 0 4px 0 #009476;
+        }
+        
+        .option-btn.wrong {
+            background: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+            box-shadow: 0 4px 0 #eb3b49;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* SUPPORT SECTION */
+        .support-area {
+            margin-top: 15px;
+            display: none; /* Hidden initially */
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .teacher-feedback {
+            background: #eef2ff;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .teacher-avatar {
+            width: 40px; 
+            height: 40px; 
+            background: var(--primary-color); 
+            border-radius: 50%; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            margin-right: 10px;
+            float: left;
+        }
+
+        .support-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: white;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .action-btn:active { transform: translateY(3px); box-shadow: none; }
+        
+        .btn-explain { background: #6c5ce7; }
+        .btn-translate { background: #0984e3; }
+        .btn-paraphrase { background: #00b894; }
+
+        .detail-content {
+            margin-top: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none;
+            border: 1px solid #ddd;
+        }
+
+        /* SUBMIT BUTTON */
+        .submit-container {
+            text-align: center;
+            margin-top: 20px;
+            padding-bottom: 40px;
+        }
+        .submit-btn {
+            background: linear-gradient(to bottom, #fdcb6e, #e17055);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 900;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #d35400, 0 10px 20px rgba(0,0,0,0.2);
+            font-family: 'Quicksand', sans-serif;
+            transition: all 0.2s;
+        }
+        .submit-btn:hover { transform: translateY(-3px); }
+        .submit-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #d35400; }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+            animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 4px solid var(--primary-color);
+        }
+        @keyframes popUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .score-big {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin: 10px 0;
+            text-shadow: 3px 3px 0px #dfe6e9;
+        }
+
+        /* CONFETTI (Simple CSS) */
+        .confetti-piece {
+            position: absolute;
+            width: 10px; height: 10px;
+            background: #ffd300;
+            top: 0;
+            opacity: 0;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; height: auto; overflow-y: auto; }
+            .panel { height: auto; overflow: visible; }
+            header { flex-direction: column; height: auto; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="teacher-brand">
+        <span>👩‍🏫 Ms MS Chí Nên</span>
+        <span class="teacher-badge">Master of TESOL</span>
+    </div>
+    <div class="timer-container">
+        <span style="font-size: 1.5rem;">⏰</span>
+        <div id="timer-display">10:00</div>
+        <button class="control-btn" id="timer-toggle" onclick="toggleTimer()">⏸</button>
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="panel" id="reading-panel">
+        <h1 class="title">The Giant Piano 🎹</h1>
+        
+        <div class="reading-content">
+            <p>
+                A young man in New Zealand recently became famous for making one of the largest pianos ever.
+                <button class="trans-btn" onclick="toggleTrans(this)">Bản dịch</button>
+                <span class="trans-content">Một thanh niên trẻ ở New Zealand gần đây đã trở nên nổi tiếng vì chế tạo ra một trong những cây đàn piano lớn nhất từ trước tới nay.</span>
+            </p>
+
+            <p>
+                Adrian Mann, who now works as a professional piano builder, started building the piano when he was just 16 years old, and made many of the parts for it himself. The piano is 5.7 metres long and is very heavy. And the keyboard actually has keys that are a metre in length. <span class="gap-marker">1</span> But despite this difference in size, the instrument can still be played perfectly, thanks to Adrian’s hard work.
+                <button class="trans-btn" onclick="toggleTrans(this)">Bản dịch</button>
+                <span class="trans-content">Adrian Mann, người hiện đang làm việc như một thợ chế tạo piano chuyên nghiệp, đã bắt đầu làm cây đàn này khi mới chỉ 16 tuổi, và tự tay làm rất nhiều bộ phận cho nó. Cây đàn dài 5.7 mét và rất nặng. Và bàn phím thực sự có các phím dài tới một mét. [1] Nhưng bất chấp sự khác biệt về kích thước này, nhạc cụ vẫn có thể được chơi một cách hoàn hảo, nhờ vào sự làm việc chăm chỉ của Adrian.</span>
+            </p>
+
+            <p>
+                <span class="gap-marker">2</span> In fact, the whole thing started when Adrian became interested in the materials used for the wires inside the piano. These create the notes when they’re hit.
+                <button class="trans-btn" onclick="toggleTrans(this)">Bản dịch</button>
+                <span class="trans-content">[2] Thực tế, toàn bộ sự việc bắt đầu khi Adrian trở nên hứng thú với các vật liệu được sử dụng làm dây đàn bên trong piano. Những dây này tạo ra các nốt nhạc khi chúng được gõ vào.</span>
+            </p>
+
+            <p>
+                And he found that if the wires were really long, he could get an amazing sound. From there, he went on to build the whole piano.
+                <button class="trans-btn" onclick="toggleTrans(this)">Bản dịch</button>
+                <span class="trans-content">Và anh ấy phát hiện ra rằng nếu dây đàn thực sự dài, anh ấy có thể tạo ra âm thanh tuyệt vời. Từ đó, anh ấy tiếp tục chế tạo toàn bộ cây đàn.</span>
+            </p>
+
+            <p>
+                The instrument was kept inside a church in his town for some time, before Adrian decided it was time to transfer the huge piano from the church to his workshop. <span class="gap-marker">3</span> So in the end, the fire service had to come and help take the instrument to its new home.
+                <button class="trans-btn" onclick="toggleTrans(this)">Bản dịch</button>
+                <span class="trans-content">Nhạc cụ này đã được giữ bên trong một nhà thờ ở thị trấn của anh ấy một thời gian, trước khi Adrian quyết định đã đến lúc chuyển cây đàn khổng lồ từ nhà thờ về xưởng của mình. [3] Vì vậy cuối cùng, đội cứu hỏa đã phải đến và giúp đưa nhạc cụ về nhà mới của nó.</span>
+            </p>
+
+            <p>
+                Since the move, a lot of piano players have visited Adrian to try out the piano. But Adrian says that when they arrive, some people aren’t very positive about the piano.
+                <button class="trans-btn" onclick="toggleTrans(this)">Bản dịch</button>
+                <span class="trans-content">Kể từ khi di chuyển, rất nhiều người chơi piano đã đến thăm Adrian để thử cây đàn. Nhưng Adrian nói rằng khi họ đến, một số người không có cái nhìn tích cực lắm về cây đàn này.</span>
+            </p>
+
+            <p>
+                <span class="gap-marker">4</span> But actually, it always performs brilliantly. They soon discover that the piano can play a wide range of music, just like any normal piano.
+                <button class="trans-btn" onclick="toggleTrans(this)">Bản dịch</button>
+                <span class="trans-content">[4] Nhưng thực ra, nó luôn trình diễn một cách xuất sắc. Họ sớm phát hiện ra rằng cây đàn có thể chơi nhiều loại nhạc khác nhau, giống hệt như bất kỳ cây đàn bình thường nào.</span>
+            </p>
+
+            <p>
+                There’s been so much interest in Adrian’s piano that he could probably start making and selling others just like it. <span class="gap-marker">5</span> So, at the moment, he has no plans to make any more.
+                <button class="trans-btn" onclick="toggleTrans(this)">Bản dịch</button>
+                <span class="trans-content">Đã có rất nhiều sự quan tâm đến cây đàn của Adrian đến nỗi anh ấy có thể bắt đầu chế tạo và bán những chiếc khác giống hệt nó. [5] Vì vậy, vào lúc này, anh ấy không có kế hoạch làm thêm cái nào nữa.</span>
+            </p>
+        </div>
+
+        <div class="glossary-box">
+            <div class="glossary-title">📖 GLOSSARY (Từ vựng xịn)</div>
+            <table class="gloss-table">
+                <tr>
+                    <td><span class="word">Professional</span> <span class="type">adj</span></td>
+                    <td>Chuyên nghiệp</td>
+                </tr>
+                <tr>
+                    <td><span class="word">Instrument</span> <span class="type">n</span></td>
+                    <td>Nhạc cụ (đàn, sáo...)</td>
+                </tr>
+                <tr>
+                    <td><span class="word">Material</span> <span class="type">n</span></td>
+                    <td>Nguyên vật liệu</td>
+                </tr>
+                <tr>
+                    <td><span class="word">Transfer</span> <span class="type">v</span></td>
+                    <td>Di chuyển, dời đi</td>
+                </tr>
+                <tr>
+                    <td><span class="word">Workshop</span> <span class="type">n</span></td>
+                    <td>Xưởng làm việc</td>
+                </tr>
+                <tr>
+                    <td><span class="word">Brilliantly</span> <span class="type">adv</span></td>
+                    <td>Một cách rực rỡ, xuất sắc</td>
+                </tr>
+                <tr>
+                    <td><span class="word">Discover</span> <span class="type">v</span></td>
+                    <td>Khám phá, phát hiện ra</td>
+                </tr>
+                 <tr>
+                    <td><span class="word">Original</span> <span class="type">adj</span></td>
+                    <td>Nguyên bản, gốc, ban đầu</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel" id="exercise-panel">
+        <h2 style="color: var(--primary-color); text-align: center; margin-bottom: 20px;">🧩 Fill in the Gaps</h2>
+        
+        <div id="quiz-container">
+            </div>
+
+        <div class="submit-container">
+            <button class="submit-btn" onclick="calculateFinalScore()">NỘP BÀI 🚀</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="score-modal">
+    <div class="modal-content">
+        <h2>KẾT QUẢ CỦA BẠN</h2>
+        <div class="score-big" id="final-score-display">0/5</div>
+        <p id="feedback-msg" style="font-size: 1.2rem; color: #555;"></p>
+        <button class="submit-btn" style="font-size: 1rem; padding: 10px 20px; margin-top: 15px;" onclick="closeModal()">Xem lại bài làm</button>
+    </div>
+</div>
+
+<script>
+    // --- DATA ---
+    const quizData = [
+        {
+            id: 1,
+            gap: 1,
+            correct: "F",
+            options: [
+                {id: "A", text: "However, he put a lot of work into his original model."},
+                {id: "B", text: "It’s so big, you could imagine actually lying down inside it!"},
+                {id: "C", text: "So what gave Adrian the idea to create such a huge piano?"},
+                {id: "F", text: "That’s much larger than on a normal-sized piano."}
+            ],
+            explanation: "Gap 1 cần một câu so sánh về kích thước. Trước đó bài nói 'keys are a metre in length' (phím dài 1 mét). Đáp án F ('Lớn hơn nhiều so với đàn thường') là sự so sánh hợp lý nhất.",
+            translation: "Câu F: Điều đó lớn hơn nhiều so với một cây đàn piano kích cỡ bình thường.",
+            paraphrase: "Metre in length = Much larger than normal."
+        },
+        {
+            id: 2,
+            gap: 2,
+            correct: "C",
+            options: [
+                {id: "C", text: "So what gave Adrian the idea to create such a huge piano?"},
+                {id: "D", text: "They expect that the instrument won’t sound very good."},
+                {id: "E", text: "But things weren’t always that simple."},
+                {id: "G", text: "Most of them were surprised by the wonderful result."}
+            ],
+            explanation: "Gap 2 đứng đầu đoạn, sau đó là câu 'In fact, the whole thing started when...' (Thực tế mọi chuyện bắt đầu khi...). Đây là câu trả lời cho câu hỏi ở đáp án C ('Vậy điều gì đã cho Adrian ý tưởng...?').",
+            translation: "Câu C: Vậy điều gì đã cho Adrian ý tưởng tạo ra một cây đàn piano khổng lồ như vậy?",
+            paraphrase: "Gave idea ~ Started when..."
+        },
+        {
+            id: 3,
+            gap: 3,
+            correct: "H",
+            options: [
+                {id: "A", text: "However, he put a lot of work into his original model."},
+                {id: "B", text: "It’s so big, you could imagine actually lying down inside it!"},
+                {id: "H", text: "But he soon found he couldn’t move it out on his own."},
+                {id: "D", text: "They expect that the instrument won’t sound very good."}
+            ],
+            explanation: "Trước Gap 3 nói về việc chuyển đàn (transfer). Sau Gap 3 nói 'fire service had to come help' (cứu hỏa phải đến giúp). Suy ra Gap 3 phải nói về khó khăn khi di chuyển -> Đáp án H ('Không thể tự mình di chuyển nó').",
+            translation: "Câu H: Nhưng anh ấy sớm nhận ra mình không thể tự di chuyển nó ra ngoài.",
+            paraphrase: "Couldn't move on his own -> Fire service had to help."
+        },
+        {
+            id: 4,
+            gap: 4,
+            correct: "D",
+            options: [
+                {id: "G", text: "Most of them were surprised by the wonderful result."},
+                {id: "D", text: "They expect that the instrument won’t sound very good."},
+                {id: "E", text: "But things weren’t always that simple."},
+                {id: "F", text: "That’s much larger than on a normal-sized piano."}
+            ],
+            explanation: "Trước Gap 4 nói mọi người 'aren't very positive' (không tích cực lắm). Sau Gap 4 dùng 'But actually' (Nhưng thực ra) để phản bác. Vậy Gap 4 phải là suy nghĩ tiêu cực cụ thể -> Đáp án D ('Họ nghĩ nó nghe không hay').",
+            translation: "Câu D: Họ mong đợi rằng nhạc cụ sẽ không có âm thanh hay lắm.",
+            paraphrase: "Aren't positive ~ Expect won't sound good."
+        },
+        {
+            id: 5,
+            gap: 5,
+            correct: "A",
+            options: [
+                {id: "A", text: "However, he put a lot of work into his original model."},
+                {id: "B", text: "It’s so big, you could imagine actually lying down inside it!"},
+                {id: "H", text: "But he soon found he couldn’t move it out on his own."},
+                {id: "C", text: "So what gave Adrian the idea to create such a huge piano?"}
+            ],
+            explanation: "Trước Gap 5 nói anh ấy 'could start selling' (có thể bán). Sau Gap 5 lại nói 'no plans to make more' (không định làm thêm). Cần một lý do cản trở -> Đáp án A ('Anh ấy đã tốn quá nhiều công sức vào bản mẫu').",
+            translation: "Câu A: Tuy nhiên, anh ấy đã đặt rất nhiều công sức vào mô hình ban đầu của mình.",
+            paraphrase: "Put a lot of work -> No plans to make more (too hard)."
+        }
+    ];
+
+    let score = 0;
+    let answeredCount = 0;
+
+    // --- SOUND EFFECTS (Synthesized to keep single file) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            // Ding sound (High pitch, fast decay)
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+            osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1); // C6
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+            fireConfetti();
+        } else {
+            // Wrong sound (Low pitch wobble)
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    // --- CONFETTI EFFECT ---
+    function fireConfetti() {
+        const colors = ['#a864fd', '#29cdff', '#78ff44', '#ff718d', '#fdff6a'];
+        for (let i = 0; i < 50; i++) {
+            const conf = document.createElement('div');
+            conf.classList.add('confetti-piece');
+            conf.style.left = Math.random() * 100 + 'vw';
+            conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            conf.style.animation = `drop ${Math.random() * 2 + 1}s linear forwards`;
+            document.body.appendChild(conf);
+            
+            // Cleanup
+            setTimeout(() => { conf.remove(); }, 3000);
+        }
+    }
+    
+    // Add Keyframes for confetti dynamically
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = `@keyframes drop { 0% { top: -10px; opacity: 1; transform: rotate(0deg); } 100% { top: 100vh; opacity: 0; transform: rotate(720deg); } }`;
+    document.head.appendChild(styleSheet);
+
+
+    // --- QUIZ RENDERING ---
+    function renderQuiz() {
+        const container = document.getElementById('quiz-container');
+        quizData.forEach(q => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `q-card-${q.id}`;
+            
+            let optionsHTML = '';
+            // Shuffle options slightly for randomness or keep fixed? Keep fixed A-H as per request logic but let's show subset if needed. 
+            // The prompt gave specific subsets for options but the original test has 8 options (A-H) for all gaps.
+            // To make it user friendly like "Blooket", I will display 4 relevant options (Distractors) per question as I defined in data above.
+            
+            q.options.forEach(opt => {
+                optionsHTML += `<button class="option-btn" onclick="checkAnswer(${q.id}, '${opt.id}', this)"><b>${opt.id}.</b> ${opt.text}</button>`;
+            });
+
+            card.innerHTML = `
+                <div class="q-header">
+                    <div class="q-number">${q.gap}</div>
+                    <span style="font-weight: 700; color: #555;">Chọn câu phù hợp điền vào vị trí [${q.gap}]</span>
+                </div>
+                <div class="options-grid" id="options-${q.id}">
+                    ${optionsHTML}
+                </div>
+                <div class="support-area" id="support-${q.id}">
+                    <div class="teacher-feedback">
+                        <div class="teacher-avatar">👩‍🏫</div>
+                        <div style="font-weight: bold; margin-bottom: 5px;">Ms. MS Chí Nên giải thích:</div>
+                        <div style="font-size: 0.95rem;">${q.explanation}</div>
+                    </div>
+                    <div class="support-actions">
+                        <button class="action-btn btn-translate" onclick="toggleDetail('trans-${q.id}')">Dịch câu</button>
+                        <button class="action-btn btn-paraphrase" onclick="toggleDetail('para-${q.id}')">Paraphrase</button>
+                    </div>
+                    <div id="trans-${q.id}" class="detail-content">📝 <b>Dịch:</b> ${q.translation}</div>
+                    <div id="para-${q.id}" class="detail-content">🔄 <b>So sánh:</b> ${q.paraphrase}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // --- INTERACTION LOGIC ---
+    function checkAnswer(qId, selectedOptId, btnElement) {
+        const qData = quizData.find(q => q.id === qId);
+        const parentGrid = document.getElementById(`options-${qId}`);
+        const allBtns = parentGrid.querySelectorAll('.option-btn');
+        
+        // Prevent re-clicking
+        if (parentGrid.classList.contains('answered')) return;
+        parentGrid.classList.add('answered');
+
+        if (selectedOptId === qData.correct) {
+            // Correct
+            btnElement.classList.add('correct');
+            playSound('correct');
+            score++;
+        } else {
+            // Wrong
+            btnElement.classList.add('wrong');
+            playSound('wrong');
+            // Highlight correct one
+            allBtns.forEach(btn => {
+                if (btn.innerText.startsWith(qData.correct)) {
+                    btn.classList.add('correct');
+                }
+            });
+        }
+        
+        // Disable all buttons
+        allBtns.forEach(btn => btn.classList.add('disabled'));
+
+        // Show Support
+        document.getElementById(`support-${qId}`).style.display = 'block';
+        answeredCount++;
+    }
+
+    function toggleDetail(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function toggleTrans(btn) {
+        const content = btn.nextElementSibling;
+        if (content.style.display === 'block') {
+            content.style.display = 'none';
+            btn.innerText = 'Bản dịch';
+            btn.style.background = '#dfe6e9';
+            btn.style.color = '#636e72';
+        } else {
+            content.style.display = 'block';
+            btn.innerText = 'Ẩn dịch';
+            btn.style.background = '#a29bfe';
+            btn.style.color = 'white';
+        }
+    }
+
+    // --- TIMER LOGIC ---
+    let time = 600; // 10 minutes
+    let timerInterval;
+    let isRunning = false;
+
+    function startTimer() {
+        if (isRunning) return;
+        isRunning = true;
+        document.getElementById('timer-toggle').innerText = '⏸';
+        timerInterval = setInterval(() => {
+            time--;
+            updateTimerDisplay();
+            if (time <= 0) {
+                clearInterval(timerInterval);
+                alert("Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục, nhưng nhớ tốc độ thi thật nhé!");
+            }
+        }, 1000);
+    }
+
+    function toggleTimer() {
+        if (isRunning) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            document.getElementById('timer-toggle').innerText = '▶️';
+        } else {
+            startTimer();
+        }
+    }
+
+    function updateTimerDisplay() {
+        const m = Math.floor(time / 60);
+        const s = time % 60;
+        document.getElementById('timer-display').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+    }
+
+    // --- SCORING ---
+    function calculateFinalScore() {
+        const modal = document.getElementById('score-modal');
+        const scoreDisplay = document.getElementById('final-score-display');
+        const feedback = document.getElementById('feedback-msg');
+        
+        scoreDisplay.innerText = `${score}/5`;
+        
+        if (score === 5) feedback.innerText = "🏆 THIÊN TÀI! Bạn quá xuất sắc!";
+        else if (score >= 3) feedback.innerText = "🌟 LÀM TỐT LẮM! Cố thêm chút nữa là tuyệt đối.";
+        else feedback.innerText = "💪 CỐ LÊN NHÉ! Hãy xem kỹ phần giải thích của cô.";
+
+        modal.style.display = 'flex';
+        playSound('correct'); // Celebration sound
+    }
+
+    function closeModal() {
+        document.getElementById('score-modal').style.display = 'none';
+    }
+
+    // INITIALIZE
+    window.onload = function() {
+        renderQuiz();
+        // Auto start timer interaction needs user gesture usually, so we wait for first click or just show paused
+        document.getElementById('timer-toggle').innerText = '▶️'; // Start in paused state
+    };
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms MS Chí Nên - Reading Practice: THIS IS MY HOUSE</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* CSS Variables cho Gradient và Glassmorphism */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --primary-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--primary-font);
+            color: #333;
+            overflow: hidden; 
+            background: linear-gradient(-45deg, #a8c0ff, #fbc2eb, #ffecd2, #fcb69f);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating SVG Background */
+        .floating-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 60%);
+        }
+        .emoji-float {
+            position: absolute;
+            font-size: 3.5rem;
+            opacity: 0.25;
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #555;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 10;
+        }
+
+        /* Sticky Note */
+        .sticky-note {
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            width: 320px;
+            background: rgba(255, 243, 205, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid #ffeeba;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            font-size: 0.85rem;
+            color: #856404;
+            transition: transform 0.3s ease;
+        }
+        .sticky-note:hover {
+            transform: scale(1.05);
+        }
+        .sticky-note h4 { margin-bottom: 5px; color: #d39e00; }
+
+        /* Split Screen Container */
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            padding-top: 10px;
+            height: calc(100vh - 40px);
+            z-index: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Glass Panels */
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Scrollbar styles */
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(150,150,150,0.5); border-radius: 10px; }
+
+        h2 { color: #444; margin-bottom: 15px; font-size: 1.5rem; text-align: center; }
+
+        /* Reading Content */
+        .passage {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .btn-translate {
+            background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #444;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+        .btn-translate:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .translation {
+            display: none;
+            background: rgba(255, 240, 245, 0.7);
+            padding: 15px;
+            border-left: 4px solid #fbc2eb;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        /* Glossary Table */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .glossary-table th { background: rgba(251, 194, 235, 0.6); font-weight: bold; }
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        /* Questions */
+        .question-card {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .question-card:hover { transform: translateY(-3px); }
+        .question-text { font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .option-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #ddd;
+            padding: 12px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            transition: all 0.2s;
+            text-align: center;
+            white-space: normal; 
+        }
+        .option-btn:hover { background: #f0f8ff; border-color: #a6c1ee; }
+        .option-btn.correct { background: #a8e6cf; border-color: #2e7d32; color: #1b5e20; }
+        .option-btn.wrong { background: #ffcccb; border-color: #c62828; color: #b71c1c; }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* Explanations (Master Class) */
+        .explanation {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(245, 245, 245, 0.9);
+            border-radius: 10px;
+            border-left: 5px solid #a6c1ee;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        /* Custom Requirement Colors */
+        .p-word { color: #0056b3; font-weight: bold; }
+        .p-mean { color: #cc4a33; font-style: italic; }
+        .p-grammar { text-decoration: underline; text-decoration-color: red; color: #d32f2f; font-weight: bold; }
+        .hl-green { color: #2e7d32; font-weight: bold; }
+        .hl-red { color: #c62828; text-decoration: line-through; }
+
+        /* Submit Area */
+        .submit-area { text-align: center; margin-top: 20px; padding-bottom: 20px; }
+        .btn-submit {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #d32f2f;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 154, 158, 0.4);
+            transition: all 0.3s;
+        }
+        .btn-submit:hover { transform: scale(1.05); box-shadow: 0 8px 20px rgba(255, 154, 158, 0.6); }
+
+        /* Overlays */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            padding: 30px; border-radius: 20px; text-align: center;
+            max-width: 450px; width: 90%;
+            border: var(--glass-border); box-shadow: var(--glass-shadow);
+        }
+        .modal input {
+            width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px;
+            border: 1px solid #ccc; font-size: 1rem;
+        }
+        .modal button {
+            background: #fbc2eb; border: none; padding: 10px 20px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; font-size: 1rem; color: #444;
+        }
+        .scorecard { text-align: center; }
+        .scorecard img { max-width: 100%; border-radius: 15px; margin-top: 15px; }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; overflow-y: auto; height: auto; }
+            body { overflow: auto; }
+            .panel { overflow-y: visible; }
+            .sticky-note { position: static; width: 100%; margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioIntro" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_dcyCDfhAokgnwEKEgvFUkr.mp3" preload="auto"></audio>
+    <audio id="audioCorrect" src="https://www.myinstants.com/media/sounds/correct-answer-sound-effect.mp3" preload="auto"></audio>
+    <audio id="audioWrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/File%20nghe%20Ket%20A2/huh_sound_effect-www_tiengdong_com.mp3" preload="auto"></audio>
+
+    <div id="startOverlay" class="overlay">
+        <div class="modal">
+            <h2>Chào mừng em đến với Lớp học của Ms MS Chí Nên!</h2>
+            <p>Hãy bật âm thanh để nghe cô dặn dò trước khi làm bài nhé!</p>
+            <button onclick="startApp()">Bắt đầu làm bài 🚀</button>
+        </div>
+    </div>
+
+    <div class="floating-bg">
+        <div class="emoji-float" style="top: 10%; left: 10%; animation-delay: 0s;">🏠</div>
+        <div class="emoji-float" style="top: 70%; left: 5%; animation-delay: 2s;">🛋️</div>
+        <div class="emoji-float" style="top: 40%; left: 80%; animation-delay: 1s;">🌺</div>
+        <div class="emoji-float" style="top: 80%; left: 90%; animation-delay: 3s;">🚗</div>
+        <div class="emoji-float" style="top: 20%; left: 60%; animation-delay: 1.5s;">🛏️</div>
+    </div>
+
+    <header>Giáo viên tạo: Ms MS Chí Nên</header>
+
+    <div class="sticky-note">
+        <h4>📌 GHI CHÚ TỪ CÔ MS Chí Nên</h4>
+        <p>Tự giác tra cứu từ mới bằng Google Dịch/AI, tra phát âm bằng từ điển Cambridge. <b>Không được chọn bừa!</b> Đọc thật kỹ phần giải thích và ghi lại từ/cấu trúc mới vào vở thì mới tiến bộ được nhé.</p>
+    </div>
+
+    <div class="container">
+        <div class="panel" id="readingPanel">
+            <h2>📖 THIS IS MY HOUSE!</h2>
+            
+            <div class="passage-container">
+                <div class="passage">
+                    Hello! My name is Peter and this is my house.<br><br>
+                    My house is quite big. It has got two floors - a ground floor and a first floor. It has also got an attic and a basement. On the ground floor, there is a kitchen, a living room, a big dining room and a bathroom. On the first floor, there are three bedrooms, one bathroom and a big corridor. My bedroom is between my parents' bedroom and the bathroom. My sister's bedroom is in front of mine.<br><br>
+                    I love my bedroom, but I also like the attic. In the attic I keep some of my books and my old toys. I like to spend my time there because it is very spacious and there is a big sofa there where I sometimes take a nap.<br><br>
+                    At the back of the house, there is a garage where my parents park the family car, and a lovely garden with many green spaces, flowers, two swings and a small swimming pool.<br><br>
+                    I love my house! It's very comfortable and cozy.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslate('trans1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation" id="trans1">
+                    Xin chào! Tên tôi là Peter và đây là nhà của tôi.<br><br>
+                    Nhà của tôi khá lớn. Nó có hai tầng - một tầng trệt và một lầu một. Nó cũng có một gác mái và một tầng hầm. Ở tầng trệt, có một nhà bếp, một phòng khách, một phòng ăn lớn và một phòng tắm. Trên lầu một, có ba phòng ngủ, một phòng tắm và một hành lang lớn. Phòng ngủ của tôi ở giữa phòng ngủ của bố mẹ tôi và phòng tắm. Phòng ngủ của em gái tôi ở phía trước phòng tôi.<br><br>
+                    Tôi yêu phòng ngủ của mình, nhưng tôi cũng thích gác mái. Trên gác mái, tôi giữ một số sách và đồ chơi cũ của mình. Tôi thích dành thời gian ở đó vì nó rất rộng rãi và có một chiếc ghế sofa lớn ở đó nơi thỉnh thoảng tôi chợp mắt.<br><br>
+                    Ở phía sau nhà, có một nhà để xe nơi bố mẹ tôi đậu chiếc xe hơi của gia đình, và một khu vườn xinh xắn với nhiều không gian xanh, hoa, hai chiếc xích đu và một hồ bơi nhỏ.<br><br>
+                    Tôi yêu nhà của tôi! Nó rất thoải mái và ấm cúng.
+                </div>
+            </div>
+
+            <h3>📚 Glossary (Bảng Từ Vựng Khó)</h3>
+            <table class="glossary-table">
+                <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                <tr><td><span class="p-word">ground floor</span></td><td>n</td><td><span class="p-mean">tầng trệt (tầng 1 theo kiểu VN)</span></td></tr>
+                <tr><td><span class="p-word">first floor</span></td><td>n</td><td><span class="p-mean">tầng một (tầng 2 theo kiểu VN)</span></td></tr>
+                <tr><td><span class="p-word">attic</span></td><td>n</td><td><span class="p-mean">gác mái</span></td></tr>
+                <tr><td><span class="p-word">basement</span></td><td>n</td><td><span class="p-mean">tầng hầm</span></td></tr>
+                <tr><td><span class="p-word">corridor</span></td><td>n</td><td><span class="p-mean">hành lang</span></td></tr>
+                <tr><td><span class="p-word">spacious</span></td><td>adj</td><td><span class="p-mean">rộng rãi, có nhiều không gian</span></td></tr>
+                <tr><td><span class="p-word">take a nap</span></td><td>v. phrase</td><td><span class="p-mean">ngủ trưa, chợp mắt</span></td></tr>
+                <tr><td><span class="p-word">garage</span></td><td>n</td><td><span class="p-mean">nhà để xe</span></td></tr>
+                <tr><td><span class="p-word">comfortable</span></td><td>adj</td><td><span class="p-mean">thoải mái, dễ chịu</span></td></tr>
+                <tr><td><span class="p-word">cozy</span></td><td>adj</td><td><span class="p-mean">ấm cúng</span></td></tr>
+            </table>
+        </div>
+
+        <div class="panel" id="exercisePanel">
+            <h2>🎯 EXERCISES</h2>
+            <div id="quizContainer"></div>
+            
+            <div class="submit-area">
+                <button class="btn-submit" onclick="showSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="submitModal" class="overlay" style="display: none;">
+        <div class="modal">
+            <h2>Nhập tên của em nhé!</h2>
+            <input type="text" id="studentName" placeholder="Ví dụ: Nguyễn Văn A">
+            <button onclick="calculateScore()">Xem Điểm</button>
+        </div>
+    </div>
+
+    <div id="resultModal" class="overlay" style="display: none;">
+        <div class="modal scorecard">
+            <h2>Bảng Điểm Của Ms MS Chí Nên</h2>
+            <h3 id="resName">Tên: </h3>
+            <h1 style="color: #d32f2f; margin: 10px 0;" id="resScoreText">0/7</h1>
+            <h3 style="color: #2e7d32;" id="res10Point">Quy đổi: 0/10 điểm</h3>
+            <p id="resComment" style="font-weight: bold; margin-top: 10px;"></p>
+            <img id="resGif" src="" alt="Result GIF">
+            <button style="margin-top: 20px;" onclick="closeAll()">Xem lại bài</button>
+        </div>
+    </div>
+
+<script>
+    const audioIntro = document.getElementById('audioIntro');
+    const audioCorrect = document.getElementById('audioCorrect');
+    const audioWrong = document.getElementById('audioWrong');
+
+    function startApp() {
+        document.getElementById('startOverlay').style.display = 'none';
+        audioIntro.play();
+    }
+
+    function toggleTranslate(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Quiz Data Array
+    const questions = [
+        {
+            id: 1,
+            text: "Is Peter's house big or small?",
+            options: [
+                "It is quite big.", 
+                "It is very small.", 
+                "It is not very big.", 
+                "It has only one floor."
+            ],
+            correct: "It is quite big.",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Ngôi nhà của Peter to hay nhỏ?</p>
+                <p><strong>Phân tích các đáp án:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>"It is very small."</span> / <span class='hl-red'>"It is not very big."</span>: ❌ Sai vì ngược lại với thông tin tác giả giới thiệu.</li>
+                    <li><span class='hl-red'>"It has only one floor."</span>: ❌ Sai vì nhà có 2 tầng (ground floor & first floor).</li>
+                    <li><span class='hl-green'>"It is quite big."</span>: ✅ Đúng y chang câu đầu tiên của đoạn 2.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> (Đoạn 2) "My house is <strong>quite big</strong>."</p>
+                <p>👉 <strong>Dịch:</strong> "Nhà của tôi thì <span class='hl-green'>khá lớn</span>."</p>
+            `
+        },
+        {
+            id: 2,
+            text: "How many rooms are there on the ground floor? What are they?",
+            options: [
+                "4 rooms. They are a kitchen, a living room, a dining room and a bathroom.", 
+                "3 rooms. They are a kitchen, a living room and a bathroom.", 
+                "5 rooms. They are a kitchen, a living room, a dining room, a bathroom and a bedroom.", 
+                "4 rooms. They are a kitchen, a living room, a dining room and a bedroom."
+            ],
+            correct: "4 rooms. They are a kitchen, a living room, a dining room and a bathroom.",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Có bao nhiêu phòng ở tầng trệt? Đó là những phòng nào?</p>
+                <p><strong>Phân tích các đáp án:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>3 rooms / 5 rooms</span>: ❌ Sai vì đếm thiếu/thừa số lượng.</li>
+                    <li><span class='hl-red'>4 rooms... and a bedroom</span>: ❌ Sai vì phòng ngủ (bedroom) nằm ở lầu một (first floor), không phải tầng trệt.</li>
+                    <li><span class='hl-green'>4 rooms... and a bathroom</span>: ✅ Đúng vì bài liệt kê: 1 kitchen + 1 living room + 1 dining room + 1 bathroom = 4 phòng.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> (Đoạn 2) "On the ground floor, there is a <strong>kitchen</strong>, a <strong>living room</strong>, a big <strong>dining room</strong> and a <strong>bathroom</strong>."</p>
+                <p>👉 <strong>Dịch:</strong> "Ở tầng trệt, có <span class='hl-green'>một nhà bếp, một phòng khách, một phòng ăn lớn và một phòng tắm</span>."</p>
+                <p><span class='p-grammar'>Cấu trúc đếm:</span> Hãy cẩn thận gạch chân dưới các danh từ liệt kê bằng dấu phẩy để đếm chính xác nhé!</p>
+            `
+        },
+        {
+            id: 3,
+            text: "Where is Peter's bedroom?",
+            options: [
+                "It is between his parents' bedroom and the bathroom.", 
+                "It is next to his sister's bedroom.", 
+                "It is in the attic.", 
+                "It is on the ground floor."
+            ],
+            correct: "It is between his parents' bedroom and the bathroom.",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Phòng ngủ của Peter ở đâu?</p>
+                <p><strong>Phân tích các đáp án:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>Next to his sister's bedroom</span>: ❌ Sai, phòng em gái ở phía trước (in front of) chứ không phải kế bên.</li>
+                    <li><span class='hl-red'>In the attic / On the ground floor</span>: ❌ Sai, phòng ngủ ở lầu một (first floor).</li>
+                    <li><span class='hl-green'>Between his parents' bedroom and the bathroom</span>: ✅ Đúng, thông tin được nêu trực tiếp.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> (Đoạn 2) "My bedroom is <strong>between my parents' bedroom and the bathroom</strong>."</p>
+                <p>👉 <strong>Dịch:</strong> "Phòng ngủ của tôi <span class='hl-green'>ở giữa phòng ngủ của bố mẹ tôi và phòng tắm</span>."</p>
+                <p>Từ vựng: <span class='p-word'>between A and B</span> (prep) - <span class='p-mean'>nằm giữa A và B</span>.</p>
+            `
+        },
+        {
+            id: 4,
+            text: "Why does Peter like to be in the attic?",
+            options: [
+                "Because it is very spacious and there is a big sofa.", 
+                "Because he sleeps there every night.", 
+                "Because there is a TV and a computer there.", 
+                "Because his sister's bedroom is there."
+            ],
+            correct: "Because it is very spacious and there is a big sofa.",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Tại sao Peter thích ở trên gác mái?</p>
+                <p><strong>Phân tích các đáp án:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>sleeps there every night</span>: ❌ Sai, cậu ấy chỉ thỉnh thoảng chợp mắt (sometimes take a nap) chứ không phải ngủ ở đó mỗi đêm.</li>
+                    <li><span class='hl-red'>TV and a computer</span>: ❌ Sai, không có thông tin này, chỉ có sách và đồ chơi cũ (books and old toys).</li>
+                    <li><span class='hl-green'>spacious and... big sofa</span>: ✅ Đúng vì đây là lý do trực tiếp được đề cập sau từ "because".</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> (Đoạn 3) "I like to spend my time there <strong>because it is very spacious and there is a big sofa</strong> there..."</p>
+                <p>👉 <strong>Dịch:</strong> "Tôi thích dành thời gian ở đó <span class='hl-green'>bởi vì nó rất rộng rãi và có một chiếc ghế sofa lớn</span> ở đó..."</p>
+                <p>Từ vựng: <span class='p-word'>spacious</span> (adj) - <span class='p-mean'>rộng rãi</span>.</p>
+            `
+        },
+        {
+            id: 5,
+            text: "Where is the garage?",
+            options: [
+                "It is at the back of the house.", 
+                "It is in the basement.", 
+                "It is in front of the house.", 
+                "It is next to the swimming pool."
+            ],
+            correct: "It is at the back of the house.",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Nhà để xe (gara) nằm ở đâu?</p>
+                <p><strong>Phân tích các đáp án:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>In the basement / in front of the house</span>: ❌ Sai vị trí hoàn toàn so với đoạn văn.</li>
+                    <li><span class='hl-red'>Next to the swimming pool</span>: ❌ Sai vì hồ bơi nằm trong vườn ở phía sau, nhưng bài không nói gara nằm sát vách (next to) hồ bơi.</li>
+                    <li><span class='hl-green'>At the back of the house</span>: ✅ Đúng vị trí khởi đầu câu nói về gara.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> (Đoạn 4) "<strong>At the back of the house</strong>, there is a garage..."</p>
+                <p>👉 <strong>Dịch:</strong> "<span class='hl-green'>Ở phía sau nhà</span>, có một nhà để xe..."</p>
+            `
+        },
+        {
+            id: 6,
+            text: "Is the swimming pool in the garden?",
+            options: [
+                "Yes, it is.", 
+                "No, it isn't. It's in the basement.", 
+                "Yes, it is in the front yard.", 
+                "No, it isn't. The garden only has flowers."
+            ],
+            correct: "Yes, it is.",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Có phải hồ bơi nằm trong vườn không?</p>
+                <p><strong>Phân tích các đáp án:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>No...</span>: ❌ Sai vì hồ bơi thực sự nằm trong vườn.</li>
+                    <li><span class='hl-red'>Yes, ... front yard</span>: ❌ Sai vì vườn nằm ở phía sau (at the back of the house), không phải sân trước (front yard).</li>
+                    <li><span class='hl-green'>Yes, it is.</span>: ✅ Đúng. Đoạn văn liệt kê hồ bơi như một phần của khu vườn xinh xắn.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> (Đoạn 4) "...and a lovely <strong>garden</strong> with many green spaces, flowers, two swings and <strong>a small swimming pool</strong>."</p>
+                <p>👉 <strong>Dịch:</strong> "...và một <span class='hl-green'>khu vườn</span> xinh xắn với nhiều không gian xanh, hoa, hai chiếc xích đu và <span class='hl-green'>một hồ bơi nhỏ</span>."</p>
+            `
+        },
+        {
+            id: 7,
+            text: "Does Peter like his room?",
+            options: [
+                "Yes, he does.", 
+                "No, he doesn't.", 
+                "He hates it.", 
+                "He prefers the basement."
+            ],
+            correct: "Yes, he does.",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Peter có thích phòng của mình không?</p>
+                <p><strong>Phân tích các đáp án:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>No, he doesn't. / He hates it.</span>: ❌ Sai hoàn toàn ý nghĩa, cậu ấy nói "love" cơ mà.</li>
+                    <li><span class='hl-red'>He prefers the basement.</span>: ❌ Sai vì không có thông tin cậu ấy thích tầng hầm hơn. Cậu ấy thích gác mái (attic).</li>
+                    <li><span class='hl-green'>Yes, he does.</span>: ✅ Đúng, vì Peter khẳng định tình yêu với căn phòng ngay đầu đoạn 3.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> (Đoạn 3) "<strong>I love my bedroom</strong>, but I also like the attic."</p>
+                <p>👉 <strong>Dịch:</strong> "<span class='hl-green'>Tôi yêu phòng ngủ của mình</span>, nhưng tôi cũng thích gác mái."</p>
+                <p><span class='p-grammar'>Lưu ý:</span> Động từ "love" mang mức độ yêu thích mạnh hơn cả "like" nên câu trả lời "Yes" là tuyệt đối chính xác.</p>
+            `
+        }
+    ];
+
+    let userAnswers = {};
+
+    function shuffle(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    function renderQuiz() {
+        const container = document.getElementById('quizContainer');
+        questions.forEach((q, index) => {
+            let optionsHtml = '';
+            let shuffledOptions = shuffle([...q.options]);
+
+            shuffledOptions.forEach((opt, i) => {
+                // Tạo ID an toàn tránh ký tự đặc biệt
+                let safeId = "btn-" + q.id + "-" + i;
+                optionsHtml += `<button class="option-btn" id="${safeId}" onclick="selectAnswer(${q.id}, \`${opt}\`, this, \`${safeId}\`)">${opt}</button>`;
+            });
+
+            const html = `
+                <div class="question-card" id="qcard-${q.id}">
+                    <div class="question-text">Câu ${index + 1}: ${q.text}</div>
+                    <div class="options-grid">
+                        ${optionsHtml}
+                    </div>
+                    <div class="explanation" id="exp-${q.id}">
+                        ${q.explanation}
+                    </div>
+                </div>
+            `;
+            container.innerHTML += html;
+        });
+    }
+
+    function selectAnswer(qId, selectedOpt, btnElement, btnId) {
+        if(userAnswers[qId]) return;
+
+        const question = questions.find(q => q.id === qId);
+        userAnswers[qId] = selectedOpt;
+        
+        const card = document.getElementById(`qcard-${qId}`);
+        const buttons = card.querySelectorAll('.option-btn');
+        
+        // Find the ID of the correct button to highlight if wrong
+        let correctBtnId = null;
+        buttons.forEach(b => {
+            b.disabled = true;
+            if(b.innerText === question.correct) {
+                correctBtnId = b.id;
+            }
+        });
+
+        if (selectedOpt === question.correct) {
+            // ĐÚNG
+            btnElement.classList.add('correct');
+            audioCorrect.currentTime = 0;
+            audioCorrect.play();
+            fireConfetti();
+        } else {
+            // SAI
+            btnElement.classList.add('wrong');
+            btnElement.classList.add('shake');
+            audioWrong.currentTime = 0;
+            audioWrong.play();
+            
+            if(correctBtnId) {
+                document.getElementById(correctBtnId).classList.add('correct');
+            }
+        }
+
+        document.getElementById(`exp-${qId}`).style.display = 'block';
+    }
+
+    function fireConfetti() {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#a8c0ff', '#fbc2eb', '#ffecd2']
+        });
+    }
+
+    function showSubmitModal() {
+        if(Object.keys(userAnswers).length < questions.length) {
+            alert("Em phải làm hết tất cả các câu hỏi rồi mới được nộp bài nhé!");
+            return;
+        }
+        document.getElementById('submitModal').style.display = 'flex';
+    }
+
+    function calculateScore() {
+        const name = document.getElementById('studentName').value.trim();
+        if(!name) {
+            alert("Vui lòng nhập tên của em!");
+            return;
+        }
+
+        let score = 0;
+        questions.forEach(q => {
+            if(userAnswers[q.id] === q.correct) score++;
+        });
+
+        const total = questions.length;
+        const percent = score / total;
+        const score10 = ((score / total) * 10).toFixed(1);
+
+        document.getElementById('submitModal').style.display = 'none';
+        document.getElementById('resultModal').style.display = 'flex';
+        
+        document.getElementById('resName').innerText = "Học sinh: " + name;
+        document.getElementById('resScoreText').innerText = `${score} / ${total}`;
+        document.getElementById('res10Point').innerText = `Quy đổi: ${score10} / 10 điểm`;
+
+        let comment = "";
+        let gifSrc = "";
+
+        if (percent === 1) {
+            comment = "Thiên tài xuất hiện! Em làm bài quá xuất sắc, cô MS Chí Nên rất tự hào về em! 🎉";
+            gifSrc = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; 
+        } else if (percent >= 0.6) {
+            comment = "Rất tốt! Em đã nắm vững phần lớn bài học. Hãy đọc lại kỹ giải thích những câu sai nhé! 👍";
+            gifSrc = "https://media.giphy.com/media/3o72FcJmLzIdYJiyT6/giphy.gif"; 
+        } else {
+            comment = "Cố lên em! Lần này có chút khó khăn, nhưng chỉ cần em chăm chỉ đọc lại giải thích, cô tin lần sau em sẽ làm tốt hơn! 💪";
+            gifSrc = "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif"; 
+        }
+
+        document.getElementById('resComment').innerText = comment;
+        document.getElementById('resGif').src = gifSrc;
+    }
+
+    function closeAll() {
+        document.getElementById('resultModal').style.display = 'none';
+    }
+
+    window.onload = renderQuiz;
+
+</script>
+</body>
+</html>

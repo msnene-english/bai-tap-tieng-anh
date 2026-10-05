@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Form Quiz - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #00C9A7;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --bg-light: #F0F4F8;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-light);
+            background-image: radial-gradient(#8854c022 2px, transparent 2px);
+            background-size: 30px 30px;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .gamify-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 0 #d1d5db;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn {
+            border: 2px solid #e2e8f0;
+            border-bottom: 6px solid #e2e8f0;
+            border-radius: 20px;
+            transition: all 0.1s;
+            text-align: left;
+            position: relative;
+            background: white;
+            font-weight: 700;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background-color: #f8fafc;
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct) !important;
+            border-color: #00a352 !important;
+            color: white !important;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong) !important;
+            border-color: #d63031 !important;
+            color: white !important;
+        }
+
+        .explanation-box {
+            display: none;
+            animation: slideUp 0.4s ease-out forwards;
+            border-left: 8px solid var(--primary);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .shake { animation: shake 0.2s ease-in-out 0s 2; }
+
+        .progress-bar-fill {
+            transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            box-shadow: 0 6px 0 #6a3da1;
+            border-radius: 15px;
+            color: white;
+            font-weight: 900;
+            transition: all 0.1s;
+        }
+
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #6a3da1;
+        }
+
+        .glossary-table th { background-color: var(--primary); color: white; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="start-screen" class="max-w-2xl mx-auto text-center mt-20">
+        <h1 class="text-5xl font-black text-purple-700 mb-4">WORD FORM MASTER</h1>
+        <p class="text-xl text-gray-600 mb-8 italic">Chinh phục 35 câu biến đổi từ cùng Ms MS Chí Nên</p>
+        <button onclick="startQuiz()" class="btn-primary px-12 py-5 text-2xl">BẮT ĐẦU THỬ THÁCH 🚀</button>
+    </div>
+
+    <div id="quiz-container" class="hidden max-w-3xl mx-auto">
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-black text-purple-600" id="progress-text">Câu 1/35</span>
+                <span class="text-sm font-bold text-gray-400">Giáo viên: Ms MS Chí Nên</span>
+            </div>
+            <div class="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
+                <div id="progress-bar" class="progress-bar-fill h-full bg-secondary" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div id="question-card" class="gamify-card p-6 md:p-10 mb-8">
+            <h2 id="question-text" class="text-2xl font-bold text-gray-800 mb-8 leading-relaxed"></h2>
+            
+            <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Options will be injected here -->
+            </div>
+
+            <!-- Explanation Area -->
+            <div id="explanation-area" class="explanation-box mt-8 p-6 bg-purple-50 rounded-2xl border-l-8">
+                <h3 class="font-black text-purple-700 text-lg mb-2">✨ CÔ MS Chí Nên GIẢI THÍCH:</h3>
+                <div id="explanation-content" class="text-gray-700 space-y-4">
+                    <!-- Detailed content -->
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end">
+            <button id="next-btn" onclick="nextQuestion()" class="hidden btn-primary px-8 py-3 text-lg">TIẾP THEO ➡️</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden max-w-2xl mx-auto text-center mt-10">
+        <div class="gamify-card p-12">
+            <h2 class="text-4xl font-black text-purple-700 mb-4">HOÀN THÀNH! 🎉</h2>
+            <div class="text-6xl font-black text-secondary mb-6" id="final-score">0/35</div>
+            <p id="feedback-text" class="text-xl text-gray-600 mb-10"></p>
+            <button onclick="location.reload()" class="btn-primary px-10 py-4 text-xl">LÀM LẠI BÀI TEST</button>
+        </div>
+    </div>
+
+    <script>
+        // Data Questions
+        const rawData = [
+            { q: "We want to buy ________ that save money. (product)", options: ["products", "product", "produce", "production"], correct: 0, root: "product" },
+            { q: "Jana: No, it isn't. I'm ________ in listening to classical music. (INTEREST)", options: ["interested", "interesting", "interest", "interestingly"], correct: 0, root: "INTEREST" },
+            { q: "I'd like to work as a volunteer for a charity ________. (organize)", options: ["organization", "organizer", "organizational", "organize"], correct: 0, root: "organize" },
+            { q: "She has a ________ smile. (beauty)", options: ["beautiful", "beauty", "beautifully", "beautify"], correct: 0, root: "beauty" },
+            { q: "During the rush hours, buses can become very ________. (CROWD)", options: ["crowded", "crowd", "crowding", "crowds"], correct: 0, root: "CROWD" },
+            { q: "She made a $5000 ________ to charity. (donate)", options: ["donation", "donate", "donor", "donating"], correct: 0, root: "donate" },
+            { q: "Volunteers can do a lot of ________ projects, such as planting trees or cleaning up rivers. (ENVIRONMENT)", options: ["environmental", "environment", "environmentally", "environmentalist"], correct: 0, root: "ENVIRONMENT" },
+            { q: "Fillip starts playing sports and he has got so much more ________. (ENERGETIC)", options: ["energy", "energetic", "energize", "energetically"], correct: 0, root: "ENERGETIC" },
+            { q: "When cycling on the roads, remember: ________ first. (safe)", options: ["safety", "safe", "safely", "save"], correct: 0, root: "safe" },
+            { q: "English is an ________ language in this country. (officially)", options: ["official", "officially", "office", "officer"], correct: 0, root: "officially" },
+            { q: "Fossil fuels are ________ and they can be used up. (RENEW)", options: ["non-renewable", "renewable", "renew", "renewal"], correct: 0, root: "RENEW" },
+            { q: "Parents are paying more attention to their children's ________. (EDUCATE)", options: ["education", "educate", "educational", "educator"], correct: 0, root: "EDUCATE" },
+            { q: "John likes traveling by bicycle, but it is ________ in bad weather. (please)", options: ["unpleasant", "pleasant", "pleasure", "pleased"], correct: 0, root: "please" },
+            { q: "The homeless shelters are entirely operated by ________ worker. (volunteer)", options: ["volunteer", "voluntary", "voluntarily", "volunteering"], correct: 0, root: "volunteer" },
+            { q: "Streets are decorated with ________ lights and red banners. (colour)", options: ["colorful", "color", "colorless", "colorfully"], correct: 0, root: "colour" },
+            { q: "There are ________ ways that you can do to help the community. (DIFFER)", options: ["different", "difference", "differ", "differently"], correct: 0, root: "DIFFER" },
+            { q: "The three-hour ________ exam was a real challenge for any student. (ENTER)", options: ["entrance", "enter", "entry", "entering"], correct: 0, root: "ENTER" },
+            { q: "Work as a volunteer at an animal shelter. You can help taking care of ________ animals by feeding or bathing them. (HOME)", options: ["homeless", "home", "homely", "homesick"], correct: 0, root: "HOME" },
+            { q: "Joey's hobby is building models. He has a big ________ of wooden model boats. (COLLECT)", options: ["collection", "collector", "collect", "collective"], correct: 0, root: "COLLECT" },
+            { q: "Michael is such an ________ person. Every day, after he goes home from school, he does homework, then helps his parents and practices the piano. (ENERGY)", options: ["energetic", "energy", "energize", "energetically"], correct: 0, root: "ENERGY" },
+            { q: "They learn to play a ________ instrument. (music)", options: ["musical", "music", "musician", "musically"], correct: 0, root: "music" },
+            { q: "They are not only ________ but also healthy. (TASTE)", options: ["tasty", "taste", "tasteless", "tastefully"], correct: 0, root: "TASTE" },
+            { q: "________ are working on the origin of this traditional game. (HISTORY)", options: ["Historians", "History", "Historic", "Historically"], correct: 0, root: "HISTORY" },
+            { q: "I saw so many ________ flowers when I attended the festival last year. (beauty)", options: ["beautiful", "beauty", "beautifully", "beautify"], correct: 0, root: "beauty" },
+            { q: "________ gas is cleaner for environment than coal. (NATURE)", options: ["Natural", "Nature", "Naturally", "Naturalist"], correct: 0, root: "NATURE" },
+            { q: "She's a professional ________. (photograph)", options: ["photographer", "photography", "photograph", "photographic"], correct: 0, root: "photograph" },
+            { q: "Timothy was ________ at the result of his geography test. (DISAPPOINT)", options: ["disappointed", "disappointing", "disappointment", "disappoint"], correct: 0, root: "DISAPPOINT" },
+            { q: "Although I prepared carefully, I got nervous when giving my ________. (PRESENT)", options: ["presentation", "present", "presenter", "presence"], correct: 0, root: "PRESENT" },
+            { q: "The campaign will ________ people to recycle paper, cans and glass. (COURAGE)", options: ["encourage", "courage", "encouragement", "courageous"], correct: 0, root: "COURAGE" },
+            { q: "Avatar 3 is probably the ________ film I've ever seen! (good)", options: ["best", "better", "good", "well"], correct: 0, root: "good" },
+            { q: "We should use them ________ and try to find out alternative sources of power. (economy)", options: ["economically", "economical", "economic", "economy"], correct: 0, root: "economy" },
+            { q: "One of the causes of global warming is ________. Humans are cutting down so many trees. (FOREST)", options: ["deforestation", "forest", "afforestation", "forestry"], correct: 0, root: "FOREST" },
+            { q: "Are you going to watch one of Michael Jackson's ________? (PERFORM)", options: ["performances", "performance", "perform", "performer"], correct: 0, root: "PERFORM" },
+            { q: "It is a sky ________ system; it'll stop everyone from crashing. (safe)", options: ["safety", "safe", "safely", "save"], correct: 0, root: "safe" },
+            { q: "Buses in this country aren't ________. They're often late. (RELY)", options: ["reliable", "rely", "reliability", "reliably"], correct: 0, root: "RELY" }
+        ];
+
+        let questions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let answered = false;
+
+        // Audio Generator
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            }
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            questions = shuffle([...rawData]).map(q => {
+                const options = [...q.options];
+                const correctText = options[q.correct];
+                shuffle(options);
+                return { ...q, options, correctIndex: options.indexOf(correctText) };
+            });
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            answered = false;
+            const q = questions[currentIndex];
+            document.getElementById('progress-text').innerText = `Câu ${currentIndex + 1}/${questions.length}`;
+            document.getElementById('progress-bar').style.width = `${((currentIndex) / questions.length) * 100}%`;
+            document.getElementById('question-text').innerText = q.q;
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('explanation-area').style.display = 'none';
+
+            const grid = document.getElementById('options-grid');
+            grid.innerHTML = '';
+            q.options.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn p-4 text-left text-lg';
+                btn.innerHTML = `<span class="inline-block w-8 h-8 rounded-full bg-purple-100 text-purple-600 text-center mr-3 font-black">${String.fromCharCode(65 + i)}</span> ${opt}`;
+                btn.onclick = () => handleAnswer(i, btn);
+                grid.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(index, btn) {
+            if (answered) return;
+            answered = true;
+            const q = questions[currentIndex];
+            const allBtns = document.querySelectorAll('.option-btn');
+            
+            if (index === q.correctIndex) {
+                score++;
+                btn.classList.add('correct');
+                playSound('correct');
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#8854C0', '#00C9A7'] });
+            } else {
+                btn.classList.add('wrong');
+                document.getElementById('question-card').classList.add('shake');
+                setTimeout(() => document.getElementById('question-card').classList.remove('shake'), 400);
+                allBtns[q.correctIndex].classList.add('correct');
+                playSound('wrong');
+            }
+
+            allBtns.forEach(b => b.disabled = true);
+            showExplanation(q, index);
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function showExplanation(q, userIdx) {
+            const content = document.getElementById('explanation-content');
+            const isCorrect = userIdx === q.correctIndex;
+            
+            // Logic để lấy từ loại/nghĩa giả định dựa trên kho dữ liệu Word Form
+            // Trong thực tế, các thuộc tính này nên được lưu trong JSON
+            const wordData = {
+                "products": "danh từ số nhiều - các sản phẩm",
+                "product": "danh từ số ít - sản phẩm",
+                "produce": "động từ - sản xuất",
+                "production": "danh từ - sự sản xuất",
+                "interested": "tính từ - cảm thấy hứng thú",
+                "interesting": "tính từ - thú vị (tính chất)",
+                "interest": "danh từ/động từ - sự quan tâm/làm quan tâm",
+                "organization": "danh từ - tổ chức",
+                "beautiful": "tính từ - đẹp đẽ",
+                "crowded": "tính từ - đông đúc",
+                "donation": "danh từ - khoản quyên góp",
+                "environmental": "tính từ - thuộc về môi trường",
+                "energy": "danh từ - năng lượng",
+                "safety": "danh từ - sự an toàn",
+                "official": "tính từ - chính thức",
+                "non-renewable": "tính từ - không thể tái tạo",
+                "education": "danh từ - sự giáo dục",
+                "unpleasant": "tính từ - khó chịu, không thoải mái",
+                "volunteer": "danh từ/tính từ - tình nguyện viên/tình nguyện",
+                "colorful": "tính từ - rực rỡ sắc màu",
+                "different": "tính từ - khác nhau",
+                "entrance": "danh từ - lối vào/đầu vào",
+                "homeless": "tính từ - vô gia cư",
+                "collection": "danh từ - bộ sưu tập",
+                "energetic": "tính từ - năng động, giàu năng lượng",
+                "musical": "tính từ - thuộc về âm nhạc",
+                "tasty": "tính từ - ngon miệng",
+                "historians": "danh từ số nhiều - các nhà sử học",
+                "natural": "tính từ - thuộc tự nhiên",
+                "photographer": "danh từ - nhiếp ảnh gia",
+                "disappointed": "tính từ - thất vọng",
+                "presentation": "danh từ - bài thuyết trình",
+                "encourage": "động từ - khuyến khích",
+                "best": "tính từ so sánh nhất - tốt nhất/hay nhất",
+                "economically": "trạng từ - một cách tiết kiệm",
+                "deforestation": "danh từ - nạn phá rừng",
+                "performances": "danh từ số nhiều - các buổi biểu diễn",
+                "reliable": "tính từ - đáng tin cậy"
+            };
+
+            let optionsAnalysis = q.options.map((opt, i) => {
+                let info = wordData[opt.toLowerCase()] || "từ loại liên quan";
+                return `<li><strong>${String.fromCharCode(65+i)}. ${opt}</strong>: ${info}</li>`;
+            }).join('');
+
+            content.innerHTML = `
+                <div class="bg-white p-4 rounded-xl shadow-inner mb-4">
+                    <p class="font-bold text-blue-600">1. Phân tích các lựa chọn:</p>
+                    <ul class="list-disc ml-5 mt-2 space-y-1">
+                        ${optionsAnalysis}
+                    </ul>
+                </div>
+                <div>
+                    <p class="font-bold text-blue-600">2. Dịch câu:</p>
+                    <p class="italic text-gray-600">"${translateSentence(q.q, q.options[q.correctIndex])}"</p>
+                </div>
+                <div>
+                    <p class="font-bold text-blue-600">3. Tại sao chọn ${String.fromCharCode(65 + q.correctIndex)}?</p>
+                    <p>Dựa vào cấu trúc ngữ pháp và ngữ nghĩa, từ cần điền phải ở dạng <strong>${wordData[q.options[q.correctIndex].toLowerCase()]?.split(' - ')[0] || 'phù hợp'}</strong>. Các lựa chọn khác sai về mặt từ loại hoặc ngữ nghĩa trong văn cảnh này.</p>
+                </div>
+            `;
+            document.getElementById('explanation-area').style.display = 'block';
+        }
+
+        function translateSentence(qText, correctWord) {
+            // Mapping đơn giản để demo dịch thuật
+            const translations = {
+                "We want to buy": "Chúng tôi muốn mua các sản phẩm tiết kiệm tiền.",
+                "I'm ________ in listening": "Tôi hứng thú với việc nghe nhạc cổ điển.",
+                "work as a volunteer": "Tôi muốn làm tình nguyện viên cho một tổ chức từ thiện.",
+                "has a ________ smile": "Cô ấy có một nụ cười thật đẹp.",
+                "buses can become": "Trong giờ cao điểm, xe buýt có thể trở nên rất đông đúc.",
+                "made a $5000": "Cô ấy đã đóng góp 5000 đô la cho từ thiện.",
+                "environmental projects": "Tình nguyện viên có thể làm các dự án môi trường.",
+                "cycling on the roads": "Khi đạp xe trên đường, hãy nhớ: an toàn là trên hết.",
+                "Fossil fuels are": "Nhiên liệu hóa thạch không thể tái tạo và sẽ cạn kiệt.",
+                "parents are paying": "Bố mẹ đang quan tâm nhiều hơn đến việc học hành của con.",
+                "Buses in this country": "Xe buýt ở đây không đáng tin cậy. Chúng thường xuyên muộn."
+            };
+            for (let key in translations) {
+                if (qText.includes(key)) return translations[key];
+            }
+            return "Câu này kiểm tra kiến thức về biến đổi từ loại (Word Form) để hoàn thiện ý nghĩa của câu.";
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showFinalResult();
+            }
+        }
+
+        function showFinalResult() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = `${score}/${questions.length}`;
+            
+            let feedback = "";
+            if (score === questions.length) feedback = "XUẤT SẮC! Em là bậc thầy Word Form rồi đấy! 🏆";
+            else if (score > 25) feedback = "RẤT TỐT! Chỉ sai một chút thôi, cố gắng phát huy nhé! 🌟";
+            else feedback = "CỐ GẮNG LÊN! Hãy xem kỹ phần giải thích của cô để nắm vững kiến thức nhé! 💪";
+            
+            document.getElementById('feedback-text').innerText = feedback;
+            confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+        }
+    </script>
+</body>
+</html>

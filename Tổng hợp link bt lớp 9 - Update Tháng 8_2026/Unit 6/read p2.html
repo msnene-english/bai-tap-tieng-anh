@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Reading - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #a1c4fd;
+            --secondary: #c2e9fb;
+            --tertiary: #fdfbfb;
+            --quaternary: #ebedee;
+            --success: #4ade80;
+            --error: #f87171;
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --text-dark: #2d3748;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, var(--primary), var(--secondary), var(--tertiary), var(--quaternary));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Background Pattern */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .emoji-float {
+            position: absolute;
+            font-size: 3rem;
+            animation: floatUp linear infinite;
+            opacity: 0.3;
+            filter: blur(1px);
+        }
+        @keyframes floatUp {
+            from { transform: translateY(100vh) rotate(0deg); }
+            to { transform: translateY(-100px) rotate(360deg); }
+        }
+
+        /* Header */
+        header {
+            padding: 10px 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        header h1 {
+            font-size: 1.2rem;
+            color: #4a5568;
+            font-weight: 700;
+        }
+        header .teacher {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #718096;
+            background: rgba(255,255,255,0.5);
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        /* Split Screen Layout */
+        .split-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 15px;
+            gap: 15px;
+        }
+
+        .pane {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+            padding: 25px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.8); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #fff; }
+
+        /* Reading Passage Styles */
+        .passage-title {
+            font-size: 1.6rem;
+            color: #2c5282;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+        .paragraph-box {
+            background: rgba(255,255,255,0.6);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .btn-translate {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-translate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+        }
+        .translation-content {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(255,255,255,0.8);
+            border-left: 4px solid #3182ce;
+            border-radius: 4px;
+            font-size: 1rem;
+            color: #2d3748;
+            font-style: italic;
+        }
+
+        /* Glossary Table */
+        .glossary-wrapper {
+            margin-top: 25px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid var(--glass-border);
+        }
+        .glossary-wrapper h3 {
+            text-align: center;
+            color: #2b6cb0;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        th {
+            background: rgba(66, 153, 225, 0.15);
+            color: #2c5282;
+            font-weight: 700;
+        }
+        td.pos { color: #e53e3e; font-style: italic; font-weight: 600; }
+        
+        /* Quiz Exercises */
+        .question-card {
+            background: rgba(255,255,255,0.65);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .question-prompt {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c5282;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            line-height: 1.5;
+        }
+        .question-prompt::before {
+            content: '🎯';
+            font-size: 1.4rem;
+            margin-top: -2px;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .option-btn {
+            background: rgba(255,255,255,0.9);
+            border: 2px solid rgba(255,255,255,0.9);
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #2d3748;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-align: left;
+            display: flex;
+            align-items: center;
+        }
+        .option-btn:hover:not(:disabled) {
+            background: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            border-color: #bee3f8;
+        }
+        .option-btn.correct {
+            background: var(--success) !important;
+            color: white !important;
+            border-color: var(--success) !important;
+            transform: scale(1.01);
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+        }
+        .option-btn.wrong {
+            background: var(--error) !important;
+            color: white !important;
+            border-color: var(--error) !important;
+        }
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        /* Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* Explanation Box & Text Formatting */
+        .explanation-box {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            border-left: 5px solid #4ade80;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease-in-out;
+            color: #2d3748;
+        }
+        .explanation-box ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 10px;
+        }
+        .explanation-box li {
+            margin-bottom: 8px;
+        }
+        .explanation-box p {
+            margin-bottom: 10px;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .p-word { font-weight: bold; color: #2b6cb0; background: rgba(43, 108, 176, 0.1); padding: 2px 6px; border-radius: 4px; }
+        .p-phonetic { font-family: "Lucida Sans Unicode", sans-serif; color: #805ad5; font-style: italic; }
+        .p-mean { font-weight: 600; color: #c53030; }
+        .p-grammar { font-weight: bold; color: #dd6b20; text-decoration: underline; text-decoration-color: rgba(221, 107, 32, 0.4); text-decoration-thickness: 3px;}
+        .hl-green { font-weight: bold; color: #276749; background: #c6f6d5; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 5px;}
+        .hl-red { font-weight: bold; color: #9b2c2c; background: #fed7d7; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 5px;}
+
+        /* Submit Button */
+        .submit-btn-wrapper {
+            text-align: center;
+            margin-top: 30px;
+            padding-bottom: 30px;
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 700;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(118, 75, 162, 0.4);
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+        .btn-submit:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 25px rgba(118, 75, 162, 0.6);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            outline: none;
+            font-family: 'Quicksand';
+            transition: border-color 0.3s;
+        }
+        .modal-input:focus { border-color: #3182ce; }
+        .modal-btn {
+            background: #3182ce;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        .modal-btn:hover { background: #2b6cb0; }
+
+        /* Scorecard */
+        .scorecard { display: none; }
+        .score-display {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #3182ce;
+            margin: 10px 0;
+        }
+        .score-scale {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #e53e3e;
+            margin-bottom: 15px;
+        }
+        .teacher-comment {
+            font-size: 1.1rem;
+            color: #4a5568;
+            background: #ebf8ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4299e1;
+            font-style: italic;
+        }
+        .gif-container img {
+            width: 100%;
+            max-width: 250px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+        .close-btn {
+            background: #cbd5e0;
+            color: #2d3748;
+            margin-top: 10px;
+        }
+        .close-btn:hover { background: #a0aec0; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-pattern" id="bgPattern"></div>
+
+    <header>
+        <h1>Reading Mastery Test</h1>
+        <div class="teacher">Giáo viên tạo: Ms MS Chí Nên</div>
+    </header>
+
+    <div class="split-container">
+        
+        <div class="pane left-pane">
+            
+            <h2 class="passage-title">Air Pollution in Hanoi</h2>
+            <div class="paragraph-box">
+                <p>Hanoi is facing serious air pollution problems. (1) December 11, 2025, the city's air quality was very bad. The Air Quality Index reached 243, making Hanoi one of the most polluted cities in the world that day. Many people felt sick with eye problems and tiredness.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans1_1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans1_1">Hà Nội đang phải đối mặt với các vấn đề ô nhiễm không khí nghiêm trọng. Vào ngày 11 tháng 12 năm 2025, chất lượng không khí của thành phố rất tồi tệ. Chỉ số Chất lượng Không khí (AQI) đạt mức 243, khiến Hà Nội trở thành một trong những thành phố ô nhiễm nhất thế giới trong ngày hôm đó. Nhiều người cảm thấy phát ốm với các vấn đề về mắt và sự mệt mỏi.</div>
+            </div>
+            <div class="paragraph-box">
+                <p>The government has started a new (2) to reduce pollution. They asked factories to produce less when the air is too dirty. Power plants, steel companies, and chemical factories must cut their production when the AQI goes over 200. Officials have (3) the main causes of pollution: cars and motorbikes, factories, construction dust, and people burning garbage.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans1_2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans1_2">Chính phủ đã bắt đầu một kế hoạch mới để giảm thiểu ô nhiễm. Họ yêu cầu các nhà máy sản xuất ít hơn khi không khí quá bẩn. Các nhà máy điện, công ty thép và nhà máy hóa chất phải cắt giảm sản lượng khi chỉ số AQI vượt quá 200. Các quan chức đã tìm ra những nguyên nhân chính gây ô nhiễm: ô tô và xe máy, các nhà máy, bụi xây dựng, và việc người dân đốt rác.</div>
+            </div>
+            <div class="paragraph-box">
+                <p>Hanoi, (4) millions of people live, needs clean air for everyone's health. The pollution is (5) bad that people can't see clearly on some days. The PM2.5 particles in the air are 50 times higher than what the World Health Organization says is safe.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans1_3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans1_3">Hà Nội, nơi có hàng triệu người sinh sống, cần không khí sạch cho sức khỏe của mọi người. Tình trạng ô nhiễm tồi tệ đến mức người dân không thể nhìn rõ vào một số ngày. Các hạt bụi mịn PM2.5 trong không khí cao gấp 50 lần so với mức mà Tổ chức Y tế Thế giới (WHO) cho là an toàn.</div>
+            </div>
+            <div class="paragraph-box">
+                <p>The city plans (6) new rules about vehicles. From mid-2026, gasoline motorbikes cannot go to central areas. Later, other vehicles using fossil fuels will also be limited. These changes are important for Hanoi's future. People hope the air will become cleaner, but it will take time and everyone must help.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans1_4')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans1_4">Thành phố có kế hoạch ban hành các quy định mới về phương tiện giao thông. Bắt đầu từ giữa năm 2026, xe máy chạy bằng xăng sẽ không thể đi vào các khu vực trung tâm. Sau đó, các phương tiện khác sử dụng nhiên liệu hóa thạch cũng sẽ bị hạn chế. Những thay đổi này rất quan trọng cho tương lai của Hà Nội. Người dân hy vọng không khí sẽ trở nên sạch hơn, nhưng điều đó sẽ cần thời gian và tất cả mọi người đều phải chung tay giúp sức.</div>
+            </div>
+            
+            <div class="glossary-wrapper">
+                <h3>Bảng Từ Vựng (Passage 1)</h3>
+                <table>
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td><span class="p-word">pollution</span></td><td class="pos">n</td><td>sự ô nhiễm</td></tr>
+                    <tr><td><span class="p-word">quality</span></td><td class="pos">n</td><td>chất lượng</td></tr>
+                    <tr><td><span class="p-word">reduce</span></td><td class="pos">v</td><td>giảm bớt, làm giảm</td></tr>
+                    <tr><td><span class="p-word">factory</span></td><td class="pos">n</td><td>nhà máy</td></tr>
+                    <tr><td><span class="p-word">chemical</span></td><td class="pos">adj/n</td><td>thuộc về hóa học / hóa chất</td></tr>
+                    <tr><td><span class="p-word">production</span></td><td class="pos">n</td><td>sản lượng, việc sản xuất</td></tr>
+                    <tr><td><span class="p-word">construction</span></td><td class="pos">n</td><td>sự xây dựng, công trình</td></tr>
+                    <tr><td><span class="p-word">particle</span></td><td class="pos">n</td><td>hạt (bụi, vi hạt)</td></tr>
+                    <tr><td><span class="p-word">fossil fuel</span></td><td class="pos">n</td><td>nhiên liệu hóa thạch</td></tr>
+                    <tr><td><span class="p-word">limit</span></td><td class="pos">v</td><td>hạn chế, giới hạn</td></tr>
+                </table>
+            </div>
+
+            <hr style="border:1px solid rgba(255,255,255,0.4); margin: 30px 0;">
+            <h2 class="passage-title">Vietnam's Anniversary Celebration</h2>
+            <div class="paragraph-box">
+                <p>On April 30, 2025, Vietnam celebrated 50 years since the end of the Vietnam War. The biggest celebration was in Ho Chi Minh City. There was a large military parade with soldiers marching through the streets. Russian fighter jets and helicopters flew in the sky. Many people came to watch, waving red flags and singing songs about their country.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans2_1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans2_1">Vào ngày 30 tháng 4 năm 2025, Việt Nam đã kỷ niệm 50 năm ngày kết thúc Chiến tranh Việt Nam. Lễ kỷ niệm lớn nhất diễn ra tại Thành phố Hồ Chí Minh. Đã có một cuộc diễu hành quân sự lớn với các binh sĩ hành quân qua các con phố. Máy bay chiến đấu và trực thăng của Nga bay lượn trên bầu trời. Nhiều người đã đến xem, vẫy cờ đỏ và hát những bài hát về đất nước của họ.</div>
+            </div>
+            <div class="paragraph-box">
+                <p>The Communist Party leader, To Lam, gave a speech. He called this day a "victory" for Vietnam. He talked about how the country has developed after the war. He wanted people to stay united and work together for Vietnam's future.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans2_2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans2_2">Lãnh đạo Đảng Cộng sản, ông Tô Lâm, đã có một bài phát biểu. Ông gọi ngày này là một "chiến thắng" của Việt Nam. Ông đã nói về việc đất nước đã phát triển như thế nào sau chiến tranh. Ông mong muốn người dân luôn đoàn kết và cùng nhau làm việc vì tương lai của Việt Nam.</div>
+            </div>
+            <div class="paragraph-box">
+                <p>The war was terrible for both sides. About 3 million Vietnamese people died, and nearly 60,000 American soldiers lost their lives. But today, things are different. Vietnam and the United States became friends in 1995. In 2023, they became even closer partners. The U.S. Consul General came to the celebration to show respect.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans2_3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans2_3">Cuộc chiến thật tàn khốc đối với cả hai bên. Khoảng 3 triệu người Việt Nam đã thiệt mạng, và gần 60.000 lính Mỹ đã mất mạng. Nhưng ngày nay, mọi thứ đã khác. Việt Nam và Hoa Kỳ đã trở thành bạn bè vào năm 1995. Năm 2023, họ thậm chí đã trở thành những đối tác gần gũi hơn. Tổng Lãnh sự Hoa Kỳ đã đến dự buổi lễ kỷ niệm để thể hiện sự tôn trọng.</div>
+            </div>
+            <div class="paragraph-box">
+                <p>Chinese soldiers also joined the parade. This shows that Vietnam has good relationships with China and Russia too. However, there are some problems. The United States might put high taxes on Vietnamese products, which could hurt trade between the two countries.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans2_4')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans2_4">Các binh sĩ Trung Quốc cũng tham gia cuộc diễu hành. Điều này cho thấy Việt Nam cũng có mối quan hệ tốt đẹp với cả Trung Quốc và Nga. Tuy nhiên, có một vài vấn đề. Hoa Kỳ có thể sẽ đánh thuế cao đối với các sản phẩm của Việt Nam, điều này có thể làm tổn hại đến thương mại giữa hai quốc gia.</div>
+            </div>
+
+            <div class="glossary-wrapper">
+                <h3>Bảng Từ Vựng (Passage 2)</h3>
+                <table>
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td><span class="p-word">celebration</span></td><td class="pos">n</td><td>lễ kỷ niệm, sự ăn mừng</td></tr>
+                    <tr><td><span class="p-word">military</span></td><td class="pos">adj</td><td>thuộc về quân đội, quân sự</td></tr>
+                    <tr><td><span class="p-word">parade</span></td><td class="pos">n</td><td>cuộc diễu hành</td></tr>
+                    <tr><td><span class="p-word">helicopter</span></td><td class="pos">n</td><td>máy bay trực thăng</td></tr>
+                    <tr><td><span class="p-word">victory</span></td><td class="pos">n</td><td>chiến thắng</td></tr>
+                    <tr><td><span class="p-word">united</span></td><td class="pos">adj</td><td>đoàn kết, hợp nhất</td></tr>
+                    <tr><td><span class="p-word">terrible</span></td><td class="pos">adj</td><td>khủng khiếp, tồi tệ</td></tr>
+                    <tr><td><span class="p-word">partner</span></td><td class="pos">n</td><td>đối tác, người cộng sự</td></tr>
+                    <tr><td><span class="p-word">respect</span></td><td class="pos">n/v</td><td>sự tôn trọng / tôn trọng</td></tr>
+                    <tr><td><span class="p-word">relationship</span></td><td class="pos">n</td><td>mối quan hệ</td></tr>
+                </table>
+            </div>
+
+            <hr style="border:1px solid rgba(255,255,255,0.4); margin: 30px 0;">
+            <h2 class="passage-title">Linh's Story After the War</h2>
+            <div class="paragraph-box">
+                <p>In 1975, when Saigon fell, Linh was a young teacher. At first, she felt hopeful. The war was over and maybe life would get better. But soon, everything changed. The new government closed her school. They said teachers who worked for the old government needed "re-education." Linh's husband had to go to a camp for two years.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans3_1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans3_1">Năm 1975, khi Sài Gòn sụp đổ, Linh là một cô giáo trẻ. Lúc đầu, cô ấy cảm thấy tràn trề hy vọng. Chiến tranh đã kết thúc và có lẽ cuộc sống sẽ trở nên tốt đẹp hơn. Nhưng chẳng bao lâu, mọi thứ đã thay đổi. Chính phủ mới đã đóng cửa trường học của cô. Họ nói rằng những giáo viên đã làm việc cho chính phủ cũ cần được "cải tạo". Chồng của Linh phải vào trại trong vòng hai năm.</div>
+            </div>
+            <div class="paragraph-box">
+                <p>Life became very hard. There was no money and little food. The economy in the South collapsed. Many shops closed. People couldn't find work. Linh sold vegetables on the street to feed her children. Every day was a struggle.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans3_2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans3_2">Cuộc sống trở nên vô cùng khó khăn. Không có tiền và có rất ít thức ăn. Nền kinh tế ở miền Nam sụp đổ. Rất nhiều cửa hàng phải đóng cửa. Người dân không thể tìm được việc làm. Linh bán rau trên phố để nuôi các con. Mỗi ngày đều là một cuộc chiến sinh tồn.</div>
+            </div>
+            <div class="paragraph-box">
+                <p>Many of Linh's neighbors left Vietnam by boat. They wanted to escape the difficult life. Linh thought about leaving too. She heard stories about dangerous sea journeys where many people died. But she also heard about new lives in America and Australia. It was a difficult decision.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans3_3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans3_3">Nhiều người hàng xóm của Linh đã rời Việt Nam bằng thuyền. Họ muốn thoát khỏi cuộc sống khó khăn này. Linh cũng từng nghĩ đến việc rời đi. Cô nghe những câu chuyện về những chuyến đi biển nguy hiểm mà rất nhiều người đã bỏ mạng. Nhưng cô cũng được nghe về những cuộc đời mới ở Mỹ và Úc. Đó quả là một quyết định khó khăn.</div>
+            </div>
+            <div class="paragraph-box">
+                <p>Finally, Linh decided to stay. She was too scared of the dangerous journey. Her elderly parents needed her. Years later, in the 1980s, things slowly improved. The government allowed small businesses. Linh opened a small restaurant. Life got better, but she still couldn't speak freely about politics. She learned to be careful with her words and focus on her family's survival.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans3_4')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans3_4">Cuối cùng, Linh đã quyết định ở lại. Cô quá sợ hãi trước chuyến đi đầy nguy hiểm. Cha mẹ già của cô cũng cần cô. Nhiều năm sau, vào những năm 1980, mọi thứ dần được cải thiện. Chính quyền cho phép kinh doanh nhỏ. Linh đã mở một nhà hàng nhỏ. Cuộc sống đã tốt lên, nhưng cô vẫn không thể tự do nói chuyện về chính trị. Cô học cách cẩn thận với lời nói của mình và tập trung vào sự sống còn của gia đình.</div>
+            </div>
+
+            <div class="glossary-wrapper">
+                <h3>Bảng Từ Vựng (Passage 3)</h3>
+                <table>
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td><span class="p-word">hopeful</span></td><td class="pos">adj</td><td>đầy hy vọng</td></tr>
+                    <tr><td><span class="p-word">collapse</span></td><td class="pos">v/n</td><td>sụp đổ</td></tr>
+                    <tr><td><span class="p-word">struggle</span></td><td class="pos">n</td><td>sự đấu tranh, sự vất vả</td></tr>
+                    <tr><td><span class="p-word">escape</span></td><td class="pos">v</td><td>trốn thoát, thoát khỏi</td></tr>
+                    <tr><td><span class="p-word">dangerous</span></td><td class="pos">adj</td><td>nguy hiểm</td></tr>
+                    <tr><td><span class="p-word">journey</span></td><td class="pos">n</td><td>hành trình, chuyến đi</td></tr>
+                    <tr><td><span class="p-word">decision</span></td><td class="pos">n</td><td>quyết định</td></tr>
+                    <tr><td><span class="p-word">survive</span></td><td class="pos">v</td><td>sống sót, tồn tại</td></tr>
+                    <tr><td><span class="p-word">politics</span></td><td class="pos">n</td><td>chính trị</td></tr>
+                    <tr><td><span class="p-word">freedom</span></td><td class="pos">n</td><td>sự tự do</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="pane right-pane" id="quizContainer">
+            <div class="submit-btn-wrapper">
+                <button class="btn-submit" onclick="showSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="submitModal">
+        <div class="modal-content" id="modalContentInput">
+            <h2 style="color: #2c5282; margin-bottom: 15px;">Hoàn thành xuất sắc! 🎉</h2>
+            <p style="color: #4a5568; margin-bottom: 15px;">Con hãy nhập tên của mình để cô MS Chí Nên lưu điểm nhé!</p>
+            <input type="text" id="studentName" class="modal-input" placeholder="Nhập họ và tên học sinh...">
+            <button class="modal-btn" onclick="processScore()">Xem Điểm Ngay 🚀</button>
+        </div>
+        
+        <div class="modal-content scorecard" id="modalContentScore">
+            <h2 id="sNameDisplay" style="color: #2c5282;">Tên học sinh</h2>
+            <div class="score-display" id="sScoreRaw">0/16</div>
+            <div class="score-scale" id="sScoreScale">Điểm: 0.00/10</div>
+            <div class="teacher-comment" id="sComment">Lời phê của cô MS Chí Nên</div>
+            <div class="gif-container"><img id="sGif" src="" alt="Reaction GIF"></div>
+            <button class="modal-btn close-btn" onclick="closeModal()">Đóng Bảng Điểm</button>
+        </div>
+    </div>
+
+    <script>
+        // DATA MODEL FOR QUIZ
+        const quizData = [
+            // PASSAGE 1 (CLOZE TEST) - THEO YÊU CẦU: CHỈ HIỂN THỊ "Câu X: Select the best answer"
+            {
+                qId: 1,
+                promptEn: "Select the best answer.",
+                promptVi: "Chọn đáp án đúng nhất điền vào ô trống số 1.",
+                options: [
+                    { text: "on", translation: "vào (ngày cụ thể)", correct: true, explGreen: "Phía sau ô trống là một mốc thời gian có đầy đủ tháng, ngày, năm \"December 11, 2025\". Theo <span class='p-grammar'>quy tắc giới từ chỉ thời gian</span>, ta bắt buộc dùng giới từ <span class='p-word'>on</span> trước các mốc thời gian có ngày cụ thể." },
+                    { text: "in", translation: "trong (tháng/năm)", correct: false, explRed: "Giới từ <span class='p-word'>in</span> chỉ dùng trước tháng, năm, mùa hoặc buổi trong ngày, không dùng khi có ngày cụ thể đi kèm." },
+                    { text: "at", translation: "vào lúc (giờ)", correct: false, explRed: "Giới từ <span class='p-word'>at</span> chỉ dùng trước giờ cụ thể hoặc các dịp lễ hội." },
+                    { text: "for", translation: "trong khoảng (thời gian)", correct: false, explRed: "Giới từ <span class='p-word'>for</span> dùng để chỉ một khoảng thời gian kéo dài, không dùng để chỉ một mốc thời điểm." }
+                ]
+            },
+            {
+                qId: 2,
+                promptEn: "Select the best answer.",
+                promptVi: "Chọn đáp án đúng nhất điền vào ô trống số 2.",
+                options: [
+                    { text: "excursion", translation: "chuyến tham quan (n)", correct: false, explRed: "Sai ngữ cảnh. Chính phủ không tổ chức 'chuyến tham quan' để giảm ô nhiễm." },
+                    { text: "voyage", translation: "chuyến đi biển dài ngày (n)", correct: false, explRed: "Sai nghĩa hoàn toàn so với việc giải quyết vấn đề ô nhiễm không khí." },
+                    { text: "cruise", translation: "chuyến du thuyền (n)", correct: false, explRed: "Sai ngữ cảnh." },
+                    { text: "plan", translation: "kế hoạch (n)", correct: true, explGreen: "Chính phủ đã bắt đầu một <span class='p-word'>plan</span> (kế hoạch) mới để giảm thiểu ô nhiễm. Ta có cụm từ hoàn chỉnh về mặt logic và ngữ nghĩa: <span class='p-grammar'>start a new plan</span>." }
+                ]
+            },
+            {
+                qId: 3,
+                promptEn: "Select the best answer.",
+                promptVi: "Chọn đáp án đúng nhất điền vào ô trống số 3.",
+                options: [
+                    { text: "looked into", translation: "điều tra, xem xét (v)", correct: false, explRed: "Mặc dù có nghĩa là điều tra, nhưng câu sau liệt kê trực tiếp kết quả (ô tô, xe máy, bụi...), nghĩa là họ đã 'tìm ra' rồi, không phải là đang 'xem xét'." },
+                    { text: "explored", translation: "thám hiểm, khám phá (v)", correct: false, explRed: "Thường dùng để nói về khám phá vùng đất mới, không dùng để nói về việc tìm ra nguyên nhân." },
+                    { text: "found", translation: "đã tìm ra (v)", correct: true, explGreen: "Các quan chức đã <span class='p-word'>found</span> (tìm ra) nguyên nhân chính của việc ô nhiễm. Động từ <span class='p-word'>find</span> <span class='p-phonetic'>/faɪnd/</span> (quá khứ là found) phù hợp nhất về collocation khi đi kèm với 'the main causes' (nguyên nhân chính)." },
+                    { text: "discovered", translation: "phát hiện ra (v)", correct: false, explRed: "Từ này mang tính chất tìm ra những thứ mang tính khoa học hoặc mới mẻ, bí ẩn. Trong ngữ cảnh tìm ra nguyên nhân thông thường, 'found' tự nhiên hơn nhiều." }
+                ]
+            },
+            {
+                qId: 4,
+                promptEn: "Select the best answer.",
+                promptVi: "Chọn đáp án đúng nhất điền vào ô trống số 4.",
+                options: [
+                    { text: "which", translation: "cái mà (đại từ quan hệ)", correct: false, explRed: "Đại từ <span class='p-word'>which</span> đóng vai trò chủ ngữ hoặc tân ngữ chỉ vật. Đằng sau chỗ trống đã có chủ ngữ 'millions of people' và động từ 'live', ta cần một trạng từ chỉ nơi chốn." },
+                    { text: "where", translation: "nơi mà (trạng từ quan hệ)", correct: true, explGreen: "Hà Nội là một danh từ chỉ địa điểm. Mệnh đề phía sau 'millions of people live' (hàng triệu người sinh sống) miêu tả hành động xảy ra tại địa điểm đó. Ta dùng <span class='p-grammar'>trạng từ quan hệ where</span> (= in which)." },
+                    { text: "who", translation: "người mà (đại từ quan hệ)", correct: false, explRed: "Hà Nội là địa danh, không phải là người nên không thể dùng <span class='p-word'>who</span>." },
+                    { text: "when", translation: "khi mà (trạng từ quan hệ)", correct: false, explRed: "Hà Nội là nơi chốn, không phải là mốc thời gian nên không thể dùng <span class='p-word'>when</span>." }
+                ]
+            },
+            {
+                qId: 5,
+                promptEn: "Select the best answer.",
+                promptVi: "Chọn đáp án đúng nhất điền vào ô trống số 5.",
+                options: [
+                    { text: "as", translation: "như (liên từ/giới từ)", correct: false, explRed: "Không tồn tại cấu trúc 'as + adj + that'." },
+                    { text: "too", translation: "quá (trạng từ)", correct: false, explRed: "Cấu trúc của 'too' là <span class='p-grammar'>too + adj + to V</span> (quá... đến nỗi không thể làm gì), không đi kèm với 'that'." },
+                    { text: "so", translation: "quá... đến nỗi (trạng từ)", correct: true, explGreen: "Ta có cấu trúc kinh điển: <span class='p-grammar'>S + be + so + adj + that + clause</span> (Cái gì đó quá... đến nỗi mà). Ở đây là 'so bad that' (quá tồi tệ đến nỗi mà người ta không thể nhìn rõ)." },
+                    { text: "such", translation: "quá... đến nỗi (tính từ)", correct: false, explRed: "Cấu trúc của 'such' phải đi kèm với danh từ: <span class='p-grammar'>such + (a/an) + adj + noun + that</span>. Đứng trước tính từ 'bad' đứng một mình, ta bắt buộc phải dùng 'so'." }
+                ]
+            },
+            {
+                qId: 6,
+                promptEn: "Select the best answer.",
+                promptVi: "Chọn đáp án đúng nhất điền vào ô trống số 6.",
+                options: [
+                    { text: "share", translation: "chia sẻ (Động từ nguyên mẫu)", correct: false, explRed: "Sai cấu trúc ngữ pháp. Sau động từ 'plan' phải là 'to V'." },
+                    { text: "sharing", translation: "việc chia sẻ (V-ing)", correct: false, explRed: "Sai cấu trúc. Không dùng V-ing sau động từ 'plan'." },
+                    { text: "to share", translation: "để chia sẻ (to V)", correct: false, explRed: "Đúng ngữ pháp nhưng sai collocation. Thành phố không 'chia sẻ' luật lệ, mà phải là 'ban hành/giới thiệu' luật lệ." },
+                    { text: "to introduce", translation: "để ban hành/giới thiệu (to V)", correct: true, explGreen: "Về ngữ pháp: Ta có cấu trúc <span class='p-grammar'>plan + to V</span> (có kế hoạch làm gì đó). Về collocation (sự kết hợp từ): Động từ <span class='p-word'>introduce</span> <span class='p-phonetic'>/ˌɪntrəˈdjuːs/</span> đi kèm hoàn hảo với 'new rules' (ban hành/áp dụng các quy định mới)." }
+                ]
+            },
+            // PASSAGE 2 (READING COMPREHENSION)
+            {
+                qId: 7,
+                promptEn: "What is the main idea of the passage?",
+                promptVi: "Ý chính của đoạn văn là gì?",
+                options: [
+                    { text: "Vietnam only celebrates with military parades", translation: "Việt Nam chỉ ăn mừng bằng các cuộc diễu hành quân sự", correct: false, explRed: "Sai vì từ 'only' (chỉ). Bài đọc còn nhắc đến việc hát hò, quan hệ ngoại giao, v.v." },
+                    { text: "Vietnam commemorated 50 years since the war ended with celebrations and diplomatic gestures", translation: "Việt Nam kỷ niệm 50 năm ngày kết thúc chiến tranh bằng các lễ kỷ niệm và các động thái ngoại giao", correct: true, explGreen: "Đây là ý bao quát toàn bài. Nửa đầu nói về <span class='p-word'>celebrations</span> (lễ kỷ niệm với diễu hành), nửa sau nhấn mạnh vào <span class='p-word'>diplomatic gestures</span> (mối quan hệ ngoại giao với Mỹ, Nga, Trung Quốc)." },
+                    { text: "The Vietnam War had no impact on modern relations", translation: "Chiến tranh Việt Nam không có tác động nào đến các mối quan hệ hiện đại", correct: false, explRed: "Sai với thực tế bài đọc, đoạn văn nhấn mạnh vào việc từ cựu thù nay đã trở thành đối tác gần gũi." },
+                    { text: "Ho Chi Minh City is the only city that celebrates this day", translation: "Thành phố Hồ Chí Minh là thành phố duy nhất ăn mừng ngày này", correct: false, explRed: "Bài đọc chỉ nói đây là nơi có 'The biggest celebration' (lễ kỷ niệm lớn nhất), chứ không phải là nơi duy nhất (only)." }
+                ]
+            },
+            {
+                qId: 8,
+                promptEn: "What did To Lam do during the celebration?",
+                promptVi: "Ông Tô Lâm đã làm gì trong suốt buổi lễ kỷ niệm?",
+                options: [
+                    { text: "He flew a fighter jet in the air show", translation: "Ông ấy đã lái một chiếc máy bay chiến đấu trong buổi biểu diễn không quân", correct: false, explRed: "Không có thông tin nào trong bài nói rằng ông ấy tự lái máy bay." },
+                    { text: "He avoided talking about the war", translation: "Ông ấy đã tránh nói về cuộc chiến tranh", correct: false, explRed: "Sai sự thật, ông ấy có nhắc đến cuộc chiến và gọi đó là một 'chiến thắng'." },
+                    { text: "He gave a speech about victory and national unity", translation: "Ông ấy đã có một bài phát biểu về chiến thắng và sự đoàn kết dân tộc", correct: true, explGreen: "Dẫn chứng trong bài ở đoạn 2: \"To Lam, gave a speech. He called this day a 'victory'... He wanted people to stay united...\" Do đó, hành động chính xác là <span class='p-word'>gave a speech</span> (phát biểu) về chiến thắng và <span class='p-word'>unity</span> (sự đoàn kết)." },
+                    { text: "He met only with American officials", translation: "Ông ấy chỉ gặp gỡ các quan chức người Mỹ", correct: false, explRed: "Chi tiết này không được nhắc đến trong đoạn liên quan đến bài phát biểu của ông." }
+                ]
+            },
+            {
+                qId: 9,
+                promptEn: "What is one detail NOT mentioned in the text about the celebration?",
+                promptVi: "Đâu là một chi tiết KHÔNG được đề cập trong bài đọc về buổi lễ kỷ niệm?",
+                options: [
+                    { text: "People waved red flags", translation: "Mọi người vẫy cờ đỏ", correct: false, explRed: "Chi tiết này CÓ trong bài: 'waving red flags'." },
+                    { text: "There were fireworks at night", translation: "Đã có pháo hoa vào ban đêm", correct: true, explGreen: "Đọc kỹ toàn bộ đoạn văn, tác giả miêu tả máy bay, diễu hành, cờ đỏ nhưng KHÔNG hề nhắc đến từ <span class='p-word'>fireworks</span> (pháo hoa). Do đó, đây là chi tiết không được đề cập." },
+                    { text: "Russian aircraft performed in the air show", translation: "Máy bay Nga đã biểu diễn trong chương trình không quân", correct: false, explRed: "Chi tiết này CÓ trong bài: 'Russian fighter jets and helicopters flew in the sky'." },
+                    { text: "Chinese soldiers participated in the parade", translation: "Binh sĩ Trung Quốc đã tham gia vào cuộc diễu hành", correct: false, explRed: "Chi tiết này CÓ trong bài: 'Chinese soldiers also joined the parade'." }
+                ]
+            },
+            {
+                qId: 10,
+                promptEn: "In the context of the text, what does the word 'united' most likely mean?",
+                promptVi: "Trong ngữ cảnh của bài đọc, từ 'united' có khả năng mang nghĩa là gì nhất?",
+                options: [
+                    { text: "separated", translation: "bị chia cắt", correct: false, explRed: "Từ này mang nghĩa trái ngược (antonym) với 'united'." },
+                    { text: "together", translation: "cùng nhau, đoàn kết", correct: true, explGreen: "Đoạn văn viết: 'stay united and work together' (đoàn kết và cùng nhau làm việc). Vậy <span class='p-word'>united</span> <span class='p-phonetic'>/juˈnaɪtɪd/</span> mang nghĩa là gắn kết, đồng nghĩa với <span class='p-word'>together</span>." },
+                    { text: "angry", translation: "tức giận", correct: false, explRed: "Hoàn toàn sai nghĩa." },
+                    { text: "confused", translation: "bối rối", correct: false, explRed: "Hoàn toàn sai nghĩa." }
+                ]
+            },
+            {
+                qId: 11,
+                promptEn: "Which of the following is NOT implied by the passage?",
+                promptVi: "Điều nào sau đây KHÔNG được ngụ ý trong bài đọc?",
+                options: [
+                    { text: "Vietnam maintains diplomatic relations with multiple countries", translation: "Việt Nam duy trì quan hệ ngoại giao với nhiều quốc gia", correct: false, explRed: "Điều này có được ngụ ý qua việc nhắc đến Mỹ, Nga, và Trung Quốc." },
+                    { text: "The war had devastating casualties on both sides", translation: "Cuộc chiến tranh có thương vong tàn khốc cho cả hai bên", correct: false, explRed: "Điều này có được ngụ ý bằng những con số: '3 million Vietnamese people died, and nearly 60,000 American soldiers lost their lives'." },
+                    { text: "Vietnam refuses to have any relationship with the United States", translation: "Việt Nam từ chối có bất kỳ mối quan hệ nào với Hoa Kỳ", correct: true, explGreen: "Đây là điều KHÔNG ĐÚNG so với bài. Trong bài viết rất rõ: 'Vietnam and the United States became friends in 1995. In 2023, they became even closer partners'. Họ là đối tác, không phải là từ chối quan hệ." },
+                    { text: "Trade tensions exist despite improved diplomatic relations", translation: "Căng thẳng thương mại vẫn tồn tại mặc dù quan hệ ngoại giao đã được cải thiện", correct: false, explRed: "Điều này có ngụ ý ở câu cuối: 'The United States might put high taxes... which could hurt trade'." }
+                ]
+            },
+            // PASSAGE 3 (READING COMPREHENSION)
+            {
+                qId: 12,
+                promptEn: "Why was Linh feeling hopeful at first?",
+                promptVi: "Lý do vì sao ban đầu Linh lại cảm thấy tràn trề hy vọng?",
+                options: [
+                    { text: "She got a new job", translation: "Cô ấy có một công việc mới", correct: false, explRed: "Sai sự thật, ngay sau đó trường học của cô bị đóng cửa." },
+                    { text: "The war had ended", translation: "Chiến tranh đã kết thúc", correct: true, explGreen: "Dẫn chứng ngay trong đoạn 1: 'At first, she felt hopeful. The war was over and maybe life would get better.' Nghĩa là cô ấy hy vọng vì <span class='p-word'>The war was over</span> (Chiến tranh đã qua đi)." },
+                    { text: "She received money from the government", translation: "Cô ấy nhận được tiền từ chính phủ", correct: false, explRed: "Không có thông tin này, thực tế cô ấy 'There was no money'." },
+                    { text: "Her husband came home", translation: "Chồng cô ấy đã về nhà", correct: false, explRed: "Sai sự thật, chồng cô ấy phải 'go to a camp for two years' (đi cải tạo hai năm)." }
+                ]
+            },
+            {
+                qId: 13,
+                promptEn: "What was Linh's initial reaction to the idea of leaving Vietnam?",
+                promptVi: "Phản ứng ban đầu của Linh đối với ý định rời khỏi Việt Nam là gì?",
+                options: [
+                    { text: "She immediately said no", translation: "Cô ấy ngay lập tức nói không", correct: false, explRed: "Sai. Cô ấy có cân nhắc việc đó ('thought about leaving too')." },
+                    { text: "She was excited about it", translation: "Cô ấy tỏ ra hào hứng về điều đó", correct: false, explRed: "Sai. Cô ấy không hề hào hứng vì hành trình quá nguy hiểm." },
+                    { text: "She considered it but was worried", translation: "Cô ấy đã cân nhắc nhưng cảm thấy lo lắng", correct: true, explGreen: "Dẫn chứng đoạn 3: 'Linh thought about leaving too... She heard stories about dangerous sea journeys... It was a difficult decision.' Cô ấy có <span class='p-word'>considered</span> (nghĩ đến việc đi) nhưng rất lo sợ về sự nguy hiểm." },
+                    { text: "She started planning right away", translation: "Cô ấy bắt đầu lên kế hoạch ngay lập tức", correct: false, explRed: "Sai, cô ấy chỉ suy nghĩ chứ chưa hề lên kế hoạch cụ thể." }
+                ]
+            },
+            {
+                qId: 14,
+                promptEn: "Why did Linh ultimately decide not to leave Vietnam?",
+                promptVi: "Cuối cùng, lý do tại sao Linh lại quyết định không rời Việt Nam?",
+                options: [
+                    { text: "She loved the new government", translation: "Cô ấy yêu chính phủ mới", correct: false, explRed: "Không có thông tin này trong bài." },
+                    { text: "She didn't have enough money", translation: "Cô ấy không có đủ tiền", correct: false, explRed: "Mặc dù đúng là cô ấy nghèo, nhưng đây không phải là lý do trực tiếp khiến cô quyết định ở lại được nêu trong bài." },
+                    { text: "She was scared and her parents needed her", translation: "Cô ấy rất sợ hãi và cha mẹ đang cần cô ấy", correct: true, explGreen: "Dẫn chứng trực tiếp ở đầu đoạn 4: 'She was too scared of the dangerous journey. Her elderly parents needed her.' Đây chính là 2 lý do chính khiến Linh ở lại." },
+                    { text: "The borders were closed", translation: "Các biên giới đã bị đóng cửa", correct: false, explRed: "Chi tiết này không được nhắc đến." }
+                ]
+            },
+            {
+                qId: 15,
+                promptEn: "How did Linh survive economically during the hard times?",
+                promptVi: "Linh đã làm cách nào để sống sót về mặt kinh tế trong những thời điểm khó khăn?",
+                options: [
+                    { text: "She kept teaching at school", translation: "Cô ấy vẫn tiếp tục dạy học ở trường", correct: false, explRed: "Sai sự thật vì 'The new government closed her school' (Trường học bị đóng cửa)." },
+                    { text: "She sold vegetables on the street", translation: "Cô ấy đã bán rau trên đường phố", correct: true, explGreen: "Dẫn chứng rõ ràng ở cuối đoạn 2: 'Linh sold vegetables on the street to feed her children.' (Linh bán rau trên phố để nuôi các con)." },
+                    { text: "She received government support", translation: "Cô ấy đã nhận được sự hỗ trợ từ chính phủ", correct: false, explRed: "Không có thông tin này." },
+                    { text: "She borrowed money from friends", translation: "Cô ấy đã mượn tiền từ bạn bè", correct: false, explRed: "Không có thông tin này." }
+                ]
+            },
+            {
+                qId: 16,
+                promptEn: "What does Linh realize about life in the 1980s?",
+                promptVi: "Linh nhận ra điều gì về cuộc sống vào những năm 1980?",
+                options: [
+                    { text: "That she should have left Vietnam", translation: "Rằng đáng lẽ cô ấy nên rời khỏi Việt Nam", correct: false, explRed: "Không có chi tiết nào cho thấy cô ấy hối hận." },
+                    { text: "That everything was perfect now", translation: "Rằng mọi thứ hiện tại đã hoàn hảo", correct: false, explRed: "Sai, vì cô ấy vẫn phải cẩn trọng lời nói, không có gì là hoàn hảo." },
+                    { text: "That life improved but freedom was still limited", translation: "Rằng cuộc sống đã được cải thiện nhưng sự tự do vẫn bị hạn chế", correct: true, explGreen: "Dẫn chứng đoạn cuối: 'Life got better, but she still couldn't speak freely about politics. She learned to be careful with her words'. Sự cải thiện đi kèm với việc không được tự do ngôn luận (<span class='p-word'>freedom was still limited</span>)." },
+                    { text: "That she could speak freely about anything", translation: "Rằng cô ấy có thể tự do nói về bất cứ điều gì", correct: false, explRed: "Sai sự thật, bài ghi rõ: 'couldn't speak freely' (không thể nói năng tự do)." }
+                ]
+            }
+        ];
+
+        let totalQuestions = quizData.length;
+        let correctCount = 0;
+        let answeredQuestions = new Set();
+        
+        // Audio Setup
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playTing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.2);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Background Emojis SVG Generation
+        const emojis = ['🏭', '😷', '🇻🇳', '🕊️', '🌳', '🏍️', '🌟'];
+        const bgContainer = document.getElementById('bgPattern');
+        for(let i=0; i<35; i++) {
+            let el = document.createElement('div');
+            el.className = 'emoji-float';
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (Math.random() * 15 + 10) + 's';
+            el.style.animationDelay = (Math.random() * 5) + 's';
+            bgContainer.appendChild(el);
+        }
+
+        // Utility: Toggle Translation
+        function toggleTranslation(id) {
+            let el = document.getElementById(id);
+            if(el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        // Shuffle Array (Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Render Questions
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            let htmlStr = '';
+
+            quizData.forEach((q, index) => {
+                let shuffledOptions = shuffleArray([...q.options]);
+                
+                // Constructing Explanation HTML first
+                let explHtml = `
+                    <p><strong>Đề bài:</strong> Câu ${q.qId}: ${q.promptEn}</p>
+                    <p><strong>Dịch đề bài:</strong> ${q.promptVi}</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                `;
+                
+                q.options.forEach(opt => {
+                    explHtml += `<li><span class='p-word'>${opt.text}</span> ➔ Dịch: <span class='p-mean'>${opt.translation}</span></li>`;
+                });
+                explHtml += `</ul><p><strong>Giải thích chi tiết:</strong></p><ul>`;
+                
+                // Add right/wrong logic
+                let correctOpt = q.options.find(o => o.correct);
+                explHtml += `<li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>${correctOpt.text}</strong>. ${correctOpt.explGreen}</li>`;
+                
+                let wrongOpts = q.options.filter(o => !o.correct);
+                explHtml += `<li><span class='hl-red'>Tại sao sai:</span><br>`;
+                wrongOpts.forEach(w => {
+                    explHtml += `- <strong>${w.text}</strong>: ${w.explRed}<br>`;
+                });
+                explHtml += `</li></ul>`;
+
+                // Building the complete Question Card
+                htmlStr += `
+                <div class="question-card" id="qCard_${q.qId}">
+                    <div class="question-prompt">Câu ${q.qId}: ${q.promptEn}</div>
+                    <div class="options-grid" id="optionsGrid_${q.qId}">
+                `;
+
+                shuffledOptions.forEach((opt, oIdx) => {
+                    let isCorrectFlag = opt.correct ? 'true' : 'false';
+                    htmlStr += `
+                        <button class="option-btn" onclick="checkAnswer(this, ${isCorrectFlag}, ${q.qId})">${opt.text}</button>
+                    `;
+                });
+
+                htmlStr += `
+                    </div>
+                    <div class="explanation-box" id="exp_${q.qId}">
+                        ${explHtml}
+                    </div>
+                </div>
+                `;
+            });
+            
+            // Insert before submit button wrapper
+            let submitWrapper = container.querySelector('.submit-btn-wrapper');
+            container.insertAdjacentHTML('afterbegin', htmlStr);
+        }
+
+        // Logic for handling answers
+        function checkAnswer(btn, isCorrect, qId) {
+            if (answeredQuestions.has(qId)) return; // Prevent double click
+            
+            let grid = document.getElementById(`optionsGrid_${qId}`);
+            let btns = grid.querySelectorAll('button');
+            
+            // Disable all buttons in this question
+            btns.forEach(b => b.disabled = true);
+            answeredQuestions.add(qId);
+
+            if (isCorrect) {
+                correctCount++;
+                btn.classList.add('correct');
+                playDing();
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { y: 0.6 }
+                });
+            } else {
+                btn.classList.add('wrong');
+                btn.classList.add('shake');
+                playTing();
+                
+                // Highlight the correct one
+                btns.forEach(b => {
+                    // Match text against original correct data
+                    let correctData = quizData.find(q => q.qId === qId).options.find(o => o.correct).text;
+                    if(b.innerText === correctData) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            // Show explanation
+            document.getElementById(`exp_${qId}`).style.display = 'block';
+        }
+
+        // Score Calculation & Modals
+        function showSubmitModal() {
+            if(answeredQuestions.size < totalQuestions) {
+                alert("Cô MS Chí Nên nhắc: Con hãy hoàn thành toàn bộ " + totalQuestions + " câu hỏi trước khi nộp bài nhé! Cố lên!");
+                return;
+            }
+            document.getElementById('submitModal').style.display = 'flex';
+            document.getElementById('modalContentInput').style.display = 'block';
+            document.getElementById('modalContentScore').style.display = 'none';
+        }
+
+        function processScore() {
+            let nameInput = document.getElementById('studentName').value.trim();
+            if(!nameInput) {
+                alert("Con quên nhập tên rồi kìa!");
+                return;
+            }
+
+            // Hide input, show scorecard
+            document.getElementById('modalContentInput').style.display = 'none';
+            document.getElementById('modalContentScore').style.display = 'block';
+            
+            document.getElementById('sNameDisplay').innerText = "Học sinh: " + nameInput;
+            document.getElementById('sScoreRaw').innerText = correctCount + " / " + totalQuestions;
+            
+            let scaleScore = (correctCount / totalQuestions) * 10;
+            document.getElementById('sScoreScale').innerText = "Điểm quy đổi: " + scaleScore.toFixed(2) + " / 10.00";
+
+            // Dynamic logic for GIFs and Comments
+            let commentEl = document.getElementById('sComment');
+            let gifEl = document.getElementById('sGif');
+            let percentage = (correctCount / totalQuestions) * 100;
+
+            if(percentage === 100) {
+                commentEl.innerHTML = "Tuyệt vời quá! Các con đã hoàn thành xuất sắc nhiệm vụ. Điểm số rực rỡ luôn! 🌟";
+                gifEl.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; // Smart/Genius minion
+            } else if (percentage >= 60) {
+                commentEl.innerHTML = "Rất tốt! Các con đã cố gắng hết sức. Hãy xem lại phần giải thích siêu chi tiết để rút kinh nghiệm nhé! 💪";
+                gifEl.src = "https://media.giphy.com/media/l41JRsph73VokN6ik/giphy.gif"; // High five / Clap
+            } else {
+                commentEl.innerHTML = "Không sao đâu, các con! Hôm nay điểm chưa cao nhưng học được từ vựng mới là thành công rồi. Cố gắng lên nhé! ❤️";
+                gifEl.src = "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif"; // Crying/Cute motivation
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('submitModal').style.display = 'none';
+        }
+
+        // Initialize
+        window.onload = function() {
+            renderQuiz();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Quiz - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --pastel-pink: #ffd1ff;
+            --pastel-blue: #c4e0e5;
+            --pastel-purple: #e0c3fc;
+            --pastel-yellow: #fbf8cc;
+            --pastel-green: #bbf7d0;
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-main: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, var(--pastel-pink), var(--pastel-blue), var(--pastel-green), var(--pastel-yellow));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Floating Pattern */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .floating-emoji {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.25;
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) rotate(0deg) scale(0.8); opacity: 0; }
+            20% { opacity: 0.5; }
+            80% { opacity: 0.5; }
+            100% { transform: translateY(-100px) rotate(360deg) scale(1.2); opacity: 0; }
+        }
+
+        /* Header */
+        header {
+            padding: 10px 20px;
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 1.2rem;
+            color: #6c5ce7;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        }
+        header .teacher-info {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #d63031;
+            background: rgba(255,255,255,0.6);
+            padding: 6px 16px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* Split Screen Layout */
+        .container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 50px);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-track { background: rgba(255,255,255,0.3); border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(108, 92, 231, 0.5); border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb:hover { background: rgba(108, 92, 231, 0.8); }
+
+        /* Reading Section */
+        .reading-title {
+            font-size: 1.5rem;
+            color: #0984e3;
+            margin-bottom: 15px;
+            border-bottom: 2px dashed #74b9ff;
+            padding-bottom: 10px;
+        }
+        .paragraph-block {
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            text-align: justify;
+            background: rgba(255,255,255,0.3);
+            padding: 15px;
+            border-radius: 15px;
+        }
+        .word-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            border: 2px solid #a29bfe;
+            justify-content: center;
+        }
+        .word-tag {
+            background: #e0c3fc;
+            color: #6c5ce7;
+            font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid #a29bfe;
+        }
+        .translate-btn {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+        }
+        .translate-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108, 92, 231, 0.5); }
+        .translation-box {
+            display: none;
+            background: rgba(255,255,255,0.75);
+            border-left: 5px solid #00b894;
+            padding: 12px 18px;
+            margin-top: 15px;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: #2d3436;
+            font-size: 1.05rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Glossary */
+        .glossary {
+            margin-top: 30px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .glossary h3 { color: #d63031; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .glossary table { width: 100%; border-collapse: collapse; }
+        .glossary th, .glossary td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.08); }
+        .glossary th { color: #6c5ce7; background: rgba(255,255,255,0.5); }
+        .glossary tr:hover { background: rgba(255,255,255,0.9); }
+
+        /* Questions Section */
+        .question-card {
+            background: rgba(255,255,255,0.8);
+            border-radius: 18px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+        }
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 18px;
+            color: #0984e3;
+            line-height: 1.5;
+        }
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid #dfe6e9;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            color: #2d3436;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: #74b9ff;
+            box-shadow: 0 5px 15px rgba(116, 185, 255, 0.4);
+        }
+        .option-btn:disabled { cursor: not-allowed; }
+        .option-btn.correct {
+            background: #55efc4 !important;
+            color: #00b894 !important;
+            border-color: #00b894 !important;
+            transform: scale(1.01);
+        }
+        .option-btn.wrong {
+            background: #ff7675 !important;
+            color: white !important;
+            border-color: #d63031 !important;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* Explanation Styling */
+        .explanation-box {
+            display: none;
+            margin-top: 25px;
+            background: #fdfbf7;
+            border: 2px solid #ffeaa7;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+        .explanation-box h4 { color: #e17055; margin-bottom: 12px; border-bottom: 1px dashed #ffeaa7; padding-bottom: 8px; }
+        .explanation-box ul { padding-left: 20px; margin-bottom: 15px; }
+        .explanation-box li { margin-bottom: 10px; }
+        
+        /* SPAN FORMATTING RULES */
+        .p-word { color: #0984e3; font-weight: bold; background: #e0f2fe; padding: 2px 6px; border-radius: 4px; }
+        .p-phonetic { color: #636e72; font-style: italic; font-family: 'Times New Roman', serif; }
+        .p-mean { color: #d35400; font-weight: 600; }
+        .p-grammar { color: #6c5ce7; font-weight: bold; background: #f3e8ff; padding: 2px 6px; border-radius: 4px; border: 1px dashed #a29bfe; }
+        .hl-green { color: #00b894; font-weight: bold; display: block; margin-top: 5px; }
+        .hl-red { color: #d63031; display: block; margin-top: 5px; }
+
+        /* Submit Button */
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 18px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 35px;
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+            transition: all 0.3s ease;
+        }
+        .submit-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(0, 184, 148, 0.6);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 100;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 24px; text-align: center;
+            max-width: 500px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+            position: relative;
+        }
+        .modal-content input {
+            width: 100%; padding: 15px; font-size: 1.2rem; border: 2px solid #a29bfe;
+            border-radius: 12px; margin: 25px 0; outline: none; text-align: center;
+            background: #f8f9fa;
+        }
+        .modal-content input:focus { border-color: #6c5ce7; box-shadow: 0 0 15px rgba(108, 92, 231, 0.2); background: white; }
+        .modal-btn {
+            background: #6c5ce7; color: white; border: none; padding: 12px 30px;
+            font-size: 1.2rem; border-radius: 12px; cursor: pointer; font-weight: bold;
+            transition: background 0.2s;
+        }
+        .modal-btn:hover { background: #5f27cd; }
+        .score-display { font-size: 3.5rem; font-weight: bold; color: #00b894; margin: 15px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+        .score-10 { font-size: 1.5rem; color: #d63031; font-weight: bold; margin-bottom: 25px; }
+        .gif-container img { max-width: 100%; border-radius: 15px; margin-top: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Pattern -->
+    <div class="bg-pattern" id="bgPattern"></div>
+
+    <header>
+        <h1>English Gamified Challenge</h1>
+        <div class="teacher-info">Giáo viên tạo: Ms MS Chí Nên</div>
+    </header>
+
+    <div class="container">
+        <!-- LEFT PANEL: READING -->
+        <div class="panel left-panel">
+            
+            <!-- Passage 1 -->
+            <h2 class="reading-title">I. Choose the word from the box to fill in the blanks.</h2>
+            
+            <div class="word-pool">
+                <span class="word-tag">break</span>
+                <span class="word-tag">friendship</span>
+                <span class="word-tag">with</span>
+                <span class="word-tag">amazing</span>
+                <span class="word-tag">listens</span>
+                <span class="word-tag">same</span>
+            </div>
+
+            <div class="paragraph-block">
+                My best friend is the most (31) _____ person I know. His name is Randy, and he is short and slim (32) _____ curly brown hair. Randy and I are in the (33) _____ English class. He is always there for me when I need help with my homework or just want someone to play with at (34) _____ time.
+                <br><button class="translate-btn" onclick="toggleTranslate('trans1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans1">
+                    Người bạn thân nhất của tôi là người tuyệt vời nhất mà tôi biết. Cậu ấy tên là Randy, và cậu ấy thấp và mảnh khảnh với mái tóc nâu xoăn. Randy và tôi học cùng lớp tiếng Anh. Cậu ấy luôn ở bên tôi khi tôi cần giúp đỡ làm bài tập về nhà hoặc chỉ là muốn có ai đó để chơi cùng vào giờ ra chơi.
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                We love doing many fun things together, like going to the park, having sleepovers, and playing games. Randy is kind and caring. He always makes me laugh when I'm sad. I can tell him anything, and he always (35) _____.
+                <br><button class="translate-btn" onclick="toggleTranslate('trans2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans2">
+                    Chúng tôi thích làm nhiều điều thú vị cùng nhau, như đi công viên, tổ chức tiệc ngủ qua đêm và chơi trò chơi. Randy tốt bụng và chu đáo. Cậu ấy luôn làm tôi cười khi tôi buồn. Tôi có thể kể cho cậu ấy nghe bất cứ chuyện gì, và cậu ấy luôn lắng nghe.
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                I am so lucky to have Randy as my best friend. He is truly special to me, and I hope our (36) _____ will last forever.
+                <br><button class="translate-btn" onclick="toggleTranslate('trans3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans3">
+                    Tôi thật may mắn khi có Randy là bạn thân nhất của mình. Cậu ấy thực sự đặc biệt đối với tôi, và tôi hy vọng tình bạn của chúng tôi sẽ kéo dài mãi mãi.
+                </div>
+            </div>
+
+            <!-- Passage 2 -->
+            <h2 class="reading-title" style="margin-top: 40px;">II. Read the passage and choose the best answer.</h2>
+
+            <div class="paragraph-block">
+                Hi Mum and Dad,
+                <br><br>
+                I am having a great time here at the cooking camp. We are learning lots of new recipes and cooking tricks. At night, we sleep in big tents. I am sharing a tent with my new friends Oliver, Sarah and Tilly.
+                <br><button class="translate-btn" onclick="toggleTranslate('trans4')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans4">
+                    Chào Bố và Mẹ,
+                    <br><br>
+                    Con đang có một khoảng thời gian tuyệt vời ở trại nấu ăn. Chúng con đang học rất nhiều công thức và mẹo nấu ăn mới. Vào ban đêm, chúng con ngủ trong những chiếc lều lớn. Con đang ở chung lều với những người bạn mới của con là Oliver, Sarah và Tilly.
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                We usually do exercise and play games after breakfast, but today we are hiking in the morning. After the hike, I am making some sandwiches so that I can bring them to the picnic at lunchtime.
+                <br><button class="translate-btn" onclick="toggleTranslate('trans5')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans5">
+                    Chúng con thường tập thể dục và chơi trò chơi sau bữa sáng, nhưng hôm nay chúng con sẽ đi leo núi (đi bộ đường dài) vào buổi sáng. Sau chuyến đi, con sẽ làm một vài chiếc bánh mì kẹp để mang chúng đi dã ngoại vào giờ ăn trưa.
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                This evening, we're having a special dinner. I always wear jeans and comfortable clothes at the camp, but today we're all wearing costumes. I'm wearing a superhero cape, a wig and a mask. My friends are in fun costumes, too.
+                <br><br>
+                I'm leaving now, my friends are calling me. See you next week!
+                <br><br>
+                Love,
+                <br>Leo
+                <br><button class="translate-btn" onclick="toggleTranslate('trans6')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans6">
+                    Tối nay, chúng con sẽ có một bữa tối đặc biệt. Con luôn mặc quần jean và quần áo thoải mái ở trại, nhưng hôm nay tất cả chúng con đều mặc trang phục hóa trang. Con đang mặc một chiếc áo choàng siêu anh hùng, đội tóc giả và đeo mặt nạ. Bạn bè của con cũng mặc những bộ trang phục thú vị.
+                    <br><br>
+                    Con phải đi bây giờ đây, bạn bè đang gọi con. Hẹn gặp lại bố mẹ vào tuần tới!
+                    <br><br>
+                    Yêu bố mẹ,
+                    <br>Leo
+                </div>
+            </div>
+
+            <!-- Glossary -->
+            <div class="glossary">
+                <h3>📖 Academic Glossary (Từ vựng cần nhớ)</h3>
+                <table>
+                    <tr><th>Word</th><th>Part of Speech</th><th>Meaning</th></tr>
+                    <tr><td><b>slim</b></td><td>(adj) /slɪm/</td><td>mảnh khảnh, thon gọn</td></tr>
+                    <tr><td><b>curly</b></td><td>(adj) /ˈkɜː.li/</td><td>xoăn (tóc)</td></tr>
+                    <tr><td><b>sleepover</b></td><td>(n) /ˈsliːpˌəʊ.vər/</td><td>tiệc ngủ qua đêm (nhà bạn)</td></tr>
+                    <tr><td><b>recipe</b></td><td>(n) /ˈres.ɪ.pi/</td><td>công thức nấu ăn</td></tr>
+                    <tr><td><b>trick</b></td><td>(n) /trɪk/</td><td>mẹo, thủ thuật</td></tr>
+                    <tr><td><b>tent</b></td><td>(n) /tent/</td><td>cái lều</td></tr>
+                    <tr><td><b>hike</b></td><td>(v/n) /haɪk/</td><td>đi bộ đường dài, leo núi</td></tr>
+                    <tr><td><b>comfortable</b></td><td>(adj) /ˈkʌm.fə.tə.bəl/</td><td>thoải mái</td></tr>
+                    <tr><td><b>costume</b></td><td>(n) /ˈkɒs.tʃuːm/</td><td>trang phục (hóa trang, biểu diễn)</td></tr>
+                    <tr><td><b>cape</b></td><td>(n) /keɪp/</td><td>áo choàng</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: EXERCISES -->
+        <div class="panel right-panel" id="quizContainer">
+            <!-- JS will generate questions here -->
+            <button class="submit-btn" onclick="showNamePrompt()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="nameModal">
+        <div class="modal-content">
+            <h2 style="color: #6c5ce7;">Nhập tên của con để nộp bài nhé! 📝</h2>
+            <input type="text" id="studentName" placeholder="Ví dụ: Anh Đức, Bảo Ngọc..." autocomplete="off">
+            <button class="modal-btn" onclick="submitQuiz()">Hoàn thành & Chấm điểm</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 id="resultTitle" style="color: #0984e3;">Kết quả của con</h2>
+            <div class="score-display" id="rawScore">0/11</div>
+            <div class="score-10" id="scaleScore">Quy đổi: 0.00/10</div>
+            <p id="teacherComment" style="font-size: 1.2rem; font-weight: bold;"></p>
+            <div class="gif-container" id="resultGif"></div>
+            <button class="modal-btn" style="margin-top: 25px;" onclick="closeResult()">Xem lại bài giải chi tiết</button>
+        </div>
+    </div>
+
+    <script>
+        // --- WEB AUDIO API FOR SOUNDS ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playTingTing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            
+            function beep(freq, time) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + time);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime + time);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + time + 0.2);
+                osc.start(audioCtx.currentTime + time);
+                osc.stop(audioCtx.currentTime + time + 0.2);
+            }
+            beep(350, 0);
+            beep(250, 0.15);
+        }
+
+        // --- DATA STRUCTURE ---
+        const questionsData = [
+            // PART I - Gap fill (No context in question text as per User Instruction)
+            {
+                id: 31,
+                question: "Select the best answer",
+                translateQ: "Chọn đáp án đúng nhất (Cho ô trống số 31)",
+                options: [
+                    { text: "amazing", isCorrect: true, mean: "(adj) tuyệt vời, kinh ngạc" },
+                    { text: "break", isCorrect: false, mean: "(n) giờ giải lao" },
+                    { text: "friendship", isCorrect: false, mean: "(n) tình bạn" },
+                    { text: "listens", isCorrect: false, mean: "(v) lắng nghe" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>amazing</b>. Trong câu <span class="p-word">"My best friend is the most (31) _____ person I know."</span>, ta cần một tính từ đứng sau <span class="p-grammar">the most</span> để bổ nghĩa cho danh từ <span class="p-word">person</span> (người). Cụm <span class="p-word">the most amazing person</span> mang nghĩa là <span class="p-mean">người tuyệt vời nhất</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Các từ <span class="p-word">break</span> (danh từ), <span class="p-word">friendship</span> (danh từ) và <span class="p-word">listens</span> (động từ) <span class="p-mean">sai hoàn toàn về loại từ</span> khi đứng trước danh từ <span class="p-word">person</span>.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 32,
+                question: "Select the best answer",
+                translateQ: "Chọn đáp án đúng nhất (Cho ô trống số 32)",
+                options: [
+                    { text: "with", isCorrect: true, mean: "(prep) với, có" },
+                    { text: "same", isCorrect: false, mean: "(adj) giống nhau" },
+                    { text: "break", isCorrect: false, mean: "(n) giờ giải lao" },
+                    { text: "amazing", isCorrect: false, mean: "(adj) tuyệt vời" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>with</b>. Câu trong bài: <span class="p-word">"he is short and slim (32) _____ curly brown hair."</span>. Giới từ <span class="p-word">with</span> được dùng để <span class="p-mean">miêu tả đặc điểm ngoại hình hoặc sở hữu</span> (có mái tóc nâu xoăn).</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Không thể điền các từ còn lại vì chúng không tạo thành cấu trúc miêu tả. Ví dụ điền <span class="p-word">same</span> (giống) hay <span class="p-word">amazing</span> (tuyệt vời) vào vị trí này đều khiến câu vô nghĩa.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 33,
+                question: "Select the best answer",
+                translateQ: "Chọn đáp án đúng nhất (Cho ô trống số 33)",
+                options: [
+                    { text: "same", isCorrect: true, mean: "(adj) cùng, giống nhau" },
+                    { text: "with", isCorrect: false, mean: "(prep) với" },
+                    { text: "friendship", isCorrect: false, mean: "(n) tình bạn" },
+                    { text: "listens", isCorrect: false, mean: "(v) lắng nghe" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>same</b>. Câu: <span class="p-word">"Randy and I are in the (33) _____ English class."</span> Ta có cụm <span class="p-grammar">be in the same class</span> nghĩa là <span class="p-mean">học cùng một lớp</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Không thể dùng cụm từ như <span class="p-word">the with English class</span> hay <span class="p-word">the friendship English class</span> vì sai ngữ pháp và nghĩa hoàn toàn.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 34,
+                question: "Select the best answer",
+                translateQ: "Chọn đáp án đúng nhất (Cho ô trống số 34)",
+                options: [
+                    { text: "break", isCorrect: true, mean: "(n) giờ nghỉ, giờ ra chơi" },
+                    { text: "amazing", isCorrect: false, mean: "(adj) tuyệt vời" },
+                    { text: "same", isCorrect: false, mean: "(adj) giống nhau" },
+                    { text: "friendship", isCorrect: false, mean: "(n) tình bạn" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>break</b>. Ta có cụm danh từ ghép quen thuộc trong trường học: <span class="p-grammar">break time</span> nghĩa là <span class="p-mean">giờ ra chơi, giờ giải lao</span>. Câu văn muốn nói "...muốn có ai đó để chơi cùng vào giờ ra chơi".</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Các từ còn lại ghép vào chữ <span class="p-word">time</span> sẽ không tạo thành collocation đúng ngữ cảnh (ví dụ: same time = cùng lúc, nhưng không hợp nghĩa "để chơi cùng" trong câu này).</li>
+                    </ul>
+                `
+            },
+            {
+                id: 35,
+                question: "Select the best answer",
+                translateQ: "Chọn đáp án đúng nhất (Cho ô trống số 35)",
+                options: [
+                    { text: "listens", isCorrect: true, mean: "(v) lắng nghe (động từ chia số ít)" },
+                    { text: "break", isCorrect: false, mean: "(n) giờ giải lao" },
+                    { text: "with", isCorrect: false, mean: "(prep) với" },
+                    { text: "amazing", isCorrect: false, mean: "(adj) tuyệt vời" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>listens</b>. Câu: <span class="p-word">"I can tell him anything, and he always (35) _____."</span> Sau trạng từ chỉ tần suất <span class="p-word">always</span> và chủ ngữ <span class="p-word">he</span> (ngôi thứ 3 số ít), ta cần một động từ chia s/es. Cậu ấy luôn <span class="p-mean">lắng nghe</span> khi tôi kể chuyện.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Vị trí này bắt buộc phải là một động từ (Verb) để hoàn thiện mệnh đề. Các từ <span class="p-word">break, with, amazing</span> <span class="p-mean">không phải là động từ</span> phù hợp.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 36,
+                question: "Select the best answer",
+                translateQ: "Chọn đáp án đúng nhất (Cho ô trống số 36)",
+                options: [
+                    { text: "friendship", isCorrect: true, mean: "(n) tình bạn" },
+                    { text: "amazing", isCorrect: false, mean: "(adj) tuyệt vời" },
+                    { text: "same", isCorrect: false, mean: "(adj) giống nhau" },
+                    { text: "listens", isCorrect: false, mean: "(v) lắng nghe" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>friendship</b>. Câu: <span class="p-word">"I hope our (36) _____ will last forever."</span> Sau tính từ sở hữu <span class="p-word">our</span> (của chúng tôi), cần một Danh từ. Người viết hy vọng <span class="p-mean">tình bạn</span> của họ sẽ kéo dài mãi mãi.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> <span class="p-word">amazing, same</span> (tính từ) và <span class="p-word">listens</span> (động từ) <span class="p-mean">không thể đứng ngay sau tính từ sở hữu</span> đóng vai trò làm chủ ngữ chính của mệnh đề sau.</li>
+                    </ul>
+                `
+            },
+            // PART II - Multiple Choice Converted
+            {
+                id: 37,
+                question: "Where do children at the cooking camp sleep at night?",
+                translateQ: "Trẻ em ở trại nấu ăn ngủ ở đâu vào ban đêm?",
+                options: [
+                    { text: "They sleep in big tents.", isCorrect: true, mean: "Chúng ngủ trong những chiếc lều lớn." },
+                    { text: "They sleep in small rooms.", isCorrect: false, mean: "Chúng ngủ trong những căn phòng nhỏ." },
+                    { text: "They sleep in comfortable beds.", isCorrect: false, mean: "Chúng ngủ trên những chiếc giường thoải mái." },
+                    { text: "They sleep in superhero capes.", isCorrect: false, mean: "Chúng ngủ trong những chiếc áo choàng siêu anh hùng." }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>They sleep in big tents.</b> Dựa vào thông tin rõ ràng ở đoạn 1, dòng 2: <span class="p-word">"At night, we sleep in big tents."</span> <span class="p-mean">(Vào ban đêm, chúng con ngủ trong những chiếc lều lớn)</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Các đáp án còn lại đều sai vì bài viết <span class="p-mean">hoàn toàn không nhắc đến</span> phòng nhỏ, hay giường êm ái. Chiếc áo choàng siêu anh hùng (superhero cape) là để mặc vào bữa tối, không phải chỗ để ngủ.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 38,
+                question: "Who is Leo sharing a tent with?",
+                translateQ: "Leo đang ở chung lều với ai?",
+                options: [
+                    { text: "He is sharing a tent with Oliver, Sarah and Tilly.", isCorrect: true, mean: "Cậu ấy đang ở chung lều với Oliver, Sarah và Tilly." },
+                    { text: "He is sharing a tent with Mum and Dad.", isCorrect: false, mean: "Cậu ấy đang ở chung lều với Bố và Mẹ." },
+                    { text: "He is sharing a tent with his old friends.", isCorrect: false, mean: "Cậu ấy đang ở chung lều với những người bạn cũ." },
+                    { text: "He is sharing a tent with his teachers.", isCorrect: false, mean: "Cậu ấy đang ở chung lều với giáo viên của mình." }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>He is sharing a tent with Oliver, Sarah and Tilly.</b> Trích xuất đoạn 1, câu cuối: <span class="p-word">"I am sharing a tent with my new friends Oliver, Sarah and Tilly."</span> <span class="p-mean">(Con đang ở chung lều với những người bạn mới là Oliver, Sarah và Tilly)</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Cậu ấy đang viết thư gửi cho <span class="p-word">Mum and Dad</span>, nên không thể ở chung với họ. Đây là bạn mới (<span class="p-word">new friends</span>), không phải bạn cũ (<span class="p-word">old friends</span>) hay giáo viên.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 39,
+                question: "What do they usually do after breakfast?",
+                translateQ: "Họ THƯỜNG làm gì sau bữa sáng?",
+                options: [
+                    { text: "They usually do exercise and play games.", isCorrect: true, mean: "Họ thường tập thể dục và chơi trò chơi." },
+                    { text: "They usually go hiking in the morning.", isCorrect: false, mean: "Họ thường đi bộ đường dài vào buổi sáng." },
+                    { text: "They usually make some sandwiches.", isCorrect: false, mean: "Họ thường làm một số bánh mì kẹp." },
+                    { text: "They usually sleep in big tents.", isCorrect: false, mean: "Họ thường ngủ trong những chiếc lều lớn." }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>They usually do exercise and play games.</b> Dẫn chứng trong bài (Đoạn 2, câu 1): <span class="p-word">"We usually do exercise and play games after breakfast..."</span> <span class="p-mean">(Chúng con THƯỜNG tập thể dục và chơi trò chơi sau bữa sáng)</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Đề hỏi hoạt động THƯỜNG XUYÊN (<span class="p-word">usually</span>). Hoạt động đi bộ (<span class="p-word">hiking</span>) là hoạt động ĐẶC BIỆT CỦA NGÀY HÔM NAY (<span class="p-word">but today we are hiking...</span>), chứ không phải việc làm thường xuyên. Sandwich được làm <span class="p-mean">sau khi đi bộ</span>, không phải sau bữa sáng.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 40,
+                question: "When is Leo making sandwiches today?",
+                translateQ: "Hôm nay khi nào Leo làm bánh mì kẹp?",
+                options: [
+                    { text: "He is making sandwiches after the hike.", isCorrect: true, mean: "Cậu ấy làm bánh mì kẹp sau chuyến đi bộ đường dài." },
+                    { text: "He is making sandwiches after breakfast.", isCorrect: false, mean: "Cậu ấy làm bánh mì kẹp sau bữa sáng." },
+                    { text: "He is making sandwiches at lunchtime.", isCorrect: false, mean: "Cậu ấy làm bánh mì kẹp vào giờ ăn trưa." },
+                    { text: "He is making sandwiches in the evening.", isCorrect: false, mean: "Cậu ấy làm bánh mì kẹp vào buổi tối." }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>He is making sandwiches after the hike.</b> Dẫn chứng (Đoạn 2, câu 2): <span class="p-word">"After the hike, I am making some sandwiches..."</span> <span class="p-mean">(Sau chuyến đi bộ, con sẽ làm một vài chiếc bánh mì kẹp)</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Có bẫy thời gian trong bài. Bạn Leo làm sandwich "sau chuyến đi" để MANG ĐẾN chỗ picnic "vào giờ ăn trưa" (<span class="p-word">bring them to the picnic at lunchtime</span>). Vì vậy làm tại giờ ăn trưa là <span class="p-mean">sai thời điểm</span>.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 41,
+                question: "What are Leo's friends wearing in the evening?",
+                translateQ: "Bạn bè của Leo sẽ mặc gì vào buổi tối?",
+                options: [
+                    { text: "They are wearing fun costumes.", isCorrect: true, mean: "Họ sẽ mặc những trang phục hóa trang thú vị." },
+                    { text: "They are wearing jeans and comfortable clothes.", isCorrect: false, mean: "Họ mặc quần jean và quần áo thoải mái." },
+                    { text: "They are wearing a superhero cape, a wig and a mask.", isCorrect: false, mean: "Họ mặc áo choàng siêu anh hùng, đội tóc giả và đeo mặt nạ." },
+                    { text: "They are wearing hiking shoes.", isCorrect: false, mean: "Họ đi giày leo núi." }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>They are wearing fun costumes.</b> Dẫn chứng (Đoạn 3, câu cuối): <span class="p-word">"My friends are in fun costumes, too."</span> <span class="p-mean">(Bạn bè của con cũng đang mặc những bộ trang phục thú vị)</span>. (Note: "in costumes" = "wearing costumes").</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Quần jeans là đồ <span class="p-word">always wear</span> (luôn luôn mặc) chứ không phải tối nay. Rất nhiều bạn sẽ chọn nhầm áo choàng siêu anh hùng + mặt nạ (<span class="p-word">superhero cape...</span>) -> <span class="p-mean">Đây là bẫy</span> vì đó là đồ LEO mặc (<span class="p-word">I'm wearing</span>), đề bài hỏi đồ CỦA BẠN BÈ LEO mặc.</li>
+                    </ul>
+                `
+            }
+        ];
+
+        let currentScore = 0;
+        let answeredQuestions = 0;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function toggleTranslate(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('quizContainer');
+            const submitBtn = container.querySelector('.submit-btn');
+            
+            questionsData.forEach((q, index) => {
+                let shuffledOptions = [...q.options];
+                shuffleArray(shuffledOptions);
+
+                let cardHtml = `
+                    <div class="question-card" id="card-${q.id}">
+                        <div class="question-text">Câu ${index + 1} (${q.id}): ${q.question}</div>
+                        <div class="options-grid">
+                `;
+
+                shuffledOptions.forEach((opt, optIndex) => {
+                    const btnId = `btn-${q.id}-${optIndex}`;
+                    cardHtml += `
+                        <button class="option-btn" id="${btnId}" 
+                            onclick="checkAnswer(${q.id}, ${opt.isCorrect}, '${btnId}')">
+                            ${opt.text}
+                        </button>
+                    `;
+                });
+
+                cardHtml += `
+                        </div>
+                        <div class="explanation-box" id="exp-${q.id}">
+                            <h4>Phân tích chi tiết từ Ms MS Chí Nên:</h4>
+                            <div><b>Dịch yêu cầu:</b> <span class="p-mean">${q.translateQ}</span></div>
+                            <br>
+                            <div><b>Các lựa chọn:</b><br>
+                                ${shuffledOptions.map(o => `• <span class="p-word">${o.text}</span> ➔ Dịch: <span class="p-mean">${o.mean}</span>`).join('<br>')}
+                            </div>
+                            <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ffeaa7;">
+                            ${q.explanation}
+                        </div>
+                    </div>
+                `;
+                
+                submitBtn.insertAdjacentHTML('beforebegin', cardHtml);
+            });
+        }
+
+        function checkAnswer(questionId, isCorrect, buttonId) {
+            const card = document.getElementById(`card-${questionId}`);
+            const buttons = card.querySelectorAll('.option-btn');
+            const expBox = document.getElementById(`exp-${questionId}`);
+            const clickedBtn = document.getElementById(buttonId);
+
+            buttons.forEach(btn => btn.disabled = true);
+            answeredQuestions++;
+
+            if (isCorrect) {
+                clickedBtn.classList.add('correct');
+                playDing();
+                confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#a864fd', '#29cdff', '#78ff44', '#ff718d', '#fdff6a']
+                });
+                currentScore++;
+            } else {
+                clickedBtn.classList.add('wrong');
+                card.classList.add('shake');
+                setTimeout(() => card.classList.remove('shake'), 400);
+                playTingTing();
+                
+                buttons.forEach(btn => {
+                    const optData = questionsData.find(q => q.id === questionId).options.find(o => o.text === btn.innerText.trim());
+                    if (optData && optData.isCorrect) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                expBox.style.display = 'block';
+            }, 600);
+        }
+
+        function showNamePrompt() {
+            if (answeredQuestions < questionsData.length) {
+                if(!confirm("Con chưa làm hết các câu hỏi, con có chắc chắn muốn nộp bài sớm không?")) {
+                    return;
+                }
+            }
+            document.getElementById('nameModal').style.display = 'flex';
+            document.getElementById('studentName').focus();
+        }
+
+        function submitQuiz() {
+            const name = document.getElementById('studentName').value.trim();
+            if (!name) {
+                alert("Con nhớ nhập tên trước khi nộp bài nhé!");
+                return;
+            }
+
+            document.getElementById('nameModal').style.display = 'none';
+            const total = questionsData.length;
+            const percent = currentScore / total;
+            const scale10 = (percent * 10).toFixed(2);
+
+            document.getElementById('resultTitle').innerText = `Kết quả của ${name}`;
+            document.getElementById('rawScore').innerText = `${currentScore} / ${total}`;
+            document.getElementById('scaleScore').innerText = `Điểm hệ 10: ${scale10} / 10`;
+
+            const cmtEl = document.getElementById('teacherComment');
+            const gifEl = document.getElementById('resultGif');
+
+            if (percent === 1) {
+                cmtEl.innerText = "Wow! Xuất sắc tuyệt đối! Con là thiên tài ngoại ngữ! 🌟";
+                cmtEl.style.color = "#00b894";
+                gifEl.innerHTML = '<img src="https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif" alt="Genius">';
+                confetti({ particleCount: 400, spread: 150 });
+            } else if (percent >= 0.6) {
+                cmtEl.innerText = "Rất tốt! Con đã nắm khá chắc kiến thức rồi, cố lên tí nữa nhé! High-five! ✋";
+                cmtEl.style.color = "#0984e3";
+                gifEl.innerHTML = '<img src="https://media.giphy.com/media/3oz8xAFtjouKVsKe1y/giphy.gif" alt="Good job">';
+            } else {
+                cmtEl.innerText = "Hơi tiếc một chút! Nhớ đọc kỹ phần phân tích đáp án của cô để gỡ điểm lần sau nhé. Cố lên! 💪";
+                cmtEl.style.color = "#d63031";
+                gifEl.innerHTML = '<img src="https://media.giphy.com/media/d2lcHJTG5Tscg/giphy.gif" alt="Try again">';
+            }
+
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+
+        function closeResult() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        function createFloatingEmojis() {
+            const emojis = ['⛺', '🍳', '🏕️', '🥪', '🦸‍♂️', '👯‍♂️'];
+            const pattern = document.getElementById('bgPattern');
+            for (let i = 0; i < 25; i++) {
+                let el = document.createElement('div');
+                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                el.className = 'floating-emoji';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.animationDuration = (Math.random() * 15 + 15) + 's'; 
+                el.style.animationDelay = (Math.random() * -20) + 's';
+                el.style.fontSize = (Math.random() * 2 + 2) + 'rem';
+                pattern.appendChild(el);
+            }
+        }
+
+        window.onload = () => {
+            renderQuestions();
+            createFloatingEmojis();
+        };
+    </script>
+</body>
+</html>

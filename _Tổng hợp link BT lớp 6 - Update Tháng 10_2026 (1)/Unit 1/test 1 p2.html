@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comics English Challenge - Ms MS Chí Nên (V2)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&family=Bangers&display=swap');
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --primary: #ff6b81;
+            --secondary: #7bed9f;
+            --text-dark: #2f3542;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Comic Floating SVGs */
+        .comic-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .comic-emoji {
+            position: absolute;
+            font-size: 4rem;
+            opacity: 0.3;
+            animation: floatEmoji 10s infinite ease-in-out alternate;
+        }
+        .emoji-1 { top: 10%; left: 10%; animation-delay: 0s; }
+        .emoji-2 { top: 70%; left: 5%; font-size: 6rem; animation-delay: 2s; }
+        .emoji-3 { top: 20%; right: 10%; font-size: 5rem; animation-delay: 1s; }
+        .emoji-4 { top: 80%; right: 15%; animation-delay: 3s; }
+        .emoji-5 { top: 40%; left: 45%; font-size: 3rem; animation-delay: 4s; }
+
+        @keyframes floatEmoji {
+            0% { transform: translateY(0) rotate(0deg) scale(1); }
+            100% { transform: translateY(-30px) rotate(15deg) scale(1.1); }
+        }
+
+        /* Layout Split Screen */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            padding: 20px;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            overflow-y: auto;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Custom Scrollbar */
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-track { background: transparent; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            font-family: 'Bangers', cursive;
+            font-size: 3rem;
+            color: #ff4757;
+            text-shadow: 2px 2px 0px #fff, 4px 4px 0px rgba(0,0,0,0.1);
+            letter-spacing: 2px;
+        }
+        .author-tag {
+            font-size: 1rem;
+            font-weight: 800;
+            background: #fff;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            color: #3742fa;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 5px;
+        }
+
+        /* Reading Section */
+        .passage-box {
+            background: rgba(255,255,255,0.5);
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            border-left: 5px solid #ffa502;
+        }
+        
+        .passage-title {
+            font-family: 'Bangers', cursive;
+            font-size: 2rem;
+            color: #2f3542;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 0px #fff;
+        }
+
+        .trans-btn {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-family: 'Nunito', sans-serif;
+        }
+        .trans-btn:hover { transform: scale(1.05); }
+        
+        .translation-content {
+            display: none;
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 10px;
+            font-style: italic;
+            color: #57606f;
+            border-left: 4px solid #ff4757;
+        }
+
+        /* Glossary */
+        .glossary {
+            background: rgba(255,255,255,0.6);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .glossary h3 {
+            font-family: 'Bangers', cursive;
+            font-size: 1.8rem;
+            color: #3742fa;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .glossary table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .glossary th, .glossary td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        .glossary th { background: rgba(0,0,0,0.05); }
+
+        /* Questions Section */
+        .question-card {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .q-text {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            color: #2f3542;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .opt-btn {
+            background: #fff;
+            border: 2px solid transparent;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            font-family: 'Nunito', sans-serif;
+        }
+        .opt-btn:hover {
+            transform: translateY(-2px);
+            border-color: #7bed9f;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        
+        .opt-btn.correct { background: #2ed573; color: white; border-color: #2ed573; }
+        .opt-btn.wrong { background: #ff4757; color: white; border-color: #ff4757; }
+        .opt-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* Explanations */
+        .explanation {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f1f2f6;
+            border-radius: 10px;
+            font-size: 1rem;
+            line-height: 1.6;
+            border: 1px solid #dfe4ea;
+        }
+        .explanation ul { padding-left: 20px; margin: 10px 0; }
+        
+        /* Highlight Tags */
+        .p-word { color: #3742fa; font-weight: bold; background: rgba(55, 66, 250, 0.1); padding: 2px 5px; border-radius: 4px; }
+        .p-phonetic { color: #57606f; font-family: monospace; }
+        .p-mean { color: #d35400; font-weight: bold; font-style: italic; }
+        .p-grammar { color: #8e44ad; font-weight: bold; border-bottom: 2px dashed #8e44ad; }
+        .hl-green { color: #27ae60; font-weight: 900; }
+        .hl-red { color: #c0392b; font-weight: 900; }
+
+        /* Submit Area */
+        .submit-area {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed rgba(0,0,0,0.2);
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, #ff6b81 0%, #ff4757 100%);
+            color: white;
+            font-size: 1.5rem;
+            font-family: 'Bangers', cursive;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(255, 71, 87, 0.4);
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+        .submit-btn:hover { transform: scale(1.05); }
+
+        /* Popup Overlay */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .popup {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .popup input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dfe4ea;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-family: 'Nunito', sans-serif;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .popup input:focus { outline: none; border-color: #ff4757; }
+        .score-display {
+            font-family: 'Bangers', cursive;
+            font-size: 4rem;
+            color: #ff4757;
+            margin: 10px 0;
+        }
+        .score-10 {
+            font-size: 1.5rem;
+            color: #2f3542;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .teacher-cmt {
+            font-size: 1.2rem;
+            color: #3742fa;
+            font-weight: 800;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        .gif-result {
+            width: 100%;
+            max-height: 250px;
+            border-radius: 15px;
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+        
+        canvas#confetti {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti"></canvas>
+
+    <div class="comic-bg">
+        <div class="comic-emoji emoji-1">💥</div>
+        <div class="comic-emoji emoji-2">🗯️</div>
+        <div class="comic-emoji emoji-3">🦸‍♂️</div>
+        <div class="comic-emoji emoji-4">✨</div>
+        <div class="comic-emoji emoji-5">🦸‍♀️</div>
+    </div>
+
+    <div class="app-container">
+        <!-- LEFT PANEL: READING -->
+        <div class="panel" id="left-panel">
+            <header>
+                <h1>READING CHALLENGE</h1>
+                <div class="author-tag">Giáo viên tạo: Ms MS Chí Nên</div>
+            </header>
+
+            <div class="passage-title">PASSAGE 1: Starting a New Grade</div>
+            
+            <div class="passage-box">
+                <p>Hi everyone! My name's Jake. I'm in eighth grade now, but will never forget feeling nervous (27) _______ starting a new grade and moving schools two years ago. I remember those thoughts: Will it be too hard? Will I get lost? Will the other kids like (28) _______? Will I make new friends? Trust me, I know how scary it can feel, but everyone feels that way! You're not alone, and those worries (29) _______ completely normal.</p>
+                <button class="trans-btn" onclick="toggleTrans('trans1')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-content" id="trans1">
+                    Chào mọi người! Tên tôi là Jake. Hiện tôi đang học lớp tám, nhưng sẽ không bao giờ quên cảm giác lo lắng (27) về việc bắt đầu một lớp học mới và chuyển trường cách đây hai năm. Tôi nhớ những suy nghĩ đó: Nó có quá khó không? Mình có bị lạc không? Những đứa trẻ khác có thích (28) mình không? Mình có kết bạn mới được không? Tin tôi đi, tôi biết cảm giác đó đáng sợ như thế nào, nhưng ai cũng cảm thấy như vậy! Bạn không đơn độc, và những lo lắng đó (29) là hoàn toàn bình thường.
+                </div>
+            </div>
+
+            <div class="passage-box">
+                <p>One thing I've learned is that starting a new grade and moving schools are big changes, but it's also a chance to discover new things about yourself, (30) _______ new friends and learn skills that will help you grow. Going to a new school can be really (31) _______!</p>
+                <button class="trans-btn" onclick="toggleTrans('trans2')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-content" id="trans2">
+                    Một điều tôi học được là bắt đầu một lớp học mới và chuyển trường là những thay đổi lớn, nhưng đó cũng là cơ hội để khám phá những điều mới về bản thân, (30) kết bạn mới và học các kỹ năng sẽ giúp bạn phát triển. Đi đến một ngôi trường mới có thể thực sự (31) thú vị!
+                </div>
+            </div>
+
+            <div class="glossary">
+                <h3>📚 Bảng từ vựng học thuật - Passage 1</h3>
+                <table>
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td><b>nervous</b></td><td>adj</td><td>lo lắng, bồn chồn</td></tr>
+                    <tr><td><b>grade</b></td><td>n</td><td>khối lớp, điểm số</td></tr>
+                    <tr><td><b>thought</b></td><td>n</td><td>suy nghĩ, ý nghĩ</td></tr>
+                    <tr><td><b>scary</b></td><td>adj</td><td>đáng sợ</td></tr>
+                    <tr><td><b>alone</b></td><td>adj</td><td>cô đơn, một mình</td></tr>
+                    <tr><td><b>worry</b></td><td>n</td><td>sự lo lắng, nỗi lo</td></tr>
+                    <tr><td><b>completely</b></td><td>adv</td><td>một cách hoàn toàn</td></tr>
+                    <tr><td><b>normal</b></td><td>adj</td><td>bình thường</td></tr>
+                    <tr><td><b>chance</b></td><td>n</td><td>cơ hội</td></tr>
+                    <tr><td><b>discover</b></td><td>v</td><td>khám phá</td></tr>
+                </table>
+            </div>
+
+            <hr style="border: 1px dashed rgba(0,0,0,0.2); margin: 20px 0;">
+
+            <div class="passage-title">PASSAGE 2: AV1 Classroom Robot</div>
+            
+            <div class="passage-box">
+                <p>AV1 is a classroom robot that was built to help students who are sick. The robot takes a student's place in class, and the student can control it with a smartphone.</p>
+                <button class="trans-btn" onclick="toggleTrans('trans3')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-content" id="trans3">
+                    AV1 là một robot lớp học được chế tạo để giúp những học sinh bị ốm. Robot này thay thế vị trí của học sinh trong lớp, và học sinh có thể điều khiển nó bằng điện thoại thông minh.
+                </div>
+            </div>
+
+            <div class="passage-box">
+                <p>Makayla Nunn is a student in the United Kingdom who uses AV1. That's because she has a rare illness that makes her tired. The feeling doesn't go away with sleep or rest. Her doctor told her to spend just three hours at school each day, which makes it hard to keep up with her schoolwork, and Makayla misses her friends. "I would love to see them more," she said.</p>
+                <button class="trans-btn" onclick="toggleTrans('trans4')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-content" id="trans4">
+                    Makayla Nunn là một học sinh ở Vương quốc Anh sử dụng AV1. Đó là vì cô bé mắc một căn bệnh hiếm gặp khiến cô bé luôn cảm thấy mệt mỏi. Cảm giác này không biến mất dù có ngủ hay nghỉ ngơi. Bác sĩ bảo cô bé chỉ được ở trường ba giờ mỗi ngày, điều này khiến cô bé khó theo kịp bài vở trên lớp, và Makayla rất nhớ bạn bè. "Cháu rất muốn gặp các bạn nhiều hơn," cô bé nói.
+                </div>
+            </div>
+
+            <div class="passage-box">
+                <p>With AV1, Makayla is able to stay connected. She uses AV1's camera to see her classroom, and she can "raise her hand" by tapping a button that makes a light flash on AV1's head. Makayla also talks to her classmates and teachers through AV1's speakers. And she can push buttons to make the robot's glowing eyes look happy or sad.</p>
+                <button class="trans-btn" onclick="toggleTrans('trans5')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-content" id="trans5">
+                    Với AV1, Makayla có thể giữ liên lạc. Cô bé sử dụng camera của AV1 để nhìn thấy lớp học của mình, và cô bé có thể "giơ tay" bằng cách chạm vào một nút khiến đèn nhấp nháy trên đầu AV1. Makayla cũng nói chuyện với bạn cùng lớp và giáo viên thông qua loa của AV1. Và cô bé có thể nhấn nút để làm cho đôi mắt sáng của robot trông vui vẻ hoặc buồn bã.
+                </div>
+            </div>
+
+            <div class="glossary">
+                <h3>📚 Bảng từ vựng học thuật - Passage 2</h3>
+                <table>
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td><b>classroom</b></td><td>n</td><td>phòng học</td></tr>
+                    <tr><td><b>control</b></td><td>v</td><td>điều khiển, kiểm soát</td></tr>
+                    <tr><td><b>smartphone</b></td><td>n</td><td>điện thoại thông minh</td></tr>
+                    <tr><td><b>rare</b></td><td>adj</td><td>hiếm gặp, hiếm có</td></tr>
+                    <tr><td><b>illness</b></td><td>n</td><td>căn bệnh, sự ốm yếu</td></tr>
+                    <tr><td><b>rest</b></td><td>n, v</td><td>sự nghỉ ngơi, nghỉ ngơi</td></tr>
+                    <tr><td><b>keep up with</b></td><td>phrasal verb</td><td>theo kịp, bắt kịp</td></tr>
+                    <tr><td><b>connected</b></td><td>adj</td><td>được kết nối, giữ liên lạc</td></tr>
+                    <tr><td><b>tap</b></td><td>v</td><td>chạm nhẹ, gõ nhẹ</td></tr>
+                    <tr><td><b>glowing</b></td><td>adj</td><td>rực rỡ, phát sáng</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: EXERCISES -->
+        <div class="panel" id="right-panel">
+            <h2 style="font-family: 'Bangers', cursive; font-size: 2.5rem; text-align:center; margin-bottom: 20px; color:#2f3542;">EXERCISES</h2>
+            
+            <div id="quiz-container">
+                <!-- Câu hỏi được render từ JS -->
+            </div>
+
+            <div class="submit-area">
+                <button class="submit-btn" onclick="openSubmitPopup()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NỘP BÀI POPUP -->
+    <div class="overlay" id="submit-overlay">
+        <div class="popup" id="name-popup">
+            <h2 style="font-family: 'Bangers'; font-size: 2.5rem; margin-bottom: 15px;">Are you ready?</h2>
+            <p style="margin-bottom: 20px;">Nhập tên của con để Ms MS Chí Nên chấm điểm nhé!</p>
+            <input type="text" id="student-name" placeholder="Ví dụ: Tuệ Minh">
+            <button class="submit-btn" onclick="calculateScore()">CHẤM ĐIỂM NGAY</button>
+        </div>
+
+        <div class="popup" id="result-popup" style="display: none;">
+            <h2 style="font-family: 'Bangers'; font-size: 2.5rem;">SCORECARD</h2>
+            <p style="font-size: 1.2rem; margin-top: 10px;">Học sinh: <b id="display-name" style="color: #ff4757;"></b></p>
+            <div class="score-display"><span id="correct-count">0</span>/10</div>
+            <div class="score-10">Điểm hệ 10: <span id="scale-score" style="color: #27ae60; font-size: 2rem;">0.00</span> / 10</div>
+            <div class="teacher-cmt" id="teacher-comment"></div>
+            <img id="result-gif" class="gif-result" src="" alt="result-gif">
+            <button class="submit-btn" onclick="closePopup()" style="font-size: 1.2rem; padding: 10px 20px;">Xem tiếp kết quả</button>
+        </div>
+    </div>
+
+<script>
+// DỮ LIỆU CÂU HỎI & GIẢI THÍCH CHI TIẾT
+const quizData = [
+    {
+        id: 27,
+        qText: "Câu 27: Select the best answer",
+        options: [
+            { text: "about", correct: true },
+            { text: "in", correct: false },
+            { text: "of", correct: false },
+            { text: "at", correct: false }
+        ],
+        explanation: `
+            <b>Đề bài:</b> Câu 27: Select the best answer<br>
+            <b>Dịch đề bài:</b> Chọn câu trả lời đúng nhất cho vị trí 27.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>about ➔ Dịch: <span class='p-mean'>về (giới từ)</span></li>
+                <li>in ➔ Dịch: <span class='p-mean'>trong (giới từ)</span></li>
+                <li>of ➔ Dịch: <span class='p-mean'>của (giới từ)</span></li>
+                <li>at ➔ Dịch: <span class='p-mean'>tại, ở (giới từ)</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>about</b>. Dựa vào cấu trúc <span class='p-grammar'>Tính từ + Giới từ</span>: <span class='p-word'>nervous</span> + <span class='p-word'>about</span> + N/V-ing mang nghĩa <span class='p-mean'>lo lắng về điều gì đó</span>. Ở đây tác giả lo lắng về việc bắt đầu lớp mới (starting a new grade).</li>
+                <li><span class='hl-red'>Tại sao sai:</span> Các giới từ <span class='p-word'>in</span>, <span class='p-word'>of</span>, <span class='p-word'>at</span> khi ghép với tính từ <span class='p-word'>nervous</span> đều sai cấu trúc ngữ pháp collocation trong Tiếng Anh.</li>
+            </ul>
+        `
+    },
+    {
+        id: 28,
+        qText: "Câu 28: Select the best answer",
+        options: [
+            { text: "him", correct: false },
+            { text: "her", correct: false },
+            { text: "me", correct: true },
+            { text: "them", correct: false }
+        ],
+        explanation: `
+            <b>Đề bài:</b> Câu 28: Select the best answer<br>
+            <b>Dịch đề bài:</b> Chọn câu trả lời đúng nhất cho vị trí 28.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>him ➔ Dịch: <span class='p-mean'>anh ấy (đại từ tân ngữ)</span></li>
+                <li>her ➔ Dịch: <span class='p-mean'>cô ấy (đại từ tân ngữ)</span></li>
+                <li>me ➔ Dịch: <span class='p-mean'>tôi (đại từ tân ngữ)</span></li>
+                <li>them ➔ Dịch: <span class='p-mean'>họ (đại từ tân ngữ)</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>me</b>. Chủ ngữ đang trần thuật ở ngôi thứ nhất (<span class='p-word'>I</span>, <span class='p-word'>My name's Jake</span>). Câu tự hỏi bản thân: "Will the other kids like <span class='p-word'>me</span>?" dịch là <span class='p-mean'>"Những đứa trẻ khác có thích TÔI không?"</span> nên tân ngữ tương ứng phải là <span class='p-word'>me</span>.</li>
+                <li><span class='hl-red'>Tại sao sai:</span> Ngữ cảnh không nhắc đến một người thứ ba nào khác (<span class='p-word'>him</span>, <span class='p-word'>her</span>) hay một nhóm người nào khác (<span class='p-word'>them</span>) để đóng vai trò làm tân ngữ nhận hành động "like" ở đây.</li>
+            </ul>
+        `
+    },
+    {
+        id: 29,
+        qText: "Câu 29: Select the best answer",
+        options: [
+            { text: "is", correct: false },
+            { text: "are", correct: true },
+            { text: "is being", correct: false },
+            { text: "are being", correct: false }
+        ],
+        explanation: `
+            <b>Đề bài:</b> Câu 29: Select the best answer<br>
+            <b>Dịch đề bài:</b> Chọn câu trả lời đúng nhất cho vị trí 29.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>is ➔ Dịch: <span class='p-mean'>là (động từ tobe số ít)</span></li>
+                <li>are ➔ Dịch: <span class='p-mean'>là (động từ tobe số nhiều)</span></li>
+                <li>is being ➔ Dịch: <span class='p-mean'>đang là (tobe tiếp diễn số ít)</span></li>
+                <li>are being ➔ Dịch: <span class='p-mean'>đang là (tobe tiếp diễn số nhiều)</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>are</b>. Chủ ngữ của mệnh đề này là cụm danh từ <span class='p-grammar'>those worries</span> (những nỗi lo lắng) ở dạng số nhiều (có "s"). Do đó, động từ to-be đi kèm phải chia ở số nhiều là <span class='p-word'>are</span>. Đây là sự thật hiển nhiên nên dùng thì hiện tại đơn.</li>
+                <li><span class='hl-red'>Tại sao sai:</span> <span class='p-word'>is</span> sai vì đây là tobe số ít. <span class='p-word'>is being</span> và <span class='p-word'>are being</span> sai thì (hiện tại tiếp diễn không dùng để chỉ tính chất/sự thật hiển nhiên của sự việc trong trường hợp này).</li>
+            </ul>
+        `
+    },
+    {
+        id: 30,
+        qText: "Câu 30: Select the best answer",
+        options: [
+            { text: "build", correct: false },
+            { text: "make", correct: true },
+            { text: "take", correct: false },
+            { text: "give", correct: false }
+        ],
+        explanation: `
+            <b>Đề bài:</b> Câu 30: Select the best answer<br>
+            <b>Dịch đề bài:</b> Chọn câu trả lời đúng nhất cho vị trí 30.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>build ➔ Dịch: <span class='p-mean'>xây dựng (động từ)</span></li>
+                <li>make ➔ Dịch: <span class='p-mean'>làm, tạo ra (động từ)</span></li>
+                <li>take ➔ Dịch: <span class='p-mean'>lấy, cầm (động từ)</span></li>
+                <li>give ➔ Dịch: <span class='p-mean'>cho, tặng (động từ)</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>make</b>. Đây là cụm từ cố định (<span class='p-grammar'>Collocation</span>). Trong tiếng Anh, để nói "kết bạn", chúng ta BẮT BUỘC dùng cụm <span class='p-word'>make friends</span>.</li>
+                <li><span class='hl-red'>Tại sao sai:</span> Dù tiếng Việt có thể dịch thoát ý là "xây dựng tình bạn", nhưng trong tiếng Anh không dùng <span class='p-word'>build friends</span>, <span class='p-word'>take friends</span> hay <span class='p-word'>give friends</span>. Tất cả đều sai collocation.</li>
+            </ul>
+        `
+    },
+    {
+        id: 31,
+        qText: "Câu 31: Select the best answer",
+        options: [
+            { text: "excitement", correct: false },
+            { text: "excite", correct: false },
+            { text: "excitedly", correct: false },
+            { text: "exciting", correct: true }
+        ],
+        explanation: `
+            <b>Đề bài:</b> Câu 31: Select the best answer<br>
+            <b>Dịch đề bài:</b> Chọn câu trả lời đúng nhất cho vị trí 31.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>excitement ➔ Dịch: <span class='p-mean'>sự thú vị, sự phấn khích (danh từ)</span></li>
+                <li>excite ➔ Dịch: <span class='p-mean'>kích thích, làm phấn khích (động từ)</span></li>
+                <li>excitedly ➔ Dịch: <span class='p-mean'>một cách đầy phấn khích (trạng từ)</span></li>
+                <li>exciting ➔ Dịch: <span class='p-mean'>thú vị, hấp dẫn (tính từ)</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>exciting</b>. Phân tích cấu trúc câu: "can be really + [Cần một Tính từ]". Ở đây, chủ ngữ là sự vật/sự việc <span class='p-word'>Going to a new school</span> (Việc đi đến trường mới). Tính từ đuôi "-ing" (<span class='p-word'>exciting</span>) được dùng để miêu tả bản chất của sự vật/sự việc mang lại cảm giác thú vị.</li>
+                <li><span class='hl-red'>Tại sao sai:</span> <span class='p-word'>excitement</span> (N) và <span class='p-word'>excite</span> (V) sai từ loại sau tobe "be". <span class='p-word'>excitedly</span> (Adv) cũng sai từ loại. Nếu dùng tính từ đuôi "-ed" (<span class='p-word'>excited</span>) thì dùng để tả cảm xúc của CON NGƯỜI (vd: I am excited), không dùng cho sự việc.</li>
+            </ul>
+        `
+    },
+    {
+        id: 32,
+        qText: "Câu 32: AV1 is helpful for students who are sick.",
+        options: [
+            { text: "True", correct: true },
+            { text: "False", correct: false }
+        ],
+        explanation: `
+            <b>Đề bài:</b> AV1 is helpful for students who are sick.<br>
+            <b>Dịch đề bài:</b> AV1 hữu ích cho những học sinh bị ốm.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>True ➔ Dịch: <span class='p-mean'>Đúng</span></li>
+                <li>False ➔ Dịch: <span class='p-mean'>Sai</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>True</b>. Dẫn chứng ngay câu đầu tiên của Passage 2: <span class='p-word'>"AV1 is a classroom robot that was built to help students who are sick."</span> (<span class='p-mean'>AV1 là một robot lớp học được chế tạo để giúp những học sinh bị ốm.</span>). Thông tin trùng khớp hoàn toàn.</li>
+                <li><span class='hl-red'>Tại sao sai:</span> Không có lý do chọn False vì thông tin được xác nhận rõ ràng trong văn bản.</li>
+            </ul>
+        `
+    },
+    {
+        id: 33,
+        qText: "Câu 33: Makayla has to spend all her time at home because of her illness.",
+        options: [
+            { text: "True", correct: false },
+            { text: "False", correct: true }
+        ],
+        explanation: `
+            <b>Đề bài:</b> Makayla has to spend all her time at home because of her illness.<br>
+            <b>Dịch đề bài:</b> Makayla phải dành toàn bộ thời gian ở nhà vì bệnh của cô ấy.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>True ➔ Dịch: <span class='p-mean'>Đúng</span></li>
+                <li>False ➔ Dịch: <span class='p-mean'>Sai</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>False</b>. Từ khóa bẫy ở đây là chữ <span class='p-word'>all her time</span> (toàn bộ thời gian). Dẫn chứng trong bài (Đoạn 2): <span class='p-word'>"Her doctor told her to spend just three hours at school each day..."</span> (<span class='p-mean'>Bác sĩ bảo cô bé chỉ dành ba giờ ở trường mỗi ngày...</span>). Điều này chứng tỏ cô bé VẪN ĐẾN TRƯỜNG 3 tiếng/ngày, chứ không phải ở nhà 100% thời gian.</li>
+                <li><span class='hl-red'>Tại sao sai:</span> Nếu chọn True nghĩa là bạn đã bị lừa bởi từ "all" mang tính chất tuyệt đối.</li>
+            </ul>
+        `
+    },
+    {
+        id: 34,
+        qText: "Câu 34: Makayla wants to see her friends at school more.",
+        options: [
+            { text: "True", correct: true },
+            { text: "False", correct: false }
+        ],
+        explanation: `
+            <b>Đề bài:</b> Makayla wants to see her friends at school more.<br>
+            <b>Dịch đề bài:</b> Makayla muốn gặp bạn bè ở trường nhiều hơn.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>True ➔ Dịch: <span class='p-mean'>Đúng</span></li>
+                <li>False ➔ Dịch: <span class='p-mean'>Sai</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>True</b>. Dẫn chứng cuối đoạn 2: <span class='p-word'>"I would love to see them more," she said.</span> (<span class='p-mean'>"Cháu rất muốn gặp các bạn nhiều hơn," cô bé nói.</span>). Thông tin trùng khớp.</li>
+                <li><span class='hl-red'>Tại sao sai:</span> Không chọn False vì ý nguyện của cô bé đã được trích dẫn trực tiếp trong ngoặc kép.</li>
+            </ul>
+        `
+    },
+    {
+        id: 35,
+        qText: "Câu 35: AV1 raises its hand in class when Makayla taps a button.",
+        options: [
+            { text: "True", correct: false },
+            { text: "False", correct: true }
+        ],
+        explanation: `
+            <b>Đề bài:</b> AV1 raises its hand in class when Makayla taps a button.<br>
+            <b>Dịch đề bài:</b> AV1 giơ tay của nó lên trong lớp khi Makayla chạm vào một nút.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>True ➔ Dịch: <span class='p-mean'>Đúng</span></li>
+                <li>False ➔ Dịch: <span class='p-mean'>Sai</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>False</b>. Đây là một câu bẫy nghĩa đen/nghĩa bóng. Dẫn chứng đoạn 3: <span class='p-word'>...she can "raise her hand" by tapping a button that makes a light flash on AV1's head.</span> (<span class='p-mean'>cô bé có thể "giơ tay" bằng cách chạm vào một nút khiến một bóng đèn nhấp nháy trên đầu AV1</span>). Việc "giơ tay" chỉ là hình ẩn dụ (được để trong ngoặc kép), thực tế robot KHÔNG CÓ TAY ĐỂ GIƠ, nó chỉ BẬT ĐÈN TRÊN ĐẦU.</li>
+                <li><span class='hl-red'>Tại sao sai:</span> Câu hỏi dùng nghĩa đen (raises its hand - giơ cánh tay vật lý lên), nên thông tin này sai hoàn toàn so với nguyên lý hoạt động của robot (nháy đèn).</li>
+            </ul>
+        `
+    },
+    {
+        id: 36,
+        qText: "Câu 36: AV1 has speakers, so Makayla can talk to her classmates and teachers.",
+        options: [
+            { text: "True", correct: true },
+            { text: "False", correct: false }
+        ],
+        explanation: `
+            <b>Đề bài:</b> AV1 has speakers, so Makayla can talk to her classmates and teachers.<br>
+            <b>Dịch đề bài:</b> AV1 có loa, vì vậy Makayla có thể nói chuyện với bạn cùng lớp và giáo viên.<br>
+            <b>Các đáp án:</b><br>
+            <ul>
+                <li>True ➔ Dịch: <span class='p-mean'>Đúng</span></li>
+                <li>False ➔ Dịch: <span class='p-mean'>Sai</span></li>
+            </ul>
+            <b>Giải thích chi tiết:</b><br>
+            <ul>
+                <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>True</b>. Dẫn chứng ở đoạn 3: <span class='p-word'>"Makayla also talks to her classmates and teachers through AV1's speakers."</span> (<span class='p-mean'>Makayla cũng nói chuyện với bạn cùng lớp và giáo viên thông qua loa của AV1.</span>).</li>
+                <li><span class='hl-red'>Tại sao sai:</span> Thông tin trong bài đã xác nhận trực tiếp chức năng "speakers" (loa) giúp kết nối giọng nói, nên không thể chọn False.</li>
+            </ul>
+        `
+    }
+];
+
+let score = 0;
+let answeredCount = 0;
+
+// Web Audio API setup
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    
+    if (type === 'correct') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+        
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+    } else if (type === 'wrong') {
+        playBeep(300, 150, 0.2, 0);
+        playBeep(300, 150, 0.2, 0.15);
+    }
+}
+
+function playBeep(startFreq, endFreq, duration, delay) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime + delay);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + delay + duration);
+    
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime + delay);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + duration);
+    
+    osc.start(audioCtx.currentTime + delay);
+    osc.stop(audioCtx.currentTime + delay + duration);
+}
+
+// Confetti Effect
+const canvas = document.getElementById('confetti');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+let particles = [];
+
+function createConfetti() {
+    for (let i = 0; i < 100; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height - canvas.height,
+            r: Math.random() * 6 + 2,
+            dx: Math.random() * 4 - 2,
+            dy: Math.random() * 4 + 2,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`
+        });
+    }
+}
+
+function drawConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, index) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        p.x += p.dx;
+        p.y += p.dy;
+        if (p.y > canvas.height) particles.splice(index, 1);
+    });
+    requestAnimationFrame(drawConfetti);
+}
+drawConfetti();
+
+// Shuffle Array Algorithm
+function shuffle(array) {
+    let currentIndex = array.length, randomIndex;
+    while (currentIndex != 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
+}
+
+// Render Quiz
+const quizContainer = document.getElementById('quiz-container');
+quizData.forEach((q, index) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = `q-card-${index}`;
+    
+    const shuffledOptions = shuffle([...q.options]);
+    let optionsHtml = '';
+    
+    shuffledOptions.forEach((opt, optIdx) => {
+        optionsHtml += `<button class="opt-btn" onclick="checkAnswer(this, ${index}, ${opt.correct})">${opt.text}</button>`;
+    });
+
+    card.innerHTML = `
+        <div class="q-text">${q.qText}</div>
+        <div class="options-grid">${optionsHtml}</div>
+        <div class="explanation" id="exp-${index}"></div>
+    `;
+    quizContainer.appendChild(card);
+});
+
+// Logic Check Answer - CẬP NHẬT: HIỆN GIẢI THÍCH NGAY LẬP TỨC
+function checkAnswer(btn, qIndex, isCorrect) {
+    const card = document.getElementById(`q-card-${qIndex}`);
+    const buttons = card.querySelectorAll('.opt-btn');
+    
+    // Vô hiệu hóa các nút khác trong câu hỏi này để tránh ấn nhiều lần
+    buttons.forEach(b => b.disabled = true);
+    
+    answeredCount++;
+
+    if (isCorrect) {
+        btn.classList.add('correct');
+        playSound('correct');
+        createConfetti();
+        score++;
+    } else {
+        btn.classList.add('wrong');
+        btn.classList.add('shake');
+        playSound('wrong');
+        
+        // Highlight đáp án đúng
+        buttons.forEach(b => {
+            const correctStatus = b.getAttribute('onclick').includes('true');
+            if (correctStatus) b.classList.add('correct');
+        });
+        
+        setTimeout(() => btn.classList.remove('shake'), 400);
+    }
+    
+    // Đổ dữ liệu giải thích và hiển thị NGAY LẬP TỨC dưới câu hỏi
+    const expDiv = document.getElementById(`exp-${qIndex}`);
+    expDiv.innerHTML = quizData[qIndex].explanation;
+    expDiv.style.display = 'block';
+}
+
+// Toggle Translation
+function toggleTrans(id) {
+    const el = document.getElementById(id);
+    if(el.style.display === 'block') {
+        el.style.display = 'none';
+    } else {
+        el.style.display = 'block';
+    }
+}
+
+// Submit Logic
+function openSubmitPopup() {
+    document.getElementById('submit-overlay').style.display = 'flex';
+}
+
+function calculateScore() {
+    const nameInput = document.getElementById('student-name').value.trim();
+    if(nameInput === "") {
+        alert("Các con hãy nhập tên của mình trước khi nộp bài nhé!");
+        return;
+    }
+    if (answeredCount < quizData.length) {
+        if(!confirm("Con chưa làm hết các câu hỏi. Có chắc chắn muốn nộp bài sớm không?")) return;
+    }
+
+    document.getElementById('name-popup').style.display = 'none';
+    document.getElementById('result-popup').style.display = 'block';
+    
+    document.getElementById('display-name').innerText = nameInput;
+    document.getElementById('correct-count').innerText = score;
+    
+    const totalQ = quizData.length;
+    const scale10 = (score / totalQ) * 10;
+    document.getElementById('scale-score').innerText = scale10.toFixed(2);
+
+    const cmtEl = document.getElementById('teacher-comment');
+    const gifEl = document.getElementById('result-gif');
+    
+    let percent = score / totalQ;
+    if (percent === 1) {
+        cmtEl.innerText = "Tuyệt đỉnh! Con là một thiên tài ngôn ngữ thực thụ! Cô MS Chí Nên rất tự hào!";
+        gifEl.src = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif";
+    } else if (percent >= 0.6) {
+        cmtEl.innerText = "Rất tốt! Con nắm bài khá vững đó. High-five! ✋";
+        gifEl.src = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif";
+    } else {
+        cmtEl.innerText = "Chà chà, lần này chưa cẩn thận rồi. Xem lại phần giải thích chi tiết để phục thù nhé! Cố lên!";
+        gifEl.src = "https://media.giphy.com/media/2rtQMJvhzOnRe/giphy.gif";
+    }
+}
+
+function closePopup() {
+    document.getElementById('submit-overlay').style.display = 'none';
+}
+</script>
+
+</body>
+</html>

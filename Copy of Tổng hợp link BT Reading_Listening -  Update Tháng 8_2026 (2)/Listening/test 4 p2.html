@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listening Practice - Giáo viên tạo: Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8854C0; /* Pastel Purple */
+            --secondary: #00C9A7; /* Turquoise */
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --text-dark: #2d3436;
+            --text-light: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            /* Dynamic Theme: Gradient kết hợp Pattern SVG nhúng Base64 chứa Emoji lơ lửng */
+            background: 
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" opacity="0.4"><text x="50" y="50" font-size="30" opacity="0.5">💃</text><text x="300" y="100" font-size="40" opacity="0.6">🎶</text><text x="150" y="250" font-size="35" opacity="0.4">🕺</text><text x="320" y="320" font-size="25" opacity="0.7">✨</text><text x="80" y="350" font-size="30" opacity="0.5">🎧</text></svg>'),
+                radial-gradient(circle at top left, #8854C0 0%, #00C9A7 100%);
+            background-attachment: fixed;
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        /* --- MODAL BẢO MẬT & NAME POPUP --- */
+        #password-modal, #name-modal, #result-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--primary);
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+            text-align: center;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .modal-content input:focus {
+            box-shadow: 0 0 15px rgba(136, 84, 192, 0.4);
+        }
+
+        .modal-content button {
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #5A3780;
+            transition: all 0.2s;
+        }
+
+        .modal-content button:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: var(--wrong) !important;
+            color: var(--wrong) !important;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* --- GIAO DIỆN CHÍNH --- */
+        #main-app {
+            display: none;
+            width: 100%;
+            max-width: 850px;
+            margin: 20px auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+        }
+
+        .header p.note-context {
+            font-size: 18px;
+            background: rgba(255,255,255,0.2);
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 15px;
+            margin-top: 15px;
+            font-weight: 700;
+        }
+
+        .audio-container {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.4);
+        }
+
+        audio {
+            width: 100%;
+            max-width: 400px;
+            outline: none;
+            border-radius: 30px;
+        }
+
+        /* --- CARD CÂU HỎI (DẠNG ĐIỀN TỪ) --- */
+        .question-card {
+            padding: 30px;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            transition: transform 0.3s;
+        }
+
+        .question-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .gap-wrapper {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .question-number {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .gap-input {
+            padding: 10px 15px;
+            border: 2px solid var(--secondary);
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            outline: none;
+            width: 180px;
+            text-align: center;
+            color: var(--text-dark);
+            transition: all 0.3s;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .gap-input:focus {
+            box-shadow: 0 0 0 3px rgba(0, 201, 167, 0.3);
+            border-color: var(--primary);
+        }
+
+        .gap-input.correct {
+            background-color: var(--correct);
+            color: white;
+            border-color: var(--correct);
+            box-shadow: 0 5px 15px rgba(0, 210, 106, 0.3);
+        }
+
+        .gap-input.wrong {
+            background-color: var(--wrong);
+            color: white;
+            border-color: var(--wrong);
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
+        }
+
+        .check-btn {
+            padding: 10px 20px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #00A355;
+            transition: all 0.2s;
+        }
+
+        .check-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #00A355;
+        }
+
+        .check-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .check-btn:disabled {
+            background: #bdc3c7;
+            box-shadow: 0 4px 0 #95a5a6;
+            cursor: not-allowed;
+            color: #fff;
+        }
+
+        .correct-answer-display {
+            display: none;
+            color: var(--correct);
+            font-size: 16px;
+            font-weight: 800;
+            margin-top: 10px;
+            margin-left: 45px;
+        }
+
+        /* --- KHUNG GIẢI THÍCH (SIÊU CHI TIẾT) --- */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-left: 5px solid var(--secondary);
+            border-radius: 0 15px 15px 0;
+            font-size: 15px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .exp-section { margin-bottom: 15px; }
+        .exp-title { font-weight: 800; color: var(--primary); margin-bottom: 5px; text-transform: uppercase; font-size: 13px;}
+        .transcript { background: #f8f9fa; padding: 12px; border-radius: 8px; font-style: italic; color: #444; margin-bottom: 8px; border: 1px solid #eee;}
+        .highlight { color: var(--wrong); font-weight: bold; background: #ffeaa7; padding: 2px 4px; border-radius: 4px;}
+        .reason-true { color: #00A355; font-weight: bold; }
+        .reason-false { color: #d35400; font-weight: bold; }
+
+        /* --- NÚT NỘP BÀI --- */
+        .submit-btn {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--secondary), #00A355);
+            color: white;
+            font-size: 22px;
+            font-weight: 800;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #007A3E;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 0 #007A3E;
+        }
+
+        .submit-btn:active {
+            transform: translateY(8px);
+            box-shadow: none;
+        }
+
+        /* --- RESULT MODAL --- */
+        .meme-img {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 15px;
+            margin: 15px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            object-fit: contain;
+        }
+
+        #error-msg {
+            color: var(--wrong);
+            font-size: 14px;
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            z-index: 10000;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="password-modal">
+        <div class="modal-content glass">
+            <h2>🔒 Nhập Mật Khẩu</h2>
+            <p style="margin-bottom: 15px; color: #555;">Dành riêng cho học sinh của Ms. MS Chí Nên</p>
+            <input type="password" id="pass-input" placeholder="Nhập mật khẩu...">
+            <button onclick="checkPassword()">MỞ KHÓA BÀI THI</button>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="header glass">
+            <h3>Listening Practice - Giáo viên tạo: Ms MS Chí Nên</h3>
+            <h1>🏆 DANCE COMPETITION 🏆</h1>
+            <p>For each question, write the correct answer in the gap.</p>
+            <p>Write <strong>one word</strong> or <strong>a number</strong> or <strong>a date</strong> or <strong>a time</strong>.</p>
+            <div class="note-context">
+                For children from: 13-15
+            </div>
+        </div>
+
+        <div class="audio-container glass">
+            <audio id="exam-audio" controls controlsList="nodownload"></audio>
+        </div>
+
+        <div id="quiz-container">
+            </div>
+
+        <button class="submit-btn" onclick="openNamePrompt()">🎯 Nộp Bài & Xem Kết Quả</button>
+    </div>
+
+    <div id="name-modal" style="display:none;">
+        <div class="modal-content glass">
+            <h2>📝 Nhập tên của bạn</h2>
+            <input type="text" id="student-name" placeholder="Ví dụ: Nguyễn Văn A..." onkeypress="handleNameEnter(event)">
+            <p id="error-msg">⚠️ Vui lòng nhập tên trước khi xem điểm nhé!</p>
+            <button onclick="submitQuiz()">XÁC NHẬN NỘP BÀI</button>
+        </div>
+    </div>
+
+    <div id="result-modal" style="display:none;">
+        <div class="modal-content glass" style="max-width: 500px;">
+            <h2 id="result-title">🌟 KẾT QUẢ 🌟</h2>
+            <h1 id="result-score" style="color: var(--primary); font-size: 40px; margin: 10px 0;">0/5</h1>
+            <img id="result-meme" class="meme-img" src="" alt="Result Meme">
+            <p id="result-feedback" style="font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #333;"></p>
+            <button onclick="location.reload()">LÀM LẠI BÀI</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. BẢO MẬT & MÃ HÓA ---
+        const securePass = [99, 111, 109, 97, 105, 97, 110, 117, 108, 105, 115];
+        const audioBase64 = "aHR0cHM6Ly9lbmdsaXNocHJhY3RpY2V0ZXN0Lm5ldC93cC1jb250ZW50L3VwbG9hZHMvMjAyMS8xMS9rZXQtcHJhY3RpY2UtbGlzdGVuaW5nLXRlc3QtMDQtcGFydC0yLm1wMw==";
+
+        function checkPassword() {
+            const input = document.getElementById('pass-input');
+            const target = securePass.map(c => String.fromCharCode(c)).join('');
+            
+            if(input.value === target) {
+                document.getElementById('password-modal').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                document.getElementById('exam-audio').src = atob(audioBase64);
+            } else {
+                input.classList.add('shake');
+                input.value = '';
+                input.placeholder = 'Sai mật khẩu!';
+                setTimeout(() => input.classList.remove('shake'), 400);
+            }
+        }
+
+        document.getElementById('pass-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') checkPassword();
+        });
+
+
+        // --- 2. DỮ LIỆU BÀI TẬP ĐIỀN TỪ ---
+        const gapFillData = [
+            {
+                id: 6,
+                prefix: "Date to enter by:",
+                suffix: "",
+                // Cambridge thường chấp nhận nhiều định dạng ngày tháng
+                acceptedAnswers: ["12th july", "12 july", "july 12", "july 12th", "the 12th of july", "twelfth of july", "12/7", "12/07"],
+                displayAnswer: "12th July",
+                explanation: {
+                    translation: "Hạn chót để đăng ký tham gia (Date to enter by) là ngày nào?",
+                    transcript: "The competition’s on the fourth of August, but you’ve got to enter by the <span class='highlight'>twelfth of July</span>.",
+                    viTranscript: "Cuộc thi diễn ra vào ngày 4 tháng 8, nhưng cháu phải đăng ký trước ngày <span class='highlight'>12 tháng 7</span>.",
+                    whyTrue: "Cô dì nói rất rõ ràng: 'enter by the twelfth of July' (đăng ký trước ngày 12 tháng 7). 'Enter by' đồng nghĩa với hạn chót đăng ký.",
+                    whyFalse: "Bẫy siêu kinh điển: Người nói nhắc đến '4th of August' nhưng đó là ngày diễn ra cuộc thi, KHÔNG phải hạn chót. Cụm 'Over four weeks' chỉ là khoảng thời gian còn lại, không phải đáp án cần điền."
+                }
+            },
+            {
+                id: 7,
+                prefix: "Send:",
+                suffix: "",
+                acceptedAnswers: ["video", "a video"],
+                displayAnswer: "video",
+                explanation: {
+                    translation: "Gửi cái gì đến ban tổ chức (Send)?",
+                    transcript: "You don’t have to send any money to enter, just a <span class='highlight'>video</span>.",
+                    viTranscript: "Cháu không cần phải gửi tiền để tham gia đâu, chỉ cần gửi một <span class='highlight'>video</span> thôi.",
+                    whyTrue: "Từ khóa 'just a video' (chỉ cần một video) kết hợp với động từ 'send' phía trước xác nhận đây là đáp án đúng.",
+                    whyFalse: "Bẫy phủ định: Người nói CÓ nhắc đến 'money' nhưng kèm theo cấu trúc phủ định 'don't have to send' (không cần phải gửi tiền)."
+                }
+            },
+            {
+                id: 8,
+                prefix: "Website address: www.",
+                suffix: ".com",
+                acceptedAnswers: ["jittersea"],
+                displayAnswer: "jittersea",
+                explanation: {
+                    translation: "Địa chỉ trang web (Website address) là gì?",
+                    transcript: "It’s www dot jittersea dot com. That’s spelt <span class='highlight'>J-I-double T-E-R-S-E-A</span>.",
+                    viTranscript: "Đó là www chấm jittersea chấm com. Đánh vần là <span class='highlight'>J-I-hai chữ T-E-R-S-E-A</span>.",
+                    whyTrue: "Nghe kỹ phần đánh vần: 'double T' nghĩa là có 2 chữ T liên tiếp -> J I T T E R S E A.",
+                    whyFalse: "Đây là dạng câu hỏi đánh vần (Spelling). Lỗi sai phổ biến nhất là học sinh viết thiếu 1 chữ T vì không nghe được từ 'double' (gấp đôi)."
+                }
+            },
+            {
+                id: 9,
+                prefix: "Place:",
+                suffix: "",
+                acceptedAnswers: ["college", "the college", "a college"],
+                displayAnswer: "college",
+                explanation: {
+                    translation: "Địa điểm tổ chức (Place) ở đâu?",
+                    transcript: "It’s going to be at the <span class='highlight'>college</span>; the one opposite the park.",
+                    viTranscript: "Nó sẽ được tổ chức ở <span class='highlight'>trường cao đẳng</span>; cái trường nằm đối diện công viên ấy.",
+                    whyTrue: "Câu khẳng định rõ ràng: 'It's going to be at the college' (Nó sẽ diễn ra ở trường cao đẳng).",
+                    whyFalse: "Bẫy địa điểm: Người nói nhắc đến 'park' (công viên) nhưng đây chỉ là mốc định vị trí (opposite the park - đối diện công viên), chứ không phải nơi tổ chức thi."
+                }
+            },
+            {
+                id: 10,
+                prefix: "First prize: £",
+                suffix: "",
+                acceptedAnswers: ["175", "175 pounds", "one hundred and seventy-five"],
+                displayAnswer: "175",
+                explanation: {
+                    translation: "Giải nhất (First prize) trị giá bao nhiêu bảng Anh?",
+                    transcript: "The winner gets a <span class='highlight'>hundred and seventy-five</span> pounds, and the person who comes second gets one hundred pounds!",
+                    viTranscript: "Người chiến thắng (Giải nhất) nhận được <span class='highlight'>175</span> bảng Anh, và người về nhì nhận được 100 bảng Anh!",
+                    whyTrue: "'The winner' (người chiến thắng) tương đương với 'First prize' (giải nhất). Số tiền đi kèm là 175.",
+                    whyFalse: "Bẫy con số: '100 pounds' là số tiền dành cho 'the person who comes second' (giải nhì). Rất nhiều bạn nghe thấy 100 ở cuối là điền luôn mà quên mất chủ ngữ!"
+                }
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = 0;
+
+        // Web Audio API
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playTeoTeo() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.4);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        function createConfetti(x, y) {
+            for (let i = 0; i < 30; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = x + 'px';
+                conf.style.top = y + 'px';
+                conf.style.backgroundColor = ['#00D26A', '#FF4757', '#8854C0', '#00C9A7', '#FFC312'][Math.floor(Math.random() * 5)];
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 50 + Math.random() * 100;
+                conf.style.transition = 'all 1s cubic-bezier(.37,0,.63,1)';
+                document.body.appendChild(conf);
+                setTimeout(() => {
+                    conf.style.transform = `translate(${Math.cos(angle)*velocity}px, ${Math.sin(angle)*velocity + 200}px) rotate(720deg)`;
+                    conf.style.opacity = '0';
+                }, 10);
+                setTimeout(() => conf.remove(), 1000);
+            }
+        }
+
+        // Render UI
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            
+            gapFillData.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.classList.add('question-card', 'glass');
+                
+                let html = `
+                <div class="gap-wrapper">
+                    <span class="question-number">(${q.id})</span>
+                    <span>${q.prefix}</span>
+                    <input type="text" class="gap-input" id="input-${index}" placeholder="Nhập đáp án..." onkeypress="handleEnterCheck(event, ${index})">
+                    <span>${q.suffix}</span>
+                    <button class="check-btn" id="btn-${index}" onclick="checkGapAnswer(${index}, event)">Kiểm tra</button>
+                </div>
+                <div class="correct-answer-display" id="correct-ans-${index}">Đáp án đúng: ${q.displayAnswer}</div>
+                `;
+                
+                // Khung Giải Thích
+                html += `
+                <div class="explanation-box" id="exp-${index}">
+                    <div class="exp-section">
+                        <div class="exp-title">📝 Phân tích câu hỏi:</div>
+                        <div>${q.explanation.translation}</div>
+                    </div>
+                    <div class="exp-section">
+                        <div class="exp-title">🎧 Audio Script (Trích đoạn):</div>
+                        <div class="transcript">${q.explanation.transcript}</div>
+                        <div class="transcript" style="background: #fff; border-color: #ddd;">${q.explanation.viTranscript}</div>
+                    </div>
+                    <div class="exp-section">
+                        <div class="exp-title">✅ Tại sao ĐÚNG?</div>
+                        <div class="reason-true">${q.explanation.whyTrue}</div>
+                    </div>
+                    <div class="exp-section">
+                        <div class="exp-title">⚠️ Bẫy (Distractors):</div>
+                        <div class="reason-false">${q.explanation.whyFalse}</div>
+                    </div>
+                </div>`;
+                
+                card.innerHTML = html;
+                container.appendChild(card);
+            });
+        }
+
+        function handleEnterCheck(e, index) {
+            if (e.key === 'Enter') {
+                checkGapAnswer(index, e);
+            }
+        }
+
+        // Logic check text
+        function checkGapAnswer(index, event) {
+            const inputField = document.getElementById(`input-${index}`);
+            const btn = document.getElementById(`btn-${index}`);
+            const correctDisplay = document.getElementById(`correct-ans-${index}`);
+            const expBox = document.getElementById(`exp-${index}`);
+            
+            const studentAnswer = inputField.value.trim().toLowerCase().replace(/\s+/g, ' '); // Loại bỏ khoảng trắng thừa
+            const qData = gapFillData[index];
+            
+            if (studentAnswer === "") {
+                inputField.classList.add('shake');
+                setTimeout(() => inputField.classList.remove('shake'), 400);
+                return;
+            }
+
+            // Disable sau khi nộp
+            inputField.readOnly = true;
+            btn.disabled = true;
+            btn.innerText = "Đã khóa";
+
+            const isCorrect = qData.acceptedAnswers.includes(studentAnswer);
+
+            if (isCorrect) {
+                inputField.classList.add('correct');
+                score++;
+                playDing();
+                
+                // Tránh lỗi khi bấm Enter (event.clientX/Y có thể undefined)
+                const x = event.clientX || inputField.getBoundingClientRect().left;
+                const y = event.clientY || inputField.getBoundingClientRect().top;
+                createConfetti(x, y);
+            } else {
+                inputField.classList.add('wrong');
+                inputField.classList.add('shake');
+                playTeoTeo();
+                correctDisplay.style.display = "block"; // Hiện đáp án đúng nếu làm sai
+            }
+            
+            answeredQuestions++;
+            expBox.style.display = 'block'; // Hiện giải thích
+        }
+
+        // --- 4. TÍNH NĂNG NỘP BÀI & KẾT QUẢ ---
+        function openNamePrompt() {
+            if (answeredQuestions < gapFillData.length) {
+                if(!confirm("Em chưa điền xong tất cả các chỗ trống. Em có chắc chắn muốn nộp bài?")) return;
+            }
+            document.getElementById('name-modal').style.display = 'flex';
+            document.getElementById('student-name').focus();
+        }
+
+        function handleNameEnter(e) {
+            if (e.key === 'Enter') submitQuiz();
+        }
+
+        function submitQuiz() {
+            const nameInput = document.getElementById('student-name');
+            const errorMsg = document.getElementById('error-msg');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                nameInput.classList.add('shake');
+                errorMsg.style.display = 'block';
+                setTimeout(() => nameInput.classList.remove('shake'), 400);
+                return;
+            }
+
+            document.getElementById('name-modal').style.display = 'none';
+            showResultModal(name);
+        }
+
+        function showResultModal(name) {
+            const modal = document.getElementById('result-modal');
+            const title = document.getElementById('result-title');
+            const scoreDisplay = document.getElementById('result-score');
+            const meme = document.getElementById('result-meme');
+            const feedback = document.getElementById('result-feedback');
+
+            const percentage = (score / gapFillData.length) * 100;
+            scoreDisplay.innerText = `${score} / ${gapFillData.length}`;
+
+            modal.style.display = 'flex';
+
+            if (percentage === 100) {
+                title.innerText = `🌟 THIÊN TÀI! ${name.toUpperCase()} XUẤT SẮC TUYỆT ĐỐI! 🌟`;
+                meme.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; 
+                feedback.innerText = "Cô MS Chí Nên siêu tự hào về em! Kỹ năng nghe bắt từ (Gap-fill) của em quá đỉnh!";
+                feedback.style.color = "var(--correct)";
+            } else if (percentage >= 60) {
+                title.innerText = `👍 KHÁ LẮM ${name.toUpperCase()}! 👍`;
+                meme.src = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; 
+                feedback.innerText = "Điểm số rất ổn! Lần tới nhớ cẩn thận hơn ở lỗi chính tả và các thông tin bẫy nhé!";
+                feedback.style.color = "var(--primary)";
+            } else {
+                title.innerText = `😅 CẦN CỐ GẮNG HƠN ${name.toUpperCase()} ƠI! 😅`;
+                meme.src = "https://media.giphy.com/media/ISOckXUydVj2g/giphy.gif"; 
+                feedback.innerText = "Bài điền từ hơi khó đúng không? Xem kỹ lại phần Audio Script cô đã bôi đỏ để rút kinh nghiệm nha!";
+                feedback.style.color = "var(--wrong)";
+            }
+        }
+
+        // Khởi tạo
+        renderQuiz();
+
+    </script>
+</body>
+</html>

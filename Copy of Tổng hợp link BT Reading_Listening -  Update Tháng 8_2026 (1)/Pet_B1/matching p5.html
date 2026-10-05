@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Challenge - Ms. MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            /* DYNAMIC THEME: COMMUNITY & NATURE (Based on "Park", "Yoga", "Picnic") */
+            --primary-color: #2E7D32; /* Forest Green */
+            --secondary-color: #FF8F00; /* Warm Amber/Sun */
+            --bg-color: #E8F5E9;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --correct-color: #00D26A;
+            --wrong-color: #FF4757;
+            --shadow: 0 8px 20px rgba(0,0,0,0.1);
+            --radius: 16px;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            /* SVG Background with Emojis: Park, Yoga, Sun */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cdefs%3E%3CradialGradient id='a' cx='50%25' cy='50%25' r='50%25' fx='50%25' fy='50%25'%3E%3Cstop offset='0%25' stop-color='%23E8F5E9' stop-opacity='0.8'/%3E%3Cstop offset='100%25' stop-color='%23C8E6C9' stop-opacity='1'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23a)'/%3E%3Ctext x='10%25' y='20%25' font-size='60' opacity='0.1'%3E🌳%3C/text%3E%3Ctext x='80%25' y='10%25' font-size='60' opacity='0.1'%3E🧘%3C/text%3E%3Ctext x='20%25' y='80%25' font-size='60' opacity='0.1'%3E🥪%3C/text%3E%3Ctext x='70%25' y='70%25' font-size='60' opacity='0.1'%3E🎭%3C/text%3E%3C/svg%3E");
+            color: var(--text-color);
+        }
+
+        /* --- HEADER & TIMER --- */
+        header {
+            background: #ffffff;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            z-index: 100;
+            position: relative;
+        }
+
+        .teacher-brand {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #timer-display {
+            font-size: 1.5rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-color);
+        }
+
+        .btn-timer {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 0 #1B5E20;
+        }
+        .btn-timer:active { transform: translateY(4px); box-shadow: none; }
+        .btn-timer.paused { background: var(--secondary-color); box-shadow: 0 4px 0 #E65100; }
+
+        /* --- SPLIT LAYOUT --- */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+            /* Scrollbar styling */
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-color) #f0f0f0;
+        }
+        
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-track { background: #f0f0f0; }
+        .panel::-webkit-scrollbar-thumb { background-color: var(--primary-color); border-radius: 10px; }
+
+        .left-panel {
+            border-right: 2px solid rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .right-panel {
+            background: transparent;
+        }
+
+        /* --- READING CONTENT --- */
+        .passage-title {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .passage-section {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--secondary-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .passage-section h3 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-translate {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+            background: none;
+            border: 1px dashed var(--secondary-color);
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: fit-content;
+        }
+        .btn-translate:hover { background: #fff3e0; }
+        
+        .translation-text {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-style: italic;
+            color: #555;
+            border-left: 3px solid #ccc;
+        }
+
+        /* --- GLOSSARY --- */
+        .glossary-box {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: var(--shadow);
+            border: 2px solid var(--primary-color);
+        }
+        .glossary-box h3 { color: var(--primary-color); text-align: center; }
+        .glossary-table { width: 100%; border-collapse: collapse; }
+        .glossary-table th, .glossary-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        .glossary-table th { color: var(--secondary-color); }
+        .word-type { font-size: 0.8em; color: #888; font-style: italic; }
+
+        /* --- EXERCISE CARDS --- */
+        .question-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            position: relative;
+            transition: transform 0.3s;
+        }
+        
+        .question-header {
+            font-weight: 800;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 cols for A-H options */
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #f1f2f6;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            color: var(--text-color);
+            position: relative;
+            box-shadow: 0 4px 0 #dcdcdc;
+        }
+
+        .option-btn:hover { transform: translateY(-2px); border-color: var(--secondary-color); }
+        .option-btn:active { transform: translateY(2px); box-shadow: none; }
+
+        .option-btn.correct {
+            background: var(--correct-color);
+            color: white;
+            border-color: #00b85c;
+            box-shadow: 0 4px 0 #008f47;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-color);
+            color: white;
+            border-color: #ff2e40;
+            box-shadow: 0 4px 0 #c41e30;
+            animation: shake 0.5s;
+        }
+
+        /* --- FEEDBACK ACTIONS --- */
+        .feedback-panel {
+            display: none; /* Hidden by default */
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #eee;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .feedback-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-explain { background: #E3F2FD; color: #1976D2; }
+        .btn-trans-q { background: #F3E5F5; color: #7B1FA2; }
+        .btn-para { background: #FFF3E0; color: #E65100; }
+
+        .action-btn:hover { filter: brightness(0.95); transform: scale(1.02); }
+
+        .detail-box {
+            display: none;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            border-left: 4px solid #ccc;
+        }
+        
+        .detail-box.show { display: block; }
+        
+        /* Teacher Avatar in Explanation */
+        .teacher-note {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .teacher-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        /* --- SCORE MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .score-card {
+            background: white;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 auto 20px;
+            border: 5px solid #fff;
+            box-shadow: 0 0 0 5px var(--primary-color);
+        }
+        .btn-submit {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--secondary-color);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: 800;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 90;
+            transition: all 0.3s;
+        }
+        .btn-submit:hover { transform: scale(1.05); }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; height: auto; }
+            .panel { height: auto; overflow: visible; }
+            .options-grid { grid-template-columns: repeat(4, 1fr); }
+            .btn-submit { bottom: 10px; right: 10px; padding: 10px 20px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="teacher-brand"><i class="fas fa-graduation-cap"></i> Ms. MS Chí Nên</div>
+        <div class="timer-container">
+            <i class="fas fa-clock" style="color: var(--secondary-color)"></i>
+            <div id="timer-display">10:00</div>
+            <button class="btn-timer" id="timer-btn" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="panel left-panel">
+            <h2 class="passage-title">Local Activities</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 20px;"><em>The people (1-5) below all want to do a local activity. There are eight activities (A-H). Decide which activity would be the most suitable for the people below.</em></p>
+
+            <div id="reading-content">
+                <div class="passage-section">
+                    <h3>A. Friends of Hamley Park</h3>
+                    <p>Come along to ‘Friends of Hamley Park’ for our monthly litter pick. Join our friendly team of adults and children every Sunday to help us keep our lovely local park tidy and something to be proud of. We provide all the tools and equipment you’ll need. Just come along on the day and we’ll find something for you to do.</p>
+                    <button class="btn-translate" onclick="toggleTrans('trans-a')"><i class="fas fa-language"></i> Bản dịch đầy đủ</button>
+                    <div id="trans-a" class="translation-text">Hãy đến với 'Những người bạn của Công viên Hamley' trong buổi nhặt rác hàng tháng của chúng tôi. Hãy tham gia đội ngũ thân thiện gồm cả người lớn và trẻ em vào mỗi Chủ nhật để giúp giữ gìn công viên địa phương xinh đẹp của chúng ta luôn sạch sẽ và trở thành niềm tự hào. Chúng tôi cung cấp tất cả các công cụ và thiết bị bạn cần. Chỉ cần đến vào ngày đó và chúng tôi sẽ sắp xếp việc cho bạn làm.</div>
+                </div>
+
+                <div class="passage-section">
+                    <h3>B. Yoga sessions</h3>
+                    <p>Yoga sessions with Petra aimed at your level. I know how important it can be for you mums to get out of the house and do some exercise. My fun weekly ‘Mum and Child’ yoga classes start on Monday 18 June. Buy five sessions and get one free.</p>
+                    <button class="btn-translate" onclick="toggleTrans('trans-b')"><i class="fas fa-language"></i> Bản dịch đầy đủ</button>
+                    <div id="trans-b" class="translation-text">Các buổi tập Yoga với Petra phù hợp với trình độ của bạn. Tôi biết việc ra khỏi nhà và tập thể dục quan trọng như thế nào đối với các bà mẹ. Các lớp học Yoga 'Mẹ và Bé' vui nhộn hàng tuần của tôi bắt đầu vào thứ Hai, ngày 18 tháng 6. Mua năm buổi và được tặng một buổi miễn phí.</div>
+                </div>
+
+                <div class="passage-section">
+                    <h3>C. Broadchester Park</h3>
+                    <p>You are invited to come along for our weekly picnic in Broadchester Park. Open to all, young and old, it’s held every Tuesday throughout the summer at 12.00. Please note there will be a charge for food which will be supplied by the café.</p>
+                    <button class="btn-translate" onclick="toggleTrans('trans-c')"><i class="fas fa-language"></i> Bản dịch đầy đủ</button>
+                    <div id="trans-c" class="translation-text">Bạn được mời đến tham gia buổi dã ngoại hàng tuần của chúng tôi tại Công viên Broadchester. Mở cửa cho tất cả mọi người, già trẻ lớn bé, sự kiện được tổ chức vào mỗi thứ Ba trong suốt mùa hè lúc 12:00. Xin lưu ý sẽ có tính phí cho đồ ăn do quán cà phê cung cấp.</div>
+                </div>
+
+                <div class="passage-section">
+                    <h3>D. Poetry competition</h3>
+                    <p>Come and see the winners of this poetry competition. The theme was the natural world and the poets will be performing their work in the beautiful surroundings of Kimberley Park. Entry costs £2. Children under 11 are free.</p>
+                    <button class="btn-translate" onclick="toggleTrans('trans-d')"><i class="fas fa-language"></i> Bản dịch đầy đủ</button>
+                    <div id="trans-d" class="translation-text">Hãy đến và xem những người chiến thắng cuộc thi thơ này. Chủ đề là thế giới tự nhiên và các nhà thơ sẽ trình diễn tác phẩm của họ trong khung cảnh tuyệt đẹp của Công viên Kimberley. Phí vào cửa là £2. Trẻ em dưới 11 tuổi được miễn phí.</div>
+                </div>
+
+                <div class="passage-section">
+                    <h3>E. Storytelling</h3>
+                    <p>Storytelling has become popular lately, especially for those who want to tell their story on stage in front of a live audience. Join our one-day event on Wednesday – we’ll be looking at how to feel confident and keep your audience interested.</p>
+                    <button class="btn-translate" onclick="toggleTrans('trans-e')"><i class="fas fa-language"></i> Bản dịch đầy đủ</button>
+                    <div id="trans-e" class="translation-text">Kể chuyện gần đây đã trở nên phổ biến, đặc biệt là đối với những người muốn kể câu chuyện của mình trên sân khấu trước khán giả trực tiếp. Hãy tham gia sự kiện một ngày của chúng tôi vào thứ Tư – chúng ta sẽ tìm hiểu cách để cảm thấy tự tin và giữ cho khán giả luôn hứng thú.</div>
+                </div>
+
+                <div class="passage-section">
+                    <h3>F. Time to relax</h3>
+                    <p>A new six-week yoga course for beginners. Help yourself become more focused, reduce your stress levels, sleep better and improve your mental health. I will be running these courses in the local community centre on Wednesday and Thursday mornings from 11.00 till 12.00. Childcare is available for babies and young children.</p>
+                    <button class="btn-translate" onclick="toggleTrans('trans-f')"><i class="fas fa-language"></i> Bản dịch đầy đủ</button>
+                    <div id="trans-f" class="translation-text">Một khóa học yoga mới kéo dài sáu tuần dành cho người mới bắt đầu. Giúp bản thân tập trung hơn, giảm mức độ căng thẳng, ngủ ngon hơn và cải thiện sức khỏe tinh thần. Tôi sẽ tổ chức các khóa học này tại trung tâm cộng đồng địa phương vào sáng thứ Tư và thứ Năm từ 11:00 đến 12:00. Có dịch vụ trông trẻ cho trẻ sơ sinh và trẻ nhỏ.</div>
+                </div>
+
+                <div class="passage-section">
+                    <h3>G. The community café</h3>
+                    <p>Our community café is looking for young volunteer waiters and waitresses to help us throughout the summer period. You’ll learn skills that will be useful when you start your job search. We’re looking for anyone who is at least 18 and would like you to be available for at least two days per week.</p>
+                    <button class="btn-translate" onclick="toggleTrans('trans-g')"><i class="fas fa-language"></i> Bản dịch đầy đủ</button>
+                    <div id="trans-g" class="translation-text">Quán cà phê cộng đồng của chúng tôi đang tìm kiếm các nam nữ phục vụ tình nguyện trẻ tuổi để giúp đỡ chúng tôi trong suốt thời gian hè. Bạn sẽ học được các kỹ năng hữu ích khi bắt đầu tìm kiếm việc làm. Chúng tôi đang tìm kiếm bất kỳ ai ít nhất 18 tuổi và mong muốn bạn có thể làm việc ít nhất hai ngày mỗi tuần.</div>
+                </div>
+
+                <div class="passage-section">
+                    <h3>H. Creswell Youth Centre</h3>
+                    <p>Are you interested in developing your acting skills? Creswell Youth Centre is offering young people aged from 7 to 19 the chance to join us for our next show. No experience is required as we can offer a role to all abilities. You will need to be available at weekends throughout the summer.</p>
+                    <button class="btn-translate" onclick="toggleTrans('trans-h')"><i class="fas fa-language"></i> Bản dịch đầy đủ</button>
+                    <div id="trans-h" class="translation-text">Bạn có quan tâm đến việc phát triển kỹ năng diễn xuất của mình không? Trung tâm Thanh thiếu niên Creswell đang mang đến cho các bạn trẻ từ 7 đến 19 tuổi cơ hội tham gia chương trình tiếp theo của chúng tôi. Không yêu cầu kinh nghiệm vì chúng tôi có thể cung cấp vai diễn cho mọi khả năng. Bạn sẽ cần phải rảnh vào các ngày cuối tuần trong suốt mùa hè.</div>
+                </div>
+            </div>
+
+            <div class="glossary-box">
+                <h3><i class="fas fa-book"></i> VOCABULARY HIGHLIGHTS</h3>
+                <table class="glossary-table">
+                    <thead>
+                        <tr>
+                            <th>Từ vựng</th>
+                            <th>Loại từ & Nghĩa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="glossary-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel right-panel" id="exercise-container">
+            </div>
+    </div>
+
+    <button class="btn-submit" onclick="submitTest()">NỘP BÀI <i class="fas fa-paper-plane"></i></button>
+
+    <div class="modal-overlay" id="score-modal">
+        <div class="score-card">
+            <div class="score-circle" id="final-score">0/5</div>
+            <h2 id="score-title" style="color: var(--secondary-color)"></h2>
+            <p id="score-message"></p>
+            <button class="btn-timer" onclick="closeModal()" style="margin-top:20px">Xem lại bài làm</button>
+        </div>
+    </div>
+
+<script>
+    // --- DATA ---
+    const vocabulary = [
+        { word: "Keen to", type: "phrasal verb", meaning: "Rất thích, hào hứng làm gì" },
+        { word: "Perform", type: "verb", meaning: "Biểu diễn, trình diễn" },
+        { word: "Voluntary", type: "adj", meaning: "Tình nguyện, tự nguyện" },
+        { word: "Bargain", type: "noun", meaning: "Món hời (mua giá rẻ)" },
+        { word: "Supply", type: "verb", meaning: "Cung cấp" },
+        { word: "Surroundings", type: "noun", meaning: "Môi trường xung quanh" },
+        { word: "Audience", type: "noun", meaning: "Khán giả" },
+        { word: "Focused", type: "adj", meaning: "Tập trung" },
+        { word: "Community", type: "noun", meaning: "Cộng đồng" },
+        { word: "Available", type: "adj", meaning: "Có sẵn, rảnh rỗi" }
+    ];
+
+    const questions = [
+        {
+            id: 1,
+            text: "Susie has a teenage son who is very keen to get into acting and learning how best to perform on stage. Because of other activities he cannot do Saturdays or Sundays.",
+            correct: "E",
+            translation: "Susie có một cậu con trai tuổi teen rất thích diễn xuất và muốn học cách biểu diễn tốt nhất trên sân khấu. Do các hoạt động khác, cậu ấy không thể tham gia vào thứ Bảy hoặc Chủ Nhật.",
+            explanation: "Cô MS Chí Nên giải thích nè: <br>1. Susie's son thích 'acting' (diễn xuất) và 'perform on stage' (biểu diễn sân khấu). <br>2. Cậu ấy bận T7, CN ('cannot do Saturdays or Sundays'). <br>-> Nhìn đáp án E: 'tell their story on stage' (kể chuyện trên sân khấu) và diễn ra vào 'Wednesday' (thứ Tư - không phải cuối tuần). <br>-> Loại H vì dù có 'acting' nhưng yêu cầu 'weekends' (cuối tuần).",
+            paraphrase: "Keen to get into acting ≈ tell their story on stage; Cannot do Sat/Sun ≈ Wednesday."
+        },
+        {
+            id: 2,
+            text: "Gareth is 21 and on summer vacation before going back to university. He is looking for voluntary work that will help him gain experience in working with customers.",
+            correct: "G",
+            translation: "Gareth 21 tuổi và đang trong kỳ nghỉ hè trước khi quay lại đại học. Cậu ấy đang tìm kiếm công việc tình nguyện giúp cậu ấy tích lũy kinh nghiệm làm việc với khách hàng.",
+            explanation: "Từ khóa quan trọng: '21 years old' (trên 18), 'voluntary work' (việc tình nguyện), 'experience working with customers' (kinh nghiệm với khách hàng). <br>-> Đáp án G phù hợp nhất: 'volunteer waiters' (phục vụ tình nguyện), 'at least 18' (ít nhất 18 tuổi), 'useful when you start your job search'.",
+            paraphrase: "Voluntary work ≈ volunteer waiters; Gain experience ≈ learn skills useful for job search."
+        },
+        {
+            id: 3,
+            text: "Marcia would like to take her children to the park one day next week. She would like to show them the importance of doing something for local people.",
+            correct: "A",
+            translation: "Marcia muốn đưa các con đến công viên vào một ngày trong tuần tới. Cô ấy muốn chỉ cho chúng thấy tầm quan trọng của việc làm điều gì đó cho người dân địa phương.",
+            explanation: "Marcia muốn đi 'park' (công viên) với 'children' (các con) và làm gì đó cho 'local people' (người dân). <br>-> Đáp án A: 'Friends of Hamley Park', 'litter pick' (nhặt rác - làm việc tốt), 'adults and children' (người lớn và trẻ em). Đây là hoạt động cộng đồng ý nghĩa.",
+            paraphrase: "Take her children ≈ adults and children; Doing something for local people ≈ keep our lovely local park tidy."
+        },
+        {
+            id: 4,
+            text: "Ella is a new mum with a three-month-old baby and is looking for exercise to help her relax. She is free on Monday and Tuesday and loves getting a bargain!",
+            correct: "B",
+            translation: "Ella là một bà mẹ mới sinh với em bé 3 tháng tuổi và đang tìm bài tập giúp thư giãn. Cô ấy rảnh vào thứ Hai, thứ Ba và thích mua được món hời!",
+            explanation: "Ella là 'new mum' (mẹ mới), có 'baby' (em bé), muốn 'exercise' (tập thể dục), rảnh 'Monday/Tuesday', thích 'bargain' (giá rẻ/khuyến mãi). <br>-> Đáp án B: 'Mum and Child yoga', 'start on Monday', 'Buy five get one free' (mua 5 tặng 1 - đây chính là bargain).",
+            paraphrase: "New mum with baby ≈ Mum and Child; Exercise ≈ Yoga; Bargain ≈ Buy five get one free."
+        },
+        {
+            id: 5,
+            text: "Jacob is looking for somewhere to take his son for something to eat at lunchtime any day this week. He would like to go somewhere that is outside to get some fresh air.",
+            correct: "C",
+            translation: "Jacob đang tìm nơi để đưa con trai đi ăn trưa vào bất kỳ ngày nào trong tuần này. Anh ấy muốn đi đâu đó ở ngoài trời để hít thở không khí trong lành.",
+            explanation: "Jacob đi với 'son' (con trai), muốn 'eat at lunchtime' (ăn trưa), 'outside' (ngoài trời). <br>-> Đáp án C: 'picnic' (dã ngoại - ăn ngoài trời), '12.00' (giờ trưa), 'food supplied by the café' (có đồ ăn).",
+            paraphrase: "Eat at lunchtime ≈ picnic at 12.00; Outside/Fresh air ≈ Park/Picnic."
+        }
+    ];
+
+    const options = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    let userAnswers = {};
+    let score = 0;
+    
+    // --- AUDIO CONTEXT FOR SOUNDS ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            // Ding sound (High pitch sine wave fade out)
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+            
+            // Confetti
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#00D26A', '#FF9800', '#2E7D32']
+            });
+        } else {
+            // Wrong sound (Low pitch sawtooth shake)
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+            oscillator.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+        renderGlossary();
+        renderExercises();
+    };
+
+    function renderGlossary() {
+        const tbody = document.getElementById('glossary-body');
+        vocabulary.forEach(item => {
+            const row = `<tr>
+                <td style="font-weight:700; color:var(--text-color)">${item.word}</td>
+                <td>
+                    <span class="word-type">(${item.type})</span> 
+                    ${item.meaning}
+                </td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function renderExercises() {
+        const container = document.getElementById('exercise-container');
+        questions.forEach((q, index) => {
+            let optionButtons = '';
+            options.forEach(opt => {
+                optionButtons += `<button class="option-btn" id="btn-${q.id}-${opt}" onclick="checkAnswer(${q.id}, '${opt}', '${q.correct}')">${opt}</button>`;
+            });
+
+            const html = `
+            <div class="question-card" id="card-${q.id}">
+                <div class="question-header">
+                    <span>Question ${q.id}</span>
+                    <span id="status-${q.id}"></span>
+                </div>
+                <div class="question-text">${q.text}</div>
+                <div class="options-grid">
+                    ${optionButtons}
+                </div>
+
+                <div class="feedback-panel" id="feedback-${q.id}">
+                    <div class="feedback-controls">
+                        <button class="action-btn btn-explain" onclick="toggleDetail('exp-${q.id}')">
+                            <i class="fas fa-chalkboard-teacher"></i> Giải thích
+                        </button>
+                        <button class="action-btn btn-trans-q" onclick="toggleDetail('transq-${q.id}')">
+                            <i class="fas fa-language"></i> Dịch câu hỏi
+                        </button>
+                        <button class="action-btn btn-para" onclick="toggleDetail('para-${q.id}')">
+                            <i class="fas fa-exchange-alt"></i> Paraphrase
+                        </button>
+                    </div>
+
+                    <div id="exp-${q.id}" class="detail-box">
+                        <div class="teacher-note">
+                            <div class="teacher-avatar">👩‍🏫</div>
+                            <div><strong>Ms. MS Chí Nên:</strong> ${q.explanation}</div>
+                        </div>
+                    </div>
+                    <div id="transq-${q.id}" class="detail-box">
+                        <strong>Dịch nghĩa:</strong> ${q.translation}
+                    </div>
+                    <div id="para-${q.id}" class="detail-box">
+                        <strong>Từ vựng tương đương:</strong><br> ${q.paraphrase}
+                    </div>
+                </div>
+            </div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    // --- INTERACTION LOGIC ---
+    function checkAnswer(qId, selectedOpt, correctOpt) {
+        // Prevent re-answering if already correct (optional, but good for testing)
+        // For this UI, we allow changing answers unless submitted, BUT per request "Instant feedback".
+        // Let's lock the question once answered correctly to give that "Game" feel.
+        
+        const card = document.getElementById(`card-${qId}`);
+        const feedbackPanel = document.getElementById(`feedback-${qId}`);
+        const allBtns = card.querySelectorAll('.option-btn');
+        
+        // Reset styles for this card
+        allBtns.forEach(btn => {
+            btn.classList.remove('correct', 'wrong');
+        });
+
+        const selectedBtn = document.getElementById(`btn-${qId}-${selectedOpt}`);
+
+        if (selectedOpt === correctOpt) {
+            selectedBtn.classList.add('correct');
+            playSound('correct');
+            userAnswers[qId] = true; // Mark correct
+            feedbackPanel.style.display = "block"; // Show explanations immediately
+        } else {
+            selectedBtn.classList.add('wrong');
+            playSound('wrong');
+            userAnswers[qId] = false; // Mark wrong
+            // Optional: Show correct answer immediately or wait? 
+            // Request says "Khi hs bấm sai thì ngay lập tức hiện luôn đáp án đúng"
+            const correctBtn = document.getElementById(`btn-${qId}-${correctOpt}`);
+            correctBtn.classList.add('correct'); // Show the right one
+            feedbackPanel.style.display = "block";
+        }
+    }
+
+    function toggleDetail(id) {
+        const el = document.getElementById(id);
+        if (el.style.display === "block") {
+            el.style.display = "none";
+        } else {
+            // Close others in same group (optional UX improvement)
+            el.parentElement.querySelectorAll('.detail-box').forEach(box => box.style.display = 'none');
+            el.style.display = "block";
+        }
+    }
+
+    function toggleTrans(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === "block" ? "none" : "block";
+    }
+
+    // --- TIMER LOGIC ---
+    let timeLeft = 600; // 10 minutes in seconds
+    let timerId = null;
+    let isPaused = true;
+
+    function toggleTimer() {
+        const btn = document.getElementById('timer-btn');
+        if (isPaused) {
+            isPaused = false;
+            btn.textContent = "TẠM DỪNG";
+            btn.classList.remove('paused');
+            timerId = setInterval(updateTimer, 1000);
+        } else {
+            isPaused = true;
+            btn.textContent = "TIẾP TỤC";
+            btn.classList.add('paused');
+            clearInterval(timerId);
+        }
+    }
+
+    function updateTimer() {
+        if (timeLeft <= 0) {
+            clearInterval(timerId);
+            alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+            return;
+        }
+        timeLeft--;
+        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const s = (timeLeft % 60).toString().padStart(2, '0');
+        document.getElementById('timer-display').textContent = `${m}:${s}`;
+    }
+
+    // --- SUBMIT & SCORE ---
+    function submitTest() {
+        // Calculate score based on userAnswers object
+        let correctCount = 0;
+        // Check actually clicked answers.
+        // Since we mark userAnswers[id] = true/false on click
+        for (let i = 1; i <= 5; i++) {
+            if (userAnswers[i] === true) correctCount++;
+        }
+
+        const modal = document.getElementById('score-modal');
+        const scoreCircle = document.getElementById('final-score');
+        const title = document.getElementById('score-title');
+        const msg = document.getElementById('score-message');
+
+        modal.style.display = "flex";
+        scoreCircle.textContent = `${correctCount}/5`;
+
+        if (correctCount === 5) {
+            title.textContent = "XUẤT SẮC! THIÊN TÀI! 🌟";
+            msg.textContent = "Cô MS Chí Nên rất tự hào về em! Không sai câu nào cả!";
+            playSound('correct'); // Extra confetti
+        } else if (correctCount >= 3) {
+            title.textContent = "LÀM TỐT LẮM! 👍";
+            msg.textContent = "Em đã nắm được ý chính rồi đó. Cố gắng xem lại các lỗi sai để lần sau 5/5 nhé!";
+        } else {
+            title.textContent = "CỐ LÊN NHÉ! 💪";
+            msg.textContent = "Bài này hơi khó một chút đúng không? Hãy đọc kỹ phần giải thích của cô để hiểu rõ hơn nha.";
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('score-modal').style.display = "none";
+    }
+
+</script>
+</body>
+</html>

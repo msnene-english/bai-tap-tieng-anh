@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Test Gamification - Ms MS Chí Nên</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* === BACKGROUND & ANIMATION === */
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes floatEmoji {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(-45deg, #ffc3a0, #ffafbd, #a1c4fd, #c2e9fb);
+            background-size: 400% 400%;
+            animation: gradientMove 15s ease infinite;
+            color: #333;
+            overflow: hidden;
+        }
+
+        /* SVG Background Patterns */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* === GLASSMORPHISM === */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        /* === LAYOUT === */
+        .header {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4a4a4a;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+        }
+        
+        .sticky-notice {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            background: rgba(255, 243, 205, 0.85);
+            backdrop-filter: blur(10px);
+            border-left: 5px solid #ffeeba;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            color: #856404;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: justify;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            padding-top: 60px;
+            box-sizing: border-box;
+            gap: 20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+        }
+
+        .left-pane, .right-pane {
+            flex: 1;
+            overflow-y: auto;
+            border-radius: 20px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.8); border-radius: 10px; }
+
+        /* === READING SECTION === */
+        .reading-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        .trans-btn {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 5px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 5px;
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .trans-btn:hover { background: rgba(255, 255, 255, 0.9); transform: scale(1.05); }
+        .trans-content {
+            display: none;
+            background: rgba(200, 230, 255, 0.5);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            font-style: italic;
+            color: #333;
+        }
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .glossary-table th, .glossary-table td {
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 10px;
+            text-align: left;
+        }
+        .glossary-table th { background: rgba(255,255,255,0.7); }
+
+        /* === EXERCISES SECTION === */
+        .question-card {
+            margin-bottom: 25px;
+            padding: 20px;
+        }
+        .question-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        .question-trans {
+            font-style: italic;
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .option-btn {
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid transparent;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.05rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .option-btn:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        .option-btn.correct {
+            background: #d4edda !important;
+            border-color: #28a745 !important;
+            color: #155724;
+        }
+        .option-btn.wrong {
+            background: #f8d7da !important;
+            border-color: #dc3545 !important;
+            color: #721c24;
+            animation: shake 0.4s;
+        }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* === NEW SCIENTIFIC EXPLANATION UI === */
+        .explanation {
+            display: none;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,1);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .exp-header {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            padding: 12px 20px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .exp-section {
+            padding: 15px 20px;
+            border-bottom: 1px dashed #ddd;
+        }
+        .exp-section:last-child { border-bottom: none; }
+        .exp-sec-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Options Grid */
+        .exp-opt-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+        .exp-opt-item {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .exp-opt-en { font-weight: bold; color: #0056b3; }
+        .exp-opt-vi { font-style: italic; color: #e67e22; font-weight: 600; }
+        
+        /* Correct/Wrong Reasons */
+        .reason {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            line-height: 1.7;
+            font-size: 0.95rem;
+            position: relative;
+        }
+        .reason:last-child { margin-bottom: 0; }
+        .reason.correct { 
+            background: #e8f5e9; 
+            border: 1px solid #c8e6c9;
+            border-left: 6px solid #28a745; 
+            color: #1b5e20; 
+        }
+        .reason.wrong { 
+            background: #ffebee; 
+            border: 1px solid #ffcdd2;
+            border-left: 6px solid #dc3545; 
+            color: #b71c1c; 
+        }
+        .reason b { display: block; margin-bottom: 5px; font-size: 1rem; }
+
+        /* Typography Highlights inside Explanations */
+        .p-word { font-weight: bold; color: #0056b3; }
+        .p-phonetic { color: #d63384; font-family: monospace; background: #fdf2f8; padding: 2px 4px; border-radius: 4px; }
+        .p-mean { font-style: italic; color: #e67e22; font-weight: bold; }
+        .p-grammar { font-weight: bold; background: #fff3cd; padding: 2px 6px; border-radius: 6px; color: #856404; border: 1px solid #ffeeba;}
+        .hl-green { color: #28a745; font-weight: bold; }
+        .hl-red { color: #dc3545; font-weight: bold; }
+
+        /* === SUBMIT & POPUP === */
+        .submit-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, #00b09b, #96c93d);
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+        .submit-btn:hover { transform: scale(1.02); }
+
+        .modal-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            width: 90%; max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .modal-content input {
+            width: 90%; padding: 10px; margin: 15px 0;
+            border-radius: 8px; border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+        .modal-content button {
+            background: #007bff; color: white; border: none;
+            padding: 10px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer;
+        }
+        .score-display { font-size: 2rem; font-weight: bold; color: #d63384; margin: 10px 0; }
+        .score-converted { font-size: 1.2rem; color: #28a745; margin-bottom: 15px; font-weight: bold; }
+        .gif-container img { max-width: 100%; border-radius: 10px; margin-top: 15px; }
+
+        .audio-btn {
+            background: #ff6b6b; color: white; border: none; padding: 10px 15px;
+            border-radius: 10px; cursor: pointer; font-weight: bold; display: block; margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <svg class="bg-pattern" xmlns="http://www.w3.org/2000/svg">
+        <text x="10%" y="20%" font-size="60" style="animation: floatEmoji 6s ease-in-out infinite;">💻</text>
+        <text x="80%" y="30%" font-size="80" style="animation: floatEmoji 8s ease-in-out infinite 1s;">⏳</text>
+        <text x="50%" y="80%" font-size="70" style="animation: floatEmoji 7s ease-in-out infinite 2s;">📱</text>
+        <text x="20%" y="70%" font-size="50" style="animation: floatEmoji 9s ease-in-out infinite 0.5s;">🚀</text>
+    </svg>
+
+    <div class="header">Giáo viên tạo: Ms MS Chí Nên</div>
+
+    <div class="sticky-notice">
+        <b>🔔 Lời dặn từ Cô MS Chí Nên:</b> Tự giác tra cứu từ mới để hiểu rõ nội dung từng câu hỏi bằng Google Dịch/ChatGPT/Gemini chứ không được lười suy nghĩ mà chọn bừa. Tra cứu ngữ âm, trọng âm bằng từ điển Cambridge và nghe máy đọc sau đó đọc theo. Chỉ có đọc kỹ giải thích sau đó ghi lại từ/cấu trúc mới vào vở để học mới thực sự giỏi lên, làm cho xong mà không đọc giải thích hay đọc qua loa mà không ghi chép để học thì chỉ tốn thời gian vô ích!
+    </div>
+
+    <audio id="audio-wrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3"></audio>
+    <audio id="audio-instruct" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/File%20nghe%20Ket%20A2/ti%E1%BA%BFng%20%C4%91%E1%BB%8Dc%20kh%C3%ADch%20l%E1%BB%87%20p1.mp3"></audio>
+
+    <div class="container">
+        <div class="left-pane glass-panel">
+            <h2 style="text-align: center; color: #2c3e50;">READING PASSAGE</h2>
+            <button class="audio-btn" onclick="playInstruction(this)">🔊 Nghe dặn dò trước khi làm (Chỉ phát 1 lần)</button>
+            
+            <h3>Part I. Cloze Test</h3>
+            <div class="reading-text">
+                The Internet is a great learning tool, and it’s likely that you’ll want it available as you study or complete your homework. But we all know that it is also (32) _____ distractions. After all, you’re only one click away (33) _____ funny videos, social media, messaging your friends, or browsing websites endlessly.
+                <button class="trans-btn" onclick="toggleTrans('trans1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1" class="trans-content">Internet là một công cụ học tập tuyệt vời, và có khả năng là bạn sẽ muốn nó luôn sẵn sàng khi bạn học tập hoặc làm bài tập về nhà. Nhưng tất cả chúng ta đều biết rằng nó cũng đầy rẫy những sự xao nhãng. Xét cho cùng, bạn chỉ cách một cú nhấp chuột để đến với các video hài hước, mạng xã hội, nhắn tin cho bạn bè, hoặc lướt các trang web vô tận.</div>
+            </div>
+            <div class="reading-text">
+                When studying online, you might find it useful to install "website-blocking software" (34) _____ block the sites you find yourself distracted by the most. There are several free and easy-to-install website blockers available for any given browser. This can be a good option for you if you’re finding that the temptation to visit a certain website is too distracting for you to (35) _____.
+                <button class="trans-btn" onclick="toggleTrans('trans2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2" class="trans-content">Khi học trực tuyến, bạn có thể thấy hữu ích khi cài đặt "phần mềm chặn trang web" để chặn những trang web khiến bạn bị xao nhãng nhiều nhất. Có một vài trình chặn trang web miễn phí và dễ cài đặt có sẵn cho bất kỳ trình duyệt nào. Đây có thể là một lựa chọn tốt cho bạn nếu bạn thấy rằng sự cám dỗ vào một trang web nhất định là quá gây xao nhãng khiến bạn không thể tập trung.</div>
+            </div>
+            <div class="reading-text">
+                Once such sites have been dealt with, you may also find that your phone is (36) _____ distracting. If you’re using your phone to study, you can search for similar website-blocking programs in your app store. If you’re not using your phone to study, you might consider putting it on airplane mode or (37) _____ while studying. This will also help you stop distractions from phone calls and texts.
+                <button class="trans-btn" onclick="toggleTrans('trans3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans3" class="trans-content">Một khi các trang web đó đã được giải quyết, bạn cũng có thể nhận thấy rằng điện thoại của bạn cũng gây xao nhãng không kém. Nếu bạn đang dùng điện thoại để học, bạn có thể tìm kiếm các chương trình chặn trang web tương tự trong cửa hàng ứng dụng. Nếu bạn không dùng điện thoại để học, bạn có thể cân nhắc để nó ở chế độ máy bay hoặc tắt nó đi trong khi học. Điều này cũng sẽ giúp bạn ngăn chặn sự xao nhãng từ các cuộc gọi điện thoại và tin nhắn.</div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px dashed rgba(0,0,0,0.3); margin: 30px 0;">
+
+            <h3>Part II. Reading Comprehension</h3>
+            <div class="reading-text">
+                Life as a teenager can be extremely busy and overwhelming, especially because we have to balance school along with our personal life and other commitments. This can be a lot and for many it is extremely tough to maintain a good schedule or routine.
+                <button class="trans-btn" onclick="toggleTrans('trans4')">Mở dịch đoạn này 🌟</button>
+                <div id="trans4" class="trans-content">Cuộc sống của một thiếu niên có thể cực kỳ bận rộn và quá tải, đặc biệt là vì chúng ta phải cân bằng việc học ở trường cùng với cuộc sống cá nhân và những trách nhiệm khác. Điều này có thể là quá nhiều và đối với nhiều người, việc duy trì một lịch trình hay thói quen tốt là cực kỳ khó khăn.</div>
+            </div>
+            <div class="reading-text">
+                That’s why one of the most important things to learn as a teenager is time management. Time management allows us to spend time in both useful and beneficial ways. For me, I make schedules for my day by using the notes app on my phone to write down all my homework assignments for school, as well as any extracurricular tasks I have to do. Then, when I complete these assignments, I delete them so that I can keep track of what I still need to do. You could also use a journal, calendar, or another app on your phone to help you track any assignments that you need to complete for that day or week.
+                <button class="trans-btn" onclick="toggleTrans('trans5')">Mở dịch đoạn này 🌟</button>
+                <div id="trans5" class="trans-content">Đó là lý do tại sao một trong những điều quan trọng nhất cần học khi còn là thiếu niên là quản lý thời gian. Quản lý thời gian cho phép chúng ta sử dụng thời gian theo những cách vừa hữu ích vừa có lợi. Đối với tôi, tôi lập lịch trình cho ngày của mình bằng cách sử dụng ứng dụng ghi chú trên điện thoại để viết xuống tất cả các bài tập về nhà ở trường, cũng như bất kỳ nhiệm vụ ngoại khóa nào tôi phải làm. Sau đó, khi tôi hoàn thành những bài tập này, tôi xóa chúng đi để tôi có thể theo dõi những gì tôi vẫn cần làm. Bạn cũng có thể sử dụng nhật ký, lịch hoặc một ứng dụng khác trên điện thoại để giúp bạn theo dõi bất kỳ bài tập nào bạn cần hoàn thành cho ngày hoặc tuần đó.</div>
+            </div>
+            <div class="reading-text">
+                Balancing school and personal life can be stressful, but developing strong time management skills makes every day a little bit easier. Though some days can be very hard, what matters is finding a routine that works for you and sticking to it as best you can!
+                <button class="trans-btn" onclick="toggleTrans('trans6')">Mở dịch đoạn này 🌟</button>
+                <div id="trans6" class="trans-content">Việc cân bằng giữa trường học và cuộc sống cá nhân có thể gây căng thẳng, nhưng việc phát triển các kỹ năng quản lý thời gian tốt sẽ làm cho mỗi ngày trở nên dễ dàng hơn một chút. Mặc dù một số ngày có thể rất khó khăn, nhưng điều quan trọng là tìm ra một thói quen phù hợp với bạn và tuân thủ nó tốt nhất có thể!</div>
+            </div>
+
+            <h3 style="margin-top: 30px; color: #0056b3;">📖 Academic Glossary (Bảng từ vựng B1-C2)</h3>
+            <table class="glossary-table">
+                <tr><th>Từ vựng (Word)</th><th>Loại từ (POS)</th><th>Nghĩa tiếng Việt (Meaning)</th></tr>
+                <tr><td><strong>distraction</strong></td><td>n</td><td>sự xao nhãng, mất tập trung</td></tr>
+                <tr><td><strong>endlessly</strong></td><td>adv</td><td>một cách vô tận, không ngừng</td></tr>
+                <tr><td><strong>temptation</strong></td><td>n</td><td>sự cám dỗ, sự quyến rũ</td></tr>
+                <tr><td><strong>accomplish</strong></td><td>v</td><td>hoàn thành, đạt được</td></tr>
+                <tr><td><strong>overwhelming</strong></td><td>adj</td><td>áp đảo, quá tải</td></tr>
+                <tr><td><strong>commitment</strong></td><td>n</td><td>sự cam kết, trách nhiệm</td></tr>
+                <tr><td><strong>maintain</strong></td><td>v</td><td>duy trì, giữ gìn</td></tr>
+                <tr><td><strong>beneficial</strong></td><td>adj</td><td>có lợi, mang lại lợi ích</td></tr>
+                <tr><td><strong>extracurricular</strong></td><td>adj</td><td>thuộc về ngoại khóa</td></tr>
+                <tr><td><strong>track</strong></td><td>v</td><td>theo dõi, ghi nhận</td></tr>
+            </table>
+        </div>
+
+        <div class="right-pane glass-panel">
+            <h2 style="text-align: center; color: #2c3e50;">EXERCISES</h2>
+            <div id="quiz-container"></div>
+            <button class="submit-btn" onclick="showSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="submit-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Nhập tên để nộp bài</h2>
+            <input type="text" id="student-name" placeholder="Nhập họ và tên của con..." required>
+            <button id="modal-action-btn" onclick="processSubmit()">Nộp bài ngay</button>
+            
+            <div id="result-section" style="display: none;">
+                <h3 id="result-name"></h3>
+                <div class="score-display" id="result-score"></div>
+                <div class="score-converted" id="result-converted"></div>
+                <p id="result-comment" style="font-weight:bold;"></p>
+                <div class="gif-container" id="result-gif"></div>
+                <button onclick="closeModal()" style="margin-top:15px; background: #6c757d;">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+/* === AUDIO CONTEXT FOR DING SOUND === */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playDing() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+}
+
+function playDuck() {
+    const audio = document.getElementById('audio-wrong');
+    audio.currentTime = 0;
+    audio.play();
+}
+
+function playInstruction(btn) {
+    const audio = document.getElementById('audio-instruct');
+    audio.play();
+    btn.disabled = true;
+    btn.style.background = '#ccc';
+    btn.innerText = "🔊 Đang phát dặn dò...";
+}
+
+function toggleTrans(id) {
+    const el = document.getElementById(id);
+    if(el.style.display === "none" || el.style.display === "") {
+        el.style.display = "block";
+    } else {
+        el.style.display = "none";
+    }
+}
+
+/* === QUIZ DATA WITH SCIENTIFIC EXPLANATIONS === */
+const quizData = [
+    {
+        id: 32,
+        question: "Câu 32: Select the best answer",
+        vi_question: "Chọn đáp án đúng nhất",
+        options: [
+            { text: "lack of", vi: "thiếu (n/v)" },
+            { text: "few of", vi: "rất ít (đại từ)" },
+            { text: "lot of", vi: "nhiều (cần đi với a lot of)" },
+            { text: "full of", vi: "đầy (adj)" }
+        ],
+        correct: "full of",
+        correct_exp: "Đáp án đúng là <span class='p-word'>full of</span>. Cụm từ <span class='p-grammar'>be full of something</span> có nghĩa là chứa đầy cái gì đó. Trong ngữ cảnh câu \"it is also full of distractions\" (nó cũng đầy rẫy những sự xao nhãng), đây là sự kết hợp từ (collocation) hoàn toàn chính xác.",
+        wrong_exp: "<span class='p-word'>lack of</span> (<span class='p-mean'>thiếu</span>) sai nghĩa vì Internet không hề thiếu sự xao nhãng.<br><span class='p-word'>few of</span> sai ngữ pháp vì \"few\" dùng với danh từ đếm được số nhiều nhưng thường cần từ hạn định đi kèm (VD: a few of the distractions).<br><span class='p-word'>lot of</span> sai ngữ pháp trầm trọng vì phải dùng cấu trúc chuẩn là <span class='p-grammar'>a lot of</span> hoặc <span class='p-grammar'>lots of</span>."
+    },
+    {
+        id: 33,
+        question: "Câu 33: Select the best answer",
+        vi_question: "Chọn đáp án đúng nhất",
+        options: [
+            { text: "to", vi: "tới (giới từ)" },
+            { text: "with", vi: "với (giới từ)" },
+            { text: "from", vi: "khỏi / từ (giới từ)" },
+            { text: "for", vi: "cho (giới từ)" }
+        ],
+        correct: "from",
+        correct_exp: "Đáp án đúng là <span class='p-word'>from</span>. Ta có cấu trúc <span class='p-grammar'>be + khoảng cách + away from + something</span> (cách xa cái gì đó bao nhiêu). Ở đây, \"you're only one click away from funny videos...\" mang ý nghĩa ẩn dụ là bạn chỉ cách các video hài hước đúng một cú click chuột (rất gần, rất dễ bị cám dỗ).",
+        wrong_exp: "Các giới từ <span class='p-word'>to</span>, <span class='p-word'>with</span>, <span class='p-word'>for</span> không thể kết hợp với cụm từ \"away\" để tạo thành cấu trúc chỉ khoảng cách cách biệt hợp lý và tự nhiên trong ngữ cảnh này."
+    },
+    {
+        id: 34,
+        question: "Câu 34: Select the best answer",
+        vi_question: "Chọn đáp án đúng nhất",
+        options: [
+            { text: "so that", vi: "để mà (+ Mệnh đề)" },
+            { text: "in order to", vi: "để (+ Động từ nguyên thể)" },
+            { text: "due to", vi: "bởi vì (+ Danh từ/V_ing)" },
+            { text: "despite", vi: "mặc dù (+ Danh từ/V_ing)" }
+        ],
+        correct: "in order to",
+        correct_exp: "Đáp án đúng là <span class='p-word'>in order to</span>. Phía sau khoảng trống là động từ nguyên thể <span class='p-word'>block</span> (chặn). Cấu trúc <span class='p-grammar'>in order to + V_inf</span> dùng để chỉ mục đích (để làm gì). Cài phần mềm chặn trang web <i>để</i> chặn các trang web gây xao nhãng.",
+        wrong_exp: "<span class='p-word'>so that</span> sai vì sau nó bắt buộc phải là một mệnh đề hoàn chỉnh (Subject + Verb).<br><span class='p-word'>due to</span> và <span class='p-word'>despite</span> sai vì sau chúng phải là Cụm danh từ hoặc V_ing, hơn nữa nếu lắp vào câu này cũng hoàn toàn sai về mặt ngữ nghĩa logic."
+    },
+    {
+        id: 35,
+        question: "Câu 35: Select the best answer",
+        vi_question: "Chọn đáp án đúng nhất",
+        options: [
+            { text: "concentrate", vi: "tập trung (v)" },
+            { text: "avoid", vi: "tránh (v)" },
+            { text: "accomplish", vi: "hoàn thành (v)" },
+            { text: "maintain", vi: "duy trì (v)" }
+        ],
+        correct: "concentrate",
+        correct_exp: "Đáp án đúng là <span class='p-word'>concentrate</span> <span class='p-phonetic'>/ˈkɒn.sən.treɪt/</span>. Phân tích ngữ cảnh: \"the temptation to visit a certain website is too distracting for you to...\" (sự cám dỗ... là quá xao nhãng khiến bạn không thể...). Khi bị xao nhãng, thứ mà chúng ta đánh mất chính là sự tập trung.",
+        wrong_exp: "Lắp các từ còn lại vào sẽ vô lý:<br>- Quá xao nhãng không thể <span class='p-word'>avoid</span> (<span class='p-mean'>tránh</span>) -> Sai logic.<br>- Không thể <span class='p-word'>accomplish</span> (<span class='p-mean'>hoàn thành</span>) -> Thiếu tân ngữ (hoàn thành cái gì?).<br>- Không thể <span class='p-word'>maintain</span> (<span class='p-mean'>duy trì</span>) -> Cũng thiếu tân ngữ. Chỉ có <span class='p-word'>concentrate</span> (nội động từ) đứng cuối câu là hợp lý toàn diện."
+    },
+    {
+        id: 36,
+        question: "Câu 36: Select the best answer",
+        vi_question: "Chọn đáp án đúng nhất",
+        options: [
+            { text: "equation", vi: "phương trình (n)" },
+            { text: "equality", vi: "sự bình đẳng (n)" },
+            { text: "equal", vi: "bằng nhau (adj)" },
+            { text: "equally", vi: "một cách tương đương / ngang bằng (adv)" }
+        ],
+        correct: "equally",
+        correct_exp: "Đáp án đúng là <span class='p-word'>equally</span>. Phân tích cấu trúc: \"your phone is _____ distracting\". Ta có <span class='p-word'>is</span> là tobe, <span class='p-word'>distracting</span> là tính từ. Theo nguyên tắc ngữ pháp, vị trí ở giữa tobe và tính từ <span class='hl-green'>bắt buộc phải là một Trạng từ (Adverb)</span> để bổ nghĩa cho tính từ đó. Trạng từ duy nhất trong 4 đáp án là <span class='p-word'>equally</span>.",
+        wrong_exp: "Đây là câu hỏi bẫy từ loại (Word form) cơ bản. Không thể dùng danh từ <span class='p-word'>equation</span> hay <span class='p-word'>equality</span> để bổ nghĩa cho một tính từ. Tính từ <span class='p-word'>equal</span> cũng tuyệt đối không được phép đứng trước một tính từ khác để bổ nghĩa cho nó trong trường hợp này."
+    },
+    {
+        id: 37,
+        question: "Câu 37: Select the best answer",
+        vi_question: "Chọn đáp án đúng nhất",
+        options: [
+            { text: "turn it off", vi: "tắt nó (V_inf)" },
+            { text: "turn off it", vi: "tắt nó (Sai vị trí đại từ)" },
+            { text: "turning off it", vi: "tắt nó (Sai vị trí đại từ)" },
+            { text: "turning it off", vi: "tắt nó (V_ing)" }
+        ],
+        correct: "turning it off",
+        correct_exp: "Đáp án đúng là <span class='p-word'>turning it off</span>. Câu này kiểm tra 2 điểm ngữ pháp cực hay:<br>1. <span class='p-grammar'>Cấu trúc song song (Parallelism):</span> \"putting it on airplane mode or _____\". Do có từ \"or\" nối 2 vế tương đương, vế trước dùng V_ing (putting) thì vế sau cũng phải dùng V_ing -> turning.<br>2. <span class='p-grammar'>Phrasal verb có thể tách rời:</span> Với cụm \"turn off\", khi tân ngữ là một đại từ (it/them/him/her...), đại từ ĐÓ BẮT BUỘC phải đứng chen vào giữa động từ và giới từ.",
+        wrong_exp: "<span class='p-word'>turn it off</span> sai vì chưa chia đuôi -ing để song song với \"putting\" ở vế trước.<br><span class='p-word'>turn off it</span> và <span class='p-word'>turning off it</span> mắc lỗi ngữ pháp cơ bản vì đặt đại từ \"it\" ra sau giới từ \"off\" đối với cụm động từ separable (có thể tách rời)."
+    },
+    {
+        id: 38,
+        question: "What is the writer's main purpose?",
+        vi_question: "Mục đích chính của tác giả là gì?",
+        options: [
+            { text: "To talk about his busy schedules", vi: "Để nói về lịch trình bận rộn của mình" },
+            { text: "To balance school and personal life", vi: "Để cân bằng trường học và cuộc sống cá nhân" },
+            { text: "To share tips on managing time", vi: "Để chia sẻ các mẹo quản lý thời gian" },
+            { text: "To complain about his difficult days", vi: "Để phàn nàn về những ngày khó khăn của mình" }
+        ],
+        correct: "To share tips on managing time",
+        correct_exp: "Đáp án đúng là <span class='p-word'>To share tips on managing time</span>. Ngay đầu đoạn 2, tác giả nhấn mạnh cốt lõi: \"one of the most important things to learn as a teenager is time management\" (một trong những điều quan trọng nhất cần học là quản lý thời gian). Sau đó, tác giả đưa ra hàng loạt mẹo cụ thể: dùng ứng dụng ghi chú, viết bài tập, xóa khi làm xong, dùng lịch/nhật ký.",
+        wrong_exp: "Tác giả có nhắc đến sự bận rộn và khó khăn, nhưng không phải để <span class='p-word'>complain</span> (<span class='p-mean'>phàn nàn</span>) mà là để làm nền tảng đưa ra giải pháp (tips). Việc cân bằng cuộc sống chỉ là lợi ích mang lại của việc quản lý thời gian, không bao quát được toàn bộ nội dung hành động chia sẻ kỹ năng xuyên suốt bài."
+    },
+    {
+        id: 39,
+        question: "The word \"commitments\" in paragraph 1 means ____.",
+        vi_question: "Từ \"commitments\" trong đoạn 1 có nghĩa là ____.",
+        options: [
+            { text: "assignments", vi: "bài tập / nhiệm vụ được giao" },
+            { text: "priorities", vi: "những ưu tiên" },
+            { text: "responsibilities", vi: "trách nhiệm / nghĩa vụ" },
+            { text: "deadlines", vi: "hạn chót" }
+        ],
+        correct: "responsibilities",
+        correct_exp: "Đáp án đúng là <span class='p-word'>responsibilities</span>. Từ <span class='p-word'>commitment</span> <span class='p-phonetic'>/kəˈmɪt.mənt/</span> trong ngữ cảnh này mang nghĩa là những sự cam kết, những nghĩa vụ hay trách nhiệm cá nhân mà một người phải thực hiện. Từ đồng nghĩa chính xác nhất của nó là <span class='p-word'>responsibilities</span> (<span class='p-mean'>trách nhiệm</span>).",
+        wrong_exp: "<span class='p-word'>assignments</span> (<span class='p-mean'>bài tập</span>) chỉ là một phần nhỏ của trách nhiệm học tập, không bao quát được cả cuộc sống cá nhân.<br><span class='p-word'>priorities</span> (<span class='p-mean'>ưu tiên</span>) và <span class='p-word'>deadlines</span> (<span class='p-mean'>hạn chót</span>) là những khái niệm liên quan đến việc sắp xếp thời gian nhưng hoàn toàn không phải nghĩa gốc thay thế được cho từ \"commitments\"."
+    },
+    {
+        id: 40,
+        question: "According to the passage, time management ____.",
+        vi_question: "Theo đoạn văn, quản lý thời gian ____.",
+        options: [
+            { text: "is a waste of time for teenagers", vi: "là sự lãng phí thời gian đối với thanh thiếu niên" },
+            { text: "uses journal, calendar or applications", vi: "sử dụng nhật ký, lịch hoặc các ứng dụng" },
+            { text: "can't manage extracurricular tasks", vi: "không thể quản lý các nhiệm vụ ngoại khóa" },
+            { text: "helps us spend our time effectively", vi: "giúp chúng ta sử dụng thời gian một cách hiệu quả" }
+        ],
+        correct: "helps us spend our time effectively",
+        correct_exp: "Đáp án đúng là <span class='p-word'>helps us spend our time effectively</span>. Dẫn chứng nằm ngay câu 2 đoạn 2: \"Time management allows us to spend time in both useful and beneficial ways.\" (Quản lý thời gian cho phép chúng ta dành thời gian theo những cách vừa hữu ích vừa có lợi). Cụm \"useful and beneficial\" chính là cách diễn đạt đồng nghĩa (paraphrase) của <span class='p-word'>effectively</span> (<span class='p-mean'>hiệu quả</span>).",
+        wrong_exp: "Nhận định lãng phí thời gian (waste of time) đi ngược hoàn toàn với bài đọc.<br>Bài đọc có nhắc đến ứng dụng, nhật ký nhưng đó là CÔNG CỤ (tools) để con người hỗ trợ bản thân, chứ bản thân khái niệm \"quản lý thời gian\" không tự \"sử dụng\" (uses) chúng.<br>Nó cũng giúp quản lý ngoại khóa (extracurricular tasks) trái ngược hoàn toàn với ý can't manage ở đáp án."
+    },
+    {
+        id: 41,
+        question: "What does the writer do after finishing an assignment?",
+        vi_question: "Tác giả làm gì sau khi hoàn thành một bài tập?",
+        options: [
+            { text: "He deletes it from his notes app.", vi: "Anh ấy xóa nó khỏi ứng dụng ghi chú." },
+            { text: "He adds more assignments to the list.", vi: "Anh ấy thêm nhiều bài tập hơn vào danh sách." },
+            { text: "He shares his results with friends.", vi: "Anh ấy chia sẻ kết quả với bạn bè." },
+            { text: "He tracks the finished assignments.", vi: "Anh ấy theo dõi các bài tập đã hoàn thành." }
+        ],
+        correct: "He deletes it from his notes app.",
+        correct_exp: "Đáp án đúng là <span class='p-word'>He deletes it from his notes app.</span> Dẫn chứng cực kỳ rõ ràng nằm ở đoạn 2: \"Then, when I complete these assignments, I delete them so that I can keep track of what I still need to do.\" (Sau đó, khi tôi hoàn thành những bài tập này, tôi xóa chúng đi để có thể theo dõi những gì tôi vẫn cần làm).",
+        wrong_exp: "Các hành động thêm bài tập (adds more) hay chia sẻ cho bạn bè (shares with friends) hoàn toàn không được nhắc đến trong văn bản (Dạng Not Given).<br>Tác giả theo dõi những việc \"vẫn cần làm\" (what I still need to do) chứ không phải giữ lại để theo dõi việc \"đã làm xong\" (finished assignments)."
+    },
+    {
+        id: 42,
+        question: "What does the writer mention about difficult days?",
+        vi_question: "Tác giả đề cập gì về những ngày khó khăn?",
+        options: [
+            { text: "Difficult days only happen at school.", vi: "Những ngày khó khăn chỉ xảy ra ở trường." },
+            { text: "Some days can be difficult, and some days aren't.", vi: "Một số ngày có thể khó khăn, và một số ngày thì không." },
+            { text: "Difficult days make every day easier.", vi: "Những ngày khó khăn làm cho mọi ngày dễ dàng hơn." },
+            { text: "Difficult days turn to good days with a routine.", vi: "Những ngày khó khăn biến thành những ngày tốt đẹp với một thói quen." }
+        ],
+        correct: "Some days can be difficult, and some days aren't.",
+        correct_exp: "Đáp án đúng là <span class='p-word'>Some days can be difficult, and some days aren't.</span> Dẫn chứng ở đoạn cuối: \"Though some days can be very hard...\" (Mặc dù một số ngày có thể rất khó khăn...). Việc tác giả nhấn mạnh chữ \"MỘT SỐ ngày\" (some days) hàm ý (imply) rằng có sự biến thiên: sẽ có những ngày vất vả và cũng sẽ có những ngày suôn sẻ nhẹ nhàng hơn.",
+        wrong_exp: "Không có thông tin nào nói ngày khó khăn chỉ có ở trường (only happen at school).<br>Tác giả nói \"kỹ năng quản lý thời gian\" làm mọi ngày dễ hơn, chứ không phải bản thân \"những ngày khó khăn\" làm mọi ngày dễ hơn (Sai chủ thể).<br>Việc có thói quen giúp duy trì kỷ luật (\"sticking to it\"), bài đọc không phóng đại đên mức nói thói quen có phép màu biến ngày khó thành ngày tốt (turn to good days)."
+    },
+    {
+        id: 43,
+        question: "All of the following statements are true EXCEPT ____",
+        vi_question: "Tất cả các câu sau đây đều đúng NGOẠI TRỪ ____",
+        options: [
+            { text: "many teenagers find it easy to arrange their schedule or routine", vi: "nhiều thanh thiếu niên cảm thấy dễ dàng sắp xếp lịch trình hay thói quen của họ" },
+            { text: "the writer writes down all his assignments and tasks on a notes app", vi: "tác giả viết xuống tất cả bài tập và nhiệm vụ trên ứng dụng ghi chú" },
+            { text: "it can be stressful trying to balance school and personal life", vi: "có thể rất căng thẳng khi cố gắng cân bằng trường học và cuộc sống cá nhân" },
+            { text: "teenagers have to deal with schoolwork, life, and other commitments", vi: "thanh thiếu niên phải giải quyết việc học, cuộc sống, và các trách nhiệm khác" }
+        ],
+        correct: "many teenagers find it easy to arrange their schedule or routine",
+        correct_exp: "Đáp án đúng (chính là câu phát biểu SAI so với bài đọc) là <span class='p-word'>many teenagers find it easy to arrange their schedule or routine</span>. Trong bài đọc (đoạn 1), tác giả viết rất rõ: \"for many it is extremely tough to maintain a good schedule or routine\" (đối với nhiều người, việc duy trì một lịch trình tốt là cực kỳ KHÓ KHĂN). Việc đáp án dùng từ <span class='p-word'>easy</span> (<span class='p-mean'>dễ dàng</span>) là ngược hoàn toàn với chữ <span class='p-word'>tough</span> trong bài.",
+        wrong_exp: "3 đáp án còn lại không được chọn vì chúng ĐỀU LÀ THÔNG TIN ĐÚNG được nêu trong bài đọc:<br>- Tác giả dùng notes app để viết nhiệm vụ (đoạn 2).<br>- Cân bằng cuộc sống gây căng thẳng (đoạn 3).<br>- Teenagers phải đối mặt với schoolwork, life, commitments (đoạn 1)."
+    }
+];
+
+/* === RENDER LOGIC === */
+let userAnswers = {};
+let score = 0;
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function renderQuiz() {
+    const container = document.getElementById('quiz-container');
+    quizData.forEach((q, index) => {
+        let clonedOptions = [...q.options];
+        shuffleArray(clonedOptions); 
+
+        const card = document.createElement('div');
+        card.className = 'glass-panel question-card';
+        card.id = `q-${q.id}`;
+        
+        let html = `
+            <div class="question-title">${q.question}</div>
+            <div class="question-trans">Dịch câu hỏi: <span class='p-mean'>${q.vi_question}</span></div>
+            <div class="options-grid">
+        `;
+
+        clonedOptions.forEach((opt) => {
+            // Chỉ hiển thị text Tiếng Anh trên nút bấm (Đã bỏ phần dịch lộ liễu)
+            html += `<button class="option-btn" data-ans="${escAttr(opt.text)}" data-cor="${escAttr(q.correct)}" onclick="checkAnswer(${q.id}, this.dataset.ans, this, this.dataset.cor)">${opt.text}</button>`;
+        });
+
+        // Tạo layout dịch 4 đáp án khoa học dạng Grid
+        let expOptionsHtml = q.options.map(o => `
+            <div class="exp-opt-item">
+                <span class="exp-opt-en">${o.text}</span> ➔ <span class="exp-opt-vi">${o.vi}</span>
+            </div>
+        `).join('');
+
+        html += `</div>
+            <div class="explanation" id="exp-${q.id}">
+                <div class="exp-header">🎓 PHÂN TÍCH & GIẢI THÍCH CHI TIẾT TỪ CÔ MS Chí Nên</div>
+                
+                <div class="exp-section">
+                    <div class="exp-sec-title">📖 Dịch & Phân tích các đáp án:</div>
+                    <div class="exp-opt-list">
+                        ${expOptionsHtml}
+                    </div>
+                </div>
+
+                <div class="exp-section">
+                    <div class="exp-sec-title">📝 Lời giải chi tiết:</div>
+                    <div class="reason correct">
+                        <b>✅ Tại sao đúng:</b> ${q.correct_exp}
+                    </div>
+                    <div class="reason wrong">
+                        <b>❌ Tại sao sai:</b> ${q.wrong_exp}
+                    </div>
+                </div>
+            </div>
+        `;
+        card.innerHTML = html;
+        container.appendChild(card);
+    });
+}
+
+// Escape an ninh cho giá trị nhét vào thuộc tính HTML (tránh vỡ khi text có dấu ' hoặc ")
+function escAttr(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function checkAnswer(qId, selectedText, btnEl, correctText) {
+    if (userAnswers[qId] !== undefined) return;
+    
+    userAnswers[qId] = selectedText;
+    const parent = btnEl.parentElement;
+    const buttons = parent.querySelectorAll('.option-btn');
+    
+    buttons.forEach(b => b.style.pointerEvents = 'none');
+
+    if (selectedText === correctText) {
+        btnEl.classList.add('correct');
+        score++;
+        playDing();
+        fireConfetti(btnEl);
+    } else {
+        btnEl.classList.add('wrong');
+        playDuck();
+        buttons.forEach(b => {
+            if (b.dataset.ans === correctText) {
+                b.classList.add('correct');
+            }
+        });
+    }
+
+    // Hiển thị phần UI Giải thích khoa học
+    document.getElementById(`exp-${qId}`).style.display = 'block';
+}
+
+function fireConfetti(btn) {
+    const rect = btn.getBoundingClientRect();
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+    confetti({
+        particleCount: 60,
+        spread: 70,
+        origin: { x: x, y: y },
+        colors: ['#ffc3a0', '#a1c4fd', '#96c93d', '#ff6b6b']
+    });
+}
+
+function showSubmitModal() {
+    const totalQ = quizData.length;
+    if (Object.keys(userAnswers).length < totalQ) {
+        alert("Con hãy trả lời đầy đủ 100% các câu hỏi trước khi nộp bài nhé!");
+        return;
+    }
+    document.getElementById('submit-modal').style.display = 'flex';
+    document.getElementById('student-name').style.display = 'block';
+    document.getElementById('modal-action-btn').style.display = 'inline-block';
+    document.getElementById('result-section').style.display = 'none';
+}
+
+function processSubmit() {
+    const nameInput = document.getElementById('student-name').value.trim();
+    if (!nameInput) {
+        alert("Con chưa nhập tên kìa!");
+        return;
+    }
+    
+    const totalQ = quizData.length;
+    const convertedScore = ((score / totalQ) * 10).toFixed(2);
+    const percentage = score / totalQ;
+
+    let gifSrc = "";
+    let comment = "";
+
+    if (percentage === 1) {
+        gifSrc = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; 
+        comment = "Lời phê của Ms MS Chí Nên: Quá xuất sắc! Con đúng là một thiên tài ngôn ngữ! 🏆 Cứ giữ vững phong độ này nhé!";
+        fireConfettiBig();
+    } else if (percentage >= 0.6) {
+        gifSrc = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"; 
+        comment = "Lời phê của Ms MS Chí Nên: Rất tốt! Con đã nắm bắt bài khá vững. Hãy đọc kỹ phần cô giải thích chi tiết ở bên dưới để rèn luyện thêm nhé! 👏";
+    } else {
+        gifSrc = "https://media.giphy.com/media/26FPpSuhgHvUqcJUI/giphy.gif"; 
+        comment = "Lời phê của Ms MS Chí Nên: Đừng buồn nhé, phần đọc hiểu luôn là phần khó nhằn. Quan trọng là con chép lại toàn bộ từ vựng và xem kỹ giải thích chi tiết tuyệt đẹp của cô bên dưới để tiến bộ hơn! 💪 Mãi yêu!";
+    }
+
+    document.getElementById('modal-title').innerText = "KẾT QUẢ CỦA CON";
+    document.getElementById('student-name').style.display = 'none';
+    document.getElementById('modal-action-btn').style.display = 'none';
+    
+    const resSec = document.getElementById('result-section');
+    resSec.style.display = 'block';
+    
+    document.getElementById('result-name').innerText = `Học sinh: ${nameInput}`;
+    document.getElementById('result-score').innerText = `Số câu đúng: ${score}/${totalQ}`;
+    document.getElementById('result-converted').innerText = `Điểm hệ 10: ${convertedScore}/10 điểm`;
+    document.getElementById('result-comment').innerText = comment;
+    document.getElementById('result-gif').innerHTML = `<img src="${gifSrc}" alt="Meme">`;
+}
+
+function closeModal() {
+    document.getElementById('submit-modal').style.display = 'none';
+}
+
+function fireConfettiBig() {
+    var duration = 3 * 1000;
+    var animationEnd = Date.now() + duration;
+    var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 3000 };
+    function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+    var interval = setInterval(function() {
+        var timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+        var particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+    }, 250);
+}
+
+window.onload = renderQuiz;
+</script>
+</body>
+</html>

@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms. MS Chí Nên - English 9 Quiz</title>
+    <!-- Google Fonts: Nunito for rounded, friendly look -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8854C0',    /* Tím hồng nhạt */
+                        secondary: '#00C9A7',  /* Xanh ngọc */
+                        correct: '#00D26A',    /* Xanh lá chuẩn */
+                        wrong: '#FF4757',      /* Đỏ cam */
+                        bgPattern: '#F0F3F9',
+                        cardBg: '#FFFFFF',
+                    },
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                        display: ['Quicksand', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        '3d': '0 6px 0px rgba(0,0,0,0.15)',
+                        '3d-active': '0 2px 0px rgba(0,0,0,0.15)',
+                        'card': '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #dfdbfb;
+            background-image: radial-gradient(#8854C0 1px, transparent 1px), radial-gradient(#8854C0 1px, transparent 1px);
+            background-position: 0 0, 25px 25px;
+            background-size: 50px 50px;
+        }
+        
+        /* Animation: Shake for wrong answer */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        .shake-anim {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* Animation: Pop In */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .pop-in {
+            animation: popIn 0.3s ease-out forwards;
+        }
+
+        /* 3D Button Styles */
+        .btn-option {
+            transition: all 0.15s ease;
+            border: 2px solid #E2E8F0;
+        }
+        .btn-option:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0px rgba(0,0,0,0.1);
+            border-color: #8854C0;
+            background-color: #F8F5FF;
+        }
+        .btn-option:active:not(.disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0px rgba(0,0,0,0.1);
+        }
+
+        /* State Styles */
+        .btn-correct {
+            background-color: #00D26A !important;
+            color: white !important;
+            border-color: #00B85C !important;
+            box-shadow: 0 6px 0px #008F47 !important;
+        }
+        .btn-wrong {
+            background-color: #FF4757 !important;
+            color: white !important;
+            border-color: #E03646 !important;
+            box-shadow: 0 6px 0px #B82C3A !important;
+        }
+        .disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8854C0; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6c4298; 
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-700 pb-20">
+
+    <!-- Header -->
+    <header class="bg-white shadow-3d sticky top-0 z-50 border-b-4 border-slate-200">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-2xl border-2 border-white shadow-md">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-xl text-primary">Ms. MS Chí Nên</h1>
+                    <p class="text-xs text-gray-500 font-bold tracking-wide">ENGLISH 9 - UNIT 9 QUIZ</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex flex-col items-end">
+                    <span class="text-xs text-gray-400 font-bold uppercase">Score</span>
+                    <span id="score-display" class="font-display font-black text-2xl text-secondary">0/0</span>
+                </div>
+                <button onclick="scrollToResult()" class="bg-secondary hover:bg-teal-500 text-white font-bold py-2 px-4 rounded-xl shadow-3d active:shadow-3d-active transform active:translate-y-1 transition-all">
+                    <i class="fa-solid fa-flag-checkered mr-2"></i>Nộp bài
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto px-4 py-8 space-y-8" id="quiz-container">
+        <!-- Introduction Card -->
+        <div class="bg-white rounded-3xl p-6 shadow-card border-2 border-slate-100 text-center pop-in">
+            <h2 class="text-2xl font-display font-bold text-gray-800 mb-2">Bài tập Unit 9: Relative Clauses</h2>
+            <p class="text-gray-500 mb-4">Kết hợp câu & Viết lại câu (Sentence Combination & Rewriting)</p>
+            <div class="flex justify-center gap-2 text-sm font-semibold">
+                <span class="px-3 py-1 bg-green-100 text-green-600 rounded-lg">16 Câu hỏi</span>
+                <span class="px-3 py-1 bg-purple-100 text-purple-600 rounded-lg">Giải thích chi tiết</span>
+                <span class="px-3 py-1 bg-orange-100 text-orange-600 rounded-lg">Gamification</span>
+            </div>
+        </div>
+
+        <!-- Questions will be injected here via JS -->
+    </main>
+
+    <!-- Result Modal (Hidden by default) -->
+    <div id="result-modal" class="fixed inset-0 bg-black/60 z-[100] hidden items-center justify-center backdrop-blur-sm px-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center relative border-4 border-white transform transition-all scale-100">
+            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-secondary rounded-full flex items-center justify-center border-4 border-white shadow-lg text-4xl text-white animate-bounce">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            
+            <h2 class="mt-10 text-3xl font-display font-black text-gray-800 mb-2">Hoàn thành!</h2>
+            <p id="feedback-message" class="text-gray-500 mb-6 font-semibold">Bạn làm rất tốt!</p>
+            
+            <div class="bg-slate-50 rounded-2xl p-6 mb-8 border border-slate-200">
+                <div class="text-sm text-gray-400 font-bold uppercase tracking-wider mb-1">Tổng điểm</div>
+                <div class="text-5xl font-black text-primary" id="final-score">0/16</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="restartQuiz()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl shadow-3d active:shadow-3d-active active:translate-y-1 transition-all">
+                    <i class="fa-solid fa-rotate-right mr-2"></i>Làm lại
+                </button>
+                <button onclick="closeModal()" class="w-full bg-primary hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-xl shadow-3d active:shadow-3d-active active:translate-y-1 transition-all">
+                    <i class="fa-solid fa-eye mr-2"></i>Xem lại
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="sound-correct" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3"></audio>
+    <audio id="sound-wrong" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3"></audio>
+    <audio id="sound-win" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
+
+    <script>
+        // --- DATA ---
+        // Dữ liệu đã được chuyển đổi và làm giàu phần giải thích theo chuẩn "Ms. MS Chí Nên"
+        const rawQuestions = [
+            {
+                id: 1,
+                label: "Ex 3-1",
+                question: "The tourists visited a local market. The market sold beautiful handmade crafts.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "The tourists visited a local market, which sold beautiful handmade crafts.",
+                    "The tourists who visited a market sold beautiful handmade crafts.",
+                    "Tourists visited the beautiful handmade crafts sold at a local market.",
+                    "A local market sold beautiful handmade crafts which the tourists visited."
+                ],
+                correct: 0,
+                explanation: {
+                    translateQ: "Du khách đã ghé thăm một khu chợ địa phương. Khu chợ này bán những món đồ thủ công tuyệt đẹp.",
+                    analysis: [
+                        "A. ...which sold... (Mệnh đề quan hệ bổ nghĩa cho 'market' - ĐÚNG)",
+                        "B. ...who visited... sold... (Sai nghĩa: Du khách bán đồ thủ công)",
+                        "C. ...visited the crafts... (Sai nghĩa: Du khách đi thăm đồ vật chứ không phải thăm chợ)",
+                        "D. ...which the tourists visited (Ngữ pháp đúng nhưng đảo ngược ý chính của câu gốc)"
+                    ],
+                    whyCorrect: "Dùng đại từ quan hệ <b>'which'</b> thay thế cho danh từ chỉ vật <b>'local market'</b> làm chủ ngữ cho động từ 'sold'.",
+                    whyWrong: "Các đáp án khác làm sai lệch ý nghĩa của câu gốc hoặc sắp xếp trật tự từ không hợp lý."
+                }
+            },
+            {
+                id: 2,
+                label: "Ex 3-2",
+                question: "We stayed at a hotel with a rooftop pool. Its view was incredible.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "The view from the pool, which was incredible, was the hotel we stayed at.",
+                    "We stayed at a hotel with a rooftop pool whose view was incredible.",
+                    "The incredible view from the pool made the hotel we stayed at unforgettable.",
+                    "With an incredible view, the rooftop pool was located at the hotel where we stayed."
+                ],
+                correct: 1,
+                explanation: {
+                    translateQ: "Chúng tôi ở tại một khách sạn có hồ bơi trên sân thượng. Tầm nhìn của nó thật đáng kinh ngạc.",
+                    analysis: [
+                        "A. ...was the hotel (Sai nghĩa: Tầm nhìn... là cái khách sạn)",
+                        "B. ...whose view was incredible (ĐÚNG: Tầm nhìn của cái hồ bơi)",
+                        "C. ...made the hotel... unforgettable (Sai: Thêm từ 'unforgettable' không có trong bài)",
+                        "D. Cấu trúc phức tạp, không dùng MĐQH nối trực tiếp."
+                    ],
+                    whyCorrect: "Dùng đại từ quan hệ chỉ sở hữu <b>'whose'</b> thay thế cho tính từ sở hữu <b>'Its'</b> (Its view -> whose view).",
+                    whyWrong: "Đáp án A sai logic. Đáp án C thêm thắt ý. Đáp án D không sát yêu cầu bài tập."
+                }
+            },
+            {
+                id: 3,
+                label: "Ex 3-3",
+                question: "The restaurant served fresh seafood. We ordered dishes from there.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "We ordered dishes from the restaurant where the fresh seafood was served.",
+                    "The fresh seafood we ordered from a restaurant that served delicious dishes.",
+                    "We enjoyed fresh seafood at a restaurant where we placed our order.",
+                    "Serving fresh seafood, the restaurant received many orders from us."
+                ],
+                correct: 0,
+                explanation: {
+                    translateQ: "Nhà hàng phục vụ hải sản tươi. Chúng tôi đã gọi món từ đó.",
+                    analysis: [
+                        "A. ...where the fresh seafood was served (ĐÚNG: Nơi phục vụ hải sản)",
+                        "B. Câu chưa hoàn chỉnh (Thiếu động từ chính)",
+                        "C. ...enjoyed fresh seafood... (Sai: Đổi 'ordered' thành 'enjoyed' sai nghĩa gốc)",
+                        "D. ...received many orders... (Sai: Thêm ý 'many orders' không có trong bài)"
+                    ],
+                    whyCorrect: "Dùng trạng từ quan hệ nơi chốn <b>'where'</b> thay thế cho cụm <b>'from there/at the restaurant'</b>. Câu được chuyển sang bị động để văn phong mượt mà hơn.",
+                    whyWrong: "B sai ngữ pháp. C và D sai nghĩa hoặc thêm thông tin không có."
+                }
+            },
+            {
+                id: 4,
+                label: "Ex 3-4",
+                question: "The tour guide spoke perfect English. He explained the history of the city.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "The tour guide explained the history of the city with perfect English.",
+                    "The tour guide’s English explanation of the city’s history was perfect.",
+                    "The tour guide who spoke perfect English explained the city’s history to us.",
+                    "The tour guide explained the city’s history for US spoke English perfectly."
+                ],
+                correct: 2,
+                explanation: {
+                    translateQ: "Hướng dẫn viên nói tiếng Anh hoàn hảo. Anh ấy giải thích lịch sử thành phố.",
+                    analysis: [
+                        "A. Câu đơn, không dùng MĐQH (Chưa tối ưu cho bài tập Unit 9)",
+                        "B. Đổi cấu trúc quá nhiều (Noun phrase)",
+                        "C. ...who spoke perfect English... (ĐÚNG: Mệnh đề quan hệ bổ nghĩa cho người)",
+                        "D. Sai ngữ pháp trầm trọng (Run-on sentence)"
+                    ],
+                    whyCorrect: "Dùng đại từ quan hệ <b>'who'</b> thay thế cho danh từ chỉ người <b>'The tour guide'</b>.",
+                    whyWrong: "A đúng nghĩa nhưng không phải câu ghép dùng MĐQH. D sai cấu trúc câu."
+                }
+            },
+            {
+                id: 5,
+                label: "Ex 3-5",
+                question: "The museum displayed ancient artifacts. They came from all over the world.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "Artifacts coming from all over the world, where the museum displayed.",
+                    "They came from all over the world, the museum displayed ancient artifacts.",
+                    "The artifacts came from all over the world which were displayed at the museum.",
+                    "The museum displayed ancient artifacts, which came from all over the world."
+                ],
+                correct: 3,
+                explanation: {
+                    translateQ: "Bảo tàng trưng bày các cổ vật. Chúng đến từ khắp nơi trên thế giới.",
+                    analysis: [
+                        "A. Sai ngữ pháp (where dùng sai, câu thiếu động từ chính)",
+                        "B. Lỗi Run-on sentence (Hai câu đơn nối bằng dấu phẩy)",
+                        "C. Đảo lộn trật tự chính phụ (Câu gốc nhấn mạnh việc trưng bày)",
+                        "D. ...artifacts, which came... (ĐÚNG)"
+                    ],
+                    whyCorrect: "Dùng <b>'which'</b> thay thế cho <b>'They'</b> (chỉ vật 'ancient artifacts'). Dùng dấu phẩy vì cụm danh từ đã xác định (tùy ngữ cảnh, nhưng ở đây nối tiếp ý rất tự nhiên).",
+                    whyWrong: "A và B sai ngữ pháp cơ bản. C làm thay đổi trọng tâm câu."
+                }
+            },
+            {
+                id: 6,
+                label: "Ex 3-6",
+                question: "Last month, we attended the festival. It celebrates the local culture.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "We attended the festival which celebrated the local culture last month.",
+                    "The festival celebrated last month by US was about local culture.",
+                    "The local culture was celebrated by a festival that we attended last month.",
+                    "It was a festival celebrating the local culture which we attended last month."
+                ],
+                correct: 0,
+                explanation: {
+                    translateQ: "Tháng trước, chúng tôi tham dự lễ hội. Nó tôn vinh văn hóa địa phương.",
+                    analysis: [
+                        "A. ...festival which celebrated... (ĐÚNG: which thay cho festival)",
+                        "B. Câu bị động, đúng nghĩa nhưng cấu trúc khác bài học",
+                        "C. Bị động hóa chủ ngữ 'local culture', mất chủ ngữ 'We'",
+                        "D. Cấu trúc Cleft sentence (Câu chẻ) hơi rườm rà"
+                    ],
+                    whyCorrect: "Dùng <b>'which'</b> để nối hai câu. Động từ 'celebrates' (hiện tại) được chuyển thành 'celebrated' (quá khứ) để hòa hợp thì với 'attended'.",
+                    whyWrong: "Các đáp án khác đúng nghĩa nhưng cấu trúc phức tạp hoặc không sát với mục tiêu luyện tập MĐQH."
+                }
+            },
+            {
+                id: 7,
+                label: "Ex 3-7",
+                question: "Tour guides are knowledgeable about the area. They can show you the best attractions.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "Tour guides who are knowledgeable about the area can show you the best attractions.",
+                    "Even when the tour guides are knowledgeable..., they are unable...",
+                    "Despite their knowledge..., few tour guides can...",
+                    "Tour guides can show you... even though they know little..."
+                ],
+                correct: 0,
+                explanation: {
+                    translateQ: "Hướng dẫn viên am hiểu về khu vực. Họ có thể chỉ cho bạn những điểm tham quan tốt nhất.",
+                    analysis: [
+                        "A. ...who are knowledgeable... (ĐÚNG)",
+                        "B. Sai nghĩa (unable - không thể)",
+                        "C. Sai nghĩa (few - rất ít)",
+                        "D. Sai nghĩa (know little - biết ít)"
+                    ],
+                    whyCorrect: "Kết hợp hai câu khẳng định mang nghĩa bổ sung cho nhau bằng đại từ quan hệ <b>'who'</b>.",
+                    whyWrong: "Các đáp án B, C, D đều dùng từ nối mang nghĩa tương phản (Even when, Despite, Even though) hoặc từ phủ định (unable, few, little) làm sai lệch nghĩa tích cực của câu gốc."
+                }
+            },
+            {
+                id: 8,
+                label: "Ex 3-8",
+                question: "Locals are friendly and welcoming. They are always ready to assist tourists.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "Locals are friendly and welcoming, but not all of them are ready to assist tourists.",
+                    "Locals who are friendly and welcoming are always ready to assist tourists.",
+                    "Even though locals are friendly and welcoming, not all of them are ready to assist tourists.",
+                    "Only the locals whose friends are welcoming are ready to assist tourists."
+                ],
+                correct: 1,
+                explanation: {
+                    translateQ: "Người dân địa phương thân thiện và hiếu khách. Họ luôn sẵn sàng hỗ trợ du khách.",
+                    analysis: [
+                        "A. Sai nghĩa (but not all - nhưng không phải tất cả)",
+                        "B. ...who are friendly... (ĐÚNG)",
+                        "C. Sai nghĩa (not all)",
+                        "D. Sai hoàn toàn (whose friends - bạn của họ)"
+                    ],
+                    whyCorrect: "Hai câu gốc đều mang nghĩa tích cực, hỗ trợ nhau -> Dùng <b>'who'</b> để kết nối.",
+                    whyWrong: "Các đáp án khác cố tình thêm ý phủ định hoặc sai lệch chủ ngữ."
+                }
+            },
+            {
+                id: 9,
+                label: "Ex 3-9",
+                question: "The hotel's rooms overlook the ocean. The hotel offers breathtaking view to guests.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "The guests who want rooms overlooking the ocean can ask the hotel to offer them.",
+                    "Only the guests who want rooms overlooking the ocean may get the hotel offers.",
+                    "The hotel whose rooms overlook the ocean offers breathtaking views to guests.",
+                    "The breathtaking view is offered to the guests who stay at the hotel for a long time."
+                ],
+                correct: 2,
+                explanation: {
+                    translateQ: "Các phòng của khách sạn nhìn ra biển. Khách sạn cung cấp tầm nhìn ngoạn mục cho khách.",
+                    analysis: [
+                        "A. Sai nghĩa so với câu gốc.",
+                        "B. Sai nghĩa.",
+                        "C. ...whose rooms overlook... (ĐÚNG: Phòng của khách sạn)",
+                        "D. Sai nghĩa (thêm ý 'stay for a long time')"
+                    ],
+                    whyCorrect: "Dùng đại từ sở hữu <b>'whose'</b> thay thế cho <b>'The hotel's'</b>.",
+                    whyWrong: "A, B, D đều tự ý thêm thắt các điều kiện không có trong câu gốc."
+                }
+            },
+            {
+                id: 10,
+                label: "Ex 3-10",
+                question: "The tour guide shares fascinating stories. The tour guide's expertise in history is impressive.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "Despite his lack of expertise in history, the tour guide shares fascinating stories.",
+                    "The tour guide fails to share fascinating stories however impressive his expertise is.",
+                    "The tour guide's expertise in history is good, but he fails to share interesting story.",
+                    "The tour guide, whose expertise in history is impressive, shares fascinating stories."
+                ],
+                correct: 3,
+                explanation: {
+                    translateQ: "Hướng dẫn viên chia sẻ những câu chuyện hấp dẫn. Chuyên môn lịch sử của anh ấy rất ấn tượng.",
+                    analysis: [
+                        "A. Sai nghĩa (lack of expertise - thiếu chuyên môn)",
+                        "B. Sai nghĩa (fails to share - thất bại chia sẻ)",
+                        "C. Sai nghĩa (fails to share)",
+                        "D. ...whose expertise... (ĐÚNG)"
+                    ],
+                    whyCorrect: "Dùng <b>'whose'</b> chỉ sở hữu (The tour guide's expertise). Câu này dùng dấu phẩy vì 'The tour guide' đã xác định hoặc coi như thông tin thêm.",
+                    whyWrong: "A, B, C đều mang nghĩa phủ định ngược lại với câu gốc."
+                }
+            },
+            {
+                id: 11,
+                label: "Ex 3-11",
+                question: "The market sells fresh produce and local crafts. It is a great place to explore.",
+                task: "Choose the sentence that best combines the original ones.",
+                options: [
+                    "The market is a great place which sell fresh produce and local crafts.",
+                    "The market which sells fresh produce and local crafts is a great place to explore.",
+                    "It is a great place to explore which sell fresh produce and local crafts.",
+                    "The market is a great place to explore which sell fresh produce and local crafts."
+                ],
+                correct: 1,
+                explanation: {
+                    translateQ: "Khu chợ bán nông sản tươi và đồ thủ công. Đó là một nơi tuyệt vời để khám phá.",
+                    analysis: [
+                        "A. Sai ngữ pháp ('which sell' - market là số ít phải là 'sells', vả lại place dùng 'where' hay hơn)",
+                        "B. ...which sells... is a great place... (ĐÚNG)",
+                        "C. Sai ngữ pháp (which sell)",
+                        "D. Sai ngữ pháp (which sell)"
+                    ],
+                    whyCorrect: "Dùng <b>'which'</b> làm chủ ngữ cho mệnh đề quan hệ 'sells fresh produce...', cả cụm này bổ nghĩa cho 'The market'.",
+                    whyWrong: "Các câu khác đều sai sự hòa hợp chủ ngữ - động từ (market - sells)."
+                }
+            },
+            {
+                id: 12,
+                label: "Ex 4-1",
+                question: "The tour includes a visit to a nature reserve where you can see endangered animals.",
+                task: "Circle the correct answer which is closest in meaning to the original one.",
+                options: [
+                    "The tour includes a visit to a nature reserve when you can see endangered animals.",
+                    "The tour involving a visit to a nature reserve which you can see endangered animals.",
+                    "The tour which includes a visit to a nature reserve where you can see endangered animals.",
+                    "The tour involves a trip to a nature reserve where you can see animals at risk."
+                ],
+                correct: 3,
+                explanation: {
+                    translateQ: "Chuyến đi bao gồm chuyến thăm khu bảo tồn thiên nhiên nơi bạn có thể thấy động vật có nguy cơ tuyệt chủng.",
+                    analysis: [
+                        "A. Sai từ 'when' (khi) thay vì 'where' (nơi)",
+                        "B. Sai ngữ pháp (Thiếu động từ chính)",
+                        "C. Sai ngữ pháp (Cả câu biến thành một cụm danh từ dài, thiếu động từ chính)",
+                        "D. ...involves a trip... animals at risk (ĐÚNG)"
+                    ],
+                    whyCorrect: "Paraphrase (Viết lại câu dùng từ đồng nghĩa): 'includes a visit' = 'involves a trip', 'endangered animals' = 'animals at risk'.",
+                    whyWrong: "A sai từ quan hệ. B và C sai cấu trúc câu (Fragment)."
+                }
+            },
+            {
+                id: 13,
+                label: "Ex 4-2",
+                question: "The tour guide in charge introduced the scenic and special points of the areas.",
+                task: "Circle the correct answer which is closest in meaning to the original one.",
+                options: [
+                    "The tour guide who was in charged introduced the scenic and special points of the areas.",
+                    "The tour guide whose was in charged will introduce the scenic and special points of the areas.",
+                    "The tour guide which was in charged introduced the scenic and special points of the areas.",
+                    "The tour guide what was in charged introduced the scenic and special points of the areas."
+                ],
+                correct: 0,
+                explanation: {
+                    translateQ: "Hướng dẫn viên phụ trách đã giới thiệu các điểm cảnh quan đặc biệt.",
+                    analysis: [
+                        "A. ...who was in charged... (ĐÚNG: Viết lại cụm danh từ thành MĐQH)",
+                        "B. Sai ngữ pháp (whose was -> sai, will introduce -> sai thì)",
+                        "C. Sai (Which dùng cho vật)",
+                        "D. Sai (What không dùng làm đại từ quan hệ)"
+                    ],
+                    whyCorrect: "Dùng <b>'who was in charge'</b> để giải thích rõ cho cụm 'The tour guide in charge'. (Lưu ý: Đề gốc có lỗi chính tả 'charged', đáp án giữ nguyên theo đề).",
+                    whyWrong: "B, C, D sai đại từ quan hệ hoặc sai thì."
+                }
+            },
+            {
+                id: 14,
+                label: "Ex 4-3",
+                question: "A self-guided tour requiring more time and effort is often selected by the young.",
+                task: "Circle the correct answer which is closest in meaning to the original one.",
+                options: [
+                    "A self-guided tour, who requires more time and effort, is often selected by the young.",
+                    "A self-guided tour, where requires more time and effort, is often selected by the young.",
+                    "A self-guided tour, which requires more time and effort, is often selected by the young.",
+                    "A self-guided tour, that more time and effort, is often selected by the young."
+                ],
+                correct: 2,
+                explanation: {
+                    translateQ: "Một chuyến du lịch tự túc đòi hỏi nhiều thời gian và công sức thường được giới trẻ lựa chọn.",
+                    analysis: [
+                        "A. Sai (Who dùng cho người)",
+                        "B. Sai (Where không làm chủ ngữ cho động từ requires)",
+                        "C. ...which requires... (ĐÚNG)",
+                        "D. Sai ngữ pháp (Thiếu động từ)"
+                    ],
+                    whyCorrect: "Chuyển từ mệnh đề rút gọn (V-ing: requiring) sang mệnh đề đầy đủ <b>'which requires'</b>.",
+                    whyWrong: "A, B sai đại từ quan hệ. D sai cấu trúc."
+                }
+            },
+            {
+                id: 15,
+                label: "Ex 4-4",
+                question: "A package tour offering more convenience is more favourable for people lazy to arrange.",
+                task: "Circle the correct answer which is closest in meaning to the original one.",
+                options: [
+                    "A package tour, that offers more convenience, is more favourable for people lazy to arrange.",
+                    "A package tour offers more convenience, yet is more favourable for people lazy to arrange.",
+                    "A package tour offers more convenience is being more favourable for people lazy to arrange.",
+                    "A package tour, which more convenience, is more favourable for people lazy to arrange."
+                ],
+                correct: 0,
+                explanation: {
+                    translateQ: "Một tour trọn gói cung cấp sự tiện lợi thì thuận tiện hơn cho người lười sắp xếp.",
+                    analysis: [
+                        "A. ...that offers... (ĐÚNG về nghĩa chuyển đổi)",
+                        "B. Sai nghĩa ('yet' = nhưng/tuy nhiên, tạo sự tương phản vô lý)",
+                        "C. Sai ngữ pháp (Thừa động từ 'is being')",
+                        "D. Sai ngữ pháp (Thiếu động từ trong MĐQH)"
+                    ],
+                    whyCorrect: "Chuyển 'offering' (V-ing) thành 'that offers' (Mệnh đề quan hệ). <br><i>*Lưu ý: Trong ngữ pháp chuẩn, 'that' không đứng sau dấu phẩy, nhưng đây là đáp án tốt nhất trong 4 lựa chọn của bài tập trắc nghiệm này.*</i>",
+                    whyWrong: "B sai nghĩa logic. C và D sai ngữ pháp nghiêm trọng."
+                }
+            },
+            {
+                id: 16,
+                label: "Ex 4-5",
+                question: "Although visitors can reduce stress in a package tour, they have to follow a fixed itinerary.",
+                task: "Circle the correct answer which is closest in meaning to the original one.",
+                options: [
+                    "Despite visitors reducing stress in a package tour, they have to follow a fixed itinerary.",
+                    "Despite reducing stress in a package tour, visitors have to follow a fixed itinerary.",
+                    "Although reducing stress in a package tour, visitors have to follow a fixed itinerary.",
+                    "Visitors can reduce stress in a package tour, despite they have to follow a fixed itinerary."
+                ],
+                correct: 1,
+                explanation: {
+                    translateQ: "Mặc dù du khách có thể giảm căng thẳng trong tour trọn gói, họ phải tuân theo lịch trình cố định.",
+                    analysis: [
+                        "A. Đúng ngữ pháp nhưng lặp từ (visitors... they) chưa hay bằng B.",
+                        "B. Despite reducing stress... (ĐÚNG: Rút gọn chủ ngữ)",
+                        "C. Sai ngữ pháp (Although thường đi với mệnh đề, ít khi đi trực tiếp V-ing ở đầu câu như này)",
+                        "D. Sai ngữ pháp (Despite không đi với mệnh đề S + V)"
+                    ],
+                    whyCorrect: "Cấu trúc: <b>Although S + V -> Despite + V-ing</b> (khi hai vế cùng chủ ngữ 'visitors' và 'they').",
+                    whyWrong: "D là lỗi sai phổ biến nhất (Despite + Mệnh đề). C dùng sai từ nối."
+                }
+            }
+        ];
+
+        // Global State
+        let currentQuestions = [];
+        let score = 0;
+        let answeredCount = 0;
+
+        // Shuffle Function (Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Initialize Quiz
+        function initQuiz() {
+            // Shuffle questions but keep track of logic via ID/Label if needed. 
+            // Here we clone deep to avoid mutating original structure when we might shuffle options too
+            currentQuestions = JSON.parse(JSON.stringify(rawQuestions));
+            
+            // Optional: Shuffle the Question Order itself? The prompt asked for shuffle algorithm.
+            // Let's shuffle questions to prevent rote learning.
+            shuffleArray(currentQuestions);
+
+            // Also Shuffle Options for each question?
+            // This requires mapping the correct index to the new position.
+            currentQuestions.forEach(q => {
+                let optionsWithIndex = q.options.map((opt, idx) => ({ txt: opt, originalIdx: idx }));
+                shuffleArray(optionsWithIndex);
+                q.options = optionsWithIndex.map(o => o.txt);
+                // Find new index of the correct answer
+                q.correct = optionsWithIndex.findIndex(o => o.originalIdx === q.correct);
+            });
+
+            renderQuiz();
+            updateScoreDisplay();
+        }
+
+        // Render Quiz
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            // Keep the intro card, remove old questions
+            const introCard = container.firstElementChild;
+            container.innerHTML = '';
+            container.appendChild(introCard);
+
+            currentQuestions.forEach((q, index) => {
+                const qEl = document.createElement('div');
+                qEl.className = 'bg-white rounded-3xl p-6 shadow-card border-2 border-slate-100 relative overflow-hidden transition-all duration-300 hover:shadow-xl';
+                qEl.id = `question-${index}`;
+                
+                // HTML for Options
+                let optionsHTML = '';
+                q.options.forEach((opt, optIdx) => {
+                    optionsHTML += `
+                        <button onclick="checkAnswer(${index}, ${optIdx})" 
+                            class="btn-option w-full text-left p-4 rounded-xl mb-3 flex items-start gap-3 bg-white text-slate-600 font-semibold text-lg relative group">
+                            <div class="w-8 h-8 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center font-bold text-slate-400 group-hover:bg-primary group-hover:text-white transition-colors border border-slate-200">
+                                ${String.fromCharCode(65 + optIdx)}
+                            </div>
+                            <span class="pt-0.5">${opt}</span>
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 transition-opacity result-icon">
+                                <!-- Icons injected via JS -->
+                            </div>
+                        </button>
+                    `;
+                });
+
+                // HTML for Explanation (Hidden initially)
+                const explanationHTML = `
+                    <div id="explanation-${index}" class="hidden mt-6 bg-slate-50 rounded-xl p-5 border-2 border-slate-200 border-dashed animate-[popIn_0.5s_ease-out]">
+                        <div class="flex items-center gap-2 mb-3">
+                            <img src="https://cdn-icons-png.flaticon.com/512/194/194935.png" class="w-8 h-8 rounded-full border border-slate-300">
+                            <span class="font-bold text-primary">Cô MS Chí Nên giải thích:</span>
+                        </div>
+                        
+                        <div class="space-y-3 text-sm">
+                            <div class="p-3 bg-white rounded-lg border border-indigo-100 shadow-sm">
+                                <span class="font-bold text-indigo-500 block mb-1"><i class="fa-solid fa-language mr-1"></i> Dịch câu hỏi:</span>
+                                <p class="text-slate-700 italic">"${q.explanation.translateQ}"</p>
+                            </div>
+                            
+                            <div class="p-3 bg-white rounded-lg border border-orange-100 shadow-sm">
+                                <span class="font-bold text-orange-500 block mb-1"><i class="fa-solid fa-list-check mr-1"></i> Phân tích đáp án:</span>
+                                <ul class="list-none space-y-1 text-slate-600">
+                                    ${q.explanation.analysis.map(line => `<li>${line}</li>`).join('')}
+                                </ul>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div class="p-3 bg-green-50 rounded-lg border border-green-200">
+                                    <span class="font-bold text-green-600 block mb-1"><i class="fa-solid fa-circle-check mr-1"></i> Tại sao ĐÚNG?</span>
+                                    <p class="text-slate-700">${q.explanation.whyCorrect}</p>
+                                </div>
+                                <div class="p-3 bg-red-50 rounded-lg border border-red-200">
+                                    <span class="font-bold text-red-500 block mb-1"><i class="fa-solid fa-circle-xmark mr-1"></i> Tại sao SAI?</span>
+                                    <p class="text-slate-700">${q.explanation.whyWrong}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                qEl.innerHTML = `
+                    <div class="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-xl shadow-sm">
+                        ${q.label}
+                    </div>
+                    <div class="mb-5 pr-8">
+                        <h3 class="text-lg font-bold text-slate-800 leading-relaxed"><i class="fa-regular fa-circle-question text-primary mr-2"></i>${q.question.replace(/\n/g, '<br>')}</h3>
+                        <p class="text-sm text-slate-500 mt-2 font-display italic"><i class="fa-solid fa-pen-nib mr-1"></i>${q.task}</p>
+                    </div>
+                    
+                    <div class="options-container" id="options-${index}">
+                        ${optionsHTML}
+                    </div>
+
+                    ${explanationHTML}
+                `;
+
+                container.appendChild(qEl);
+            });
+        }
+
+        // Handle Answer
+        function checkAnswer(qIndex, optIndex) {
+            const container = document.getElementById(`options-${qIndex}`);
+            const buttons = container.querySelectorAll('button');
+            const qData = currentQuestions[qIndex];
+
+            // Prevent multiple clicks
+            if (container.classList.contains('answered')) return;
+            container.classList.add('answered');
+            answeredCount++;
+
+            const selectedBtn = buttons[optIndex];
+            const correctBtn = buttons[qData.correct];
+            const questionCard = document.getElementById(`question-${qIndex}`);
+
+            // Logic
+            if (optIndex === qData.correct) {
+                // Correct
+                score++;
+                updateScoreDisplay();
+                playSound('correct');
+                triggerConfetti(selectedBtn);
+                
+                selectedBtn.classList.add('btn-correct');
+                selectedBtn.querySelector('.result-icon').innerHTML = '<i class="fa-solid fa-check text-white text-xl"></i>';
+                selectedBtn.querySelector('.result-icon').classList.remove('opacity-0');
+            } else {
+                // Wrong
+                playSound('wrong');
+                selectedBtn.classList.add('btn-wrong');
+                selectedBtn.querySelector('.result-icon').innerHTML = '<i class="fa-solid fa-xmark text-white text-xl"></i>';
+                selectedBtn.querySelector('.result-icon').classList.remove('opacity-0');
+                
+                // Highlight correct one
+                correctBtn.classList.add('btn-correct'); // Or maybe a softer green to show it was the right one? Let's stick to consistent green.
+                correctBtn.querySelector('.result-icon').innerHTML = '<i class="fa-solid fa-check text-white text-xl"></i>';
+                correctBtn.querySelector('.result-icon').classList.remove('opacity-0');
+
+                // Shake animation
+                questionCard.classList.add('shake-anim');
+                setTimeout(() => questionCard.classList.remove('shake-anim'), 500);
+            }
+
+            // Disable all buttons
+            buttons.forEach(btn => btn.classList.add('disabled'));
+
+            // Show Explanation
+            document.getElementById(`explanation-${qIndex}`).classList.remove('hidden');
+        }
+
+        // Utilities
+        function updateScoreDisplay() {
+            document.getElementById('score-display').innerText = `${score}/${rawQuestions.length}`;
+            document.getElementById('final-score').innerText = `${score}/${rawQuestions.length}`;
+        }
+
+        function playSound(type) {
+            const audio = document.getElementById(`sound-${type}`);
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(e => console.log("Audio play failed interaction required"));
+            }
+        }
+
+        function triggerConfetti(element) {
+            const rect = element.getBoundingClientRect();
+            // Calculate position relative to viewport
+            const x = (rect.left + rect.width / 2) / window.innerWidth;
+            const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { x: x, y: y },
+                colors: ['#8854C0', '#00C9A7', '#FF4757', '#ffffff']
+            });
+        }
+
+        function scrollToResult() {
+            if (answeredCount < rawQuestions.length) {
+                const confirmSubmit = confirm(`Bạn mới làm ${answeredCount}/${rawQuestions.length} câu. Bạn có chắc muốn nộp bài không?`);
+                if (!confirmSubmit) return;
+            }
+            
+            // Generate Feedback Message
+            const percentage = (score / rawQuestions.length) * 100;
+            let message = "";
+            if (percentage === 100) message = "Tuyệt đối! Bạn là thiên tài Tiếng Anh! 🌟🏆";
+            else if (percentage >= 80) message = "Làm tốt lắm! Chỉ một chút nữa thôi! 🔥";
+            else if (percentage >= 50) message = "Cố gắng lên! Ôn lại kiến thức nhé! 📚";
+            else message = "Đừng buồn, hãy xem kỹ lại giải thích nha! 💪";
+            
+            document.getElementById('feedback-message').innerText = message;
+            
+            // Play sound
+            if (percentage >= 50) playSound('win');
+            
+            document.getElementById('result-modal').classList.remove('hidden');
+            document.getElementById('result-modal').classList.add('flex');
+            triggerConfetti(document.body); // Big confetti
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('result-modal').classList.remove('flex');
+        }
+
+        function restartQuiz() {
+            closeModal();
+            score = 0;
+            answeredCount = 0;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            initQuiz();
+        }
+
+        // Start
+        window.onload = initQuiz;
+
+    </script>
+</body>
+</html>

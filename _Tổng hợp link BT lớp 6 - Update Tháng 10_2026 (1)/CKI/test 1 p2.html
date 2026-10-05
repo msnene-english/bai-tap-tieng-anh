@@ -1,0 +1,949 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms MS Chí Nên - English Test Gamification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-dark: #333333;
+            --primary: #8e94f2;
+            --correct: #4ade80;
+            --incorrect: #f87171;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* SVG Background */
+        .floating-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+        }
+
+        .emoji {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.3;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .emoji:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; }
+        .emoji:nth-child(2) { left: 80%; top: 15%; animation-delay: -3s; }
+        .emoji:nth-child(3) { left: 25%; top: 75%; animation-delay: -5s; font-size: 4rem; }
+        .emoji:nth-child(4) { left: 75%; top: 80%; animation-delay: -7s; }
+        .emoji:nth-child(5) { left: 50%; top: 50%; animation-delay: -11s; font-size: 5rem; opacity: 0.15; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(15deg); }
+        }
+
+        /* Header */
+        header {
+            padding: 10px 20px;
+            text-align: left;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4a4e69;
+        }
+
+        /* Split Screen */
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .left-panel, .right-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .left-panel {
+            border-right: 2px dashed rgba(255,255,255,0.5);
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* Text & Translation */
+        .passage {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .passage strong {
+            color: #d63384;
+        }
+
+        .translate-btn {
+            background: rgba(255, 255, 255, 0.7);
+            border: none;
+            border-radius: 15px;
+            padding: 8px 15px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .translate-btn:hover {
+            background: #fff;
+            transform: translateY(-2px);
+        }
+
+        .translation-text {
+            display: none;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1rem;
+            color: #444;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+
+        /* Question Styles */
+        .question-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid rgba(255,255,255,0.8);
+            padding: 12px 15px;
+            border-radius: 15px;
+            font-family: inherit;
+            font-size: 1.05rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            font-weight: 500;
+        }
+
+        .option-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.02);
+        }
+
+        .option-btn.selected-correct {
+            background: var(--correct);
+            color: white;
+            border-color: var(--correct);
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+        }
+
+        .option-btn.selected-incorrect {
+            background: var(--incorrect);
+            color: white;
+            border-color: var(--incorrect);
+            animation: shake 0.4s;
+        }
+        
+        .option-btn.show-correct {
+            background: var(--correct);
+            color: white;
+            border-color: var(--correct);
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        /* Explanations */
+        .explanation {
+            display: none;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .explanation ul { padding-left: 20px; margin: 5px 0; }
+        .explanation li { margin-bottom: 5px; }
+
+        .p-word { font-weight: bold; color: #4338ca; }
+        .p-phonetic { color: #6b7280; font-style: italic; }
+        .p-mean { color: #059669; font-weight: 600; }
+        .p-grammar { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 6px; font-size: 0.85em; }
+        .hl-green { color: #166534; font-weight: bold; background: #dcfce7; padding: 2px 5px; border-radius: 4px; }
+        .hl-red { color: #991b1b; font-weight: bold; background: #fee2e2; padding: 2px 5px; border-radius: 4px; }
+
+        /* Submit Button & Modal */
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            border: none;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #d63384;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(214, 51, 132, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.02);
+        }
+
+        /* Glossary Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.6);
+        }
+        th { background: rgba(255,255,255,0.7); color: #333; }
+
+        /* Modal popup */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .modal-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+        }
+
+        .score-gif {
+            width: 150px;
+            height: 150px;
+            margin: 10px auto;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.6); border-radius: 10px; }
+
+        canvas#confetti {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG Background -->
+    <div class="floating-bg">
+        <div class="emoji">⛰️</div>
+        <div class="emoji">🏞️</div>
+        <div class="emoji">✨</div>
+        <div class="emoji">🦇</div>
+        <div class="emoji">💧</div>
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti"></canvas>
+
+    <header>
+        Giáo viên tạo: Ms MS Chí Nên
+    </header>
+
+    <div class="container">
+        <!-- LEFT PANEL: Reading Passages -->
+        <div class="left-panel">
+            <div class="glass-card">
+                <h2 style="margin-top: 0; color: #4338ca;">Part VII. Fill in the blank</h2>
+                <p style="font-weight: bold; color: #555;">Words to use: full, drawers, do, favourite, around</p>
+                <div class="passage">
+                    My <strong>(21) _________</strong> room is my bedroom. It's big enough to hold a double bed, which leans against the back wall of the room. On the left side of my bed, to the left of the door, there is a chest of <strong>(22) _________</strong>. In front of the bed, there is a dressing table with a large mirror. This is the place where I sit and <strong>(23) _________</strong> my hair every morning. On both sides of the dressing table, there are two wardrobes. The wardrobe on the right is the one I use daily, and the one on the left is <strong>(24) _________</strong> of old toys, games, clothes, and books. My television and video recorder are on a shelf above the dressing table. I also have photos of my friends and family everywhere <strong>(25) _________</strong> the room.
+                </div>
+                <button class="translate-btn" onclick="toggleTranslation('trans1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1" class="translation-text">
+                    Căn phòng yêu thích của tôi là phòng ngủ. Nó đủ lớn để chứa một chiếc giường đôi, chiếc giường tựa vào bức tường phía sau của căn phòng. Ở bên trái giường của tôi, bên trái cửa ra vào, có một chiếc tủ có ngăn kéo. Trước giường có một bàn trang điểm với một chiếc gương lớn. Đây là nơi tôi ngồi và chải tóc mỗi sáng. Ở hai bên bàn trang điểm, có hai tủ quần áo. Tủ quần áo bên phải là tủ tôi sử dụng hàng ngày, và tủ bên trái chứa đầy đồ chơi cũ, trò chơi, quần áo và sách. Tivi và máy ghi hình của tôi nằm trên một chiếc kệ phía trên bàn trang điểm. Tôi cũng có những bức ảnh của bạn bè và gia đình ở khắp nơi quanh phòng.
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h2 style="margin-top: 0; color: #4338ca;">Part VIII. Reading Comprehension</h2>
+                
+                <!-- Para 1 -->
+                <div class="passage">
+                    Located among the mountains of Minh Hoa District in Quang Binh Province, Ruc Mon Cave is a hidden natural gem that attracts visitors with its mysterious beauty.
+                </div>
+                <button class="translate-btn" onclick="toggleTranslation('trans2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2" class="translation-text">
+                    Nằm giữa những ngọn núi của huyện Minh Hóa, tỉnh Quảng Bình, Hang Rục Mòn là một viên ngọc thiên nhiên ẩn giấu thu hút du khách bởi vẻ đẹp huyền bí của nó.
+                </div>
+
+                <!-- Para 2 -->
+                <div class="passage">
+                    Ruc Mon Cave is divided into two areas: the wet cave and the dry cave. The wet cave has cool, crystal-clear underground rivers where visitors can swim, kayak, or simply relax in the water, with fish swimming around them. In contrast, the dry cave is often called a "stalactite museum" due to its huge number of stalactites, a kind of rock that grows from the roof of caves, in different shapes and sizes. The soft glow from the cave's lighting system highlights the stalactites, making them look even more amazing.
+                </div>
+                <button class="translate-btn" onclick="toggleTranslation('trans3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans3" class="translation-text">
+                    Hang Rục Mòn được chia thành hai khu vực: hang ướt và hang khô. Hang ướt có những dòng sông ngầm mát lạnh, trong vắt như pha lê, nơi du khách có thể bơi lội, chèo thuyền kayak, hay đơn giản là thư giãn trong làn nước, với những đàn cá bơi lội xung quanh. Ngược lại, hang khô thường được gọi là "bảo tàng thạch nhũ" vì có một số lượng lớn thạch nhũ, một loại đá mọc từ trần hang, với nhiều hình dáng và kích cỡ khác nhau. Ánh sáng dịu nhẹ từ hệ thống chiếu sáng của hang làm nổi bật những khối thạch nhũ, khiến chúng trông càng tuyệt vời hơn.
+                </div>
+
+                <!-- Para 3 -->
+                <div class="passage">
+                    The best time to explore the cave is from March to October, when the weather is nice with lots of sunshine and little rain. During this period, the rivers inside the cave are clear and refreshingly cool.
+                </div>
+                <button class="translate-btn" onclick="toggleTranslation('trans4')">Mở dịch đoạn này 🌟</button>
+                <div id="trans4" class="translation-text">
+                    Thời điểm tốt nhất để khám phá hang động là từ tháng 3 đến tháng 10, khi thời tiết đẹp với nhiều nắng và ít mưa. Trong thời gian này, các dòng sông bên trong hang rất trong và mát mẻ sảng khoái.
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h3 style="margin-top: 0; color: #b45309;">📖 Glossary (Bảng từ vựng)</h3>
+                <table>
+                    <tr>
+                        <th>Từ vựng</th>
+                        <th>Loại từ</th>
+                        <th>Nghĩa tiếng Việt</th>
+                    </tr>
+                    <tr><td>favourite</td><td>adj</td><td>yêu thích</td></tr>
+                    <tr><td>lean against</td><td>verb</td><td>dựa vào</td></tr>
+                    <tr><td>chest of drawers</td><td>noun</td><td>tủ có nhiều ngăn kéo</td></tr>
+                    <tr><td>wardrobe</td><td>noun</td><td>tủ quần áo lớn</td></tr>
+                    <tr><td>mysterious</td><td>adj</td><td>huyền bí, bí ẩn</td></tr>
+                    <tr><td>crystal-clear</td><td>adj</td><td>trong vắt như pha lê</td></tr>
+                    <tr><td>stalactite</td><td>noun</td><td>thạch nhũ (từ trần hang rủ xuống)</td></tr>
+                    <tr><td>highlight</td><td>verb</td><td>làm nổi bật</td></tr>
+                    <tr><td>explore</td><td>verb</td><td>khám phá, thám hiểm</td></tr>
+                    <tr><td>refreshingly</td><td>adv</td><td>một cách sảng khoái</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Questions -->
+        <div class="right-panel" id="quiz-container">
+            <!-- Questions will be injected here via JS to allow shuffling options -->
+            
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="nameModal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary);">Nhập tên của em nhé! 🌟</h2>
+            <input type="text" id="studentName" class="modal-input" placeholder="Ví dụ: Nguyễn Văn A">
+            <button class="modal-btn" onclick="submitTest()">Hoàn thành & Chấm điểm</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary);">Bảng điểm của <span id="resName"></span></h2>
+            <img id="resGif" class="score-gif" src="" alt="Score GIF">
+            <h1 style="color: #d63384; font-size: 2.5rem; margin: 10px 0;" id="resScore">0/10</h1>
+            <h3 style="color: #4338ca; margin: 5px 0;" id="resScore10">0.00/10 điểm</h3>
+            <p style="font-size: 1.1rem; font-weight: 600; color: #444;" id="resComment"></p>
+            <button class="modal-btn" style="margin-top: 15px;" onclick="closeResultModal()">Xem lại đáp án</button>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio API Context
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration, vol) {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            playTone(880, 'sine', 0.1, 0.5); // A5
+            setTimeout(() => playTone(1108.73, 'sine', 0.3, 0.5), 100); // C#6
+        }
+
+        function playTing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            playTone(300, 'square', 0.2, 0.3);
+            setTimeout(() => playTone(250, 'square', 0.3, 0.3), 150);
+        }
+
+        // Confetti logic
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let confettiActive = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function createConfetti() {
+            particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 100,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * -10 - 5,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`
+                });
+            }
+            confettiActive = true;
+            animateConfetti();
+            setTimeout(() => { confettiActive = false; ctx.clearRect(0,0,canvas.width,canvas.height); }, 2000);
+        }
+
+        function animateConfetti() {
+            if (!confettiActive) return;
+            requestAnimationFrame(animateConfetti);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.dx;
+                p.y += p.dy;
+                p.dy += 0.2; // gravity
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            });
+        }
+
+        // Data
+        const questions = [
+            {
+                id: 21,
+                title: "My (21) _________ room is my bedroom.",
+                options: [
+                    { text: "full", isCorrect: false },
+                    { text: "drawers", isCorrect: false },
+                    { text: "do", isCorrect: false },
+                    { text: "favourite", isCorrect: true },
+                    { text: "around", isCorrect: false }
+                ],
+                explanation: `
+                    **Câu 21**<br>
+                    **Đề bài:** My (21) _________ room is my bedroom.<br>
+                    **Dịch đề bài:** Căn phòng (21) _________ của tôi là phòng ngủ của tôi.<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>full ➔ Dịch: <span class='p-mean'>đầy (adj)</span></li>
+                        <li>drawers ➔ Dịch: <span class='p-mean'>ngăn kéo (n)</span></li>
+                        <li>do ➔ Dịch: <span class='p-mean'>làm (v)</span></li>
+                        <li>favourite ➔ Dịch: <span class='p-mean'>yêu thích (adj)</span></li>
+                        <li>around ➔ Dịch: <span class='p-mean'>xung quanh (prep)</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **favourite**. Vị trí cần điền là một <span class='p-grammar'>tính từ</span> bổ nghĩa cho danh từ "room" để chỉ sự yêu thích. Cụm <span class='p-word'>favourite room</span> có nghĩa là <span class='p-mean'>căn phòng yêu thích</span>, hoàn toàn phù hợp với ngữ cảnh.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> <span class='p-word'>full</span> (<span class='p-mean'>đầy</span>) không hợp nghĩa. <span class='p-word'>drawers</span> là danh từ không thể đứng trước "room". <span class='p-word'>do</span> là động từ và <span class='p-word'>around</span> là giới từ, sai ngữ pháp.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 22,
+                title: "On the left side of my bed, to the left of the door, there is a chest of (22) _________.",
+                options: [
+                    { text: "full", isCorrect: false },
+                    { text: "drawers", isCorrect: true },
+                    { text: "do", isCorrect: false },
+                    { text: "favourite", isCorrect: false },
+                    { text: "around", isCorrect: false }
+                ],
+                explanation: `
+                    **Câu 22**<br>
+                    **Đề bài:** ...there is a chest of (22) _________.<br>
+                    **Dịch đề bài:** ...có một chiếc tủ có (22) _________.<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>full ➔ Dịch: <span class='p-mean'>đầy (adj)</span></li>
+                        <li>drawers ➔ Dịch: <span class='p-mean'>ngăn kéo (n)</span></li>
+                        <li>do ➔ Dịch: <span class='p-mean'>làm (v)</span></li>
+                        <li>favourite ➔ Dịch: <span class='p-mean'>yêu thích (adj)</span></li>
+                        <li>around ➔ Dịch: <span class='p-mean'>xung quanh (prep)</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **drawers**. Ta có cụm từ cố định (collocation) <span class='p-word'>chest of drawers</span> mang nghĩa là <span class='p-mean'>tủ có nhiều ngăn kéo</span>.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Các từ còn lại không tạo thành cụm từ có nghĩa khi kết hợp với "chest of". "chest of full/do/favourite/around" đều vô nghĩa và sai ngữ pháp.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 23,
+                title: "This is the place where I sit and (23) _________ my hair every morning.",
+                options: [
+                    { text: "full", isCorrect: false },
+                    { text: "drawers", isCorrect: false },
+                    { text: "do", isCorrect: true },
+                    { text: "favourite", isCorrect: false },
+                    { text: "around", isCorrect: false }
+                ],
+                explanation: `
+                    **Câu 23**<br>
+                    **Đề bài:** This is the place where I sit and (23) _________ my hair every morning.<br>
+                    **Dịch đề bài:** Đây là nơi tôi ngồi và (23) _________ tóc mỗi sáng.<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>full ➔ Dịch: <span class='p-mean'>đầy (adj)</span></li>
+                        <li>drawers ➔ Dịch: <span class='p-mean'>ngăn kéo (n)</span></li>
+                        <li>do ➔ Dịch: <span class='p-mean'>làm (v)</span></li>
+                        <li>favourite ➔ Dịch: <span class='p-mean'>yêu thích (adj)</span></li>
+                        <li>around ➔ Dịch: <span class='p-mean'>xung quanh (prep)</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **do**. Cấu trúc song song "sit and do". Cụm <span class='p-word'>do my hair</span> có nghĩa là <span class='p-mean'>chải tóc/làm tóc</span>. Vị trí này cần một <span class='p-grammar'>động từ nguyên thể</span> đi sau "and" nối với động từ "sit".</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Các từ "full", "favourite" là tính từ; "around" là giới từ; "drawers" là danh từ, tất cả đều không thể đóng vai trò động từ chỉ hành động làm tóc ở đây.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 24,
+                title: "The wardrobe on the right is the one I use daily, and the one on the left is (24) _________ of old toys...",
+                options: [
+                    { text: "full", isCorrect: true },
+                    { text: "drawers", isCorrect: false },
+                    { text: "do", isCorrect: false },
+                    { text: "favourite", isCorrect: false },
+                    { text: "around", isCorrect: false }
+                ],
+                explanation: `
+                    **Câu 24**<br>
+                    **Đề bài:** ...and the one on the left is (24) _________ of old toys...<br>
+                    **Dịch đề bài:** ...và cái ở bên trái thì (24) _________ đồ chơi cũ...<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>full ➔ Dịch: <span class='p-mean'>đầy (adj)</span></li>
+                        <li>drawers ➔ Dịch: <span class='p-mean'>ngăn kéo (n)</span></li>
+                        <li>do ➔ Dịch: <span class='p-mean'>làm (v)</span></li>
+                        <li>favourite ➔ Dịch: <span class='p-mean'>yêu thích (adj)</span></li>
+                        <li>around ➔ Dịch: <span class='p-mean'>xung quanh (prep)</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **full**. Ta có cấu trúc <span class='p-grammar'>be full of + N</span> mang nghĩa là <span class='p-mean'>chứa đầy cái gì</span>.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> "drawers", "do", "favourite", "around" không đi kèm với giới từ "of" để tạo nghĩa "chứa đầy" trong ngữ cảnh mô tả đồ đạc trong tủ.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 25,
+                title: "I also have photos of my friends and family everywhere (25) _________ the room.",
+                options: [
+                    { text: "full", isCorrect: false },
+                    { text: "drawers", isCorrect: false },
+                    { text: "do", isCorrect: false },
+                    { text: "favourite", isCorrect: false },
+                    { text: "around", isCorrect: true }
+                ],
+                explanation: `
+                    **Câu 25**<br>
+                    **Đề bài:** I also have photos of my friends and family everywhere (25) _________ the room.<br>
+                    **Dịch đề bài:** Tôi cũng có ảnh của bạn bè và gia đình ở khắp nơi (25) _________ căn phòng.<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>full ➔ Dịch: <span class='p-mean'>đầy (adj)</span></li>
+                        <li>drawers ➔ Dịch: <span class='p-mean'>ngăn kéo (n)</span></li>
+                        <li>do ➔ Dịch: <span class='p-mean'>làm (v)</span></li>
+                        <li>favourite ➔ Dịch: <span class='p-mean'>yêu thích (adj)</span></li>
+                        <li>around ➔ Dịch: <span class='p-mean'>xung quanh (prep)</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **around**. Ta cần một <span class='p-grammar'>giới từ chỉ vị trí</span>. Cụm <span class='p-word'>around the room</span> có nghĩa là <span class='p-mean'>xung quanh căn phòng</span>.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Các từ "full", "drawers", "do", "favourite" không phải là giới từ chỉ không gian để ghép với "the room" tạo thành trạng ngữ chỉ nơi chốn.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 26,
+                title: "Ruc Mon Cave is _________.",
+                options: [
+                    { text: "the only cave in Quang Binh Province", isCorrect: false },
+                    { text: "far away from any mountain", isCorrect: false },
+                    { text: "beautiful and mysterious", isCorrect: true },
+                    { text: "not very popular with tourists", isCorrect: false }
+                ],
+                explanation: `
+                    **Câu 26**<br>
+                    **Đề bài:** Ruc Mon Cave is _________.<br>
+                    **Dịch đề bài:** Hang Rục Mòn là _________.<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>the only cave in Quang Binh Province ➔ Dịch: <span class='p-mean'>hang động duy nhất ở tỉnh Quảng Bình</span></li>
+                        <li>far away from any mountain ➔ Dịch: <span class='p-mean'>cách xa bất kỳ ngọn núi nào</span></li>
+                        <li>beautiful and mysterious ➔ Dịch: <span class='p-mean'>xinh đẹp và huyền bí</span></li>
+                        <li>not very popular with tourists ➔ Dịch: <span class='p-mean'>không phổ biến lắm với du khách</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **beautiful and mysterious**. Dẫn chứng đoạn 1: "Ruc Mon Cave is a hidden natural gem that attracts visitors with its <span class='p-word'>mysterious beauty</span>." (vẻ đẹp huyền bí).</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Đáp án "the only cave" sai vì bài không đề cập đây là hang duy nhất. Đáp án "far away from any mountain" sai vì bài nói nó "Located among the mountains" (Nằm giữa những ngọn núi). Đáp án "not very popular" sai vì bài nói nó "attracts visitors" (thu hút du khách).</li>
+                    </ul>
+                `
+            },
+            {
+                id: 27,
+                title: "What can visitors find inside Ruc Mon Cave?",
+                options: [
+                    { text: "underground lakes", isCorrect: false },
+                    { text: "two areas", isCorrect: true },
+                    { text: "sea animals", isCorrect: false },
+                    { text: "colourful crystals", isCorrect: false }
+                ],
+                explanation: `
+                    **Câu 27**<br>
+                    **Đề bài:** What can visitors find inside Ruc Mon Cave?<br>
+                    **Dịch đề bài:** Du khách có thể tìm thấy gì bên trong Hang Rục Mòn?<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>underground lakes ➔ Dịch: <span class='p-mean'>những hồ nước ngầm</span></li>
+                        <li>two areas ➔ Dịch: <span class='p-mean'>hai khu vực</span></li>
+                        <li>sea animals ➔ Dịch: <span class='p-mean'>động vật biển</span></li>
+                        <li>colourful crystals ➔ Dịch: <span class='p-mean'>những tinh thể đầy màu sắc</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **two areas**. Dẫn chứng đoạn 2: "Ruc Mon Cave is divided into <span class='p-word'>two areas</span>: the wet cave and the dry cave." (Hang Rục Mòn được chia thành hai khu vực: hang ướt và hang khô).</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> "underground lakes" sai vì bài nhắc đến "underground rivers" (sông ngầm) chứ không phải hồ. "sea animals" sai vì bài chỉ nói có "fish" (cá) bềnh bồng chứ không nói động vật biển (đây là hang trên núi). "colourful crystals" sai vì bài nhắc đến "crystal-clear" (trong như pha lê) để miêu tả nước, không phải có tinh thể màu sắc.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 28,
+                title: "Visitors can do the following activities in the wet cave EXCEPT _________.",
+                options: [
+                    { text: "relax", isCorrect: false },
+                    { text: "swim", isCorrect: false },
+                    { text: "kayak", isCorrect: false },
+                    { text: "fish", isCorrect: true }
+                ],
+                explanation: `
+                    **Câu 28**<br>
+                    **Đề bài:** Visitors can do the following activities in the wet cave EXCEPT _________.<br>
+                    **Dịch đề bài:** Du khách có thể thực hiện các hoạt động sau đây trong hang ướt NGOẠI TRỪ _________.<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>relax ➔ Dịch: <span class='p-mean'>thư giãn (v)</span></li>
+                        <li>swim ➔ Dịch: <span class='p-mean'>bơi (v)</span></li>
+                        <li>kayak ➔ Dịch: <span class='p-mean'>chèo thuyền kayak (v)</span></li>
+                        <li>fish ➔ Dịch: <span class='p-mean'>câu cá (v)</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **fish**. Câu hỏi có từ <span class='p-grammar'>EXCEPT</span> (ngoại trừ). Bài đọc nói có cá bơi xung quanh ("with fish swimming around them") chứ KHÔNG HỀ đề cập đến việc du khách được phép câu cá (fish).</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Các hoạt động "relax", "swim", "kayak" đều ĐƯỢC nhắc đến trong bài: "...where visitors can <span class='p-word'>swim</span>, <span class='p-word'>kayak</span>, or simply <span class='p-word'>relax</span> in the water..." nên không được chọn.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 29,
+                title: 'Why do people call the dry cave a "stalactite museum"?',
+                options: [
+                    { text: "Because there are many stalactites.", isCorrect: true },
+                    { text: "Because the stalactites have similar shapes.", isCorrect: false },
+                    { text: "Because a special light shines on the stalactites.", isCorrect: false },
+                    { text: "Because the stalactites there grow from the ground.", isCorrect: false }
+                ],
+                explanation: `
+                    **Câu 29**<br>
+                    **Đề bài:** Why do people call the dry cave a "stalactite museum"?<br>
+                    **Dịch đề bài:** Tại sao người ta gọi hang khô là "bảo tàng thạch nhũ"?<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>Because there are many stalactites. ➔ Dịch: <span class='p-mean'>Vì có rất nhiều thạch nhũ.</span></li>
+                        <li>Because the stalactites have similar shapes. ➔ Dịch: <span class='p-mean'>Vì thạch nhũ có hình dạng giống nhau.</span></li>
+                        <li>Because a special light shines on the stalactites. ➔ Dịch: <span class='p-mean'>Vì có ánh sáng đặc biệt chiếu lên thạch nhũ.</span></li>
+                        <li>Because the stalactites there grow from the ground. ➔ Dịch: <span class='p-mean'>Vì thạch nhũ ở đó mọc từ dưới đất lên.</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **Because there are many stalactites.** Dẫn chứng: "...often called a 'stalactite museum' due to its <span class='p-word'>huge number of stalactites</span>" (do có số lượng thạch nhũ khổng lồ).</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> "similar shapes" sai vì bài ghi "in <span class='p-word'>different</span> shapes and sizes" (hình dáng và kích cỡ khác nhau). "special light shines" có nhắc đến hệ thống đèn chiếu sáng nhưng đây không phải nguyên nhân gọi là bảo tàng. "grow from the ground" sai vì bài ghi mọc từ trần hang ("grows from the <span class='p-word'>roof</span>").</li>
+                    </ul>
+                `
+            },
+            {
+                id: 30,
+                title: "According to the passage, it is better to visit Ruc Mon Cave _________.",
+                options: [
+                    { text: "before March", isCorrect: false },
+                    { text: "whenever the sun shines", isCorrect: false },
+                    { text: "when it doesn't rain much", isCorrect: true },
+                    { text: "when the air is clear and cool", isCorrect: false }
+                ],
+                explanation: `
+                    **Câu 30**<br>
+                    **Đề bài:** According to the passage, it is better to visit Ruc Mon Cave _________.<br>
+                    **Dịch đề bài:** Theo bài đọc, tốt hơn là nên đến thăm Hang Rục Mòn _________.<br>
+                    **Các đáp án:**<br>
+                    <ul>
+                        <li>before March ➔ Dịch: <span class='p-mean'>trước tháng 3</span></li>
+                        <li>whenever the sun shines ➔ Dịch: <span class='p-mean'>bất cứ khi nào trời nắng</span></li>
+                        <li>when it doesn't rain much ➔ Dịch: <span class='p-mean'>khi trời không mưa nhiều (ít mưa)</span></li>
+                        <li>when the air is clear and cool ➔ Dịch: <span class='p-mean'>khi không khí trong lành và mát mẻ</span></li>
+                    </ul>
+                    **Giải thích chi tiết:**<br>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là **when it doesn't rain much**. Dẫn chứng đoạn 3: "The best time to explore the cave is from March to October, when the weather is nice with lots of sunshine and <span class='p-word'>little rain</span>." (với nhiều nắng và ít mưa). "little rain" đồng nghĩa với "doesn't rain much".</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> "before March" sai vì bài khuyên từ tháng 3 đến tháng 10. "whenever the sun shines" quá chung chung, không chính xác theo thời gian bài đưa. "when the air is clear and cool" sai vì bài miêu tả "rivers" (dòng sông) clear and cool, chứ không nói về "air".</li>
+                    </ul>
+                `
+            }
+        ];
+
+        let answeredQuestions = {};
+        let score = 0;
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('quiz-container');
+            let html = '';
+            
+            questions.forEach((q, index) => {
+                let shuffledOptions = shuffle([...q.options]);
+                html += `
+                    <div class="glass-card" id="q-card-${q.id}">
+                        <div class="question-title">Câu ${q.id}: ${q.title}</div>
+                        <div class="options-grid" id="options-${q.id}">
+                `;
+                
+                shuffledOptions.forEach((opt, optIndex) => {
+                    html += `
+                        <button class="option-btn" onclick="selectOption(${q.id}, ${opt.isCorrect}, this)">
+                            ${opt.text}
+                        </button>
+                    `;
+                });
+
+                html += `
+                        </div>
+                        <div class="explanation" id="exp-${q.id}">
+                            ${q.explanation}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Insert before the submit button
+            const submitBtnHTML = '<button class="submit-btn" onclick="openSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>';
+            container.innerHTML = html + submitBtnHTML;
+        }
+
+        function selectOption(qId, isCorrect, btnElement) {
+            if (answeredQuestions[qId]) return; // prevent multiple answers
+            
+            answeredQuestions[qId] = true;
+            const card = document.getElementById(`q-card-${qId}`);
+            const optionsDiv = document.getElementById(`options-${qId}`);
+            const buttons = optionsDiv.querySelectorAll('.option-btn');
+            
+            buttons.forEach(btn => btn.style.pointerEvents = 'none'); // disable all
+
+            if (isCorrect) {
+                btnElement.classList.add('selected-correct');
+                playDing();
+                createConfetti();
+                score++;
+            } else {
+                btnElement.classList.add('selected-incorrect');
+                playTing();
+                
+                // Highlight the correct one
+                const originalQ = questions.find(q => q.id === qId);
+                const correctText = originalQ.options.find(o => o.isCorrect).text;
+                
+                buttons.forEach(btn => {
+                    if(btn.innerText.trim() === correctText) {
+                        btn.classList.add('show-correct');
+                    }
+                });
+            }
+
+            // Show explanation
+            document.getElementById(`exp-${qId}`).style.display = 'block';
+        }
+
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            if(el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        function openSubmitModal() {
+            if(Object.keys(answeredQuestions).length < questions.length) {
+                alert("Em vui lòng trả lời hết tất cả các câu hỏi trước khi nộp bài nhé!");
+                return;
+            }
+            document.getElementById('nameModal').style.display = 'flex';
+        }
+
+        function submitTest() {
+            const name = document.getElementById('studentName').value.trim();
+            if(!name) {
+                alert("Em chưa nhập tên kìa!");
+                return;
+            }
+            
+            document.getElementById('nameModal').style.display = 'none';
+            
+            const total = questions.length;
+            const percent = score / total;
+            const outOf10 = (score / total) * 10;
+            
+            document.getElementById('resName').innerText = name;
+            document.getElementById('resScore').innerText = `${score} / ${total}`;
+            document.getElementById('resScore10').innerText = `${outOf10.toFixed(2)}/10 điểm`;
+            
+            let gifSrc = '';
+            let comment = '';
+            
+            if(percent === 1) {
+                gifSrc = 'https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif'; // Smart/Genius
+                comment = "Xuất sắc! Em là thiên tài tiếng Anh! 🌟 Ms MS Chí Nên rất tự hào về em!";
+                createConfetti();
+            } else if(percent >= 0.6) {
+                gifSrc = 'https://media.giphy.com/media/3o7TKoWXm3okO1kgHC/giphy.gif'; // High five
+                comment = "Rất tốt! Em đã nắm bài khá vững. Cố gắng thêm chút nữa để đạt điểm tối đa nhé! 💪";
+            } else {
+                gifSrc = 'https://media.giphy.com/media/OPU6wzx8JlNyc/giphy.gif'; // Crying/Try harder
+                comment = "Không sao đâu! Lần sau hãy đọc kỹ giải thích chi tiết của Ms MS Chí Nên để làm tốt hơn nhé. Cố lên! ❤️";
+            }
+            
+            document.getElementById('resGif').src = gifSrc;
+            document.getElementById('resComment').innerText = comment;
+            
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        window.onload = renderQuestions;
+    </script>
+</body>
+</html>

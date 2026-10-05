@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài tập Tiếng Anh - Gamification</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* ================= CƠ BẢN & MÀU SẮC ================= */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --text-dark: #2c3e50;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif;
+            /* Theme Bầu trời & Thiên nhiên */
+            background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #d4fc79, #96e6a1);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Nền Floating Emojis Theme Đô thị & Thiên nhiên */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            opacity: 0.7;
+        }
+
+        /* ================= BỐ CỤC CHUNG ================= */
+        .header {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            z-index: 100;
+            text-align: center;
+            pointer-events: none;
+        }
+        
+        .header h3 {
+            margin: 5px;
+            font-size: 14px;
+            color: #444;
+            text-shadow: 1px 1px 2px #fff;
+        }
+
+        .sticky-notice {
+            position: fixed;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 850px;
+            z-index: 99;
+            padding: 10px 15px;
+            font-size: 13.5px;
+            line-height: 1.4;
+            text-align: center;
+            pointer-events: auto;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .split-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            padding-top: 80px; 
+            box-sizing: border-box;
+            gap: 15px;
+            padding-left: 15px;
+            padding-right: 15px;
+            padding-bottom: 15px;
+        }
+
+        .pane {
+            flex: 1;
+            overflow-y: auto;
+            border-radius: 20px;
+            padding: 25px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .pane::-webkit-scrollbar { width: 8px; }
+        .pane::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        /* ================= PHẦN READING ================= */
+        .text-section {
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.45);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        
+        .text-title {
+            font-size: 22px;
+            color: #00796b;
+            margin-top: 0;
+            border-bottom: 2px dashed #00796b;
+            padding-bottom: 10px;
+        }
+
+        .paragraph-box { margin-bottom: 15px; }
+        
+        .para-en {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .para-vi {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #34495e;
+            background: rgba(255, 235, 153, 0.6);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #f39c12;
+            display: none;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .btn-translate {
+            background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #2c3e50;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .btn-translate:hover { transform: scale(1.05); background: linear-gradient(135deg, #d4fc79, #96e6a1); }
+
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            border: 1px solid rgba(0,0,0,0.05);
+            text-align: left;
+        }
+        .glossary-table th { background: rgba(161, 196, 253, 0.8); color: #2c3e50;}
+
+        /* ================= PHẦN EXERCISE ================= */
+        .question-card {
+            background: rgba(255,255,255,0.7);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .question-card:hover { transform: translateY(-3px); }
+
+        .q-text { 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-bottom: 15px; 
+            color: #e67e22;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .options-grid.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        .btn-option {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            color: #2c3e50;
+            text-align: left;
+            /* TUYỆT ĐỐI KHÔNG CẮT XÉN CHỮ: Ép nội dung tự xuống dòng, không dùng dấu ba chấm */
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.5;
+            height: auto;
+        }
+
+        .btn-option:hover { border-color: #00796b; background: #fff; }
+        .btn-option:disabled { cursor: not-allowed; opacity: 0.8; }
+        
+        .btn-option.correct {
+            background: #d4edda !important;
+            border-color: #28a745 !important;
+            color: #155724;
+            transform: scale(1.02);
+        }
+        
+        .btn-option.wrong {
+            background: #f8d7da !important;
+            border-color: #dc3545 !important;
+            color: #721c24;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* ================= GIẢI THÍCH CHI TIẾT ================= */
+        .explanation-box {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+            font-size: 15px;
+            display: none;
+            line-height: 1.6;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Các class bắt buộc cho giải thích */
+        .p-word { color: #007bff; font-weight: bold; }
+        .p-mean { color: #E2725B; font-style: italic; font-weight: 600; }
+        .p-grammar { color: #dc3545; text-decoration: underline; font-weight: bold; }
+        .hl-green { color: #28a745; font-weight: bold; }
+        .hl-red { color: #8b0000; text-decoration: line-through; }
+        
+        .exp-line { margin-bottom: 8px; }
+        .exp-quote {
+            background: #f1f8ff;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #007bff;
+            margin-top: 10px;
+            font-size: 14.5px;
+        }
+
+        /* ================= PHẦN NỘP BÀI ================= */
+        .submit-section { text-align: center; margin-top: 30px; padding-bottom: 20px;}
+        .btn-submit {
+            background: linear-gradient(45deg, #00b09b, #96c93d);
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 176, 155, 0.4);
+            transition: all 0.3s;
+        }
+        .btn-submit:hover { transform: translateY(-3px) scale(1.05); }
+
+        /* Modal Kết quả */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: #fff; padding: 30px; border-radius: 20px;
+            text-align: center; max-width: 400px; width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .modal-content h2 { color: #00796b; margin-top: 0; }
+        .modal-content input {
+            width: 80%; padding: 10px; margin: 15px 0;
+            border: 2px solid #a1c4fd; border-radius: 10px; font-size: 16px; text-align: center;
+            outline: none;
+        }
+        .modal-content img { width: 100%; border-radius: 10px; margin-top: 15px; }
+        .score-display { font-size: 28px; font-weight: bold; color: #28a745; margin: 10px 0; }
+        .btn-close-modal {
+            background: #333; color: #fff; border: none; padding: 10px 20px;
+            border-radius: 10px; margin-top: 15px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <svg class="bg-pattern" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="grad1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                <stop offset="0%" style="stop-color:rgba(255,255,255,0.5); stop-opacity:1" />
+                <stop offset="100%" style="stop-color:rgba(255,255,255,0); stop-opacity:1" />
+            </radialGradient>
+        </defs>
+        <circle cx="15%" cy="25%" r="180" fill="url(#grad1)" />
+        <circle cx="85%" cy="75%" r="220" fill="url(#grad1)" />
+        <text x="10%" y="20%" font-size="50" opacity="0.4">🏙️</text>
+        <text x="80%" y="15%" font-size="60" opacity="0.4">⛅</text>
+        <text x="75%" y="85%" font-size="55" opacity="0.4">☕</text>
+        <text x="20%" y="80%" font-size="60" opacity="0.4">🚌</text>
+        <text x="50%" y="50%" font-size="45" opacity="0.3">✈️</text>
+        <text x="90%" y="50%" font-size="50" opacity="0.4">🌳</text>
+    </svg>
+
+    <div class="header">
+        <h3>Giáo viên tạo: Ms MS Chí Nên</h3>
+    </div>
+
+    <div class="sticky-notice">
+        <strong>⚠️ LƯU Ý:</strong> Tự giác tra cứu từ mới bằng Google Dịch/AI để hiểu nội dung, không được chọn bừa. Tra từ điển Cambridge để nghe phát âm và luyện đọc theo. <strong>CHỈ CÓ ĐỌC KỸ GIẢI THÍCH VÀ GHI CHÉP TỪ/CẤU TRÚC VÀO VỞ</strong> mới thực sự giỏi lên. Làm qua loa mà không ghi chép thì tốn thời gian vô ích! 🌟
+    </div>
+
+    <div class="split-container">
+        <div class="pane" id="reading-pane"></div>
+
+        <div class="pane" id="exercise-pane">
+            <div class="submit-section">
+                <button class="btn-submit" onclick="showSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="submitModal">
+        <div class="modal-content" id="modal-step-1">
+            <h2>Hoàn thành bài tập! 🎉</h2>
+            <p>Nhập tên của em để xem điểm nhé:</p>
+            <input type="text" id="studentName" placeholder="Ví dụ: Nguyễn Văn A">
+            <button class="btn-submit" onclick="processSubmit()">Xem Kết Quả</button>
+        </div>
+        <div class="modal-content" id="modal-step-2" style="display:none;">
+            <h2 id="result-name"></h2>
+            <div class="score-display" id="result-score"></div>
+            <div style="font-size: 20px; font-weight: bold; color: #00796b; margin-bottom: 10px;" id="result-score-10"></div>
+            <p id="result-comment" style="font-weight: bold;"></p>
+            <img id="result-gif" src="" alt="Meme">
+            <button class="btn-close-modal" onclick="closeModal()">Đóng</button>
+        </div>
+    </div>
+
+    <script>
+        // ================= DỮ LIỆU ĐỀ BÀI (23 CÂU HỎI) =================
+        const appData = [
+            // PASSAGE 1: London's Commuters
+            {
+                title: "Passage 1: London's Commuters & Attractions [Reading Comprehension]",
+                paragraphs: [
+                    {
+                        en: "The majority of London's inhabitants live in its suburbs. Many of them travel to the city to work every day by train, bus, tube or car. These people are called \"commuters\". Commuters may spend as much as two hours every morning getting to work and another two hours getting home again.",
+                        vi: "Phần lớn cư dân London sống ở các vùng ngoại ô của nó. Nhiều người trong số họ đi vào thành phố để làm việc mỗi ngày bằng tàu hỏa, xe buýt, tàu điện ngầm hoặc ô tô. Những người này được gọi là \"người đi làm xa\". Người đi làm xa có thể dành tới hai giờ mỗi sáng để đi làm và hai giờ nữa để về nhà."
+                    },
+                    {
+                        en: "The cost of living in London is higher than that in most other parts of Britain. Millions of visitors come to London every year from all over the world to see the famous sights here such as Buckingham Palace and many other historic buildings.",
+                        vi: "Chi phí sinh hoạt ở London cao hơn so với hầu hết các khu vực khác của nước Anh. Hàng triệu du khách đến London mỗi năm từ khắp nơi trên thế giới để ngắm nhìn những danh lam thắng cảnh nổi tiếng ở đây như Cung điện Buckingham và nhiều tòa nhà lịch sử khác."
+                    },
+                    {
+                        en: "London is also very famous for its theaters, red buses and black taxis. Some people find it a noisy and dirty place but it has many large, pleasant parks. Here, everyone can enjoy some peaceful and quiet moments. London has many attractions both people from other parts of Britain and people from overseas.",
+                        vi: "London cũng rất nổi tiếng với các nhà hát, xe buýt đỏ và taxi đen. Một số người thấy nó là một nơi ồn ào và bẩn thỉu nhưng nó có nhiều công viên lớn và dễ chịu. Ở đây, mọi người có thể tận hưởng một số khoảnh khắc thanh bình và yên tĩnh. London có nhiều điểm thu hút đối với cả những người từ các vùng khác của nước Anh và những người từ nước ngoài."
+                    }
+                ],
+                glossary: [
+                    { w: "majority", pos: "n", m: "phần lớn, đa số" },
+                    { w: "inhabitant", pos: "n", m: "cư dân" },
+                    { w: "suburb", pos: "n", m: "vùng ngoại ô" },
+                    { w: "commuter", pos: "n", m: "người đi làm xa (bằng xe bus/tàu)" },
+                    { w: "historic", pos: "adj", m: "mang tính lịch sử" },
+                    { w: "pleasant", pos: "adj", m: "dễ chịu, thoải mái" },
+                    { w: "attraction", pos: "n", m: "điểm thu hút" },
+                    { w: "overseas", pos: "adv/adj", m: "hải ngoại, nước ngoài" }
+                ],
+                questions: [
+                    {
+                        type: "rc",
+                        qEn: "Question 1: In London _______",
+                        qVi: "Ở London _______",
+                        options: [
+                            { t: "A. more people live in the suburbs than in the city center.", c: true, exp: "✅ <span class='hl-green'>Đúng. Đoạn 1 viết 'The majority of London's inhabitants live in its suburbs' (Đa số người dân sống ở ngoại ô) -> Điều này có nghĩa là số người ở ngoại ô NHIỀU HƠN ở trung tâm</span>." },
+                            { t: "B. most people live in the suburbs than in the city center.", c: false, exp: "❌ <span class='hl-red'>Sai ngữ pháp (most không đi với than trong câu so sánh hơn)</span>." },
+                            { t: "C. less people live in the suburbs than in the city center.", c: false, exp: "❌ <span class='hl-red'>Sai vì trái nghĩa với từ 'majority'</span>." },
+                            { t: "D. many people live in the suburbs than in the city center.", c: false, exp: "❌ <span class='hl-red'>Sai ngữ pháp (many không đi với than)</span>." }
+                        ],
+                        evEn: "The majority of London's inhabitants live in its suburbs.",
+                        evVi: "<span class='hl-green'>Phần lớn</span> cư dân London sống ở các vùng ngoại ô của nó."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 2: Commuters _______",
+                        qVi: "Những 'người đi làm xa' (commuters) _______",
+                        options: [
+                            { t: "A. live in the city center.", c: false, exp: "❌ <span class='hl-red'>Sai, họ sống ở ngoại ô</span>." },
+                            { t: "B. live in the suburbs and travel to work in the city.", c: true, exp: "✅ <span class='hl-green'>Đúng. Đoạn 1 nêu rõ họ sống ở ngoại ô và đi vào thành phố để làm việc</span>." },
+                            { t: "C. live in the suburbs and work there.", c: false, exp: "❌ <span class='hl-red'>Sai, họ làm việc ở trung tâm thành phố</span>." },
+                            { t: "D. live in the city center and work there.", c: false, exp: "❌ <span class='hl-red'>Sai</span>." }
+                        ],
+                        evEn: "...live in its suburbs. Many of them travel to the city to work every day... These people are called 'commuters'.",
+                        evVi: "...sống ở vùng <span class='hl-green'>ngoại ô. Nhiều người đi vào thành phố để làm việc mỗi ngày</span>... Những người này được gọi là 'người đi làm xa'."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 3: Living in London is _______",
+                        qVi: "Việc sinh sống ở London thì _______",
+                        options: [
+                            { t: "A. cheaper than in most other parts of Britain.", c: false, exp: "❌ <span class='hl-red'>Sai, nó đắt đỏ hơn chứ không rẻ hơn</span>." },
+                            { t: "B. more expensive than in most other parts of Britain.", c: true, exp: "✅ <span class='hl-green'>Đúng. Đoạn 2 ghi 'The cost of living... is higher' (Chi phí cao hơn = đắt đỏ hơn)</span>." },
+                            { t: "C. most expensive than in most other parts of Britain.", c: false, exp: "❌ <span class='hl-red'>Sai ngữ pháp, 'most expensive' là so sánh nhất, không đi với 'than'</span>." },
+                            { t: "D. more cheap than in most other parts of Britain.", c: false, exp: "❌ <span class='hl-red'>Sai ngữ pháp (rẻ hơn phải là cheaper)</span>." }
+                        ],
+                        evEn: "The cost of living in London is higher than that in most other parts of Britain.",
+                        evVi: "Chi phí sinh hoạt ở London <span class='hl-green'>cao hơn</span> so với hầu hết các khu vực khác của nước Anh."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 4: London is famous for _______",
+                        qVi: "London nổi tiếng vì _______",
+                        options: [
+                            { t: "A. its delicious food.", c: false, exp: "❌ <span class='hl-red'>Không nhắc đến đồ ăn</span>." },
+                            { t: "B. its theaters but not its red buses.", c: false, exp: "❌ <span class='hl-red'>Sai, nó nổi tiếng cả về xe buýt đỏ</span>." },
+                            { t: "C. its theaters, red buses and black taxis.", c: true, exp: "✅ <span class='hl-green'>Đúng. Trích dẫn y hệt trong đoạn 3</span>." },
+                            { t: "D. its inhabitants.", c: false, exp: "❌ <span class='hl-red'>Không phải đặc trưng nổi tiếng được nhắc tới</span>." }
+                        ],
+                        evEn: "London is also very famous for its theaters, red buses and black taxis.",
+                        evVi: "London cũng rất nổi tiếng với <span class='hl-green'>các nhà hát, xe buýt đỏ và taxi đen</span>."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 5: The attractions of London are _______",
+                        qVi: "Các điểm tham quan của London là _______",
+                        options: [
+                            { t: "A. for the Londoners only.", c: false, exp: "❌ <span class='hl-red'>Sai, không chỉ dành cho người dân địa phương</span>." },
+                            { t: "B. only for people from other parts in Britain.", c: false, exp: "❌ <span class='hl-red'>Sai chữ 'only' (chỉ dành cho)</span>." },
+                            { t: "C. just for foreigners.", c: false, exp: "❌ <span class='hl-red'>Sai chữ 'just for'</span>." },
+                            { t: "D. both for foreigners and for people from other parts in Britain.", c: true, exp: "✅ <span class='hl-green'>Đúng. Dẫn chứng ở câu cuối cùng của bài (người từ vùng khác và người nước ngoài)</span>." }
+                        ],
+                        evEn: "London has many attractions both people from other parts of Britain and people from overseas.",
+                        evVi: "London có nhiều điểm thu hút đối với <span class='hl-green'>cả những người từ các vùng khác của nước Anh và những người từ nước ngoài</span>."
+                    }
+                ]
+            },
+
+            // PASSAGE 2: Big city living
+            {
+                title: "Passage 2: Advantages of Big City Living [Reading Comprehension]",
+                paragraphs: [
+                    {
+                        en: "Do you live in a big city? It is said that living in big cities is expensive because of the high living cost. There are also pollution and traffic problems that make living in big cities unpleasant.",
+                        vi: "Bạn có sống ở một thành phố lớn không? Người ta nói rằng sống ở các thành phố lớn rất đắt đỏ vì chi phí sinh hoạt cao. Cũng có những vấn đề về ô nhiễm và giao thông khiến cho việc sống ở các thành phố lớn trở nên khó chịu."
+                    },
+                    {
+                        en: "However, many people enjoy living in big cities because they offer convenience and countless options for entertainment. Many big cities already have good public transportation systems, which makes it easy for the citizens to go anywhere around the city. This also reduces and helps overcome the problem of traffic jams that often occur at peak times.",
+                        vi: "Tuy nhiên, nhiều người thích sống ở các thành phố lớn vì chúng mang lại sự tiện lợi và vô số lựa chọn giải trí. Nhiều thành phố lớn đã có hệ thống giao thông công cộng tốt, giúp người dân dễ dàng đi bất cứ đâu quanh thành phố. Điều này cũng làm giảm và giúp khắc phục vấn đề ùn tắc giao thông thường xảy ra vào giờ cao điểm."
+                    },
+                    {
+                        en: "With the convenience of public transportation, the citizens do not have to drive everywhere and can save money as they do not have to pay for parking charges.",
+                        vi: "Với sự tiện lợi của giao thông công cộng, người dân không phải lái xe đi mọi nơi và có thể tiết kiệm tiền vì họ không phải trả phí đậu xe."
+                    },
+                    {
+                        en: "Staying healthy is everybody's concern and in big cities you can find the best possible medical care for any diseases, especially the severe ones. Moreover, compared to rural areas, access to medical treatment is easier because there are always clinics or medical centers that open 24 hours in many parts of the city so you can get medical help anytime, as soon as you need it. Reaching hospitals is also easier as public transport is usually available 24 hours a day.",
+                        vi: "Giữ gìn sức khỏe là mối quan tâm của mọi người và ở các thành phố lớn, bạn có thể tìm thấy sự chăm sóc y tế tốt nhất có thể cho bất kỳ căn bệnh nào, đặc biệt là những căn bệnh nghiêm trọng. Hơn nữa, so với khu vực nông thôn, việc tiếp cận điều trị y tế dễ dàng hơn vì luôn có các phòng khám hoặc trung tâm y tế mở cửa 24 giờ ở nhiều khu vực của thành phố để bạn có thể nhận được trợ giúp y tế bất cứ lúc nào, ngay khi bạn cần. Đến bệnh viện cũng dễ dàng hơn vì phương tiện giao thông công cộng thường có sẵn 24 giờ một ngày."
+                    }
+                ],
+                glossary: [
+                    { w: "expensive", pos: "adj", m: "đắt đỏ" },
+                    { w: "unpleasant", pos: "adj", m: "khó chịu, không vừa ý" },
+                    { w: "countless", pos: "adj", m: "vô số, không đếm xuể" },
+                    { w: "convenience", pos: "n", m: "sự tiện lợi" },
+                    { w: "overcome", pos: "v", m: "vượt qua, khắc phục" },
+                    { w: "severe", pos: "adj", m: "nghiêm trọng, dữ dội" },
+                    { w: "treatment", pos: "n", m: "sự điều trị" },
+                    { w: "available", pos: "adj", m: "có sẵn" }
+                ],
+                questions: [
+                    {
+                        type: "rc",
+                        qEn: "Question 1: What is the passage mainly about?",
+                        qVi: "Đoạn văn chủ yếu nói về vấn đề gì?",
+                        options: [
+                            { t: "A. Advantages of living in big cities", c: true, exp: "✅ <span class='hl-green'>Đúng. Dù đoạn 1 nhắc đến bất lợi, nhưng từ đoạn 2 trở đi tác giả dùng từ 'However' và liên tục liệt kê những mặt tốt như sự tiện lợi, giải trí, giao thông, y tế -> Nên lợi ích là chủ đề chính</span>." },
+                            { t: "B. Disadvantages of living in big cities", c: false, exp: "❌ <span class='hl-red'>Sai, bất lợi chỉ được nhắc sơ qua ở đoạn đầu</span>." },
+                            { t: "C. Drawbacks of living rural areas", c: false, exp: "❌ <span class='hl-red'>Sai, bài này nói về thành phố</span>." },
+                            { t: "D. Benefits of living rural areas", c: false, exp: "❌ <span class='hl-red'>Sai</span>." }
+                        ],
+                        evEn: "However, many people enjoy living in big cities because they offer convenience and countless options for entertainment...",
+                        evVi: "Tuy nhiên, nhiều người thích sống ở các thành phố lớn vì chúng mang lại <span class='hl-green'>sự tiện lợi và vô số lựa chọn giải trí</span>..."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 2: Which of the following is closest in meaning to the word 'countless' in paragraph 1?",
+                        qVi: "Từ nào sau đây gần nghĩa nhất với từ 'countless' trong đoạn 1?",
+                        options: [
+                            { t: "A. definite", c: false, exp: "<span class='p-word'>definite</span> (<span class='p-mean'>adj</span>): xác định, rõ ràng. ❌ <span class='hl-red'>Trái nghĩa</span>." },
+                            { t: "B. numberless", c: true, exp: "<span class='p-word'>numberless</span> (<span class='p-mean'>adj</span>): vô số, không đếm xuể. ✅ <span class='hl-green'>Đúng. Bằng nghĩa với 'countless'</span>." },
+                            { t: "C. measurable", c: false, exp: "<span class='p-word'>measurable</span> (<span class='p-mean'>adj</span>): có thể đo lường. ❌ <span class='hl-red'>Sai</span>." },
+                            { t: "D. limited", c: false, exp: "<span class='p-word'>limited</span> (<span class='p-mean'>adj</span>): hạn chế. ❌ <span class='hl-red'>Trái nghĩa</span>." }
+                        ],
+                        evEn: "...they offer convenience and countless options for entertainment.",
+                        evVi: "...chúng mang lại sự tiện lợi và <span class='hl-green'>vô số</span> lựa chọn giải trí."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 3: What makes living in big cities costly?",
+                        qVi: "Điều gì khiến việc sống ở thành phố lớn trở nên đắt đỏ?",
+                        options: [
+                            { t: "A. public transport", c: false, exp: "❌ <span class='hl-red'>Phương tiện công cộng giúp tiết kiệm tiền</span>." },
+                            { t: "B. healthcare", c: false, exp: "❌ <span class='hl-red'>Không phải lý do chính được nêu</span>." },
+                            { t: "C. high cost of living", c: true, exp: "✅ <span class='hl-green'>Đúng. Đoạn 1 viết rõ: expensive because of the high living cost</span>." },
+                            { t: "D. high parking charges", c: false, exp: "❌ <span class='hl-red'>Người dân có thể tránh phí này bằng cách đi phương tiện công cộng</span>." }
+                        ],
+                        evEn: "It is said that living in big cities is expensive because of the high living cost.",
+                        evVi: "Người ta nói rằng sống ở các thành phố lớn rất đắt đỏ vì <span class='hl-green'>chi phí sinh hoạt cao</span>."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 4: According to the passage, what is people's concern?",
+                        qVi: "Theo đoạn văn, mối quan tâm của mọi người là gì?",
+                        options: [
+                            { t: "A. traffic congestions", c: false, exp: "❌ <span class='hl-red'>Nó là một vấn đề (problem) chứ bài không gọi nó là mối quan tâm chung của mọi người (everybody's concern)</span>." },
+                            { t: "B. air pollution", c: false, exp: "❌ <span class='hl-red'>Sai</span>." },
+                            { t: "C. medical centers", c: false, exp: "❌ <span class='hl-red'>Sai</span>." },
+                            { t: "D. good health", c: true, exp: "✅ <span class='hl-green'>Đúng. Đầu đoạn 4 viết: 'Staying healthy is everybody's concern' (Sức khỏe tốt/giữ gìn sức khỏe là mối quan tâm của mọi người)</span>." }
+                        ],
+                        evEn: "Staying healthy is everybody's concern...",
+                        evVi: "<span class='hl-green'>Giữ gìn sức khỏe</span> là mối quan tâm của mọi người..."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 5: It can be inferred from the passage that in big cities _______",
+                        qVi: "Có thể suy luận từ đoạn văn rằng ở các thành phố lớn _______",
+                        options: [
+                            { t: "A. no one cares about the high cost of living.", c: false, exp: "❌ <span class='hl-red'>Sai, nó vẫn là một vấn đề khó chịu</span>." },
+                            { t: "B. it's impossible to get medical care for severe diseases.", c: false, exp: "❌ <span class='hl-red'>Sai, tác giả nói y tế thành phố là tốt nhất cho bệnh nặng</span>." },
+                            { t: "C. traffic jams are often seen during rush hours.", c: true, exp: "✅ <span class='hl-green'>Đúng. 'Rush hours' (giờ cao điểm) bằng nghĩa với 'peak times' trong bài</span>." },
+                            { t: "D. city dwellers do not have to pay for parking.", c: false, exp: "❌ <span class='hl-red'>Chỉ những người đi phương tiện công cộng mới không phải trả, nếu đi xe riêng thì vẫn phải trả</span>." }
+                        ],
+                        evEn: "...the problem of traffic jams that often occur at peak times.",
+                        evVi: "...vấn đề ùn tắc giao thông thường xảy ra vào <span class='hl-green'>thời điểm đông đúc nhất (giờ cao điểm)</span>."
+                    }
+                ]
+            },
+
+            // PASSAGE 3: Magic City Hustle
+            {
+                title: "Passage 3: Magic City Hustle [Reading Comprehension]",
+                paragraphs: [
+                    {
+                        en: "Magic city hustle attracts enormous crowds because of several advantages of living in dynamic cities. Many capital cities, huge metropolitans, and educational and financial centres of the countries are well known for their active urban life.",
+                        vi: "Sự hối hả của thành phố kỳ diệu thu hút những đám đông khổng lồ vì một vài lợi thế của việc sống ở các thành phố năng động. Nhiều thành phố thủ đô, đô thị khổng lồ, và các trung tâm giáo dục, tài chính của các quốc gia nổi tiếng vì cuộc sống đô thị năng động của chúng."
+                    },
+                    {
+                        en: "The first pro of living in cities is that people can have access to great pre-school, school, and higher education institutions. Parents who live in cities conveniently leave their kids to the pre-school educational facilities. Pre-school education in cities features perfect quality, thanks to the highly skilled and educated teaching staff. Due to the high salaries, pre-school teachers prefer working in cities. Also, city life offers a vast variety of schools, among which the families choose the most affordable one.",
+                        vi: "Lợi ích đầu tiên của việc sống ở thành phố là mọi người có thể tiếp cận với các trường mầm non, trường học và các tổ chức giáo dục đại học tuyệt vời. Cha mẹ sống ở thành phố thuận tiện giao con cái cho các cơ sở giáo dục mầm non. Giáo dục mầm non ở thành phố có chất lượng hoàn hảo, nhờ vào đội ngũ giảng dạy có tay nghề và trình độ học vấn cao. Do mức lương cao, giáo viên mầm non thích làm việc ở các thành phố hơn. Ngoài ra, cuộc sống thành phố cung cấp rất nhiều trường học đa dạng, mà trong đó các gia đình chọn trường có giá cả phải chăng nhất."
+                    },
+                    {
+                        en: "When the kids enjoy the busy, engaging, and interesting pre-school life, families are busy with hustling and working for long hours. As a result, parents make more money and ensure better financial security for the family.",
+                        vi: "Khi những đứa trẻ tận hưởng cuộc sống mẫu giáo bận rộn, hấp dẫn và thú vị, các gia đình bận rộn với việc chen lấn và làm việc trong nhiều giờ. Kết quả là, cha mẹ kiếm được nhiều tiền hơn và đảm bảo an ninh tài chính tốt hơn cho gia đình."
+                    },
+                    {
+                        en: "Another huge advantage of living in cities is related to career and financial success. It is a worldwide trend that people move from country to urban areas in order to find better jobs. Cities are home to enormous marketplaces, companies, government institutions, banks, etc., that offer a myriad of jobs. Both high-skilled and low-skilled labour forces can find jobs very easily in urban areas. Workplaces continuously need new people to hire because the market forces change at a swift pace. Therefore, people usually move to cities confidently, believing that they will get jobs very conveniently.",
+                        vi: "Một lợi thế to lớn khác của việc sống ở thành phố liên quan đến sự nghiệp và thành công tài chính. Có một xu hướng trên toàn thế giới là mọi người di chuyển từ nông thôn đến các khu vực thành thị để tìm việc làm tốt hơn. Các thành phố là nơi tập trung các thị trường khổng lồ, công ty, tổ chức chính phủ, ngân hàng, v.v., cung cấp vô số việc làm. Cả lực lượng lao động kỹ năng cao và kỹ năng thấp đều có thể tìm việc làm rất dễ dàng ở khu vực thành thị. Nơi làm việc liên tục cần tuyển người mới vì sức mạnh thị trường thay đổi với tốc độ nhanh chóng. Do đó, mọi người thường tự tin chuyển đến các thành phố, tin rằng họ sẽ có được việc làm rất thuận tiện."
+                    }
+                ],
+                glossary: [
+                    { w: "enormous", pos: "adj", m: "to lớn, khổng lồ" },
+                    { w: "metropolitan", pos: "n", m: "cư dân đô thị / khu đô thị" },
+                    { w: "institution", pos: "n", m: "tổ chức, viện (giáo dục/chính phủ)" },
+                    { w: "affordable", pos: "adj", m: "có thể chi trả được, giá cả phải chăng" },
+                    { w: "security", pos: "n", m: "sự an toàn, an ninh" },
+                    { w: "myriad", pos: "n", m: "vô số, một lượng rất lớn" },
+                    { w: "continuously", pos: "adv", m: "một cách liên tục" },
+                    { w: "swift", pos: "adj", m: "nhanh chóng" }
+                ],
+                questions: [
+                    {
+                        type: "rc",
+                        qEn: "Question 1: What could be the best title for the passage?",
+                        qVi: "Tiêu đề nào tốt nhất cho đoạn văn?",
+                        options: [
+                            { t: "A. Advantages of living in Cities", c: true, exp: "✅ <span class='hl-green'>Đúng. Xuyên suốt bài viết (đoạn 2 & 4) tác giả tập trung liệt kê các lợi ích (Education, Career/Jobs)</span>." },
+                            { t: "B. Features of Dynamic Cities", c: false, exp: "❌ <span class='hl-red'>Đặc điểm thành phố năng động thì chung chung quá, bài này tập trung vào Lợi ích (Advantages/Pros)</span>." },
+                            { t: "C. Education and Employment in Cities", c: false, exp: "❌ <span class='hl-red'>Ý này đúng nhưng nó chỉ là chi tiết chứng minh cho cái lợi ích tổng thể (Advantages)</span>." },
+                            { t: "D. High-skilled and Low-skilled Labour Forces in Cities", c: false, exp: "❌ <span class='hl-red'>Chỉ là một chi tiết nhỏ ở đoạn cuối</span>." }
+                        ],
+                        evEn: "Magic city hustle attracts enormous crowds because of several advantages of living in dynamic cities.",
+                        evVi: "Sự hối hả của thành phố kỳ diệu thu hút những đám đông khổng lồ vì một vài <span class='hl-green'>lợi ích của việc sống ở thành phố</span> năng động."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 2: The word 'pro' is closest in meaning to",
+                        qVi: "Từ 'pro' gần nghĩa nhất với từ nào?",
+                        options: [
+                            { t: "A. disadvantage", c: false, exp: "<span class='p-word'>disadvantage</span> (<span class='p-mean'>n</span>): nhược điểm. ❌ <span class='hl-red'>Trái nghĩa</span>." },
+                            { t: "B. advantage", c: true, exp: "<span class='p-word'>advantage</span> (<span class='p-mean'>n</span>): lợi thế, ưu điểm. ✅ <span class='hl-green'>Đúng. Thành ngữ 'Pros and Cons' nghĩa là Ưu và Nhược điểm</span>." },
+                            { t: "C. trouble", c: false, exp: "<span class='p-word'>trouble</span> (<span class='p-mean'>n</span>): rắc rối. ❌ <span class='hl-red'>Sai</span>." },
+                            { t: "D. feature", c: false, exp: "<span class='p-word'>feature</span> (<span class='p-mean'>n</span>): đặc tính. ❌ <span class='hl-red'>Sai</span>." }
+                        ],
+                        evEn: "The first pro of living in cities is that people can have access to great... education...",
+                        evVi: "<span class='hl-green'>Lợi ích (Ưu điểm)</span> đầu tiên của việc sống ở thành phố là mọi người có thể tiếp cận với nền giáo dục tuyệt vời..."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 3: Why do pre-school teachers prefer working in cities?",
+                        qVi: "Tại sao giáo viên mầm non thích làm việc ở thành phố?",
+                        options: [
+                            { t: "A. Because parents leave their kids to the pre-school educational facilities.", c: false, exp: "❌ <span class='hl-red'>Đó là lý do phụ huynh thích, không phải giáo viên</span>." },
+                            { t: "B. Because they can earn high salaries.", c: true, exp: "✅ <span class='hl-green'>Đúng. Nằm trực tiếp ở đoạn 2</span>." },
+                            { t: "C. Because can have access to great pre-school, school, and higher education institutions.", c: false, exp: "❌ <span class='hl-red'>Sai</span>." },
+                            { t: "D. Because they can have more job opportunities.", c: false, exp: "❌ <span class='hl-red'>Không được nhắc đến ở chi tiết giáo viên mầm non</span>." }
+                        ],
+                        evEn: "Due to the high salaries, pre-school teachers prefer working in cities.",
+                        evVi: "Do <span class='hl-green'>mức lương cao</span>, giáo viên mầm non thích làm việc ở các thành phố hơn."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 4: How many advantages of living in cities are mentioned in the passage?",
+                        qVi: "Có bao nhiêu lợi ích của việc sống ở thành phố được đề cập trong đoạn văn?",
+                        options: [
+                            { t: "A. four", c: false, exp: "❌ <span class='hl-red'>Sai</span>." },
+                            { t: "B. three", c: false, exp: "❌ <span class='hl-red'>Sai</span>." },
+                            { t: "C. two", c: true, exp: "✅ <span class='hl-green'>Đúng. Lợi ích số 1 là 'Giáo dục' (The first pro...) và lợi ích số 2 là 'Sự nghiệp/Tiền bạc' (Another huge advantage...)</span>." },
+                            { t: "D. one", c: false, exp: "❌ <span class='hl-red'>Sai</span>." }
+                        ],
+                        evEn: "The first pro... is education. Another huge advantage... is related to career.",
+                        evVi: "<span class='hl-green'>Lợi ích đầu tiên</span>... là giáo dục. <span class='hl-green'>Một lợi thế to lớn khác</span>... là liên quan đến sự nghiệp."
+                    },
+                    {
+                        type: "rc",
+                        qEn: "Question 5: Which of the following statements can be inferred from the passage?",
+                        qVi: "Câu nào sau đây có thể được suy ra từ đoạn văn?",
+                        options: [
+                            { t: "A. Cities offer various types of jobs suitable for people's abilities and skills.", c: true, exp: "✅ <span class='hl-green'>Đúng. Đoạn cuối ghi: 'Cả lực lượng kỹ năng cao và kỹ năng thấp đều có thể tìm việc dễ dàng' -> Có nghĩa là có nhiều loại việc phù hợp với các năng lực khác nhau</span>." },
+                            { t: "B. Children spend all day at school as their parents are busy working.", c: false, exp: "❌ <span class='hl-red'>Bài đọc không nhắc đến chi tiết 'all day' (cả ngày)</span>." },
+                            { t: "C. Education in the cities features best quality thanks to the highly skilled and educated teachers.", c: false, exp: "❌ <span class='hl-red'>Bài đọc nói Pre-school (giáo dục mầm non) có perfect quality, đáp án gom chung thành Education (giáo dục nói chung) là bị khái quát hóa, có thể gây sai lệch</span>." },
+                            { t: "D. Workplaces sack and hire employees at a swift pace.", c: false, exp: "❌ <span class='hl-red'>Bài đọc có nói 'hire' (tuyển dụng) nhưng không hề nhắc chữ 'sack' (sa thải) nhân viên</span>." }
+                        ],
+                        evEn: "Both high-skilled and low-skilled labour forces can find jobs very easily in urban areas.",
+                        evVi: "Cả lực lượng lao động <span class='hl-green'>kỹ năng cao và kỹ năng thấp</span> đều có thể tìm việc làm rất dễ dàng ở khu vực thành thị."
+                    }
+                ]
+            },
+
+            // PASSAGE 4: The Tube (Fill missing sentences)
+            {
+                title: "Passage 4: The London Underground (Missing Sentences)",
+                paragraphs: [
+                    {
+                        en: "The London Underground, affectionately nicknamed \"the Tube,\" (1) ___, which resemble a maze for the strangers. Opened in 1863, (2) ___.",
+                        vi: "Hệ thống tàu điện ngầm London, được gọi một cách trìu mến là 'the Tube', (1) ___, giống như một mê cung đối với những người lạ. Được khai trương vào năm 1863, (2) ___."
+                    },
+                    {
+                        en: "With a network of 11 distinct lines and over 270 stations, the Tube serves as the lifeblood of the city, transporting millions of passengers daily across its vast expanse.",
+                        vi: "Với một mạng lưới gồm 11 tuyến riêng biệt và hơn 270 nhà ga, tàu điện ngầm đóng vai trò là huyết mạch của thành phố, vận chuyển hàng triệu hành khách mỗi ngày trên khu vực rộng lớn của nó."
+                    },
+                    {
+                        en: "(3) ___. Carefully studying detailed maps and understanding the nuances of different lines and travel zones are essential skills for navigating this network.",
+                        vi: "(3) ___. Việc nghiên cứu cẩn thận bản đồ chi tiết và hiểu được sắc thái của các tuyến đường và khu vực di chuyển khác nhau là những kỹ năng cần thiết để điều hướng mạng lưới này."
+                    },
+                    {
+                        en: "(4) ___, the Tube is undeniably a convenient and efficient way to travel around London. It seamlessly connects major landmarks Buckingham Palace and the Tower of London with bustling residential areas and key business districts.",
+                        vi: "(4) ___, the Tube không thể phủ nhận là một cách thuận tiện và hiệu quả để đi du lịch quanh London. Nó kết nối liền mạch các địa danh lớn như Cung điện Buckingham và Tháp London với các khu dân cư nhộn nhịp và các khu kinh doanh trọng điểm."
+                    },
+                    {
+                        en: "Whether you're a seasoned commuter or a first-time visitor, the Tube offers a fascinating glimpse into the city's intricate transportation network and weaves its way beneath the busy streets of London.",
+                        vi: "Cho dù bạn là người đi lại thường xuyên dày dạn kinh nghiệm hay người mới đến lần đầu, the Tube vẫn mang đến cái nhìn hấp dẫn về mạng lưới giao thông phức tạp của thành phố và len lỏi dưới những con phố sầm uất của London."
+                    }
+                ],
+                glossary: [
+                    { w: "affectionately", pos: "adv", m: "một cách trìu mến" },
+                    { w: "maze", pos: "n", m: "mê cung" },
+                    { w: "distinct", pos: "adj", m: "riêng biệt, khác biệt" },
+                    { w: "lifeblood", pos: "n", m: "huyết mạch" },
+                    { w: "expanse", pos: "n", m: "khoảng rộng (đất đai)" },
+                    { w: "nuance", pos: "n", m: "sắc thái" },
+                    { w: "navigate", pos: "v", m: "điều hướng, dò đường" },
+                    { w: "seamlessly", pos: "adv", m: "một cách liền mạch, không bị gián đoạn" },
+                    { w: "intricate", pos: "adj", m: "phức tạp, tinh xảo" }
+                ],
+                questions: [
+                    {
+                        type: "fill-sentence",
+                        qEn: "The London Underground, affectionately nicknamed \"the Tube,\" (1) ___, which resemble a maze for the strangers.", 
+                        qVi: "Hệ thống tàu điện ngầm London, được gọi một cách trìu mến là 'the Tube', (1) ___, giống như một mê cung đối với những người lạ.",
+                        options: [
+                            { t: "A. Navigating the Tube requires a degree of skill and familiarity", c: false, exp: "❌ <span class='hl-red'>Sai ngữ pháp khi nối vào câu gốc</span>." },
+                            { t: "B. Despite its complexity", c: false, exp: "❌ <span class='hl-red'>Sai</span>." },
+                            { t: "C. is a complex and sprawling network of underground railway lines", c: true, exp: "✅ <span class='hl-green'>Đúng. Đoạn văn thiếu một cụm Động từ + Tân ngữ bổ nghĩa cho Chủ ngữ 'The London Underground'. Lắp câu này vào sẽ dịch là: Tàu điện ngầm London là một mạng lưới đường sắt ngầm phức tạp và rộng lớn, cái mà trông giống như mê cung... Phù hợp hoàn toàn</span>." },
+                            { t: "D. it holds the distinction of being the oldest underground railway system in the world", c: false, exp: "❌ <span class='hl-red'>Sai ngữ pháp khi nối vào câu gốc</span>." }
+                        ],
+                        evEn: "The London Underground... (1) is a complex and sprawling network of underground railway lines, which resemble a maze for the strangers.",
+                        evVi: "Hệ thống tàu điện ngầm London... <span class='hl-green'>là một mạng lưới đường sắt ngầm phức tạp và rộng lớn</span>, cái mà giống như một mê cung đối với những người lạ."
+                    },
+                    {
+                        type: "fill-sentence",
+                        qEn: "Opened in 1863, (2) ___.",
+                        qVi: "Được khai trương vào năm 1863, (2) ___.",
+                        options: [
+                            { t: "A. Navigating the Tube requires a degree of skill and familiarity", c: false, exp: "❌ <span class='hl-red'>Sai logic</span>." },
+                            { t: "B. Despite its complexity", c: false, exp: "❌ <span class='hl-red'>Sai</span>." },
+                            { t: "C. is a complex and sprawling network of underground railway lines", c: false, exp: "❌ <span class='hl-red'>Đã dùng cho ô trống 1</span>." },
+                            { t: "D. it holds the distinction of being the oldest underground railway system in the world", c: true, exp: "✅ <span class='hl-green'>Đúng. Cấu trúc rút gọn chủ ngữ: 'Opened in 1863' thì vế sau chủ ngữ phải là vật được mở năm 1863 ('it' thay thế cho The Tube). Dịch: Được khai trương năm 1863, nó giữ danh hiệu là hệ thống đường sắt ngầm lâu đời nhất thế giới</span>." }
+                        ],
+                        evEn: "Opened in 1863, (2) it holds the distinction of being the oldest underground railway system in the world.",
+                        evVi: "Được khai trương vào năm 1863, <span class='hl-green'>nó giữ danh hiệu là hệ thống đường sắt ngầm lâu đời nhất thế giới</span>."
+                    },
+                    {
+                        type: "fill-sentence",
+                        qEn: "(3) ___. Carefully studying detailed maps and understanding the nuances of different lines and travel zones are essential skills for navigating this network.",
+                        qVi: "(3) ___. Việc nghiên cứu cẩn thận bản đồ chi tiết và hiểu được sắc thái của các tuyến đường và khu vực di chuyển khác nhau là những kỹ năng cần thiết để điều hướng mạng lưới này.",
+                        options: [
+                            { t: "A. Navigating the Tube requires a degree of skill and familiarity", c: true, exp: "✅ <span class='hl-green'>Đúng. Dịch: 'Việc điều hướng hệ thống Tube đòi hỏi một mức độ kỹ năng và sự quen thuộc'. Câu sau tác giả lập tức giải thích kỹ năng đó là gì (nghiên cứu bản đồ, hiểu sắc thái các tuyến), tạo ra tính liên kết liền mạch</span>." },
+                            { t: "B. Despite its complexity", c: false, exp: "❌ <span class='hl-red'>Sai, vì nó là một trạng ngữ chỉ nhượng bộ chứ không phải 1 câu độc lập</span>." },
+                            { t: "C. is a complex and sprawling network of underground railway lines", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." },
+                            { t: "D. it holds the distinction of being the oldest underground railway system in the world", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." }
+                        ],
+                        evEn: "(3) Navigating the Tube requires a degree of skill and familiarity. Carefully studying detailed maps and understanding the nuances of different lines and travel zones are essential skills for navigating this network.",
+                        evVi: "<span class='hl-green'>Việc điều hướng the Tube đòi hỏi một mức độ kỹ năng và sự quen thuộc</span>. Việc nghiên cứu cẩn thận bản đồ chi tiết và hiểu được sắc thái của các tuyến đường và khu vực di chuyển khác nhau là những kỹ năng cần thiết để điều hướng mạng lưới này."
+                    },
+                    {
+                        type: "fill-sentence",
+                        qEn: "(4) ___, the Tube is undeniably a convenient and efficient way to travel around London.",
+                        qVi: "(4) ___, the Tube không thể phủ nhận là một cách thuận tiện và hiệu quả để đi du lịch quanh London.",
+                        options: [
+                            { t: "A. Navigating the Tube requires a degree of skill and familiarity", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." },
+                            { t: "B. Despite its complexity", c: true, exp: "✅ <span class='hl-green'>Đúng. Cấu trúc nhượng bộ: 'Mặc dù sự phức tạp của nó, the Tube không thể phủ nhận là một cách thuận tiện...'. Hoàn toàn hợp lý về logic</span>." },
+                            { t: "C. is a complex and sprawling network of underground railway lines", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." },
+                            { t: "D. it holds the distinction of being the oldest underground railway system in the world", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." }
+                        ],
+                        evEn: "(4) Despite its complexity, the Tube is undeniably a convenient and efficient way to travel around London.",
+                        evVi: "<span class='hl-green'>Bất chấp sự phức tạp của nó</span>, the Tube không thể phủ nhận là một cách thuận tiện và hiệu quả để đi du lịch quanh London."
+                    }
+                ]
+            },
+
+            // PASSAGE 5: New York City (Fill missing sentences)
+            {
+                title: "Passage 5: New York City Cultures (Missing Sentences)",
+                paragraphs: [
+                    {
+                        en: "New York City is a mix of cultures, (1) ___. This remarkable diversity is evident in the city's unique neighborhoods, each with its own distinct character and traditions.",
+                        vi: "Thành phố New York là sự pha trộn của nhiều nền văn hóa, (1) ___. Sự đa dạng đáng chú ý này thể hiện rõ trong các khu phố độc đáo của thành phố, mỗi khu phố mang nét đặc trưng và truyền thống riêng."
+                    },
+                    {
+                        en: "(2) ___, which transports you to a world of authentic restaurants and charming bakeries lining the streets. The aromas of freshly baked bread and hot sauces fill the air, creating a sensory experience that evokes the heart of Italy.",
+                        vi: "(2) ___, cái mà đưa bạn đến một thế giới của những nhà hàng đích thực và những tiệm bánh quyến rũ dọc theo các con phố. Mùi thơm của bánh mì mới nướng và nước sốt nóng hổi tràn ngập không khí, tạo ra một trải nghiệm giác quan gợi lên trái tim của nước Ý."
+                    },
+                    {
+                        en: "(3) ___, with its markets overflowing with exotic spices and delicious street food. Here, you can experience the rich cultural heritage of China through its sights, sounds, and flavors.",
+                        vi: "(3) ___, với những khu chợ tràn ngập các loại gia vị kỳ lạ và thức ăn đường phố ngon tuyệt. Tại đây, bạn có thể trải nghiệm di sản văn hóa phong phú của Trung Quốc thông qua các khung cảnh, âm thanh và hương vị của nó."
+                    },
+                    {
+                        en: "Harlem, known as a center of African American culture, (4) ___. This incredible cultural richness contributes to the city's dynamic energy and makes New York City a captivating place to explore, offering a unique blend of cultures and experiences that leave a lasting impression on visitors and residents.",
+                        vi: "Harlem, được biết đến như một trung tâm của văn hóa người Mỹ gốc Phi, (4) ___. Sự phong phú về văn hóa đáng kinh ngạc này đóng góp vào năng lượng năng động của thành phố và khiến Thành phố New York trở thành một nơi quyến rũ để khám phá, cung cấp một sự pha trộn độc đáo của các nền văn hóa và trải nghiệm để lại ấn tượng sâu sắc cho du khách và cư dân."
+                    }
+                ],
+                glossary: [
+                    { w: "remarkable", pos: "adj", m: "đáng chú ý, nổi bật" },
+                    { w: "diversity", pos: "n", m: "sự đa dạng" },
+                    { w: "authentic", pos: "adj", m: "đích thực, thật" },
+                    { w: "aroma", pos: "n", m: "mùi thơm (mạnh)" },
+                    { w: "sensory", pos: "adj", m: "thuộc về giác quan" },
+                    { w: "evoke", pos: "v", m: "gợi lên" },
+                    { w: "overflow", pos: "v", m: "tràn ngập" },
+                    { w: "exotic", pos: "adj", m: "kỳ lạ, từ nước ngoài đưa vào" },
+                    { w: "heritage", pos: "n", m: "di sản" },
+                    { w: "captivating", pos: "adj", m: "làm say đắm, quyến rũ" }
+                ],
+                questions: [
+                    {
+                        type: "fill-sentence",
+                        qEn: "New York City is a mix of cultures, (1) ___.",
+                        qVi: "Thành phố New York là sự pha trộn của nhiều nền văn hóa, (1) ___.",
+                        options: [
+                            { t: "A. boasts a rich history and continues to be a hub for music and artistic expression", c: false, exp: "❌ <span class='hl-red'>Sai ngữ pháp khi nối vào câu gốc có dấu phẩy</span>." },
+                            { t: "B. with people from over 200 countries represented within its diverse population", c: true, exp: "✅ <span class='hl-green'>Đúng. Dịch: 'với những người từ hơn 200 quốc gia có mặt trong dân số đa dạng của nó'. Nó làm rõ cụm từ 'mix of cultures' ở đầu câu</span>." },
+                            { t: "C. In contrast, bustling Chinatown transports you to another world", c: false, exp: "❌ <span class='hl-red'>Sai ngữ pháp</span>." },
+                            { t: "D. Little Italy offers a taste of Italy", c: false, exp: "❌ <span class='hl-red'>Sai ngữ pháp</span>." }
+                        ],
+                        evEn: "New York City is a mix of cultures, (1) with people from over 200 countries represented within its diverse population.",
+                        evVi: "Thành phố New York là sự pha trộn của nhiều nền văn hóa, <span class='hl-green'>với những người từ hơn 200 quốc gia có mặt trong dân số đa dạng của nó</span>."
+                    },
+                    {
+                        type: "fill-sentence",
+                        qEn: "(2) ___, which transports you to a world of authentic restaurants and charming bakeries lining the streets. The aromas of freshly baked bread and hot sauces fill the air, creating a sensory experience that evokes the heart of Italy.",
+                        qVi: "(2) ___, cái mà đưa bạn đến một thế giới của những nhà hàng đích thực và những tiệm bánh quyến rũ dọc theo các con phố. Mùi thơm của bánh mì mới nướng và nước sốt nóng hổi tràn ngập không khí, tạo ra một trải nghiệm giác quan gợi lên trái tim của nước Ý.",
+                        options: [
+                            { t: "A. boasts a rich history and continues to be a hub for music and artistic expression", c: false, exp: "❌ <span class='hl-red'>Sai</span>." },
+                            { t: "B. with people from over 200 countries represented within its diverse population", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." },
+                            { t: "C. In contrast, bustling Chinatown transports you to another world", c: false, exp: "❌ <span class='hl-red'>Đoạn văn đang miêu tả về nước Ý, không phải Chinatown (Trung Quốc)</span>." },
+                            { t: "D. Little Italy offers a taste of Italy", c: true, exp: "✅ <span class='hl-green'>Đúng. Đoạn văn chứa các keyword mạnh như 'evokes the heart of Italy' (gợi nhớ trái tim nước Ý) -> Câu dẫn dắt phải là: 'Khu Little Italy (Nước Ý thu nhỏ) mang đến một hương vị nước Ý...'</span>." }
+                        ],
+                        evEn: "(2) Little Italy offers a taste of Italy, which transports you to a world of authentic restaurants and charming bakeries lining the streets. The aromas of freshly baked bread and hot sauces fill the air, creating a sensory experience that evokes the heart of Italy.",
+                        evVi: "<span class='hl-green'>Little Italy (Nước Ý thu nhỏ) mang đến một hương vị nước Ý</span>, cái mà đưa bạn đến một thế giới của những nhà hàng đích thực và những tiệm bánh quyến rũ dọc theo các con phố. Mùi thơm của bánh mì mới nướng và nước sốt nóng hổi tràn ngập không khí, tạo ra một trải nghiệm giác quan gợi lên trái tim của nước Ý."
+                    },
+                    {
+                        type: "fill-sentence",
+                        qEn: "(3) ___, with its markets overflowing with exotic spices and delicious street food. Here, you can experience the rich cultural heritage of China through its sights, sounds, and flavors.",
+                        qVi: "(3) ___, với những khu chợ tràn ngập các loại gia vị kỳ lạ và thức ăn đường phố ngon tuyệt. Tại đây, bạn có thể trải nghiệm di sản văn hóa phong phú của Trung Quốc thông qua các khung cảnh, âm thanh và hương vị của nó.",
+                        options: [
+                            { t: "A. boasts a rich history and continues to be a hub for music and artistic expression", c: false, exp: "❌ <span class='hl-red'>Sai</span>." },
+                            { t: "B. with people from over 200 countries represented within its diverse population", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." },
+                            { t: "C. In contrast, bustling Chinatown transports you to another world", c: true, exp: "✅ <span class='hl-green'>Đúng. Tác giả sử dụng câu chuyển ý 'In contrast' (Ngược lại) để đổi bối cảnh từ khu Ý sang khu Trung Quốc. 'Khu phố Tàu nhộn nhịp đưa bạn đến thế giới khác...' khớp với các câu tiếp theo miêu tả chợ Tàu</span>." },
+                            { t: "D. Little Italy offers a taste of Italy", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." }
+                        ],
+                        evEn: "(3) In contrast, bustling Chinatown transports you to another world, with its markets overflowing with exotic spices and delicious street food. Here, you can experience the rich cultural heritage of China through its sights, sounds, and flavors.",
+                        evVi: "<span class='hl-green'>Ngược lại, khu phố Tàu nhộn nhịp đưa bạn đến một thế giới khác</span>, với những khu chợ tràn ngập các loại gia vị kỳ lạ và thức ăn đường phố ngon tuyệt. Tại đây, bạn có thể trải nghiệm di sản văn hóa phong phú của Trung Quốc thông qua các khung cảnh, âm thanh và hương vị của nó."
+                    },
+                    {
+                        type: "fill-sentence",
+                        qEn: "Harlem, known as a center of African American culture, (4) ___. This incredible cultural richness contributes to the city's dynamic energy and makes New York City a captivating place to explore...",
+                        qVi: "Harlem, được biết đến như một trung tâm của văn hóa người Mỹ gốc Phi, (4) ___. Sự phong phú về văn hóa đáng kinh ngạc này đóng góp vào năng lượng năng động của thành phố và khiến Thành phố New York trở thành một nơi quyến rũ để khám phá...",
+                        options: [
+                            { t: "A. boasts a rich history and continues to be a hub for music and artistic expression", c: true, exp: "✅ <span class='hl-green'>Đúng. Câu này có vai trò Động từ bổ nghĩa cho Chủ ngữ Harlem. Dịch: Harlem... tự hào có một lịch sử phong phú và tiếp tục là trung tâm của âm nhạc và biểu diễn nghệ thuật</span>." },
+                            { t: "B. with people from over 200 countries represented within its diverse population", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." },
+                            { t: "C. In contrast, bustling Chinatown transports you to another world", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." },
+                            { t: "D. Little Italy offers a taste of Italy", c: false, exp: "❌ <span class='hl-red'>Đã dùng</span>." }
+                        ],
+                        evEn: "Harlem, known as a center of African American culture, (4) boasts a rich history and continues to be a hub for music and artistic expression. This incredible cultural richness contributes to the city's dynamic energy and makes New York City a captivating place to explore...",
+                        evVi: "Harlem, được biết đến như một trung tâm của văn hóa người Mỹ gốc Phi, <span class='hl-green'>tự hào có một lịch sử phong phú và tiếp tục là trung tâm của âm nhạc và biểu diễn nghệ thuật</span>. Sự phong phú về văn hóa đáng kinh ngạc này đóng góp vào năng lượng năng động của thành phố và khiến Thành phố New York trở thành một nơi quyến rũ để khám phá..."
+                    }
+                ]
+            }
+        ];
+
+        // ================= BIẾN TOÀN CỤC & ÂM THANH =================
+        let totalQuestions = 0;
+        let answeredQuestions = 0;
+        let score = 0;
+        let introAudioPlayed = false;
+
+        const wrongAudio = new Audio("https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/oi-ban-oi.mp3");
+        const introAudio = new Audio("https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_2rUjepgpwpTxnU6YGv6kmq.mp3");
+
+        function playDing() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.5);
+            } catch(e) { console.log("AudioContext not supported"); }
+        }
+
+        // ================= RENDER GIAO DIỆN =================
+        function initApp() {
+            const readingPane = document.getElementById('reading-pane');
+            const exercisePane = document.getElementById('exercise-pane');
+            let qIndexGlobal = 0;
+
+            appData.forEach((textData, textIdx) => {
+                // 1. RENDER READING PANE
+                let htmlReading = `<div class="text-section"><h2 class="text-title">${textData.title}</h2>`;
+                
+                textData.paragraphs.forEach((p, pIdx) => {
+                    htmlReading += `
+                    <div class="paragraph-box">
+                        <div class="para-en">${p.en}</div>
+                        <div class="para-vi" id="vi-${textIdx}-${pIdx}">${p.vi}</div>
+                        <button class="btn-translate" onclick="toggleTranslation(${textIdx}, ${pIdx})">Mở dịch đoạn này 🌟</button>
+                    </div>`;
+                });
+
+                htmlReading += `<table class="glossary-table">
+                                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>`;
+                textData.glossary.forEach(item => {
+                    htmlReading += `<tr><td><strong>${item.w}</strong></td><td><em>${item.pos}</em></td><td>${item.m}</td></tr>`;
+                });
+                htmlReading += `</table></div>`;
+                
+                readingPane.insertAdjacentHTML('beforeend', htmlReading);
+
+                // 2. RENDER EXERCISE PANE
+                textData.questions.forEach((q, qIdx) => {
+                    qIndexGlobal++;
+                    totalQuestions++;
+                    
+                    let optionsWithOriginalIdx = q.options.map((opt, origIdx) => ({ ...opt, origIdx }));
+                    let shuffledOptions = optionsWithOriginalIdx.sort(() => Math.random() - 0.5);
+                    
+                    // Xử lý bài đục lỗ (Ẩn câu hỏi) và Bài đọc (Hiện câu hỏi)
+                    let displayQuestionText = "";
+                    let gridClass = "options-grid";
+                    
+                    if (q.type === "fill" || q.type === "fill-sentence") {
+                        displayQuestionText = `Câu ${qIndexGlobal}: Select the best answer`;
+                    } else {
+                        displayQuestionText = `Câu ${qIndexGlobal}: ${q.qEn.replace('Question:', '').replace(/Question \d+:/, '').trim()}`;
+                    }
+
+                    // Nếu là điền cả câu dài thì chuyển grid thành 1 cột
+                    if (q.type === "fill-sentence") {
+                        gridClass = "options-grid full-width";
+                    }
+
+                    let htmlExercise = `
+                    <div class="question-card" id="q-card-${qIndexGlobal}">
+                        <div class="q-text">${displayQuestionText}</div>
+                        <div class="${gridClass}">
+                    `;
+                    
+                    shuffledOptions.forEach((opt) => {
+                        htmlExercise += `<button class="btn-option" data-correct="${opt.c}" onclick="checkAnswer(this, ${qIndexGlobal}, ${textIdx}, ${qIdx}, ${opt.origIdx})">${opt.t}</button>`;
+                    });
+
+                    htmlExercise += `
+                        </div>
+                        <div class="explanation-box" id="exp-${qIndexGlobal}"></div>
+                    </div>`;
+                    
+                    document.querySelector('.submit-section').insertAdjacentHTML('beforebegin', htmlExercise);
+                });
+            });
+            
+            document.body.addEventListener('click', () => {
+                if(!introAudioPlayed) {
+                    introAudio.play().catch(e => console.log("Auto-play prevented"));
+                    introAudioPlayed = true;
+                }
+            }, {once: true});
+        }
+
+        // ================= CÁC HÀM XỬ LÝ (LOGIC) =================
+        function toggleTranslation(textIdx, pIdx) {
+            const el = document.getElementById(`vi-${textIdx}-${pIdx}`);
+            if (el.style.display === "none" || el.style.display === "") {
+                el.style.display = "block";
+            } else {
+                el.style.display = "none";
+            }
+        }
+
+        function checkAnswer(btn, globalQId, textIdx, qIdx, optOrigIdx) {
+            const questionData = appData[textIdx].questions[qIdx];
+            const selectedOption = questionData.options[optOrigIdx];
+            const isCorrect = selectedOption.c;
+
+            const container = document.getElementById(`q-card-${globalQId}`);
+            const buttons = container.querySelectorAll('.btn-option');
+            buttons.forEach(b => b.disabled = true);
+            
+            const expBox = document.getElementById(`exp-${globalQId}`);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playDing();
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                score++;
+            } else {
+                btn.classList.add('wrong');
+                wrongAudio.currentTime = 0;
+                wrongAudio.play();
+                
+                buttons.forEach(b => {
+                    if (b.getAttribute('data-correct') === 'true') {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            let expHtml = `<div class="exp-line"><strong>📝 Dịch/Ngữ cảnh:</strong> <span style="color:#00796b;">${questionData.qVi}</span></div>`;
+            expHtml += `<div class="exp-line"><strong>🔍 Phân tích các đáp án:</strong></div>`;
+            
+            questionData.options.forEach(o => {
+                // Tự động bỏ nhãn A, B, C, D 
+                expHtml += `<div style="margin-left: 10px; margin-bottom: 5px;">- <strong>${o.t.replace(/^[A-D]\.\s*/, '')}</strong>: ${o.exp}</div>`;
+            });
+            
+            expHtml += `<div class="exp-quote"><strong>📖 Dẫn chứng trong bài:</strong><br/>"${questionData.evEn}"<br/>👉 <strong>Dịch:</strong> "${questionData.evVi}"</div>`;
+            
+            expBox.innerHTML = expHtml;
+            expBox.style.display = "block";
+            answeredQuestions++;
+        }
+
+        // ================= KẾT QUẢ & NỘP BÀI =================
+        function showSubmitModal() {
+            document.getElementById('submitModal').style.display = "flex";
+            document.getElementById('modal-step-1').style.display = "block";
+            document.getElementById('modal-step-2').style.display = "none";
+        }
+
+        function processSubmit() {
+            const nameInput = document.getElementById('studentName').value.trim();
+            if(nameInput === "") {
+                alert("Em vui lòng nhập tên trước khi nộp bài nhé!");
+                return;
+            }
+            if(answeredQuestions < totalQuestions) {
+                const cf = confirm(`Em mới làm ${answeredQuestions}/${totalQuestions} câu. Em có chắc chắn muốn nộp bài luôn không?`);
+                if(!cf) return;
+            }
+
+            const percentage = score / totalQuestions;
+            const score10 = ((score / totalQuestions) * 10).toFixed(1);
+            
+            let gifUrl = "";
+            let comment = "";
+
+            if (percentage === 1) {
+                gifUrl = "https://media.giphy.com/media/l4pTfx2qLszoacZRS/giphy.gif"; 
+                comment = "Tuyệt đỉnh! Em đúng là thiên tài Tiếng Anh! 🏆";
+            } else if (percentage >= 0.6) {
+                gifUrl = "https://media.giphy.com/media/xT5LMHxhOfscxPfIfm/giphy.gif"; 
+                comment = "Rất xuất sắc! Chúc mừng em đã nắm bài rất tốt! 🌟";
+            } else {
+                gifUrl = "https://media.giphy.com/media/2UIcmK4pn7rYNLRboG/giphy.gif"; 
+                comment = "Không sao đâu, hãy đọc kỹ giải thích của cô và cố gắng lần sau nhé! 💪";
+            }
+
+            document.getElementById('modal-step-1').style.display = "none";
+            document.getElementById('modal-step-2').style.display = "block";
+            
+            document.getElementById('result-name').innerText = `Học sinh: ${nameInput}`;
+            document.getElementById('result-score').innerText = `Số câu đúng: ${score}/${totalQuestions}`;
+            document.getElementById('result-score-10').innerText = `Điểm quy đổi: ${score10}/10 điểm`;
+            document.getElementById('result-comment').innerText = comment;
+            document.getElementById('result-gif').src = gifUrl;
+        }
+
+        function closeModal() {
+            document.getElementById('submitModal').style.display = "none";
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>

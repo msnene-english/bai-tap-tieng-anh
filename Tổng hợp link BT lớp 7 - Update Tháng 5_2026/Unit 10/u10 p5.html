@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Quiz - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #FDCB6E;
+            --accent: #00C9A7;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --bg-gradient: linear-gradient(-45deg, #8854C0, #E056FD, #FDCB6E, #00C9A7);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        /* Họa tiết lơ lửng SVG Pattern */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2v-4h4v-2h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2v-4h4v-2H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        header {
+            z-index: 10;
+            text-align: center;
+            color: white;
+            padding: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        h1 { margin: 0; font-size: 1.8rem; font-weight: 800; }
+        .teacher-name { font-size: 0.9rem; opacity: 0.9; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; display: inline-block; margin-top: 5px; }
+
+        .container {
+            width: 95%;
+            max-width: 800px;
+            z-index: 1;
+            padding-bottom: 100px;
+        }
+
+        .exercise-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            border: 5px solid white;
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 3px dashed var(--secondary);
+            padding-bottom: 10px;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 2px solid #eee;
+            transition: transform 0.3s;
+            position: relative;
+        }
+
+        .question-card:hover { transform: translateY(-5px); }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        /* Reorder Style (Word Chips) */
+        .word-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            min-height: 50px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 15px;
+        }
+
+        .word-chip {
+            background: white;
+            border: 2px solid #ddd;
+            border-bottom: 4px solid #ddd;
+            padding: 8px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .word-chip:hover { transform: scale(1.05); border-color: var(--primary); }
+        .word-chip.selected { opacity: 0.3; pointer-events: none; }
+
+        .answer-zone {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            min-height: 60px;
+            padding: 15px;
+            border: 2px dashed var(--primary);
+            border-radius: 15px;
+            background: #fff;
+        }
+
+        /* Input Style */
+        .input-box {
+            width: 100%;
+            padding: 12px 20px;
+            border: 3px solid #eee;
+            border-radius: 15px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-box:focus { border-color: var(--secondary); }
+
+        .check-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 0 #00a88b;
+            transition: 0.2s;
+        }
+
+        .check-btn:active { transform: translateY(3px); box-shadow: none; }
+
+        /* Explanation Box */
+        .explanation {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 15px;
+            display: none;
+            animation: slideDown 0.4s ease-out;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .explanation.correct { background: #e6ffed; border: 2px solid var(--correct); display: block; }
+        .explanation.wrong { background: #fff5f5; border: 2px solid var(--wrong); display: block; }
+
+        .explanation h4 { margin: 0 0 10px 0; color: #333; display: flex; align-items: center; gap: 8px; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .shake { animation: shake 0.3s ease-in-out 2; }
+
+        /* Scoreboard Popup */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            border: 8px solid var(--secondary);
+        }
+
+        .modal-content h2 { font-size: 2.5rem; color: var(--primary); margin-bottom: 10px; }
+        .score-circle {
+            width: 150px; height: 150px;
+            border-radius: 50%;
+            border: 10px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 20px auto;
+            color: #333;
+        }
+
+        .btn-finish {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff7675;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            border-radius: 50px;
+            box-shadow: 0 6px 0 #d63031;
+            cursor: pointer;
+            z-index: 99;
+        }
+
+        .btn-finish:hover { transform: translateX(-50%) scale(1.05); }
+
+        .reset-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        /* CSS Drawing for Sale Sign & Phone */
+        .visual-container { margin: 15px 0; display: flex; justify-content: center; }
+        .sale-sign {
+            background: #ff4757; color: white; padding: 10px 30px;
+            font-weight: 900; border: 4px solid white; transform: rotate(-5deg);
+            box-shadow: 5px 5px 0 rgba(0,0,0,0.1); font-size: 1.5rem;
+        }
+        .phone-frame {
+            width: 200px; height: 100px; background: #333; border-radius: 15px;
+            padding: 10px; border: 4px solid #555; position: relative;
+        }
+        .phone-screen { background: #fff; height: 100%; border-radius: 8px; padding: 5px; font-size: 0.8rem; overflow: hidden; }
+        .msg-bubble { background: #e1ffc7; padding: 5px; border-radius: 5px; margin-bottom: 5px; border: 1px solid #ccc; }
+
+        u { text-decoration: underline; font-weight: bold; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>HỌC TIẾNG ANH CÙNG MS MS Chí Nên</h1>
+    <div class="teacher-name">Giáo viên tạo: Ms MS Chí Nên</div>
+</header>
+
+<div class="container" id="quiz-container">
+    </div>
+
+<button class="btn-finish" onclick="showResults()">NỘP BÀI <i class="fas fa-paper-plane"></i></button>
+
+<div class="modal" id="result-modal">
+    <div class="modal-content">
+        <h2>TUYỆT VỜI!</h2>
+        <div id="feedback-text">Bạn đã hoàn thành bài tập xuất sắc!</div>
+        <div class="score-circle" id="final-score">0/40</div>
+        <button class="check-btn" onclick="location.reload()" style="background: var(--primary); box-shadow: 0 4px 0 #6c3da1;">LÀM LẠI BÀI</button>
+        <button class="check-btn" onclick="document.getElementById('result-modal').style.display='none'" style="margin-left: 10px;">XEM LẠI LỖI</button>
+    </div>
+</div>
+
+<script>
+    // Audio Context for Procedural Sounds
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        } else {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+    }
+
+    const quizData = [
+        {
+            type: "reorder",
+            section: "Exercise 16: Reorder the words to make sentences (Present Continuous)",
+            questions: [
+                { q: "solar panels / are / on the roof / installing / Workers / right now / .", a: "Workers are installing solar panels on the roof right now.", trans: "Công nhân đang lắp đặt các tấm pin mặt trời trên mái nhà ngay bây giờ.", grammar: "S + am/is/are + V-ing (Workers số nhiều nên dùng 'are')" },
+                { q: "using / at the moment / too much / electricity / We / are / .", a: "We are using too much electricity at the moment.", trans: "Chúng ta đang sử dụng quá nhiều điện vào lúc này.", grammar: "Dấu hiệu 'at the moment' dùng thì Hiện tại tiếp diễn." },
+                { q: "the wind turbines / Look! / spinning / are / very fast / today / .", a: "Look! The wind turbines are spinning very fast today.", trans: "Nhìn kìa! Các tuabin gió đang quay rất nhanh hôm nay.", grammar: "Mệnh lệnh 'Look!' là dấu hiệu nhận biết thì HTTD." },
+                { q: "studying / this week / about / The students / renewable energy / are / .", a: "The students are studying about renewable energy this week.", trans: "Các học sinh đang nghiên cứu về năng lượng tái tạo trong tuần này.", grammar: "'this week' diễn tả một hành động tạm thời xảy ra xung quanh thời điểm nói." },
+                { q: "our school / Is / solar power / currently / to save money / using / ?", a: "Is our school currently using solar power to save money?", trans: "Trường chúng ta hiện đang sử dụng năng lượng mặt trời để tiết kiệm tiền phải không?", grammar: "Câu nghi vấn: Is + S + V-ing?" },
+                { q: "not / coal / These days, / burning / many factories / are / for energy / .", a: "These days, many factories are not burning coal for energy.", trans: "Dạo này, nhiều nhà máy không còn đốt than để lấy năng lượng nữa.", grammar: "Câu phủ định: S + are + not + V-ing." },
+                { q: "always / My brother / leaving / the lights on / is / ! (complaint)", a: "My brother is always leaving the lights on!", trans: "Anh trai tôi suốt ngày cứ để đèn sáng thôi!", grammar: "S + is + always + V-ing dùng để phàn nàn về một thói quen xấu." },
+                { q: "building / near our town / They / a new / wind farm / are / this year / .", a: "They are building a new wind farm near our town this year.", trans: "Họ đang xây dựng một trang trại gió mới gần thị trấn của chúng ta năm nay.", grammar: "'this year' chỉ kế hoạch hoặc sự thay đổi đang diễn ra." },
+                { q: "you / Are / doing / about / a project / energy sources / now / ?", a: "Are you doing a project about energy sources now?", trans: "Bạn đang làm một dự án về các nguồn năng lượng bây giờ phải không?", grammar: "Câu hỏi Yes/No: Are + you + V-ing...?" },
+                { q: "producing / The solar panels / aren't / much electricity / because / it's cloudy / today / .", a: "The solar panels aren't producing much electricity because it's cloudy today.", trans: "Các tấm pin mặt trời không sản xuất được nhiều điện vì hôm nay trời nhiều mây.", grammar: "The solar panels (số nhiều) + are not + V-ing." }
+            ]
+        },
+        {
+            type: "input",
+            section: "Exercise 17: Write complete sentences using the guided words",
+            questions: [
+                { q: "scientists / develop / new / solar panels / at the moment / .", a: "Scientists are developing new solar panels at the moment.", trans: "Các nhà khoa học đang phát triển các tấm pin mặt trời mới vào lúc này.", grammar: "S (Scientists) + are + V-ing (developing)." },
+                { q: "the wind turbine / not / work / today / because / no wind / .", a: "The wind turbine is not working today because there is no wind.", trans: "Tuabin gió không hoạt động hôm nay vì không có gió.", grammar: "S (số ít) + is not + V-ing." },
+                { q: "your family / use / solar energy / at home / now / ?", a: "Is your family using solar energy at home now?", trans: "Gia đình bạn đang sử dụng năng lượng mặt trời tại nhà bây giờ phải không?", grammar: "Is your family (tập thể số ít) + using...?" },
+                { q: "Look! / the solar panels / produce / electricity / from sunlight / .", a: "Look! The solar panels are producing electricity from sunlight.", trans: "Nhìn kìa! Các tấm pin mặt trời đang tạo ra điện từ ánh sáng mặt trời.", grammar: "Look! + HTTD." },
+                { q: "we / learn / about / renewable energy / in science class / this week / .", a: "We are learning about renewable energy in science class this week.", trans: "Chúng tôi đang học về năng lượng tái tạo trong tiết khoa học tuần này.", grammar: "We + are + learning." },
+                { q: "fossil fuels / cause / pollution / problems / these days / ?", a: "Are fossil fuels causing pollution problems these days?", trans: "Các nhiên liệu hóa thạch có đang gây ra các vấn đề ô nhiễm dạo gần đây không?", grammar: "Are + fuels (số nhiều) + causing...?" },
+                { q: "my neighbor / always / waste / electricity / by leaving lights on / ! (complaint)", a: "My neighbor is always wasting electricity by leaving lights on!", trans: "Hàng xóm của tôi cứ luôn lãng phí điện bằng cách để đèn sáng!", grammar: "Is always V-ing (phàn nàn)." },
+                { q: "many countries / not / use / coal power / at the moment / .", a: "Many countries are not using coal power at the moment.", trans: "Nhiều quốc gia không sử dụng năng lượng than vào lúc này.", grammar: "Countries (số nhiều) + are not using." },
+                { q: "the government / build / more wind farms / this year / ?", a: "Is the government building more wind farms this year?", trans: "Chính phủ có đang xây dựng thêm các trang trại gió trong năm nay không?", grammar: "Is the government building...?" },
+                { q: "Listen! / the wind turbines / make / loud noise / right now / .", a: "Listen! The wind turbines are making loud noise right now.", trans: "Nghe kìa! Các tuabin gió đang tạo ra tiếng ồn lớn ngay lúc này.", grammar: "Listen! + HTTD." }
+            ]
+        },
+        {
+            type: "reorder",
+            section: "Exercise 18: Reorder phrases to make meaningful sentences in a paragraph",
+            questions: [
+                { q: "visiting / Today, / our class / a green energy / is / exhibition / at the city center / .", a: "Today, our class is visiting a green energy exhibition at the city center.", trans: "Hôm nay, lớp chúng tôi đang đi thăm một cuộc triển lãm năng lượng xanh ở trung tâm thành phố.", grammar: "S (our class) + is visiting." },
+                { q: "showing / The guide / us / is / different types / of renewable energy / right now / .", a: "The guide is showing us different types of renewable energy right now.", trans: "Người hướng dẫn đang cho chúng tôi xem các loại năng lượng tái tạo khác nhau ngay bây giờ.", grammar: "S (The guide) + is showing." },
+                { q: "looking at / We / are / a model / of a wind turbine / at the moment / .", a: "We are looking at a model of a wind turbine at the moment.", trans: "Chúng tôi đang nhìn vào mô hình của một tuabin gió vào lúc này.", grammar: "We + are looking at." },
+                { q: "the blades / Look! / are / The wind / making / spin / very fast / .", a: "Look! The wind is making the blades spin very fast.", trans: "Nhìn kìa! Gió đang làm cho những cánh quạt quay rất nhanh.", grammar: "Gió (không đếm được) + is making." },
+                { q: "is / My friend Tom / taking / many photos / of the solar panels / now / .", a: "My friend Tom is taking many photos of the solar panels now.", trans: "Bạn tôi, Tom, đang chụp nhiều ảnh các tấm pin mặt trời bây giờ.", grammar: "Tom (số ít) + is taking." },
+                { q: "explaining / The scientist / is / how / solar energy / works / to us / currently / .", a: "The scientist is currently explaining how solar energy works to us.", trans: "Nhà khoa học hiện đang giải thích cho chúng tôi cách năng lượng mặt trời hoạt động.", grammar: "Is currently explaining." },
+                { q: "listening / All the students / are / carefully / and / asking / questions / .", a: "All the students are listening carefully and asking questions.", trans: "Tất cả học sinh đang lắng nghe cẩn thận và đặt câu hỏi.", grammar: "S (số nhiều) + are listening and asking (cấu trúc song hành)." },
+                { q: "not / using / This exhibition hall / is / fossil fuels / for electricity / anymore / .", a: "This exhibition hall is not using fossil fuels for electricity anymore.", trans: "Hội trường triển lãm này không còn sử dụng nhiên liệu hóa thạch để phát điện nữa.", grammar: "S (số ít) + is not using." },
+                { q: "learning / We / are / a lot / about / clean energy / today / .", a: "We are learning a lot about clean energy today.", trans: "Chúng tôi đang học được rất nhiều về năng lượng sạch hôm nay.", grammar: "We + are learning." },
+                { q: "planning / Our teacher / is / to bring / more classes / here / next week / .", a: "Our teacher is planning to bring more classes here next week.", trans: "Giáo viên của chúng tôi đang lên kế hoạch đưa thêm nhiều lớp đến đây vào tuần tới.", grammar: "Is planning (diễn tả kế hoạch tương lai gần)." }
+            ]
+        },
+        {
+            type: "input",
+            section: "Exercise 19: Rewrite the sentences (Transformation)",
+            questions: [
+                { q: "Solar panels are producing electricity on our roof right now. (PRODUCING)", a: "Are solar panels producing electricity on our roof right now?", trans: "Các tấm pin mặt trời đang tạo ra điện trên mái nhà của chúng ta phải không?", grammar: "Chuyển sang câu nghi vấn: Đảo 'Are' lên trước chủ ngữ." },
+                { q: "The wind turbines are spinning very fast at the moment. (AREN'T)", a: "The wind turbines aren't spinning very fast at the moment.", trans: "Các tuabin gió không quay rất nhanh vào lúc này.", grammar: "Chuyển sang câu phủ định: Thêm 'not' sau 'are'." },
+                { q: "Is the government building more solar farms this year? (BUILDING)", a: "The government is building more solar farms this year.", trans: "Chính phủ đang xây dựng thêm nhiều trang trại điện mặt trời trong năm nay.", grammar: "Chuyển sang câu khẳng định: S + is + V-ing." },
+                { q: "We aren't wasting electricity in our classroom today. (SAVING)", a: "We are saving electricity in our classroom today.", trans: "Chúng tôi đang tiết kiệm điện trong lớp học hôm nay.", grammar: "Dùng từ trái nghĩa: 'not wasting' = 'saving'." },
+                { q: "Scientists are developing new types of clean energy these days. (WHAT)", a: "What are scientists developing these days?", trans: "Các nhà khoa học đang phát triển cái gì dạo gần đây?", grammar: "Câu hỏi với từ để hỏi What: What + are + S + V-ing?" },
+                { q: "My family isn't using coal for heating anymore. (SOLAR)", a: "My family is using solar energy for heating now.", trans: "Gia đình tôi hiện đang sử dụng năng lượng mặt trời để sưởi ấm.", grammar: "Thay thế coal (than) bằng solar energy (năng lượng mặt trời)." },
+                { q: "Are students learning about renewable energy this week? (LEARNING)", a: "Students are learning about renewable energy this week.", trans: "Các học sinh đang học về năng lượng tái tạo tuần này.", grammar: "Chuyển nghi vấn sang khẳng định." },
+                { q: "The old power plant is polluting the air right now. (ISN'T)", a: "The old power plant isn't polluting the air right now.", trans: "Nhà máy điện cũ không còn gây ô nhiễm không khí ngay lúc này nữa.", grammar: "Chuyển sang phủ định." },
+                { q: "Many countries are changing to green energy currently. (SWITCHING)", a: "Many countries are switching to green energy currently.", trans: "Nhiều quốc gia hiện đang chuyển sang năng lượng xanh.", grammar: "Đồng nghĩa: change to = switch to." },
+                { q: "The factory is using too much electricity at the moment. (WASTING)", a: "The factory is wasting too much electricity at the moment.", trans: "Nhà máy đang lãng phí quá nhiều điện vào lúc này.", grammar: "Đồng nghĩa ngữ cảnh: use too much = waste." }
+            ]
+        }
+    ];
+
+    let totalScore = 0;
+    const answeredQuestions = new Set();
+
+    function initQuiz() {
+        const container = document.getElementById('quiz-container');
+        quizData.forEach((section, sIdx) => {
+            const secDiv = document.createElement('div');
+            secDiv.className = 'exercise-section';
+            secDiv.innerHTML = `<div class="section-title">${section.section}</div>`;
+
+            section.questions.forEach((q, qIdx) => {
+                const qId = `q_${sIdx}_${qIdx}`;
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `card_${qId}`;
+
+                if (section.type === 'reorder') {
+                    card.innerHTML = `
+                        <div class="question-text">Câu ${qIdx + 1}: Sắp xếp các từ sau:</div>
+                        <div class="answer-zone" id="zone_${qId}"></div>
+                        <div class="word-pool" id="pool_${qId}"></div>
+                        <button class="check-btn" onclick="checkReorder('${qId}', '${section.type}', ${sIdx}, ${qIdx})">KIỂM TRA</button>
+                        <button class="reset-btn" onclick="resetReorder('${qId}')">LÀM LẠI</button>
+                        <div class="explanation" id="exp_${qId}"></div>
+                    `;
+                    container.appendChild(secDiv);
+                    secDiv.appendChild(card);
+                    renderWords(qId, q.q);
+                } else {
+                    card.innerHTML = `
+                        <div class="question-text">Câu ${qIdx + 1}: ${q.q}</div>
+                        <input type="text" class="input-box" id="input_${qId}" placeholder="Viết câu trả lời của bạn vào đây...">
+                        <button class="check-btn" onclick="checkInput('${qId}', ${sIdx}, ${qIdx})">KIỂM TRA</button>
+                        <div class="explanation" id="exp_${qId}"></div>
+                    `;
+                    container.appendChild(secDiv);
+                    secDiv.appendChild(card);
+                }
+            });
+        });
+    }
+
+    function renderWords(qId, sentence) {
+        const pool = document.getElementById(`pool_${qId}`);
+        const words = sentence.split('/').map(w => w.trim());
+        // Shuffle words
+        words.sort(() => Math.random() - 0.5);
+        
+        words.forEach(word => {
+            if(!word) return;
+            const span = document.createElement('span');
+            span.className = 'word-chip';
+            span.innerText = word;
+            span.onclick = () => selectWord(qId, span);
+            pool.appendChild(span);
+        });
+    }
+
+    function selectWord(qId, el) {
+        const zone = document.getElementById(`zone_${qId}`);
+        if (el.parentNode.id.startsWith('pool')) {
+            const clone = el.cloneNode(true);
+            clone.onclick = () => {
+                el.classList.remove('selected');
+                clone.remove();
+            };
+            zone.appendChild(clone);
+            el.classList.add('selected');
+        }
+    }
+
+    function resetReorder(qId) {
+        document.getElementById(`zone_${qId}`).innerHTML = '';
+        const chips = document.getElementById(`pool_${qId}`).querySelectorAll('.word-chip');
+        chips.forEach(c => c.classList.remove('selected'));
+    }
+
+    function checkReorder(qId, type, sIdx, qIdx) {
+        const zone = document.getElementById(`zone_${qId}`);
+        const userA = Array.from(zone.children).map(c => c.innerText).join(' ').replace(/\s+\./g, '.').replace(/\s+\?/g, '?');
+        const correctA = quizData[sIdx].questions[qIdx].a;
+        
+        processResult(qId, userA === correctA, sIdx, qIdx);
+    }
+
+    function checkInput(qId, sIdx, qIdx) {
+        const userA = document.getElementById(`input_${qId}`).value.trim();
+        const correctA = quizData[sIdx].questions[qIdx].a;
+        
+        // So sánh không phân biệt hoa thường và dấu câu cuối
+        const cleanUser = userA.toLowerCase().replace(/[.!?]$/, "");
+        const cleanCorrect = correctA.toLowerCase().replace(/[.!?]$/, "");
+
+        processResult(qId, cleanUser === cleanCorrect, sIdx, qIdx);
+    }
+
+    function processResult(qId, isCorrect, sIdx, qIdx) {
+        const exp = document.getElementById(`exp_${qId}`);
+        const card = document.getElementById(`card_${qId}`);
+        const data = quizData[sIdx].questions[qIdx];
+
+        if (isCorrect) {
+            if(!answeredQuestions.has(qId)) {
+                totalScore++;
+                answeredQuestions.add(qId);
+            }
+            exp.className = 'explanation correct';
+            exp.innerHTML = `
+                <h4><i class="fas fa-check-circle" style="color:var(--correct)"></i> ĐÚNG RỒI! BẠN GIỎI QUÁ!</h4>
+                <p><b>Dịch nghĩa:</b> ${data.trans}</p>
+                <p><b>Giải thích chi tiết:</b> Đây là câu thì Hiện tại tiếp diễn. Cấu trúc: <u>${data.grammar}</u>. 
+                Trong câu này, chúng ta dùng động từ thêm đuôi -ing để chỉ hành động đang diễn ra.</p>
+            `;
+            playSound('correct');
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        } else {
+            card.classList.add('shake');
+            setTimeout(() => card.classList.remove('shake'), 500);
+            exp.className = 'explanation wrong';
+            exp.innerHTML = `
+                <h4><i class="fas fa-times-circle" style="color:var(--wrong)"></i> TIẾC QUÁ, CHƯA ĐÚNG RỒI!</h4>
+                <p><b>Đáp án đúng:</b> <span style="color:var(--correct); font-weight:bold">${data.a}</span></p>
+                <p><b>Dịch nghĩa:</b> ${data.trans}</p>
+                <p><b>Tại sao sai?</b> Hãy chú ý cấu trúc <u>${data.grammar}</u>. 
+                Bạn cần kiểm tra kỹ chủ ngữ là số ít hay số nhiều để chọn 'am/is/are' cho đúng nhé!</p>
+            `;
+            playSound('wrong');
+        }
+    }
+
+    function showResults() {
+        const modal = document.getElementById('result-modal');
+        const scoreCircle = document.getElementById('final-score');
+        const feedback = document.getElementById('feedback-text');
+        
+        scoreCircle.innerText = `${totalScore}/40`;
+        
+        if (totalScore === 40) feedback.innerText = "XUẤT SẮC! Bạn là thiên tài tiếng Anh!";
+        else if (totalScore >= 30) feedback.innerText = "RẤT TỐT! Cố gắng thêm chút nữa là hoàn hảo!";
+        else if (totalScore >= 20) feedback.innerText = "KHÁ LẮM! Hãy xem lại các câu sai để học thêm nhé!";
+        else feedback.innerText = "ĐỪNG BUỒN! Hãy ôn lại thì Hiện tại tiếp diễn và thử lại nha!";
+
+        modal.style.display = 'flex';
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+    }
+
+    // Start the game
+    window.onload = initQuiz;
+</script>
+
+</body>
+</html>

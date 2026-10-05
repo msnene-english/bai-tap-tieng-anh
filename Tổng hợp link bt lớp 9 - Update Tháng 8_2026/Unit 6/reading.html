@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Challenge - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        /* === GLOBAL STYLES & RESET === */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #ffc3a0, #ffafbd, #a1c4fd, #c2e9fb, #d4fc79, #96e6a1);
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+            color: #2d3436;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* === FLOATING EMOJI BACKGROUND === */
+        #bg-svg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* === HEADER === */
+        header {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .header-title {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #2c3e50;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        }
+
+        .score-display {
+            font-weight: 800;
+            background: rgba(255,255,255,0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: #d35400;
+        }
+
+        /* === SPLIT SCREEN LAYOUT === */
+        .container {
+            display: flex;
+            height: 100vh;
+            padding-top: 55px; /* space for header */
+            gap: 20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+        }
+
+        .pane {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 25px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+        }
+
+        /* Custom Scrollbar */
+        .pane::-webkit-scrollbar { width: 8px; }
+        .pane::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .pane::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.6); border-radius: 10px; }
+        .pane::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.9); }
+
+        /* === READING SECTION STYLES === */
+        .passage-title {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 1.8rem;
+            color: #2980b9;
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.6);
+        }
+
+        .paragraph-box {
+            background: rgba(255, 255, 255, 0.4);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            box-shadow: inset 0 2px 5px rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        .btn-translate {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 10px rgba(253, 160, 133, 0.4);
+        }
+        .btn-translate:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(253, 160, 133, 0.6); }
+
+        .translation-text {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(236, 240, 241, 0.8);
+            border-left: 5px solid #e67e22;
+            border-radius: 0 10px 10px 0;
+            font-style: italic;
+            color: #2c3e50;
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* === GLOSSARY STYLES === */
+        .glossary-box {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 2px dashed #a29bfe;
+        }
+        .glossary-title {
+            text-align: center; color: #6c5ce7; font-weight: 800; font-size: 1.3rem; margin-bottom: 15px;
+        }
+        .glossary-table {
+            width: 100%; border-collapse: collapse;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px; text-align: left; border-bottom: 1px solid rgba(108, 92, 231, 0.2);
+        }
+        .glossary-table th { color: #2d3436; background: rgba(108, 92, 231, 0.1); }
+        .g-word { font-weight: bold; color: #d63031; }
+        .g-pos { font-style: italic; color: #0984e3; font-size: 0.9em; }
+
+        /* === QUIZ SECTION STYLES === */
+        .question-card {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+
+        .q-number {
+            display: inline-block;
+            background: #6c5ce7;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .q-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2d3436;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid transparent;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #2d3436;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            transform: translateY(-3px);
+            background: #fff;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            border-color: #a29bfe;
+        }
+
+        .option-btn.disabled { pointer-events: none; }
+        
+        /* Interactive States */
+        .btn-correct {
+            background: #55efc4 !important;
+            color: #006266 !important;
+            border-color: #00b894 !important;
+            box-shadow: 0 0 15px rgba(85, 239, 196, 0.6) !important;
+        }
+        .btn-wrong {
+            background: #ff7675 !important;
+            color: #fff !important;
+            border-color: #d63031 !important;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .shake-anim { animation: shake 0.4s ease-in-out; }
+
+        /* === EXPLANATION STYLES (THE CORE REQUIREMENT) === */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 6px solid #a29bfe;
+            animation: fadeIn 0.5s ease;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+        .exp-title { font-weight: bold; margin-bottom: 10px; color: #6c5ce7; font-size: 1.1rem; }
+        .exp-item { margin-bottom: 8px; }
+        
+        /* REQUIRED SPAN CLASSES */
+        .p-word { color: #e84393; font-weight: 800; }
+        .p-phonetic { color: #636e72; font-style: italic; }
+        .p-mean { color: #0984e3; font-weight: bold; background: rgba(9, 132, 227, 0.1); padding: 0 4px; border-radius: 4px; }
+        .p-grammar { color: #e17055; font-family: monospace; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: rgba(225, 112, 85, 0.15); }
+        .hl-green { color: #00b894; font-weight: 900; text-transform: uppercase; }
+        .hl-red { color: #d63031; font-weight: 900; text-transform: uppercase; }
+
+        /* === SUBMIT SECTION === */
+        .submit-area { text-align: center; padding: 30px 0; }
+        .btn-submit {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white; border: none; padding: 15px 40px; font-size: 1.3rem;
+            font-weight: bold; border-radius: 30px; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3);
+            transition: all 0.3s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-submit:hover { transform: scale(1.05); box-shadow: 0 15px 25px rgba(108, 92, 231, 0.5); }
+
+        /* === MODAL (SCORECARD) === */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            width: 450px; border-radius: 25px; padding: 40px;
+            text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: zoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative; overflow: hidden;
+        }
+        .modal-content::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 10px;
+            background: linear-gradient(90deg, #ff9a9e, #fecfef, #a1c4fd);
+        }
+        .score-circle {
+            width: 120px; height: 120px; background: #6c5ce7; color: white;
+            border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            margin: 0 auto 20px; font-size: 2rem; font-weight: 900; box-shadow: 0 10px 20px rgba(108, 92, 231, 0.4);
+        }
+        .score-scale { font-size: 1.2rem; color: #dfe6e9; font-weight: 600; margin-top: -5px;}
+        .student-name-display { font-size: 1.5rem; color: #2d3436; font-weight: bold; margin-bottom: 10px; }
+        .teacher-comment { font-size: 1.1rem; color: #e84393; font-weight: bold; margin-bottom: 20px; font-style: italic;}
+        .result-gif { width: 100%; border-radius: 15px; margin-top: 15px; max-height: 200px; object-fit: cover;}
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+        /* Confetti Canvas */
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 999; }
+    </style>
+</head>
+<body>
+
+    <svg id="bg-svg" xmlns="http://www.w3.org/2000/svg">
+        <g id="emoji-group"></g>
+    </svg>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>
+        <div class="header-title">✨ Giáo viên tạo: Ms MS Chí Nên</div>
+        <div class="score-display">Điểm: <span id="current-score">0</span> / 14</div>
+    </header>
+
+    <div class="container">
+        <div class="pane" id="left-pane">
+            
+            <h1 class="passage-title">📖 Passage 1: Education Evolution</h1>
+            
+            <div class="paragraph-box">
+                Education has evolved <b>(1) __________</b> over time. Humanity began storing and transmitting knowledge through word of mouth, passing down information about animals, plants and the land to each succeeding <b>(2) __________</b>. Formal education is said to have begun in Greece at around 4 BCE. In fact, the word "school" comes from the Greek word "schole", which means "leisure". This provides insight into how education was perceived back then; as an <b>(3) __________</b> activity rather than a chore.
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1" class="translation-text">
+                    Giáo dục đã phát triển <b>(1) __________</b> theo thời gian. Nhân loại bắt đầu lưu trữ và truyền bá kiến thức thông qua truyền miệng, truyền đạt thông tin về động vật, thực vật và đất đai cho từng <b>(2) __________</b> kế tiếp. Giáo dục chính quy được cho là đã bắt đầu ở Hy Lạp vào khoảng năm 4 trước Công nguyên. Trên thực tế, từ "trường học" xuất phát từ từ "schole" trong tiếng Hy Lạp, có nghĩa là "sự nhàn rỗi". Điều này cung cấp cái nhìn sâu sắc về cách giáo dục được nhận thức hồi đó; như một hoạt động <b>(3) __________</b> chứ không phải là một công việc vặt vãnh bắt buộc.
+                </div>
+            </div>
+
+            <div class="paragraph-box">
+                Today, the likes of Elon Musk have criticised formal education, deeming college degrees as a means of "prove(ing) that you can do your chores, but they're not for learning". Educational <b>(4) __________</b> have advanced. Wax tablets were amongst the earliest learning instruments used by the Romans. Today, digital tablets and an electric stylus fill our classrooms and have <b>(5) __________</b> completely replaced pen and paper. Digital technology, comprising computers and the internet, <b>(6) __________</b> the second main wave of disruptive technology since the printing press. Such technology has completely revolutionised the <b>(7) __________</b> for learning and teaching in more engaging and accessible ways, paving the way for "leisurely learning" as the Greeks <b>(8) __________</b> it to be.
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2" class="translation-text">
+                    Ngày nay, những người như Elon Musk đã chỉ trích giáo dục chính quy, coi bằng đại học như một phương tiện "chứng minh rằng bạn có thể làm những công việc vặt vãnh của mình, nhưng chúng không dùng để học tập". Các <b>(4) __________</b> giáo dục đã tiến bộ. Bảng sáp là một trong những công cụ học tập sớm nhất được người La Mã sử dụng. Ngày nay, máy tính bảng kỹ thuật số và bút cảm ứng điện từ lấp đầy lớp học của chúng ta và <b>(5) __________</b> đã thay thế hoàn toàn bút và giấy. Công nghệ số, bao gồm máy tính và internet, <b>(6) __________</b> làn sóng công nghệ mang tính đột phá lớn thứ hai kể từ khi máy in ra đời. Công nghệ như vậy đã cách mạng hóa hoàn toàn <b>(7) __________</b> học tập và giảng dạy theo những cách hấp dẫn và dễ tiếp cận hơn, mở đường cho "việc học tập nhàn rỗi" đúng như những gì người Hy Lạp đã <b>(8) __________</b> ban đầu.
+                </div>
+            </div>
+
+            <h1 class="passage-title" style="margin-top: 40px;">📖 Passage 2: Digital Devices in Education</h1>
+
+            <div class="paragraph-box">
+                Digital devices are used in every aspect of life and provide a mobile, interactive tool for learning. Educators are finding ways to use them effectively, including the nuances and process of social channels.
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans3" class="translation-text">
+                    Các thiết bị kỹ thuật số được sử dụng trong mọi khía cạnh của cuộc sống và cung cấp một công cụ di động, tương tác cho việc học tập. Các nhà giáo dục đang tìm cách sử dụng chúng một cách hiệu quả, bao gồm cả những sắc thái và quá trình của các kênh truyền thông xã hội.
+                </div>
+            </div>
+
+            <div class="paragraph-box">
+                Digital devices also allow students to be more mobile instead of being chained to a desk. Interactive communication such as Skype can also be used for new learning experiences that are shared with other classrooms. This allows for collaboration for projects between classes and even school-to-school introducing experiential learning in many communities.
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans4')">Mở dịch đoạn này 🌟</button>
+                <div id="trans4" class="translation-text">
+                    Các thiết bị kỹ thuật số cũng cho phép học sinh cơ động hơn thay vì bị trói buộc vào bàn học. Giao tiếp tương tác như Skype cũng có thể được sử dụng cho những trải nghiệm học tập mới được chia sẻ với các lớp học khác. Điều này cho phép sự hợp tác cho các dự án giữa các lớp và thậm chí giữa trường với trường, đưa việc học tập qua trải nghiệm vào nhiều cộng đồng.
+                </div>
+            </div>
+
+            <div class="paragraph-box">
+                Technology and digital devices have also made teachers more accessible to students using educational platforms, social media and other means to communicate, upload lessons and assignments, and for assignment submissions. At the same time, many fear that artificial intelligence is the sleeping giant that can replace a teacher with many adaptive software developments opening up various possibilities.
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans5')">Mở dịch đoạn này 🌟</button>
+                <div id="trans5" class="translation-text">
+                    Công nghệ và các thiết bị kỹ thuật số cũng giúp giáo viên dễ tiếp cận với học sinh hơn thông qua việc sử dụng các nền tảng giáo dục, mạng xã hội và các phương tiện khác để giao tiếp, tải lên các bài học, bài tập, và để nộp bài tập. Đồng thời, nhiều người lo sợ rằng trí tuệ nhân tạo là một "gã khổng lồ đang ngủ" có thể thay thế giáo viên khi sự phát triển của nhiều phần mềm thích ứng mở ra nhiều khả năng khác nhau.
+                </div>
+            </div>
+
+            <div class="paragraph-box">
+                Schools are using the internet as a learning tool with many focusing on IT skills. While many have smart boards in every classroom and students carry around laptops to their lectures.
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans6')">Mở dịch đoạn này 🌟</button>
+                <div id="trans6" class="translation-text">
+                    Các trường học đang sử dụng internet như một công cụ học tập với nhiều trường tập trung vào các kỹ năng công nghệ thông tin. Trong khi nhiều trường có bảng thông minh ở mỗi phòng học và học sinh mang theo máy tính xách tay đến các bài giảng của họ.
+                </div>
+            </div>
+
+            <div class="glossary-box">
+                <div class="glossary-title">🧠 Bảng Từ Vựng Academic (B1-C2)</div>
+                <table class="glossary-table">
+                    <tr><th>Từ vựng</th><th>Phiên âm / Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td class="g-word">Evolve</td><td class="g-pos">/ɪˈvɒlv/ (v)</td><td>Tiến hóa, phát triển</td></tr>
+                    <tr><td class="g-word">Transmit</td><td class="g-pos">/trænzˈmɪt/ (v)</td><td>Truyền đạt, phát đi</td></tr>
+                    <tr><td class="g-word">Succeeding</td><td class="g-pos">/səkˈsiːdɪŋ/ (adj)</td><td>Kế tiếp, nối tiếp</td></tr>
+                    <tr><td class="g-word">Perceive</td><td class="g-pos">/pəˈsiːv/ (v)</td><td>Nhận thức, nhìn nhận</td></tr>
+                    <tr><td class="g-word">Chore</td><td class="g-pos">/tʃɔː/ (n)</td><td>Công việc vặt (thường nhàm chán)</td></tr>
+                    <tr><td class="g-word">Disruptive</td><td class="g-pos">/dɪsˈrʌptɪv/ (adj)</td><td>Mang tính đột phá/phá vỡ cấu trúc cũ</td></tr>
+                    <tr><td class="g-word">Nuance</td><td class="g-pos">/ˈnjuːɑːns/ (n)</td><td>Sắc thái (khác biệt rất nhỏ)</td></tr>
+                    <tr><td class="g-word">Collaboration</td><td class="g-pos">/kəˌlæbəˈreɪʃn/ (n)</td><td>Sự hợp tác, cộng tác</td></tr>
+                    <tr><td class="g-word">Experiential</td><td class="g-pos">/ɪkˌspɪəriˈenʃl/ (adj)</td><td>Dựa trên trải nghiệm, kinh nghiệm</td></tr>
+                    <tr><td class="g-word">Adaptive</td><td class="g-pos">/əˈdæptɪv/ (adj)</td><td>Có khả năng thích nghi, thích ứng</td></tr>
+                </table>
+            </div>
+
+        </div>
+
+        <div class="pane" id="right-pane">
+            <div id="quiz-container">
+                </div>
+            
+            <div class="submit-area">
+                <button class="btn-submit" onclick="submitQuiz()">🎯 Nộp Bài Tính Điểm & Xem Kết Quả</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-content">
+            <div class="student-name-display" id="modal-student-name">Tên Học Sinh</div>
+            <div class="score-circle">
+                <span id="final-score-raw">0/14</span>
+                <span class="score-scale" id="final-score-10">0.00/10</span>
+            </div>
+            <div class="teacher-comment" id="modal-comment">Lời phê của Ms MS Chí Nên: ...</div>
+            <img id="modal-gif" class="result-gif" src="" alt="Reaction GIF">
+            <button class="btn-translate" style="margin-top: 20px; width: 100%;" onclick="location.reload()">Làm lại bài 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // === 1. AUDIO SYSTEM (Web Audio API) ===
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                // Ding sound (High pitch, quick fade)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'wrong') {
+                // Ting-ting sound (Low pitch buzz)
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+                
+                // second beep
+                setTimeout(() => {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc2.type = 'square';
+                    osc2.frequency.setValueAtTime(250, audioCtx.currentTime);
+                    osc2.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                    gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc2.start();
+                    osc2.stop(audioCtx.currentTime + 0.2);
+                }, 150);
+            }
+        }
+
+        // === 2. CONFETTI SYSTEM ===
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+
+        function fireConfetti() {
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 20 - 10,
+                    dy: Math.random() * -20 - 5,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    tilt: Math.random() * 10
+                });
+            }
+        }
+
+        function animateConfetti() {
+            requestAnimationFrame(animateConfetti);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.dy += 0.5; // gravity
+                p.x += p.dx;
+                p.y += p.dy;
+                p.tilt += 0.1;
+                
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                ctx.stroke();
+
+                if (p.y > canvas.height) particles.splice(index, 1);
+            });
+        }
+        animateConfetti();
+
+        // === 3. BACKGROUND SVG GENERATOR ===
+        const emojis = ['📚', '💻', '🚀', '🎓', '🤖', '🌍', '🎧', '💡'];
+        const svgGroup = document.getElementById('emoji-group');
+        for(let i=0; i<30; i++) {
+            let text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", Math.random() * 100 + "%");
+            text.setAttribute("y", Math.random() * 100 + "%");
+            text.setAttribute("font-size", (Math.random() * 20 + 20) + "px");
+            text.setAttribute("opacity", Math.random() * 0.4 + 0.1);
+            text.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            
+            // Simple floating animation
+            let anim = document.createElementNS("http://www.w3.org/2000/svg", "animateTransform");
+            anim.setAttribute("attributeName", "transform");
+            anim.setAttribute("type", "translate");
+            anim.setAttribute("values", "0,0; 0,-50; 0,0");
+            anim.setAttribute("dur", (Math.random() * 10 + 10) + "s");
+            anim.setAttribute("repeatCount", "indefinite");
+            text.appendChild(anim);
+            
+            svgGroup.appendChild(text);
+        }
+
+        // === 4. TRANSLATION TOGGLE ===
+        function toggleTranslate(id) {
+            const el = document.getElementById(id);
+            if(el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        // === 5. QUIZ DATA (Strict adherence to 4-step explanation rule) ===
+        const quizData = [
+            // PART 1: FILL IN THE BLANKS (Converted to dynamic MCQs for Gamification)
+            {
+                q: "Education has evolved (1) __________ over time.",
+                trans: "Giáo dục đã phát triển (1) __________ theo thời gian.",
+                options: [
+                    { text: "drastically", isCorrect: true, mean: "một cách mạnh mẽ, đáng kể (adv)" },
+                    { text: "almost", isCorrect: false, mean: "gần như (adv)" },
+                    { text: "intended", isCorrect: false, mean: "có ý định, dự định (v-ed)" },
+                    { text: "enjoyable", isCorrect: false, mean: "thú vị (adj)" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>drastically</span>. Ta có động từ <span class='p-word'>evolve</span> cần một trạng từ <span class='p-mean'>(adv)</span> để bổ nghĩa. Cụm <span class='p-word'>evolved drastically</span> mang nghĩa là <span class='p-mean'>phát triển một cách cực kỳ mạnh mẽ</span>.",
+                expWrong: "Các từ còn lại không hợp ngữ cảnh. <span class='p-word'>almost</span> <span class='p-mean'>(gần như)</span> thiếu vế bổ nghĩa phía sau; <span class='p-word'>intended</span> là động từ dạng quá khứ; <span class='p-word'>enjoyable</span> là tính từ không thể đứng sau động từ thường để bổ nghĩa trực tiếp."
+            },
+            {
+                q: "passing down information... to each succeeding (2) __________.",
+                trans: "truyền đạt thông tin... cho từng (2) __________ kế tiếp.",
+                options: [
+                    { text: "tools", isCorrect: false, mean: "các công cụ (n)" },
+                    { text: "represents", isCorrect: false, mean: "đại diện cho (v)" },
+                    { text: "generation", isCorrect: true, mean: "thế hệ (n)" },
+                    { text: "potential", isCorrect: false, mean: "tiềm năng (n)" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>generation</span>. Sau tính từ <span class='p-word'>succeeding</span> <span class='p-mean'>(kế tiếp)</span> cần một danh từ chỉ người/vật nhận thông tin. <span class='p-word'>succeeding generation</span> mang nghĩa là <span class='p-mean'>thế hệ kế tiếp</span>.",
+                expWrong: "<span class='p-word'>represents</span> là động từ (sai ngữ pháp). <span class='p-word'>tools</span> <span class='p-mean'>(công cụ)</span> và <span class='p-word'>potential</span> <span class='p-mean'>(tiềm năng)</span> không hợp logic vì con người truyền miệng kiến thức cho con người (thế hệ sau), chứ không truyền cho công cụ."
+            },
+            {
+                q: "This provides insight into how education was perceived back then; as an (3) __________ activity rather than a chore.",
+                trans: "Điều này cung cấp cái nhìn sâu sắc về cách giáo dục được nhìn nhận hồi đó; như một hoạt động (3) __________ chứ không phải là một công việc vặt vãnh bắt buộc.",
+                options: [
+                    { text: "enjoyable", isCorrect: true, mean: "thú vị, thích thú (adj)" },
+                    { text: "drastically", isCorrect: false, mean: "mạnh mẽ (adv)" },
+                    { text: "almost", isCorrect: false, mean: "gần như (adv)" },
+                    { text: "represents", isCorrect: false, mean: "đại diện (v)" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>enjoyable</span>. Vị trí trống nằm giữa mạo từ <span class='p-word'>an</span> và danh từ <span class='p-word'>activity</span>, nên cần một tính từ bắt đầu bằng nguyên âm. <span class='p-grammar'>an + Adj + Noun</span>. Hơn nữa cấu trúc <span class='p-grammar'>... rather than a chore</span> (chứ không phải việc nhàm chán) đòi hỏi từ điền vào mang nghĩa tích cực (thú vị).",
+                expWrong: "Các từ còn lại hoàn toàn sai loại từ. <span class='p-word'>drastically</span>, <span class='p-word'>almost</span> là trạng từ. <span class='p-word'>represents</span> là động từ."
+            },
+            {
+                q: "Educational (4) __________ have advanced.",
+                trans: "Các (4) __________ giáo dục đã tiến bộ.",
+                options: [
+                    { text: "potential", isCorrect: false, mean: "tiềm năng (n)" },
+                    { text: "tools", isCorrect: true, mean: "công cụ (n)" },
+                    { text: "generation", isCorrect: false, mean: "thế hệ (n)" },
+                    { text: "intended", isCorrect: false, mean: "có ý định (v-ed)" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>tools</span>. Động từ <span class='p-grammar'>have advanced</span> chia ở số nhiều, do đó chủ ngữ cần một danh từ đếm được số nhiều. Trong danh sách chỉ có <span class='p-word'>tools</span> <span class='p-mean'>(công cụ)</span> thỏa mãn. Cụm <span class='p-word'>Educational tools</span> = <span class='p-mean'>Công cụ giáo dục</span>.",
+                expWrong: "<span class='p-word'>potential</span> là danh từ không đếm được. <span class='p-word'>generation</span> là danh từ số ít (sẽ dùng 'has' thay vì 'have'). <span class='p-word'>intended</span> không phải danh từ."
+            },
+            {
+                q: "Today, digital tablets... have (5) __________ completely replaced pen and paper.",
+                trans: "Ngày nay, máy tính bảng kỹ thuật số... đã (5) __________ thay thế hoàn toàn bút và giấy.",
+                options: [
+                    { text: "almost", isCorrect: true, mean: "hầu như, gần như (adv)" },
+                    { text: "drastically", isCorrect: false, mean: "mạnh mẽ (adv)" },
+                    { text: "represents", isCorrect: false, mean: "đại diện (v)" },
+                    { text: "enjoyable", isCorrect: false, mean: "thú vị (adj)" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>almost</span>. Cụm trạng từ <span class='p-word'>almost completely</span> là một collocation cực kỳ phổ biến mang nghĩa <span class='p-mean'>gần như hoàn toàn</span>. Bổ nghĩa cho động từ <span class='p-word'>replaced</span>.",
+                expWrong: "<span class='p-word'>drastically completely</span> là hai trạng từ chỉ mức độ mạnh đi liền nhau không tự nhiên. <span class='p-word'>represents</span> (động từ) và <span class='p-word'>enjoyable</span> (tính từ) sai cấu trúc ngữ pháp khi chèn giữa cụm động từ thì hiện tại hoàn thành."
+            },
+            {
+                q: "Digital technology... (6) __________ the second main wave of disruptive technology.",
+                trans: "Công nghệ số... (6) __________ cho làn sóng công nghệ đột phá chính thứ hai.",
+                options: [
+                    { text: "tools", isCorrect: false, mean: "công cụ (n)" },
+                    { text: "represents", isCorrect: true, mean: "đại diện cho, là hiện thân của (v)" },
+                    { text: "intended", isCorrect: false, mean: "dự định (v)" },
+                    { text: "generation", isCorrect: false, mean: "thế hệ (n)" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>represents</span>. Chủ ngữ là <span class='p-word'>Digital technology</span> (số ít) thiếu một động từ chính trong câu. Cụm <span class='p-word'>represents the second main wave</span> mang nghĩa <span class='p-mean'>đại diện cho làn sóng lớn thứ hai</span>.",
+                expWrong: "<span class='p-word'>tools</span> và <span class='p-word'>generation</span> là danh từ (câu sẽ thiếu động từ). <span class='p-word'>intended</span> <span class='p-mean'>(dự định)</span> ghép vào làm sai hoàn toàn nghĩa của câu (công nghệ số không tự 'dự định' được)."
+            },
+            {
+                q: "Such technology has completely revolutionised the (7) __________ for learning and teaching.",
+                trans: "Công nghệ như vậy đã cách mạng hóa hoàn toàn (7) __________ cho việc học và dạy.",
+                options: [
+                    { text: "enjoyable", isCorrect: false, mean: "thú vị (adj)" },
+                    { text: "potential", isCorrect: true, mean: "tiềm năng (n)" },
+                    { text: "almost", isCorrect: false, mean: "gần như (adv)" },
+                    { text: "drastically", isCorrect: false, mean: "đáng kể (adv)" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>potential</span>. Sau mạo từ <span class='p-word'>the</span> cần một danh từ. <span class='p-word'>potential</span> ở đây đóng vai trò danh từ mang nghĩa là <span class='p-mean'>tiềm năng, khả năng</span>. Dịch cả cụm: <span class='p-mean'>cách mạng hóa tiềm năng học tập</span>.",
+                expWrong: "<span class='p-word'>enjoyable</span> (tính từ), <span class='p-word'>almost</span> (trạng từ), <span class='p-word'>drastically</span> (trạng từ) đều vi phạm quy tắc ngữ pháp cơ bản <span class='p-grammar'>The + Danh từ</span>."
+            },
+            {
+                q: "paving the way for 'leisurely learning' as the Greeks (8) __________ it to be.",
+                trans: "mở đường cho 'việc học nhàn rỗi' đúng như những gì người Hy Lạp đã (8) __________ ban đầu.",
+                options: [
+                    { text: "intended", isCorrect: true, mean: "dự định, có ý định (v-ed)" },
+                    { text: "tools", isCorrect: false, mean: "công cụ (n)" },
+                    { text: "generation", isCorrect: false, mean: "thế hệ (n)" },
+                    { text: "represents", isCorrect: false, mean: "đại diện (v-hiện tại)" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>intended</span>. Cấu trúc <span class='p-grammar'>as SO intended it to be</span> có nghĩa là <span class='p-mean'>đúng như dự định ban đầu của ai đó</span>. Ngoài ra việc người Hy Lạp tạo ra trường học đã xảy ra trong quá khứ nên phải dùng động từ chia ở thì quá khứ.",
+                expWrong: "<span class='p-word'>represents</span> đang chia ở hiện tại (số ít - thêm s) trong khi 'the Greeks' là số nhiều, và sự việc đã xảy ra ở quá khứ. <span class='p-word'>tools</span> và <span class='p-word'>generation</span> là danh từ, lắp vào vị trí này câu sẽ không có động từ."
+            },
+
+            // PART 2: READING COMPREHENSION
+            {
+                q: "Digital devices are described in the passage as __________.",
+                trans: "Các thiết bị kỹ thuật số được miêu tả trong đoạn văn như là __________.",
+                options: [
+                    { text: "ways students learn these days", isCorrect: false, mean: "cách học sinh học ngày nay" },
+                    { text: "helpful educational materials", isCorrect: false, mean: "tài liệu giáo dục hữu ích" },
+                    { text: "things that help in mobile learning", isCorrect: true, mean: "những thứ giúp ích cho việc học tập di động" },
+                    { text: "a platform for collaboration", isCorrect: false, mean: "một nền tảng để hợp tác" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>things that help in mobile learning</span>. Dẫn chứng ở ngay câu đầu tiên Đoạn 1: <span class='p-grammar'>'Digital devices... provide a mobile, interactive tool for learning'</span> <span class='p-mean'>(Cung cấp một công cụ di động, tương tác cho việc học)</span>. Suy ra nó là thứ giúp học tập di động.",
+                expWrong: "Các đáp án khác sai lệch hoặc chưa đủ ý. <span class='p-word'>ways students learn</span> quá chung chung. <span class='p-word'>helpful materials</span> (tài liệu) sai bản chất vì device là thiết bị phần cứng. <span class='p-word'>a platform</span> (nền tảng) thường dùng cho phần mềm (như skype, zoom) chứ không phải bản thân thiết bị (devices)."
+            },
+            {
+                q: "What is one advantage of using Skype in education?",
+                trans: "Một lợi ích của việc sử dụng Skype trong giáo dục là gì?",
+                options: [
+                    { text: "It only encourages individual learning experiences.", isCorrect: false, mean: "Nó CHỈ khuyến khích trải nghiệm học tập cá nhân." },
+                    { text: "It limits interaction between classes and school-to-school.", isCorrect: false, mean: "Nó GIỚI HẠN sự tương tác giữa các lớp và các trường." },
+                    { text: "It's a new learning experience in many communities.", isCorrect: false, mean: "Nó là một trải nghiệm học tập mới trong nhiều cộng đồng." },
+                    { text: "It enables collaborations across classrooms and schools.", isCorrect: true, mean: "Nó cho phép sự hợp tác xuyên suốt giữa các phòng học và các trường." }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>It enables collaborations across classrooms and schools.</span>. Dẫn chứng ở Đoạn 2: <span class='p-grammar'>'This allows for collaboration for projects between classes and even school-to-school...'</span>. Từ <span class='p-word'>enables</span> bằng nghĩa với <span class='p-word'>allows for</span> <span class='p-mean'>(cho phép)</span>.",
+                expWrong: "Đáp án <span class='p-word'>only encourages individual...</span> có chứa từ 'only' (chỉ) làm sai lệch ý nghĩa (Skype mang tính kết nối chứ không phải cá nhân). Đáp án <span class='p-word'>limits interaction...</span> dùng từ <span class='p-word'>limits</span> <span class='p-mean'>(giới hạn)</span> là hoàn toàn ngược nghĩa với bài. Đáp án <span class='p-word'>It's a new learning experience...</span> chỉ là kết quả phụ, ý chính là sự hợp tác (collaboration)."
+            },
+            {
+                q: "According to the passage, artificial intelligence __________.",
+                trans: "Theo đoạn văn, trí tuệ nhân tạo __________.",
+                options: [
+                    { text: "has no clear impact on education", isCorrect: false, mean: "không có tác động rõ ràng nào lên giáo dục" },
+                    { text: "is more accessible to teachers than to students", isCorrect: false, mean: "dễ tiếp cận với giáo viên hơn là học sinh" },
+                    { text: "can communicate, upload lessons and assignments", isCorrect: false, mean: "có thể giao tiếp, tải lên bài giảng và bài tập" },
+                    { text: "is feared as a potential threat to teachers", isCorrect: true, mean: "bị lo sợ như một mối đe dọa tiềm tàng đối với giáo viên" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>is feared as a potential threat to teachers</span>. Dẫn chứng ở cuối Đoạn 3: <span class='p-grammar'>'many fear that artificial intelligence is the sleeping giant that can replace a teacher...'</span>. <span class='p-word'>Replace a teacher</span> <span class='p-mean'>(thay thế giáo viên)</span> chính là một mối đe dọa (threat).",
+                expWrong: "<span class='p-word'>has no clear impact</span> sai vì bài đã nêu rõ sức mạnh của AI. <span class='p-word'>more accessible to teachers</span> không được đề cập so sánh trong bài. <span class='p-word'>can communicate, upload...</span> là chức năng của 'educational platforms' và thiết bị công nghệ nói chung, không phải do AI tự làm việc đó."
+            },
+            {
+                q: "The phrase 'sleeping giant' in paragraph 3 means __________.",
+                trans: "Cụm từ 'sleeping giant' (gã khổng lồ đang ngủ) trong đoạn 3 có nghĩa là __________.",
+                options: [
+                    { text: "one that has great but unrealized power", isCorrect: true, mean: "kẻ có sức mạnh to lớn nhưng chưa được hiện thực hóa/bộc lộ hết" },
+                    { text: "one that is too weak to fight", isCorrect: false, mean: "kẻ quá yếu để chiến đấu" },
+                    { text: "one that is lazy and has no ambition", isCorrect: false, mean: "kẻ lười biếng và không có tham vọng" },
+                    { text: "one that is sometimes strong", isCorrect: false, mean: "kẻ đôi khi mạnh mẽ" }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>one that has great but unrealized power</span>. Đây là câu hỏi Idiom (Thành ngữ). <span class='p-word'>Sleeping giant</span> <span class='p-mean'>(gã khổng lồ đang ngủ)</span> ám chỉ một thực thể có sức mạnh cực kỳ kinh khủng nhưng hiện tại chưa thức giấc (chưa bộc lộ hết sức mạnh). Bài đọc dùng cụm này để chỉ AI - hiện tại mới phát triển nhưng tương lai có sức mạnh thay thế giáo viên.",
+                expWrong: "Các đáp án còn lại suy diễn sai nghĩa đen của từ 'sleeping'. Ngủ không có nghĩa là <span class='p-word'>too weak</span> (quá yếu), <span class='p-word'>lazy</span> (lười biếng) hay <span class='p-word'>sometimes strong</span> (thỉnh thoảng mới mạnh)."
+            },
+            {
+                q: "How have digital devices impacted classrooms?",
+                trans: "Các thiết bị kỹ thuật số đã tác động đến lớp học như thế nào?",
+                options: [
+                    { text: "Students who carry laptops to lectures don't need teachers.", isCorrect: false, mean: "Học sinh mang laptop đến bài giảng KHÔNG cần giáo viên nữa." },
+                    { text: "Smart boards and laptops appear in many classrooms.", isCorrect: true, mean: "Bảng thông minh và máy tính xách tay xuất hiện ở nhiều phòng học." },
+                    { text: "Every student in the classroom focuses on IT skills.", isCorrect: false, mean: "MỌI học sinh trong lớp học đều tập trung vào kỹ năng IT." },
+                    { text: "Schools are using the internet to replace teachers.", isCorrect: false, mean: "Các trường học đang sử dụng internet để thay thế giáo viên." }
+                ],
+                expRight: "Đáp án đúng là <span class='p-word'>Smart boards and laptops appear in many classrooms.</span>. Dẫn chứng rõ nhất nằm ở câu cuối Đoạn 4: <span class='p-grammar'>'While many have smart boards in every classroom and students carry around laptops to their lectures.'</span>",
+                expWrong: "<span class='p-word'>don't need teachers</span> <span class='p-mean'>(không cần giáo viên)</span> là suy diễn quá đà, không có trong bài. <span class='p-word'>Every student... focuses on IT skills</span> bị sai chữ 'Every' (Mọi học sinh), bài chỉ nói 'many focusing' (nhiều trường tập trung). <span class='p-word'>replace teachers</span> là nỗi sợ về AI ở tương lai, không phải là việc các trường đang làm bằng internet hiện tại."
+            },
+            {
+                q: "Which of the following statements is NOT true?",
+                trans: "Câu phát biểu nào sau đây KHÔNG đúng?",
+                options: [
+                    { text: "The internet is considered a learning tool at schools.", isCorrect: false, mean: "Internet được coi là một công cụ học tập tại các trường." },
+                    { text: "Teachers can use educational platforms to communicate with students.", isCorrect: false, mean: "Giáo viên có thể sử dụng các nền tảng giáo dục để giao tiếp với học sinh." },
+                    { text: "Many people are afraid that artificial intelligence can replace teachers.", isCorrect: false, mean: "Nhiều người e sợ rằng trí tuệ nhân tạo có thể thay thế giáo viên." },
+                    { text: "Social channels prevent educators from using digital devices effectively.", isCorrect: true, mean: "Các kênh mạng xã hội NGĂN CẢN các nhà giáo dục sử dụng thiết bị số hiệu quả." }
+                ],
+                expRight: "Đáp án đúng (câu sai so với bài) là <span class='p-word'>Social channels prevent educators from using digital devices effectively.</span>. Dẫn chứng ở cuối Đoạn 1: <span class='p-grammar'>'Educators are finding ways to use them effectively, including the nuances and process of social channels.'</span> (Họ đang TÌM CÁCH SỬ DỤNG mạng xã hội hiệu quả, chứ không phải mạng xã hội NGĂN CẢN - <span class='p-word'>prevent</span> - họ).",
+                expWrong: "Ba đáp án còn lại ĐỀU ĐÚNG với bài đọc: Internet là công cụ học tập (đoạn 4); Giáo viên dùng nền tảng giáo dục để giao tiếp (đoạn 3); Nhiều người sợ AI thay thế giáo viên (đoạn 3). Vì đề hỏi 'NOT true' nên ta không chọn 3 đáp án này."
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = 0;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Render Questions
+        const quizContainer = document.getElementById('quiz-container');
+        quizData.forEach((item, index) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = 'question-card';
+            
+            // Build question HTML
+            let html = `
+                <div class="q-number">Câu ${index + 1}</div>
+                <div class="q-text">${item.q}</div>
+                <button class="btn-translate" style="margin-bottom: 15px; font-size:0.8rem; padding: 5px 10px;" onclick="toggleTranslate('qTrans${index}')">Dịch câu hỏi</button>
+                <div id="qTrans${index}" class="translation-text" style="margin-top:0; margin-bottom:15px; padding:10px;">${item.trans}</div>
+                <div class="options-grid" id="options-${index}">
+            `;
+
+            // Shuffle options for this question
+            let optionsCopy = [...item.options];
+            shuffleArray(optionsCopy);
+
+            optionsCopy.forEach((opt, optIndex) => {
+                // Encode option text to base64 to pass easily in HTML string, or just use escape characters
+                const escapedText = opt.text.replace(/'/g, "\\'");
+                html += `<button class="option-btn" onclick="checkAnswer(this, ${index}, ${opt.isCorrect})">${opt.text}</button>`;
+            });
+
+            html += `</div>
+                <div class="explanation-box" id="exp-${index}">
+                    <div class="exp-title">🌟 Giải thích chi tiết:</div>
+                    <div class="exp-item"><span class="hl-green">Tại sao đúng:</span> ${item.expRight}</div>
+                    <div class="exp-item"><span class="hl-red">Tại sao sai:</span> ${item.expWrong}</div>
+                    <hr style="border: 0; border-top: 1px dashed rgba(0,0,0,0.1); margin: 15px 0;">
+                    <div class="exp-title" style="font-size: 0.9rem; color: #636e72;">📚 Bảng dịch các đáp án:</div>
+                    <ul style="padding-left: 20px; font-size: 0.9rem;">
+            `;
+            // Add translation for each original option dynamically
+            item.options.forEach(o => {
+                html += `<li><span class="p-word">${o.text}</span> ➔ Dịch: <span class="p-mean">${o.mean}</span></li>`;
+            });
+
+            html += `</ul></div>`;
+            qDiv.innerHTML = html;
+            quizContainer.appendChild(qDiv);
+        });
+
+        // Answer Logic
+        function checkAnswer(btnElement, qIndex, isCorrect) {
+            initAudio(); // Ensure audio context is ready on user interaction
+            
+            const container = document.getElementById(`options-${qIndex}`);
+            const buttons = container.querySelectorAll('.option-btn');
+            
+            // Disable all buttons in this question
+            buttons.forEach(b => b.classList.add('disabled'));
+
+            if (isCorrect) {
+                btnElement.classList.add('btn-correct');
+                playSound('correct');
+                fireConfetti();
+                score++;
+                document.getElementById('current-score').innerText = score;
+            } else {
+                btnElement.classList.add('btn-wrong', 'shake-anim');
+                playSound('wrong');
+                // Highlight the correct one
+                buttons.forEach(b => {
+                    // We need to find which button holds the correct text. 
+                    // Since we passed isCorrect directly in html, we search by matching text from quizData.
+                    const correctText = quizData[qIndex].options.find(o => o.isCorrect).text;
+                    if(b.innerText === correctText) {
+                        b.classList.add('btn-correct');
+                        b.style.boxShadow = "0 0 20px rgba(85, 239, 196, 0.8)";
+                    }
+                });
+            }
+
+            // Show explanation
+            const expBox = document.getElementById(`exp-${qIndex}`);
+            expBox.style.display = 'block';
+            
+            answeredQuestions++;
+        }
+
+        // Submit Logic
+        function submitQuiz() {
+            if (answeredQuestions < quizData.length) {
+                alert(`Bạn mới làm ${answeredQuestions}/${quizData.length} câu. Hãy hoàn thành hết bài nhé!`);
+                return;
+            }
+
+            const studentName = prompt("🎯 Nhập tên của em để nộp bài nhé:");
+            if (!studentName || studentName.trim() === "") {
+                alert("Em phải nhập tên mới nộp bài được nha!");
+                return;
+            }
+
+            const scale10 = (score / quizData.length) * 10;
+            const percent = score / quizData.length;
+
+            document.getElementById('modal-student-name').innerText = `Học sinh: ${studentName}`;
+            document.getElementById('final-score-raw').innerText = `${score}/${quizData.length}`;
+            document.getElementById('final-score-10').innerText = `${scale10.toFixed(2)} / 10 điểm`;
+
+            const commentEl = document.getElementById('modal-comment');
+            const gifEl = document.getElementById('modal-gif');
+
+            if (percent === 1) {
+                commentEl.innerText = "Tuyệt cú mèo! Em đúng là thiên tài ngôn ngữ! 🏆✨";
+                gifEl.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; // Minion cheer
+                fireConfetti(); setTimeout(fireConfetti, 500); setTimeout(fireConfetti, 1000);
+            } else if (percent >= 0.6) {
+                commentEl.innerText = "Rất tốt! Cố gắng chút nữa là đạt điểm tối đa nha! ✋🌟";
+                gifEl.src = "https://media.giphy.com/media/3oz8xAFtjouKCdOqhO/giphy.gif"; // High five
+                fireConfetti();
+            } else {
+                commentEl.innerText = "Hơi tiếc một chút! Nhớ đọc kỹ phần giải thích chi tiết để rút kinh nghiệm nhé! 💪❤️";
+                gifEl.src = "https://media.giphy.com/media/2UIcmK4pn7rYNLRboG/giphy.gif"; // Pat on back
+            }
+
+            document.getElementById('result-modal').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Homes Quiz – Ms MS Chí Nên</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#4F46E5;--secondary:#7C3AED;--accent:#06B6D4;
+  --correct:#00D26A;--wrong:#FF4757;--warn:#FDCB6E;
+  --bg1:#0F0C29;--bg2:#302B63;--bg3:#24243e;
+  --card:rgba(255,255,255,0.07);--border:rgba(255,255,255,0.15);
+  --text:#F1F5F9;--text2:#CBD5E1;--radius:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Nunito',sans-serif;
+  min-height:100vh;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+  background-size:400% 400%;
+  animation:gradientShift 12s ease infinite;
+  color:var(--text);
+  overflow-x:hidden;
+}
+@keyframes gradientShift{
+  0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}
+}
+/* SVG floating pattern */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ctext x='20' y='60' font-size='40' opacity='0.12'%3E🏠%3C/text%3E%3Ctext x='140' y='130' font-size='35' opacity='0.10'%3E🤖%3C/text%3E%3Ctext x='60' y='200' font-size='42' opacity='0.11'%3E⚡%3C/text%3E%3Ctext x='200' y='250' font-size='38' opacity='0.09'%3E🌐%3C/text%3E%3Ctext x='240' y='50' font-size='30' opacity='0.10'%3E💡%3C/text%3E%3Ctext x='10' y='280' font-size='32' opacity='0.08'%3E🚀%3C/text%3E%3C/svg%3E");
+  background-size:300px 300px;
+  pointer-events:none;z-index:0;
+  animation:floatPattern 20s linear infinite;
+}
+@keyframes floatPattern{0%{background-position:0 0}100%{background-position:300px 300px}}
+
+/* ===== TOP HEADER ===== */
+#top-header{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 24px;
+  background:rgba(15,12,41,0.82);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+#top-header h1{font-size:1rem;font-weight:800;color:#a5b4fc;letter-spacing:.5px}
+#top-header small{display:block;font-size:.72rem;color:#818CF8;font-weight:600}
+#timer-btn{
+  background:linear-gradient(135deg,#6366F1,#7C3AED);
+  color:#fff;border:none;border-radius:50px;
+  padding:8px 20px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.85rem;
+  cursor:pointer;box-shadow:0 4px 15px rgba(99,102,241,.5);
+  transition:transform .2s,box-shadow .2s;
+}
+#timer-btn:hover{transform:scale(1.05);box-shadow:0 6px 20px rgba(99,102,241,.7)}
+#timer-display{
+  font-size:1.4rem;font-weight:900;color:#FDCB6E;
+  text-shadow:0 0 20px #FDCB6E88;min-width:80px;text-align:center;display:none;
+}
+#timer-controls{display:flex;align-items:center;gap:10px}
+#pause-btn{
+  background:rgba(255,255,255,.1);color:#fff;border:1px solid var(--border);
+  border-radius:50px;padding:6px 14px;font-family:'Nunito',sans-serif;
+  font-size:.78rem;font-weight:700;cursor:pointer;display:none;
+}
+#timer-msg{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:linear-gradient(135deg,#1e1b4b,#312e81);
+  border:2px solid #6366F1;border-radius:20px;padding:28px 36px;
+  text-align:center;z-index:9999;display:none;max-width:440px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+#timer-msg p{font-size:1rem;line-height:1.7;color:#E0E7FF;font-weight:600}
+#timer-msg button{
+  margin-top:16px;background:linear-gradient(135deg,#6366F1,#4F46E5);
+  color:#fff;border:none;border-radius:50px;padding:10px 28px;
+  font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;font-size:.9rem;
+}
+
+/* ===== MAIN LAYOUT ===== */
+#main-layout{
+  display:grid;grid-template-columns:1fr 1fr;
+  height:calc(100vh - 61px);
+  position:relative;z-index:1;
+}
+#reading-panel,#exercise-panel{
+  overflow-y:auto;padding:20px 22px;
+}
+#reading-panel{
+  border-right:1px solid var(--border);
+}
+#reading-panel::-webkit-scrollbar,#exercise-panel::-webkit-scrollbar{width:6px}
+#reading-panel::-webkit-scrollbar-track,#exercise-panel::-webkit-scrollbar-track{background:rgba(255,255,255,.05);border-radius:3px}
+#reading-panel::-webkit-scrollbar-thumb,#exercise-panel::-webkit-scrollbar-thumb{background:#6366F1;border-radius:3px}
+
+/* ===== PANEL LABELS ===== */
+.panel-label{
+  font-size:.72rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;
+  color:#818CF8;margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.panel-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ===== PASSAGE CARD ===== */
+.passage-card{
+  background:var(--card);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;margin-bottom:16px;
+}
+.passage-card h3{
+  font-size:1rem;font-weight:900;color:#A5B4FC;
+  margin-bottom:12px;letter-spacing:.3px;
+}
+.passage-card p{
+  font-size:.92rem;line-height:1.85;color:var(--text2);font-family:'Quicksand',sans-serif;
+}
+.passage-card p strong{color:#C7D2FE;font-weight:700}
+
+/* Translation toggle */
+.translate-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:12px;background:linear-gradient(135deg,#7C3AED44,#06B6D444);
+  border:1px solid #7C3AED88;color:#C4B5FD;
+  border-radius:50px;padding:6px 16px;font-family:'Nunito',sans-serif;
+  font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;
+}
+.translate-btn:hover{background:linear-gradient(135deg,#7C3AED88,#06B6D488);transform:scale(1.03)}
+.translation-box{
+  display:none;margin-top:12px;padding:14px;
+  background:rgba(167,139,250,.08);border-left:3px solid #7C3AED;
+  border-radius:0 12px 12px 0;
+  font-size:.87rem;line-height:1.8;color:#DDD6FE;font-family:'Quicksand',sans-serif;
+}
+.translation-box em{color:#A78BFA;font-style:normal;font-weight:700}
+
+/* ===== GLOSSARY ===== */
+.glossary-card{
+  background:var(--card);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;margin-bottom:16px;overflow:hidden;
+}
+.glossary-card h3{font-size:1rem;font-weight:900;color:#34D399;margin-bottom:12px}
+.glossary-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.glossary-table th{
+  background:rgba(52,211,153,.15);color:#6EE7B7;
+  padding:8px 10px;text-align:left;font-weight:800;font-size:.75rem;letter-spacing:.5px;
+}
+.glossary-table td{
+  padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.06);
+  color:var(--text2);vertical-align:top;
+}
+.glossary-table tr:hover td{background:rgba(255,255,255,.04)}
+.word-col{color:#A5B4FC;font-weight:700}
+.pos-col{color:#F59E0B;font-size:.75rem;font-style:italic}
+
+/* ===== EXERCISE SECTION ===== */
+.section-title{
+  font-size:.95rem;font-weight:900;color:#F9A8D4;
+  margin:18px 0 12px;padding:10px 16px;
+  background:rgba(249,168,212,.1);border-radius:12px;
+  border-left:4px solid #F9A8D4;
+}
+.q-card{
+  background:var(--card);backdrop-filter:blur(10px);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px;margin-bottom:14px;transition:box-shadow .3s;
+}
+.q-card:hover{box-shadow:0 8px 30px rgba(99,102,241,.2)}
+.q-number{
+  font-size:.72rem;font-weight:900;letter-spacing:1px;
+  color:#818CF8;margin-bottom:8px;text-transform:uppercase;
+}
+.q-text{
+  font-size:.92rem;font-weight:700;color:var(--text);
+  line-height:1.6;margin-bottom:14px;
+  font-family:'Quicksand',sans-serif;
+}
+.q-text .blank{
+  color:#FDCB6E;border-bottom:2px dashed #FDCB6E88;
+  padding:0 4px;font-weight:900;
+}
+
+/* Multiple Choice options */
+.options-grid{display:flex;flex-direction:column;gap:8px}
+.opt-btn{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);
+  border-radius:14px;padding:10px 14px;cursor:pointer;
+  font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:600;color:var(--text2);
+  transition:all .22s;text-align:left;width:100%;
+  box-shadow:0 3px 10px rgba(0,0,0,.3);
+}
+.opt-btn:hover:not(:disabled){
+  transform:scale(1.02);
+  background:rgba(99,102,241,.2);border-color:#6366F1;color:#fff;
+  box-shadow:0 5px 18px rgba(99,102,241,.35);
+}
+.opt-btn.correct{
+  background:rgba(0,210,106,.18)!important;
+  border-color:var(--correct)!important;color:#4ADE80!important;
+  box-shadow:0 5px 18px rgba(0,210,106,.35)!important;
+}
+.opt-btn.wrong{
+  background:rgba(255,71,87,.18)!important;
+  border-color:var(--wrong)!important;color:#FF6B6B!important;
+  animation:shake .4s;
+  box-shadow:0 5px 18px rgba(255,71,87,.35)!important;
+}
+.opt-letter{
+  min-width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:900;flex-shrink:0;
+}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* Explanation box */
+.explanation{
+  display:none;margin-top:12px;padding:14px;
+  background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);
+  border-radius:12px;font-size:.83rem;line-height:1.75;color:#BAE6FD;
+}
+.explanation .ex-title{font-weight:900;color:#38BDF8;margin-bottom:8px;font-size:.85rem}
+.explanation .ex-why{color:#E0F2FE;margin-top:6px}
+.explanation .correct-tag{
+  display:inline-block;background:rgba(0,210,106,.2);color:#4ADE80;
+  border-radius:50px;padding:2px 10px;font-size:.75rem;font-weight:800;
+}
+.explanation .wrong-tag{
+  display:inline-block;background:rgba(255,71,87,.2);color:#FF6B6B;
+  border-radius:50px;padding:2px 10px;font-size:.75rem;font-weight:800;
+}
+
+/* Fill-in-blank (sentences with blanks shown as underlines) */
+.fill-blank-q .q-text{cursor:default}
+
+/* ===== PASSAGE COMPLETION (37-40) ===== */
+.passage-comp-text{
+  font-size:.9rem;line-height:2;color:var(--text2);
+  font-family:'Quicksand',sans-serif;
+}
+.blank-spot{
+  display:inline-block;
+  color:#FDCB6E;border-bottom:2px dashed #FDCB6E66;
+  padding:0 4px;cursor:pointer;font-weight:700;font-size:.9rem;
+  min-width:28px;text-align:center;
+  transition:all .2s;
+}
+.blank-spot:hover{color:#F59E0B;border-color:#F59E0B}
+
+/* ===== SUBMIT + RESULT ===== */
+#submit-zone{
+  padding:16px 22px 30px;
+  position:relative;z-index:1;
+  display:flex;justify-content:center;
+}
+#submit-btn{
+  background:linear-gradient(135deg,#6366F1,#7C3AED,#EC4899);
+  color:#fff;border:none;border-radius:50px;
+  padding:14px 50px;font-family:'Nunito',sans-serif;
+  font-size:1rem;font-weight:900;cursor:pointer;letter-spacing:.5px;
+  box-shadow:0 6px 25px rgba(99,102,241,.55);
+  transition:transform .2s,box-shadow .2s;
+}
+#submit-btn:hover{transform:scale(1.05);box-shadow:0 10px 35px rgba(99,102,241,.75)}
+
+/* Result Modal */
+#result-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  display:none;align-items:center;justify-content:center;
+  z-index:9999;padding:20px;
+}
+.result-card{
+  background:linear-gradient(135deg,#1e1b4b,#312e81,#1e3a5f);
+  border:2px solid #6366F1;border-radius:28px;
+  padding:36px 40px;max-width:520px;width:100%;text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,.7);
+  position:relative;overflow:hidden;
+}
+.result-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 0%,rgba(99,102,241,.3),transparent 60%);
+  pointer-events:none;
+}
+.result-emoji{font-size:4rem;margin-bottom:10px;display:block}
+.result-score{
+  font-size:3.5rem;font-weight:900;
+  background:linear-gradient(135deg,#A5B4FC,#F9A8D4,#FDCB6E);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:8px;
+}
+.result-label{font-size:1.3rem;font-weight:900;color:#E0E7FF;margin-bottom:10px}
+.result-comment{font-size:.92rem;color:#C7D2FE;line-height:1.7;margin-bottom:20px}
+.result-close{
+  background:linear-gradient(135deg,#6366F1,#7C3AED);
+  color:#fff;border:none;border-radius:50px;padding:12px 36px;
+  font-family:'Nunito',sans-serif;font-weight:900;font-size:.95rem;cursor:pointer;
+  box-shadow:0 5px 20px rgba(99,102,241,.5);transition:transform .2s;
+}
+.result-close:hover{transform:scale(1.05)}
+
+/* ===== CONFETTI ===== */
+.confetti-piece{
+  position:fixed;top:-10px;
+  width:10px;height:14px;
+  border-radius:2px;
+  animation:confettiFall linear forwards;
+  pointer-events:none;z-index:9998;
+}
+@keyframes confettiFall{
+  0%{transform:translateY(-10px) rotate(0deg);opacity:1}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+}
+
+/* Responsive */
+@media(max-width:768px){
+  #main-layout{grid-template-columns:1fr;height:auto}
+  #reading-panel{border-right:none;border-bottom:1px solid var(--border)}
+  #top-header h1{font-size:.85rem}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP CONTROL BAR -->
+<div id="top-header">
+  <div>
+    <h1>🏠 SMART HOMES, BRIGHT FUTURE</h1>
+    <small>Giáo viên tạo: Ms MS Chí Nên – ULIS</small>
+  </div>
+  <div id="timer-controls">
+    <div id="timer-display">10:00</div>
+    <button id="pause-btn" onclick="togglePause()">⏸ Tạm dừng</button>
+    <button id="timer-btn" onclick="startTimer()">⏱ BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
+  </div>
+</div>
+
+<div id="timer-msg">
+  <p>⏰ <strong>Đã hết giờ làm bài!</strong><br>Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong <strong>10 phút</strong> thôi nha! 😊</p>
+  <button onclick="document.getElementById('timer-msg').style.display='none'">OK, mình hiểu rồi! ✌️</button>
+</div>
+
+<!-- MAIN SPLIT LAYOUT -->
+<div id="main-layout">
+
+  <!-- LEFT: READING PANEL -->
+  <div id="reading-panel">
+    <div class="panel-label">📖 Reading Passages</div>
+
+    <!-- PASSAGE A: Smart Homes Bright Future -->
+    <div class="passage-card">
+      <h3>📄 Passage A – Questions 13–16</h3>
+      <p><strong>SMART HOMES, BRIGHT FUTURE</strong><br><br>
+        Imagine a house where everything is connected and automated. In the future, our homes (13) ______ much smarter. We (14) ______ control lights, temperature, and appliances with our voice or smartphones. Houses (15) ______ be more energy-efficient, thanks to smart technology. Living in these futuristic homes will be a truly (16) ______ experience.
+      </p>
+      <button class="translate-btn" onclick="toggleTranslation('tr-a')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="tr-a">
+        <em>BẢN DỊCH ĐẦY ĐỦ – Passage A:</em><br><br>
+        <strong>NHÀ THÔNG MINH, TƯƠNG LAI TƯƠI SÁNG</strong><br><br>
+        Hãy tưởng tượng một ngôi nhà nơi mọi thứ đều được kết nối và tự động hóa. Trong tương lai, những ngôi nhà của chúng ta <em>(13) sẽ trở nên</em> thông minh hơn nhiều. Chúng ta <em>(14) có thể</em> điều khiển đèn, nhiệt độ và các thiết bị gia dụng bằng giọng nói hoặc điện thoại thông minh. Các ngôi nhà <em>(15) sẽ</em> tiết kiệm năng lượng hơn nhờ công nghệ thông minh. Sống trong những ngôi nhà mang tính tương lai như vậy sẽ là một trải nghiệm thực sự <em>(16) tiện lợi</em>.
+      </div>
+    </div>
+
+    <!-- PASSAGE B: Smart Walls -->
+    <div class="passage-card">
+      <h3>📄 Passage B – Questions 19–24</h3>
+      <p>
+        Are you tired (19)_______ the colour or pattern of your walls? In a smart home, you won't have to (20)______ them. The walls will actually be digital screens, like computer or TV screens.
+      </p>
+      <button class="translate-btn" onclick="toggleTranslation('tr-b1')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="tr-b1">
+        <em>BẢN DỊCH ĐOẠN 1 – Passage B:</em><br><br>
+        Bạn có chán <em>(19) với</em> màu sắc hay hoa văn của những bức tường không? Trong một ngôi nhà thông minh, bạn sẽ không cần phải <em>(20) sơn lại</em> chúng. Các bức tường thực ra sẽ là những màn hình kỹ thuật số, giống như màn hình máy tính hoặc tivi.
+      </div>
+      <p style="margin-top:14px">
+        A computer network will link these walls with (21)________ else in your house. Called "ambient intelligence," this computer "brain" will control your entire house. It will also adapt to your (22)________. Your house will learn about your likes and dislikes. It will then use that knowledge to control the environment. For example, it will set the heat in the house to your (23)________ temperature. It will turn on the shower at the right temperature. It will also darken the windows at night and lighten them when it's (24)________ to wake up.
+      </p>
+      <button class="translate-btn" onclick="toggleTranslation('tr-b2')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="tr-b2">
+        <em>BẢN DỊCH ĐOẠN 2 – Passage B:</em><br><br>
+        Một mạng lưới máy tính sẽ kết nối những bức tường này với <em>(21) mọi thứ</em> khác trong nhà bạn. Được gọi là "trí thông minh môi trường xung quanh", "bộ não" máy tính này sẽ kiểm soát toàn bộ ngôi nhà của bạn. Nó cũng sẽ thích nghi với <em>(22) sở thích</em> của bạn. Ngôi nhà của bạn sẽ tìm hiểu về những gì bạn thích và không thích. Sau đó, nó sẽ sử dụng kiến thức đó để kiểm soát môi trường. Ví dụ: nó sẽ đặt nhiệt độ trong nhà theo nhiệt độ <em>(23) yêu thích</em> của bạn. Nó sẽ bật vòi hoa sen ở nhiệt độ phù hợp. Nó cũng sẽ làm tối cửa sổ vào ban đêm và làm sáng chúng khi đã đến <em>(24) thời điểm</em> thức dậy.
+      </div>
+    </div>
+
+    <!-- PASSAGE C: Future Home Dream -->
+    <div class="passage-card">
+      <h3>📄 Passage C – Questions 31–36</h3>
+      <p>
+        My future home will be a convenient and eco-friendly semi-detached house situated in a quite ecologically clean neighborhood. In front of the house, there will be a green lawn and flowers with a barbecue for parties. My house will have a large kitchen fully equipped with appliances, a pantry, a dining room, a laundry room, a cozy living room: with a large sofa, and windows overlooking the swimming pool. There will be five bedrooms with separate modern bathrooms. And I want my room to be spacious with a balcony full of flowers.
+      </p>
+      <button class="translate-btn" onclick="toggleTranslation('tr-c1')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="tr-c1">
+        <em>BẢN DỊCH ĐOẠN 1 – Passage C:</em><br><br>
+        Ngôi nhà tương lai của tôi sẽ là một ngôi nhà đôi (semi-detached) tiện nghi và thân thiện với môi trường, nằm trong một khu phố khá sạch về mặt sinh thái. Trước nhà sẽ có một bãi cỏ xanh và hoa với khu nướng thịt ngoài trời để tổ chức tiệc. Ngôi nhà của tôi sẽ có một căn bếp lớn được trang bị đầy đủ thiết bị, một phòng đựng thức ăn, phòng ăn, phòng giặt, phòng khách ấm cúng với ghế sofa lớn và cửa sổ nhìn ra hồ bơi. Sẽ có năm phòng ngủ với phòng tắm hiện đại riêng biệt. Và tôi muốn phòng của mình rộng rãi với ban công đầy hoa.
+      </div>
+      <p style="margin-top:14px">
+        Moreover, I want to have the newest and the most modern furniture and Artificial Intelligence to make meals and clean up the house when I wake up. Additionally, it will automatically turn on some soft music and turn off the light before I sleep. Security with fingerprint recognition technology locks, in my opinion, will be one of the essential parts of my future house so that no burglar can break into my home or steal valuable items. Solar energy will be used to power appliances so that I don't have to pay much for electric bills and help protect the environment. A robot will take over household chores, and it will level up my life. I think my automatic house will make my life easier and worth living. I'm looking forward to living in my own house soon.
+      </p>
+      <button class="translate-btn" onclick="toggleTranslation('tr-c2')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="tr-c2">
+        <em>BẢN DỊCH ĐOẠN 2 – Passage C:</em><br><br>
+        Hơn nữa, tôi muốn có đồ nội thất mới nhất và hiện đại nhất cùng với Trí tuệ Nhân tạo để nấu bữa ăn và dọn dẹp nhà cửa khi tôi thức dậy. Ngoài ra, nó sẽ tự động bật nhạc nhẹ và tắt đèn trước khi tôi ngủ. Theo tôi, khóa bảo mật bằng công nghệ nhận dạng vân tay sẽ là một trong những phần thiết yếu của ngôi nhà tương lai của tôi để không tên trộm nào có thể đột nhập vào nhà tôi hoặc đánh cắp đồ vật có giá trị. Năng lượng mặt trời sẽ được sử dụng để cung cấp điện cho các thiết bị, nhờ đó tôi không phải trả nhiều tiền điện và giúp bảo vệ môi trường. Một con robot sẽ đảm nhiệm các công việc gia đình và sẽ nâng cấp cuộc sống của tôi. Tôi nghĩ ngôi nhà tự động của mình sẽ làm cho cuộc sống của tôi dễ dàng hơn và đáng sống hơn. Tôi mong chờ sớm được sống trong ngôi nhà của mình.
+      </div>
+    </div>
+
+    <!-- PASSAGE D: Spaceship House -->
+    <div class="passage-card">
+      <h3>📄 Passage D – Questions 37–40</h3>
+      <p>
+        I think that my house in the future will look like a spaceship. (37) _____. It will be a quiet place with only a few people. (38) _____. One of them is a beautiful room for my guests. The walls will be painted blue with some decorations about the space. (39) ____. There will be a lot of green trees, fresh air, no litter, no smoke and no noises. I will plant my favorite kinds of vegetables and I will raise some chickens and fish. (40) _____.
+      </p>
+      <button class="translate-btn" onclick="toggleTranslation('tr-d')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="tr-d">
+        <em>BẢN DỊCH ĐẦY ĐỦ – Passage D:</em><br><br>
+        Tôi nghĩ rằng ngôi nhà của tôi trong tương lai sẽ trông như một con tàu vũ trụ. <em>(37) Nó sẽ nằm trên đỉnh một ngọn đồi xanh mướt.</em> Đó sẽ là một nơi yên tĩnh chỉ với vài người. <em>(38) Sẽ có 3 phòng trong nhà tôi.</em> Một trong số đó là một căn phòng xinh đẹp dành cho khách của tôi. Các bức tường sẽ được sơn màu xanh lam với một số trang trí về không gian vũ trụ. <em>(39) Môi trường ở nơi của tôi sẽ hoàn hảo.</em> Sẽ có rất nhiều cây xanh, không khí trong lành, không có rác thải, không khói và không tiếng ồn. Tôi sẽ trồng các loại rau yêu thích và nuôi một số gà và cá. <em>(40) Tôi sẽ không phải đi chợ thường xuyên.</em>
+      </div>
+    </div>
+
+    <!-- GLOSSARY -->
+    <div class="glossary-card">
+      <h3>📚 GLOSSARY – Bảng từ vựng học thuật</h3>
+      <table class="glossary-table">
+        <thead>
+          <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="word-col">automated</td><td class="pos-col">adj</td><td>được tự động hóa</td></tr>
+          <tr><td class="word-col">appliance</td><td class="pos-col">n</td><td>thiết bị gia dụng</td></tr>
+          <tr><td class="word-col">energy-efficient</td><td class="pos-col">adj</td><td>tiết kiệm năng lượng</td></tr>
+          <tr><td class="word-col">futuristic</td><td class="pos-col">adj</td><td>mang tính tương lai, hiện đại</td></tr>
+          <tr><td class="word-col">ambient intelligence</td><td class="pos-col">n phr</td><td>trí thông minh môi trường xung quanh</td></tr>
+          <tr><td class="word-col">preference(s)</td><td class="pos-col">n</td><td>sở thích (thứ gì đó ưa thích hơn)</td></tr>
+          <tr><td class="word-col">semi-detached</td><td class="pos-col">adj</td><td>(nhà) đôi (chia sẻ một bức tường chung)</td></tr>
+          <tr><td class="word-col">ecologically</td><td class="pos-col">adv</td><td>về mặt sinh thái</td></tr>
+          <tr><td class="word-col">spacious</td><td class="pos-col">adj</td><td>rộng rãi, thoáng đãng</td></tr>
+          <tr><td class="word-col">fingerprint recognition</td><td class="pos-col">n phr</td><td>nhận dạng vân tay</td></tr>
+          <tr><td class="word-col">burglar</td><td class="pos-col">n</td><td>tên trộm (đột nhập vào nhà)</td></tr>
+          <tr><td class="word-col">household chores</td><td class="pos-col">n phr</td><td>việc nhà, công việc gia đình</td></tr>
+          <tr><td class="word-col">pantry</td><td class="pos-col">n</td><td>phòng đựng thức ăn/tạp hóa</td></tr>
+          <tr><td class="word-col">convenient</td><td class="pos-col">adj</td><td>tiện lợi, thuận tiện</td></tr>
+          <tr><td class="word-col">essential</td><td class="pos-col">adj</td><td>thiết yếu, cần thiết</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- end reading-panel -->
+
+  <!-- RIGHT: EXERCISE PANEL -->
+  <div id="exercise-panel">
+    <div class="panel-label">✏️ Exercises</div>
+
+    <!-- SECTION 1: Q13-16 -->
+    <div class="section-title">📝 Questions 13–16: Fill in the blank (Passage A)</div>
+    <div id="q13-container"></div>
+    <div id="q14-container"></div>
+    <div id="q15-container"></div>
+    <div id="q16-container"></div>
+
+    <!-- SECTION 2: Q19-24 -->
+    <div class="section-title">📝 Questions 19–24: Fill in the blank (Passage B)</div>
+    <div id="q19-container"></div>
+    <div id="q20-container"></div>
+    <div id="q21-container"></div>
+    <div id="q22-container"></div>
+    <div id="q23-container"></div>
+    <div id="q24-container"></div>
+
+    <!-- SECTION 3: Q31-36 -->
+    <div class="section-title">📝 Questions 31–36: Reading Comprehension (Passage C)</div>
+    <div id="q31-container"></div>
+    <div id="q32-container"></div>
+    <div id="q33-container"></div>
+    <div id="q34-container"></div>
+    <div id="q35-container"></div>
+    <div id="q36-container"></div>
+
+    <!-- SECTION 4: Q37-40 -->
+    <div class="section-title">📝 Questions 37–40: Passage Completion (Passage D)</div>
+    <div id="q37-container"></div>
+    <div id="q38-container"></div>
+    <div id="q39-container"></div>
+    <div id="q40-container"></div>
+
+  </div><!-- end exercise-panel -->
+
+</div><!-- end main-layout -->
+
+<div id="submit-zone">
+  <button id="submit-btn" onclick="submitQuiz()">🎯 NỘP BÀI & XEM KẾT QUẢ</button>
+</div>
+
+<!-- RESULT MODAL -->
+<div id="result-modal">
+  <div class="result-card">
+    <span class="result-emoji" id="res-emoji">🏆</span>
+    <div class="result-score" id="res-score">0/16</div>
+    <div class="result-label" id="res-label">Xuất sắc!</div>
+    <div class="result-comment" id="res-comment"></div>
+    <button class="result-close" onclick="closeResult()">Xem lại bài ✨</button>
+  </div>
+</div>
+
+<script>
+// ===== AUDIO =====
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx;
+function getACtx(){if(!actx)actx=new AudioCtx();return actx;}
+function playCorrect(){
+  const c=getACtx();const o=c.createOscillator();const g=c.createGain();
+  o.connect(g);g.connect(c.destination);
+  o.frequency.setValueAtTime(880,c.currentTime);
+  o.frequency.exponentialRampToValueAtTime(1320,c.currentTime+.15);
+  g.gain.setValueAtTime(.3,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.4);
+  o.start();o.stop(c.currentTime+.4);
+}
+function playWrong(){
+  const c=getACtx();
+  [300,250,200].forEach((f,i)=>{
+    const o=c.createOscillator();const g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    o.type='sawtooth';o.frequency.value=f;
+    g.gain.setValueAtTime(.15,c.currentTime+i*.1);
+    g.gain.exponentialRampToValueAtTime(.001,c.currentTime+i*.1+.15);
+    o.start(c.currentTime+i*.1);o.stop(c.currentTime+i*.1+.15);
+  });
+}
+
+// ===== CONFETTI =====
+function launchConfetti(){
+  const colors=['#FF6B6B','#FDCB6E','#00D26A','#A5B4FC','#F9A8D4','#67E8F9','#FDE68A'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};
+    width:${6+Math.random()*8}px;height:${10+Math.random()*8}px;
+    border-radius:${Math.random()>0.5?'50%':'2px'};
+    animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.5}s`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),(3+Math.random()*2)*1000);
+  }
+}
+
+// ===== SHUFFLE =====
+function shuffleArray(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+// ===== TIMER =====
+let timerInterval=null,timerSeconds=600,paused=false,timerStarted=false;
+function startTimer(){
+  if(timerStarted)return;
+  timerStarted=true;
+  document.getElementById('timer-btn').style.display='none';
+  document.getElementById('timer-display').style.display='block';
+  document.getElementById('pause-btn').style.display='inline-block';
+  timerInterval=setInterval(()=>{
+    if(paused)return;
+    timerSeconds--;
+    updateTimerDisplay();
+    if(timerSeconds<=0){
+      clearInterval(timerInterval);
+      document.getElementById('timer-msg').style.display='block';
+    }
+  },1000);
+}
+function updateTimerDisplay(){
+  const m=Math.floor(timerSeconds/60),s=timerSeconds%60;
+  document.getElementById('timer-display').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if(timerSeconds<=60)document.getElementById('timer-display').style.color='#FF4757';
+}
+function togglePause(){
+  paused=!paused;
+  document.getElementById('pause-btn').textContent=paused?'▶ Tiếp tục':'⏸ Tạm dừng';
+}
+
+// ===== TRANSLATION =====
+function toggleTranslation(id){
+  const box=document.getElementById(id);
+  const btn=box.previousElementSibling;
+  if(box.style.display==='block'){
+    box.style.display='none';btn.textContent='🌟 Mở dịch đoạn này';
+  }else{
+    box.style.display='block';btn.textContent='🌟 Ẩn bản dịch';
+  }
+}
+
+// ===== QUESTION DATA =====
+const questions=[
+  // Q13
+  {id:'q13',num:13,
+   text:'In the future, our homes (13) ______ much smarter.',
+   opts:[
+     {l:'A',t:'is',c:false},{l:'B',t:'are',c:false},{l:'C',t:'will be',c:true},{l:'D',t:'was',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 13</div>
+     <strong>1. Phân tích 4 đáp án:</strong><br>
+     <span class="wrong-tag">A. is</span> – Chia ở thì Hiện tại đơn (ngôi số ít). Không phù hợp với chủ ngữ số nhiều "our homes" và ngữ cảnh tương lai.<br>
+     <span class="wrong-tag">B. are</span> – Chia ở thì Hiện tại đơn (ngôi số nhiều). Sai vì câu nói về <em>tương lai</em> (cụm "In the future").<br>
+     <span class="correct-tag">C. will be</span> ✅ – Đây là dạng Tương lai đơn (Future Simple). Hoàn toàn phù hợp với dấu hiệu thời gian "<strong>In the future</strong>".<br>
+     <span class="wrong-tag">D. was</span> – Quá khứ đơn, ngược nghĩa với "tương lai". Sai hoàn toàn.<br><br>
+     <strong>2. Dịch câu:</strong> "Trong tương lai, những ngôi nhà của chúng ta <em>sẽ trở nên</em> thông minh hơn nhiều."<br><br>
+     <div class="ex-why">💡 <strong>Quy tắc:</strong> Cụm từ "In the future" = dấu hiệu nhận biết Thì Tương lai đơn → dùng <strong>will + V-bare</strong>.</div>
+   `
+  },
+  // Q14
+  {id:'q14',num:14,
+   text:'We (14) ______ control lights, temperature, and appliances with our voice or smartphones.',
+   opts:[
+     {l:'A',t:'can',c:true},{l:'B',t:'must',c:false},{l:'C',t:'should',c:false},{l:'D',t:'ought to',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 14</div>
+     <strong>1. Phân tích 4 đáp án (Modal Verbs):</strong><br>
+     <span class="correct-tag">A. can</span> ✅ – Diễn đạt <strong>khả năng</strong> (ability/possibility): "có thể làm được". Phù hợp vì câu nói về khả năng điều khiển nhà thông minh trong tương lai.<br>
+     <span class="wrong-tag">B. must</span> – Diễn đạt <strong>nghĩa vụ bắt buộc</strong> (obligation). Không hợp lý vì điều khiển nhà thông minh là <em>tùy chọn</em>, không phải bắt buộc.<br>
+     <span class="wrong-tag">C. should</span> – Diễn đạt <strong>lời khuyên/đề nghị</strong> (advice). Không phù hợp với ngữ cảnh miêu tả khả năng công nghệ.<br>
+     <span class="wrong-tag">D. ought to</span> – Tương tự "should", mang nghĩa lời khuyên. Không phù hợp.<br><br>
+     <strong>2. Dịch câu:</strong> "Chúng ta <em>có thể</em> điều khiển đèn, nhiệt độ và các thiết bị gia dụng bằng giọng nói hoặc điện thoại thông minh."<br><br>
+     <div class="ex-why">💡 <strong>Từ khóa:</strong> Câu miêu tả <em>khả năng</em> công nghệ mang lại → dùng <strong>can</strong> (khả năng/possibility).</div>
+   `
+  },
+  // Q15
+  {id:'q15',num:15,
+   text:'Houses (15) ______ be more energy-efficient, thanks to smart technology.',
+   opts:[
+     {l:'A',t:'will',c:true},{l:'B',t:'did',c:false},{l:'C',t:'does',c:false},{l:'D',t:'are',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 15</div>
+     <strong>1. Phân tích cấu trúc câu:</strong><br>
+     Câu có dạng: "Houses (15) ______ <strong>be</strong> more energy-efficient" → Sau chỗ trống phải là một từ kết hợp được với động từ <strong>"be"</strong> nguyên thể.<br>
+     <span class="correct-tag">A. will</span> ✅ – "will be" = Tương lai đơn. Phù hợp với ngữ cảnh cả đoạn văn nói về tương lai.<br>
+     <span class="wrong-tag">B. did</span> – "did be" không phải cấu trúc đúng trong tiếng Anh. Sai ngữ pháp.<br>
+     <span class="wrong-tag">C. does</span> – "does be" không phải cấu trúc đúng. Sai ngữ pháp.<br>
+     <span class="wrong-tag">D. are</span> – "are be" sai hoàn toàn về ngữ pháp.<br><br>
+     <strong>2. Dịch câu:</strong> "Các ngôi nhà <em>sẽ</em> tiết kiệm năng lượng hơn nhờ công nghệ thông minh."<br><br>
+     <div class="ex-why">💡 Chỉ có <strong>will</strong> mới có thể đứng trước động từ nguyên thể "be" để tạo cụm tương lai.</div>
+   `
+  },
+  // Q16
+  {id:'q16',num:16,
+   text:'Living in these futuristic homes will be a truly (16) ______ experience.',
+   opts:[
+     {l:'A',t:'convenient',c:true},{l:'B',t:'inconvenient',c:false},{l:'C',t:'difficult',c:false},{l:'D',t:'tiring',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 16</div>
+     <strong>1. Phân tích 4 đáp án (Vocabulary):</strong><br>
+     <span class="correct-tag">A. convenient</span> ✅ – <em>tiện lợi, thuận tiện</em>. Toàn bộ đoạn văn miêu tả những lợi ích tích cực (điều khiển bằng giọng nói, tiết kiệm điện...) → trải nghiệm phải là TÍCH CỰC.<br>
+     <span class="wrong-tag">B. inconvenient</span> – <em>bất tiện</em> (tiền tố in- = phủ định). Mâu thuẫn hoàn toàn với ý nghĩa tích cực của đoạn văn.<br>
+     <span class="wrong-tag">C. difficult</span> – <em>khó khăn</em>. Ngược với thông điệp "nhà thông minh làm cuộc sống dễ dàng hơn".<br>
+     <span class="wrong-tag">D. tiring</span> – <em>mệt mỏi</em>. Cũng mang nghĩa tiêu cực, không phù hợp.<br><br>
+     <strong>2. Dịch câu:</strong> "Sống trong những ngôi nhà mang tính tương lai như vậy sẽ là một trải nghiệm thực sự <em>tiện lợi</em>."<br><br>
+     <div class="ex-why">💡 Dùng ngữ cảnh (context clues): cả đoạn văn ca ngợi lợi ích → tính từ tích cực → <strong>convenient</strong>.</div>
+   `
+  },
+
+  // Q19
+  {id:'q19',num:19,
+   text:'Are you tired (19)_______ the colour or pattern of your walls?',
+   opts:[
+     {l:'A',t:'with',c:false},{l:'B',t:'of',c:true},{l:'C',t:'in',c:false},{l:'D',t:'by',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 19</div>
+     <strong>1. Kiến thức ngữ pháp: Cụm tính từ + giới từ cố định</strong><br>
+     Cấu trúc cần nhớ: <strong>be tired OF something</strong> = chán cái gì đó.<br>
+     <span class="wrong-tag">A. with</span> – "tired with" không phải cụm cố định đúng.<br>
+     <span class="correct-tag">B. of</span> ✅ – <strong>"tired of"</strong> = chán, mệt mỏi với điều gì. Đây là cụm cố định.<br>
+     <span class="wrong-tag">C. in</span> – Không phù hợp về nghĩa và cấu trúc.<br>
+     <span class="wrong-tag">D. by</span> – "tired by" dùng khi chán do một nguyên nhân (bị động), không phù hợp ngữ cảnh này.<br><br>
+     <strong>2. Dịch câu:</strong> "Bạn có chán <em>với</em> màu sắc hay hoa văn của những bức tường không?"<br><br>
+     <div class="ex-why">💡 <strong>Cụm cố định:</strong> tired <strong>of</strong> = chán, mệt mỏi với. Ví dụ: I'm tired of waiting. (Tôi chán chờ đợi rồi.)</div>
+   `
+  },
+  // Q20
+  {id:'q20',num:20,
+   text:'In a smart home, you won\'t have to (20)______ them [the walls].',
+   opts:[
+     {l:'A',t:'build',c:false},{l:'B',t:'cover',c:false},{l:'C',t:'pull',c:false},{l:'D',t:'repaint',c:true}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 20</div>
+     <strong>1. Phân tích ngữ cảnh:</strong><br>
+     Câu hỏi trước là "Are you tired of the colour of your walls?" → Nếu chán màu tường, bạn thường sẽ làm gì? → <strong>Sơn lại</strong>!<br>
+     <span class="wrong-tag">A. build</span> – <em>xây dựng</em>. Không hợp lý, vì tường đã có sẵn rồi.<br>
+     <span class="wrong-tag">B. cover</span> – <em>che phủ</em>. Không tự nhiên trong ngữ cảnh này.<br>
+     <span class="wrong-tag">C. pull</span> – <em>kéo, giật</em>. Sai nghĩa hoàn toàn.<br>
+     <span class="correct-tag">D. repaint</span> ✅ – <em>sơn lại</em>. Hoàn toàn phù hợp: vì tường là màn hình kỹ thuật số nên bạn không cần sơn lại nữa!<br><br>
+     <strong>2. Dịch câu:</strong> "Trong nhà thông minh, bạn sẽ không cần phải <em>sơn lại</em> chúng."<br><br>
+     <div class="ex-why">💡 Từ khóa ngữ cảnh: "colour or pattern of walls" + "won't have to" → Hành động liên quan đến màu tường = <strong>repaint</strong> (sơn lại).</div>
+   `
+  },
+  // Q21
+  {id:'q21',num:21,
+   text:'A computer network will link these walls with (21)________ else in your house.',
+   opts:[
+     {l:'A',t:'thing',c:false},{l:'B',t:'everything',c:true},{l:'C',t:'anything',c:false},{l:'D',t:'nothing',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 21</div>
+     <strong>1. Phân tích (Indefinite Pronouns + "else"):</strong><br>
+     Cấu trúc: "___ else" = "khác, ngoài ra". Chủ ngữ là mạng máy tính kết nối tường với MỌI THỨ.<br>
+     <span class="wrong-tag">A. thing</span> – "thing else" không phải cụm đúng trong tiếng Anh.<br>
+     <span class="correct-tag">B. everything</span> ✅ – <strong>"everything else"</strong> = mọi thứ khác. Câu nói mạng máy tính kết nối tường với <em>mọi thứ khác</em> trong nhà. Đây là câu khẳng định, nói về tính năng toàn diện.<br>
+     <span class="wrong-tag">C. anything</span> – "anything else" thường dùng trong câu hỏi hoặc phủ định (e.g., "Is there anything else?"). Câu này là khẳng định.<br>
+     <span class="wrong-tag">D. nothing</span> – "nothing else" = không có gì khác. Ngược nghĩa với ý muốn diễn đạt.<br><br>
+     <strong>2. Dịch câu:</strong> "Một mạng lưới máy tính sẽ kết nối những bức tường này với <em>mọi thứ khác</em> trong nhà bạn."<br><br>
+     <div class="ex-why">💡 Câu khẳng định + muốn diễn đạt "tất cả, toàn bộ" → <strong>everything else</strong>.</div>
+   `
+  },
+  // Q22
+  {id:'q22',num:22,
+   text:'It will also adapt to your (22)________.',
+   opts:[
+     {l:'A',t:'prefering',c:false},{l:'B',t:'preferable',c:false},{l:'C',t:'preferably',c:false},{l:'D',t:'preferences',c:true}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 22</div>
+     <strong>1. Phân tích (Word Forms – Dạng từ):</strong><br>
+     Sau "your" (sở hữu từ) → cần một <strong>danh từ</strong>.<br>
+     <span class="wrong-tag">A. prefering</span> – Dạng V-ing. Không phải danh từ; cũng sai chính tả (đúng: preferring).<br>
+     <span class="wrong-tag">B. preferable</span> – Tính từ (adj): <em>đáng ưa thích hơn</em>. Không thể đứng sau "your".<br>
+     <span class="wrong-tag">C. preferably</span> – Trạng từ (adv): <em>tốt hơn là, lý tưởng là</em>. Không phù hợp sau "your".<br>
+     <span class="correct-tag">D. preferences</span> ✅ – Danh từ số nhiều (n): <em>sở thích, điều ưa thích</em>. Hoàn toàn phù hợp sau "your".<br><br>
+     <strong>2. Dịch câu:</strong> "Nó cũng sẽ thích nghi với <em>sở thích</em> của bạn."<br><br>
+     <div class="ex-why">💡 <strong>Quy tắc:</strong> Possessive (your/his/their...) + NOUN. Dạng từ: prefer (v) → preference(s) (n) → preferable (adj) → preferably (adv).</div>
+   `
+  },
+  // Q23
+  {id:'q23',num:23,
+   text:'It will set the heat in the house to your (23)________ temperature.',
+   opts:[
+     {l:'A',t:'favourite',c:true},{l:'B',t:'terrible',c:false},{l:'C',t:'high',c:false},{l:'D',t:'clearly',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 23</div>
+     <strong>1. Phân tích ngữ cảnh + từ loại:</strong><br>
+     Chỗ trống bổ nghĩa cho danh từ "temperature" → cần <strong>tính từ</strong>. Ngữ cảnh: hệ thống AI học sở thích của bạn rồi đặt nhiệt độ <em>bạn thích</em>.<br>
+     <span class="correct-tag">A. favourite</span> ✅ – <em>yêu thích</em>. "favourite temperature" = nhiệt độ yêu thích. Phù hợp hoàn toàn với ý "nhà học về sở thích của bạn".<br>
+     <span class="wrong-tag">B. terrible</span> – <em>kinh khủng, tệ</em>. Nghĩa tiêu cực, không ai muốn nhiệt độ "kinh khủng".<br>
+     <span class="wrong-tag">C. high</span> – <em>cao</em>. Chỉ nhiệt độ cao, không nói về sở thích cá nhân. Không phù hợp ngữ cảnh.<br>
+     <span class="wrong-tag">D. clearly</span> – Trạng từ (adv), không thể đứng trước danh từ "temperature".<br><br>
+     <strong>2. Dịch câu:</strong> "Nó sẽ đặt nhiệt độ trong nhà theo nhiệt độ <em>yêu thích</em> của bạn."<br><br>
+     <div class="ex-why">💡 Kết hợp: ngữ cảnh (học sở thích) + từ loại (cần adj) → <strong>favourite</strong>.</div>
+   `
+  },
+  // Q24
+  {id:'q24',num:24,
+   text:'It will also darken the windows at night and lighten them when it\'s (24)________ to wake up.',
+   opts:[
+     {l:'A',t:'occasion',c:false},{l:'B',t:'way',c:false},{l:'C',t:'time',c:true},{l:'D',t:'order',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 24</div>
+     <strong>1. Phân tích cụm cố định:</strong><br>
+     Cấu trúc: <strong>"it's ___ to do something"</strong>. Xem xét cụm nào có nghĩa với "thức dậy".<br>
+     <span class="wrong-tag">A. occasion</span> – "it's occasion to" không phải cụm tự nhiên trong tiếng Anh.<br>
+     <span class="wrong-tag">B. way</span> – "it's way to wake up" = sai ngữ pháp.<br>
+     <span class="correct-tag">C. time</span> ✅ – <strong>"it's time to do something"</strong> = đã đến lúc làm gì. Hoàn toàn phù hợp!<br>
+     <span class="wrong-tag">D. order</span> – "it's order to" không có nghĩa trong ngữ cảnh này.<br><br>
+     <strong>2. Dịch câu:</strong> "Nó cũng sẽ làm tối cửa sổ vào ban đêm và làm sáng chúng khi đã <em>đến lúc</em> thức dậy."<br><br>
+     <div class="ex-why">💡 <strong>Cụm cố định:</strong> "It's <strong>time</strong> to + V" = Đã đến lúc phải làm gì. Ví dụ: It's time to go to school!</div>
+   `
+  },
+
+  // Q31
+  {id:'q31',num:31,
+   text:'Question 31. What is the main idea of the passage?',
+   opts:[
+     {l:'A',t:'The different types of houses.',c:false},
+     {l:'B',t:"The writer's dream of a future home.",c:true},
+     {l:'C',t:'How to build an eco-friendly house.',c:false},
+     {l:'D',t:'The advantages of living in a big city.',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 31 (Main Idea)</div>
+     <span class="correct-tag">B</span> ✅ – "The writer's dream of a future home" = Ước mơ của tác giả về ngôi nhà trong tương lai.<br><br>
+     <strong>Dẫn chứng từ bài:</strong> Toàn bộ đoạn văn dùng ngôi thứ nhất "I" và thì tương lai "will": "<em>My future home will be...</em>", "<em>I want to have...</em>", "<em>I'm looking forward to...</em>" → Rõ ràng là tác giả đang MÔ TẢ GIẤC MƠ cá nhân.<br><br>
+     <span class="wrong-tag">A</span> – Sai. Bài không so sánh các loại nhà khác nhau.<br>
+     <span class="wrong-tag">C</span> – Sai. Bài không hướng dẫn cách xây nhà.<br>
+     <span class="wrong-tag">D</span> – Sai. Bài không nói về thành phố lớn.<br><br>
+     <div class="ex-why">💡 Chiến thuật: Đọc câu đầu và câu cuối → Câu đầu: "My future home will be a convenient and eco-friendly house..." → Đây là ý kiến của tác giả về ngôi nhà mơ ước.</div>
+   `
+  },
+  // Q32
+  {id:'q32',num:32,
+   text:'Question 32. The word "spacious" in the passage is CLOSEST in meaning to ________.',
+   opts:[
+     {l:'A',t:'Small',c:false},{l:'B',t:'large',c:true},{l:'C',t:'tiny',c:false},{l:'D',t:'cramped',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 32 (Synonym)</div>
+     Câu gốc: "<em>I want my room to be <strong>spacious</strong> with a balcony full of flowers.</em>"<br><br>
+     <strong>Phân tích:</strong><br>
+     <span class="correct-tag">B. large</span> ✅ – <strong>spacious</strong> (adj) = rộng rãi, thoáng đãng → đồng nghĩa với <strong>large</strong> (lớn, rộng).<br>
+     <span class="wrong-tag">A. Small</span> – nhỏ bé. Trái nghĩa với spacious.<br>
+     <span class="wrong-tag">C. tiny</span> – rất nhỏ, tí hon. Trái nghĩa.<br>
+     <span class="wrong-tag">D. cramped</span> – chật chội, bức bối. Trái nghĩa với spacious.<br><br>
+     <div class="ex-why">💡 <strong>spacious</strong> ↔ <strong>cramped</strong> là cặp ANTONYM (trái nghĩa). <strong>spacious</strong> ≈ <strong>large / roomy / big</strong>.</div>
+   `
+  },
+  // Q33
+  {id:'q33',num:33,
+   text:'Question 33. The word "modern" in the passage is OPPOSITE in meaning to ______.',
+   opts:[
+     {l:'A',t:'New',c:false},{l:'B',t:'old',c:true},{l:'C',t:'current',c:false},{l:'D',t:'busy',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 33 (Antonym)</div>
+     Câu gốc: "<em>There will be five bedrooms with separate <strong>modern</strong> bathrooms.</em>"<br><br>
+     <strong>modern</strong> (adj) = hiện đại, tân tiến (thuộc về hiện tại/tương lai).<br><br>
+     <span class="wrong-tag">A. New</span> – mới. Gần nghĩa với modern, không phải trái nghĩa.<br>
+     <span class="correct-tag">B. old</span> ✅ – <em>cũ, lỗi thời</em>. Đây là từ TRÁI NGHĨA với <strong>modern</strong>.<br>
+     <span class="wrong-tag">C. current</span> – hiện tại, đương đại. Gần nghĩa với modern.<br>
+     <span class="wrong-tag">D. busy</span> – bận rộn. Hoàn toàn không liên quan đến modern/old.<br><br>
+     <div class="ex-why">💡 <strong>modern</strong> (hiện đại) ↔ <strong>old / outdated / ancient</strong> (lỗi thời, cũ).</div>
+   `
+  },
+  // Q34
+  {id:'q34',num:34,
+   text:'Question 34. Which of the following statements is NOT TRUE according to the passage?',
+   opts:[
+     {l:'A',t:'The house will have a large kitchen.',c:false},
+     {l:'B',t:'The house will be located in a noisy neighborhood.',c:true},
+     {l:'C',t:'The house will use solar energy.',c:false},
+     {l:'D',t:'The house will have fingerprint recognition locks.',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 34 (NOT TRUE)</div>
+     <strong>Cách làm:</strong> Đối chiếu từng đáp án với bài đọc.<br><br>
+     <span class="wrong-tag">A</span> – CÓ trong bài: "<em>My house will have a <strong>large kitchen</strong> fully equipped...</em>" → TRUE. Loại.<br>
+     <span class="correct-tag">B</span> ✅ – <strong>KHÔNG CÓ / SAI</strong>: Bài nói "<em>situated in a quite <strong>ecologically clean</strong> neighborhood</em>" (khu phố sạch về sinh thái). Câu B nói "noisy neighborhood" (khu phố ồn ào) → Sai so với bài!<br>
+     <span class="wrong-tag">C</span> – CÓ trong bài: "<em><strong>Solar energy</strong> will be used to power appliances...</em>" → TRUE. Loại.<br>
+     <span class="wrong-tag">D</span> – CÓ trong bài: "<em>Security with <strong>fingerprint recognition technology</strong> locks...</em>" → TRUE. Loại.<br><br>
+     <div class="ex-why">💡 Chiến thuật NOT TRUE: Tìm chi tiết trong bài rồi so sánh. Từ khóa "quite ecologically clean" ≠ "noisy".</div>
+   `
+  },
+  // Q35
+  {id:'q35',num:35,
+   text:"Question 35. What are some of the features the writer wants in their room?",
+   opts:[
+     {l:'A',t:'A small bed and a desk.',c:false},
+     {l:'B',t:'A spacious room with a balcony full of flowers.',c:true},
+     {l:'C',t:'A shared bathroom.',c:false},
+     {l:'D',t:'Old furniture.',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 35 (Detail)</div>
+     <strong>Dẫn chứng trực tiếp từ bài:</strong><br>
+     "<em>And I want my room to be <strong>spacious with a balcony full of flowers</strong>.</em>"<br><br>
+     <span class="correct-tag">B</span> ✅ – "A spacious room with a balcony full of flowers" → Khớp 100% với câu gốc trong bài.<br>
+     <span class="wrong-tag">A</span> – Sai. Bài không đề cập đến "giường nhỏ và bàn học".<br>
+     <span class="wrong-tag">C</span> – Sai. Bài nói "separate modern bathrooms" (phòng tắm riêng, hiện đại), không phải "shared" (dùng chung).<br>
+     <span class="wrong-tag">D</span> – Sai. Bài nói "the newest and the most modern furniture" (nội thất mới nhất và hiện đại nhất), không phải đồ cũ.<br><br>
+     <div class="ex-why">💡 Đây là câu hỏi chi tiết (Detail question). Cần locate (xác định vị trí) câu trong bài → Đoạn 1, câu cuối.</div>
+   `
+  },
+  // Q36
+  {id:'q36',num:36,
+   text:'Question 36. What are some of the things AI will do in the house?',
+   opts:[
+     {l:'A',t:'Cook meals and clean the house.',c:true},
+     {l:'B',t:'Pay the electric bills.',c:false},
+     {l:'C',t:'Drive the writer to work.',c:false},
+     {l:'D',t:'Do the gardening.',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 36 (Detail)</div>
+     <strong>Dẫn chứng trực tiếp từ bài:</strong><br>
+     "<em>I want to have Artificial Intelligence to <strong>make meals</strong> and <strong>clean up the house</strong> when I wake up.</em>"<br><br>
+     <span class="correct-tag">A</span> ✅ – "Cook meals and clean the house" = "make meals and clean up the house" → Khớp hoàn toàn.<br>
+     <span class="wrong-tag">B</span> – Sai. Bài nói Solar energy giúp TRẢ ÍT TIỀN ĐIỆN HƠN, không phải AI trả hóa đơn.<br>
+     <span class="wrong-tag">C</span> – Sai. Bài không đề cập đến việc lái xe.<br>
+     <span class="wrong-tag">D</span> – Sai. Việc làm vườn không được đề cập là nhiệm vụ của AI (robot đảm nhiệm việc nhà - household chores).<br><br>
+     <div class="ex-why">💡 Locate (tìm vị trí) trong bài: Đoạn 2, câu đầu tiên. Từ khóa "Artificial Intelligence" → "make meals + clean up".</div>
+   `
+  },
+
+  // Q37-40: Passage Completion
+  {id:'q37',num:37,
+   text:'(37) _____ [after "I think that my house in the future will look like a spaceship."]',
+   opts:[
+     {l:'A',t:'There will be 3 rooms in my house.',c:false},
+     {l:'B',t:'It will be on the top of a green hill.',c:true},
+     {l:'C',t:"I won't have to go to the market often.",c:false},
+     {l:'D',t:'The environment in my place will be perfect.',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 37 (Passage Completion)</div>
+     <strong>Câu trước:</strong> "My house will look like a <strong>spaceship</strong>."<br>
+     <strong>Câu sau:</strong> "It will be a <strong>quiet place</strong> with only a few people."<br><br>
+     <span class="correct-tag">B</span> ✅ – "It will be <strong>on the top of a green hill</strong>" = Nằm trên đỉnh một ngọn đồi xanh.<br>
+     ✔ Cầu nối logic: Nhà như tàu vũ trụ → trên đỉnh đồi → nơi yên tĩnh, ít người.<br>
+     ✔ Ý "yên tĩnh" (quiet place) ở câu sau phù hợp với vị trí "đỉnh đồi" cô lập.<br><br>
+     <span class="wrong-tag">A</span> – "3 rooms" phù hợp hơn cho vị trí 38 (nói về số phòng).<br>
+     <span class="wrong-tag">C</span> – "Won't go to market" phù hợp hơn sau câu nói về trồng rau, nuôi gà (vị trí 40).<br>
+     <span class="wrong-tag">D</span> – "Environment perfect" phù hợp hơn trước câu nói về cây xanh, không khí sạch (vị trí 39).<br><br>
+     <div class="ex-why">💡 Kỹ thuật: Đọc câu TRƯỚC và câu SAU mỗi chỗ trống để tìm CẦU NỐI LOGIC.</div>
+   `
+  },
+  {id:'q38',num:38,
+   text:'(38) _____ [after "It will be a quiet place with only a few people."]',
+   opts:[
+     {l:'A',t:'There will be 3 rooms in my house.',c:true},
+     {l:'B',t:'It will be on the top of a green hill.',c:false},
+     {l:'C',t:"I won't have to go to the market often.",c:false},
+     {l:'D',t:'The environment in my place will be perfect.',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 38 (Passage Completion)</div>
+     <strong>Câu trước:</strong> "It will be a quiet place with only a few people."<br>
+     <strong>Câu sau:</strong> "<strong>One of them</strong> is a beautiful room for my guests."<br><br>
+     <span class="correct-tag">A</span> ✅ – "There will be <strong>3 rooms</strong> in my house."<br>
+     ✔ Từ "One of them" ở câu sau → "them" phải chỉ số nhiều → "3 rooms" đi trước là HOÀN TOÀN PHÙ HỢP (one of [the 3 rooms]).<br><br>
+     <span class="wrong-tag">B</span> – Đã được dùng ở câu 37.<br>
+     <span class="wrong-tag">C, D</span> – Không tạo được mối liên hệ với "One of them".<br><br>
+     <div class="ex-why">💡 Từ khóa LIÊN KẾT: "<strong>One of them</strong>" (câu sau) → "them" = "the 3 rooms" (câu trước). Đây là kỹ thuật Referencing trong đọc hiểu.</div>
+   `
+  },
+  {id:'q39',num:39,
+   text:'(39) _____ [after "The walls will be painted blue with some decorations about the space."]',
+   opts:[
+     {l:'A',t:'There will be 3 rooms in my house.',c:false},
+     {l:'B',t:'It will be on the top of a green hill.',c:false},
+     {l:'C',t:"I won't have to go to the market often.",c:false},
+     {l:'D',t:'The environment in my place will be perfect.',c:true}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 39 (Passage Completion)</div>
+     <strong>Câu sau:</strong> "There will be a lot of <strong>green trees, fresh air, no litter, no smoke and no noises</strong>."<br><br>
+     <span class="correct-tag">D</span> ✅ – "The <strong>environment</strong> in my place will be <strong>perfect</strong>."<br>
+     ✔ Câu sau liệt kê chi tiết về môi trường (cây xanh, không khí sạch, không rác, không khói, không tiếng ồn) → Câu D là câu chủ đề (topic sentence) cho những chi tiết đó.<br>
+     ✔ Logic: Câu D (tổng quát: môi trường hoàn hảo) → câu sau (cụ thể: cây xanh, không khói...).<br><br>
+     <span class="wrong-tag">A, B, C</span> – Không liên quan đến chủ đề môi trường.<br><br>
+     <div class="ex-why">💡 Kỹ thuật: Câu topic sentence (câu chủ đề) đứng TRƯỚC câu chi tiết. "Environment perfect" → sau đó liệt kê chi tiết về môi trường.</div>
+   `
+  },
+  {id:'q40',num:40,
+   text:'(40) _____ [after "I will plant vegetables and I will raise some chickens and fish."]',
+   opts:[
+     {l:'A',t:'There will be 3 rooms in my house.',c:false},
+     {l:'B',t:'It will be on the top of a green hill.',c:false},
+     {l:'C',t:"I won't have to go to the market often.",c:true},
+     {l:'D',t:'The environment in my place will be perfect.',c:false}
+   ],
+   explanation:`
+     <div class="ex-title">📌 Giải thích chi tiết – Câu 40 (Passage Completion)</div>
+     <strong>Câu trước:</strong> "I will plant my favorite kinds of <strong>vegetables</strong> and I will raise some <strong>chickens and fish</strong>."<br><br>
+     <span class="correct-tag">C</span> ✅ – "<strong>I won't have to go to the market often</strong>." = Tôi sẽ không phải đi chợ thường xuyên.<br>
+     ✔ Hệ quả LOGIC: Có rau tự trồng + có gà + có cá → KHÔNG cần đi chợ mua thực phẩm.<br>
+     ✔ Đây là câu kết luận (conclusion) cho đoạn văn, tóm tắt lợi ích của việc tự cung tự cấp.<br><br>
+     <span class="wrong-tag">A, B, D</span> – Đã được dùng ở vị trí khác.<br><br>
+     <div class="ex-why">💡 Kỹ thuật CAUSE → EFFECT: Trồng rau + nuôi gà/cá (nguyên nhân) → Không cần đi chợ (kết quả). Đây là câu kết thúc tự nhiên nhất cho đoạn văn.</div>
+   `
+  }
+];
+
+// ===== RENDER QUESTIONS =====
+let answeredMap = {};
+
+function renderQuestion(q){
+  const container = document.getElementById(q.id+'-container');
+  if(!container)return;
+  const shuffled = shuffleArray(q.opts);
+  
+  const optsHtml = shuffled.map(opt=>`
+    <button class="opt-btn" id="opt-${q.id}-${opt.l}" 
+      onclick="checkAnswer('${q.id}','${opt.l}',${opt.c},this)">
+      <span class="opt-letter">${opt.l}</span>
+      <span>${opt.t}</span>
+    </button>
+  `).join('');
+
+  container.innerHTML=`
+    <div class="q-card" id="qcard-${q.id}">
+      <div class="q-number">Câu ${q.num}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="options-grid">${optsHtml}</div>
+      <div class="explanation" id="exp-${q.id}">${q.explanation}</div>
+    </div>
+  `;
+}
+
+function checkAnswer(qid, letter, isCorrect, btn){
+  if(answeredMap[qid]) return;
+  answeredMap[qid] = isCorrect ? 'correct' : 'wrong';
+
+  const allBtns = document.querySelectorAll(`[id^="opt-${qid}-"]`);
+  allBtns.forEach(b=>b.disabled=true);
+
+  if(isCorrect){
+    btn.classList.add('correct');
+    playCorrect();
+    launchConfetti();
+  } else {
+    btn.classList.add('wrong');
+    playWrong();
+    // Highlight correct answer
+    allBtns.forEach(b=>{
+      const letter_text = b.querySelector('span:last-child').textContent;
+      const q = questions.find(x=>x.id===qid);
+      const correctOpt = q.opts.find(o=>o.c);
+      if(letter_text === correctOpt.t) b.classList.add('correct');
+    });
+  }
+
+  document.getElementById('exp-'+qid).style.display='block';
+}
+
+// Init
+questions.forEach(renderQuestion);
+
+// ===== SUBMIT =====
+function submitQuiz(){
+  let correct=0, total=questions.length;
+  questions.forEach(q=>{
+    if(answeredMap[q.id]==='correct') correct++;
+  });
+  
+  const pct = correct/total;
+  let emoji,label,comment;
+  if(pct===1){emoji='🏆';label='THIÊN TÀI! Hoàn hảo!';comment='Điểm số hoàn hảo 16/16! Bạn thực sự là một ngôi sao! Trí tuệ của bạn sáng như tòa nhà thông minh trong tương lai! ⭐✨';}
+  else if(pct>=0.875){emoji='🥇';label='Xuất sắc!';comment='Gần như hoàn hảo! Chỉ còn một chút nhỏ thôi, bạn đã nắm vững kiến thức rất tốt rồi! Tiếp tục phát huy nhé! 💪';}
+  else if(pct>=0.75){emoji='😊';label='Làm tốt lắm!';comment='Kết quả rất khả quan! Bạn đã hiểu phần lớn bài. Hãy xem lại phần giải thích những câu làm sai để củng cố kiến thức nhé! 📚';}
+  else if(pct>=0.5){emoji='🤔';label='Cố lên nhé!';comment='Bạn đã vượt qua được nửa bài! Đây là nền tảng tốt rồi. Hãy đọc kỹ phần giải thích và luyện tập thêm để tiến bộ hơn! 🌟';}
+  else{emoji='💪';label='Hãy cố gắng hơn!';comment='Đừng nản lòng nhé! Mỗi lần sai là một lần học. Hãy đọc kỹ bài đọc và phần giải thích, rồi thử lại nhé! Bạn làm được! 🚀';}
+
+  document.getElementById('res-emoji').textContent=emoji;
+  document.getElementById('res-score').textContent=`${correct}/${total}`;
+  document.getElementById('res-label').textContent=label;
+  document.getElementById('res-comment').textContent=comment;
+  document.getElementById('result-modal').style.display='flex';
+
+  if(pct>=0.75) launchConfetti();
+}
+
+function closeResult(){
+  document.getElementById('result-modal').style.display='none';
+}
+</script>
+</body>
+</html>

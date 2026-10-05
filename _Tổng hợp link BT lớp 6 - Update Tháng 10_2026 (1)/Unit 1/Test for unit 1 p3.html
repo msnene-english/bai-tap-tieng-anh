@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Practice | Ms MS Chí Nên</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Baloo+2:wght@500;700&display=swap');
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            
+            --color-word: #2196F3; /* Xanh dương */
+            --color-mean: #E2725B; /* Đất nung */
+            --color-grammar: #D32F2F; /* Đỏ (cho gạch chân) */
+            --color-correct: #4CAF50; /* Xanh lá */
+            --color-incorrect: #B71C1C; /* Đỏ sậm */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(-45deg, #ffb6c1, #e0ffff, #fff0f5, #f0f8ff, #ffc0cb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #333;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Nền nổi SVG Emoji (Floating Pattern) */
+        .floating-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.05) 100%);
+        }
+
+        .emoji-float {
+            position: absolute;
+            font-size: 3rem;
+            animation: floatUp 20s linear infinite;
+            opacity: 0.5;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) rotate(0deg) scale(0.8); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) rotate(360deg) scale(1.2); opacity: 0; }
+        }
+
+        /* Glassmorphism Classes */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .glass-btn:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        /* Layout Main Split-Screen */
+        #app-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            padding: 15px;
+            gap: 20px;
+        }
+
+        /* Header */
+        .header-title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-weight: 800;
+            color: #6a1b9a;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            pointer-events: none;
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid white;
+        }
+
+        /* Cột trái: Bài đọc */
+        .left-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding: 20px;
+            padding-top: 50px;
+        }
+        
+        .left-pane::-webkit-scrollbar, .right-pane::-webkit-scrollbar {
+            width: 8px;
+        }
+        .left-pane::-webkit-scrollbar-thumb, .right-pane::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        /* Cột phải: Câu hỏi */
+        .right-pane {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            padding: 20px;
+            padding-top: 50px;
+        }
+
+        /* Bảng Cảnh Báo */
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 235, 59, 0.8), rgba(255, 193, 7, 0.8));
+            border-left: 8px solid #FF5722;
+            padding: 15px 20px;
+            border-radius: 16px;
+            animation: pulse-border 2s infinite;
+        }
+        .warning-box h3 { color: #d84315; margin-bottom: 5px; font-family: 'Baloo 2', sans-serif; display: flex; align-items: center; gap: 8px;}
+        .warning-box p { font-size: 1rem; font-weight: 600; line-height: 1.5; color: #4e342e; }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+        }
+
+        /* Kiểu dáng bài đọc */
+        .passage-box { padding: 25px; }
+        .passage-box h2 { font-family: 'Baloo 2', sans-serif; color: #2c3e50; margin-bottom: 15px; font-size: 1.5rem; text-align: center; }
+        .passage-content { font-size: 1.15rem; line-height: 1.8; color: #2d3436; margin-bottom: 10px; text-align: justify; font-weight: 600;}
+        .passage-content u { text-decoration: underline; text-decoration-color: #ff7675; text-decoration-thickness: 3px; }
+
+        .translate-btn {
+            display: inline-block;
+            background: #fff; border: none; padding: 6px 14px; border-radius: 20px;
+            color: #0984e3; font-weight: bold; cursor: pointer; font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.2s;
+            margin-bottom: 20px; /* Tạo khoảng cách với đoạn văn tiếp theo */
+        }
+        .translate-btn:hover { background: #0984e3; color: white; }
+        .translation-text {
+            display: none; background: rgba(255,255,255,0.6); padding: 15px;
+            border-radius: 12px; border-left: 4px solid #00cec9;
+            font-size: 1.05rem; font-style: italic; margin-bottom: 20px; color: #34495e;
+        }
+
+        /* Bảng Từ Vựng */
+        .glossary-box { padding: 20px; margin-top: 10px; }
+        .glossary-box h3 { font-family: 'Baloo 2', sans-serif; color: #6c5ce7; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;}
+        .glossary-table { width: 100%; border-collapse: collapse; }
+        .glossary-table th, .glossary-table td {
+            padding: 12px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .glossary-table th { background: rgba(108, 92, 231, 0.2); font-weight: bold; color: #2d3436; border-radius: 8px 8px 0 0;}
+        .glossary-table tr:last-child td { border-bottom: none; }
+        .glossary-table .vocab { font-weight: bold; color: #0984e3; }
+        .glossary-table .pos { font-style: italic; color: #e17055; font-size: 0.9rem;}
+
+        /* Khung Câu Hỏi */
+        .question-card {
+            padding: 25px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .q-title {
+            font-size: 1.25rem; font-weight: 700; color: #2d3436;
+            margin-bottom: 10px; line-height: 1.5; font-family: 'Baloo 2', sans-serif;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        
+        .opt-btn {
+            padding: 14px 20px;
+            font-size: 1.1rem; font-weight: 700; color: #4a4a4a;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .opt-btn.correct { background: #c8e6c9 !important; border-color: #4CAF50; color: #2e7d32; }
+        .opt-btn.wrong { background: #ffcdd2 !important; border-color: #F44336; color: #c62828; animation: shake 0.4s; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        /* KHUNG GIẢI THÍCH MASTER LEVEL */
+        .explanation-box {
+            display: none;
+            margin-top: 15px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            border-left: 6px solid #6c5ce7;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #2c3e50;
+            animation: slideDown 0.5s ease-out forwards;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .explanation-box p { margin-bottom: 10px; }
+        .explanation-box .q-translate { font-weight: bold; color: #8e44ad; margin-bottom: 15px; }
+        .explanation-box .ev-row { margin-bottom: 5px; padding-left: 10px; }
+        .explanation-box .quote {
+            background: rgba(253, 203, 110, 0.2);
+            padding: 10px 15px; border-radius: 8px;
+            font-style: italic; border-left: 4px solid #fdcb6e;
+            margin: 15px 0;
+        }
+
+        /* 5 CLASS YÊU CẦU ĐẶC BIỆT DÀNH CHO TEXT GIẢI THÍCH */
+        .p-word { color: var(--color-word); font-weight: 800; }
+        .p-mean { color: var(--color-mean); font-weight: 700; }
+        .p-grammar { text-decoration: underline; text-decoration-color: var(--color-grammar); text-decoration-thickness: 2px; font-weight: bold; }
+        .hl-green { color: var(--color-correct); font-weight: 800; }
+        .hl-red { color: var(--color-incorrect); text-decoration: line-through; font-weight: 700; }
+
+        /* Nút Submit */
+        .submit-btn {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white; padding: 18px; font-size: 1.3rem; font-weight: bold;
+            border: none; border-radius: 20px; cursor: pointer; text-align: center;
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3);
+            transition: 0.3s; width: 100%; margin-top: 10px;
+            font-family: 'Baloo 2', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .submit-btn:hover {
+            transform: translateY(-5px); box-shadow: 0 15px 25px rgba(108, 92, 231, 0.5);
+        }
+
+        /* Popup */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .popup {
+            background: white; padding: 35px; border-radius: 24px;
+            text-align: center; max-width: 400px; width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .popup h2 { font-family: 'Baloo 2', sans-serif; color: #2d3436; font-size: 1.8rem; margin-bottom: 15px;}
+        .popup input {
+            width: 100%; padding: 15px; font-size: 1.1rem; margin: 15px 0;
+            border: 2px solid #dfe6e9; border-radius: 12px; outline: none;
+            font-family: 'Nunito', sans-serif;
+        }
+        .popup input:focus { border-color: #6c5ce7; }
+        .popup-btn {
+            background: #00b894; color: white; padding: 12px 25px; border: none;
+            border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%;
+        }
+
+        .result-meme { width: 100%; max-height: 200px; object-fit: contain; border-radius: 12px; margin: 15px 0;}
+        .score-text { font-size: 2.5rem; font-weight: 800; color: #6c5ce7; font-family: 'Baloo 2', sans-serif; }
+        .scaled-score { font-size: 1.3rem; color: #e17055; font-weight: bold; margin-bottom: 10px; }
+        .teacher-cmt { font-size: 1.2rem; color: #2d3436; font-style: italic; background: #f1f2f6; padding: 10px; border-radius: 8px;}
+
+        /* Canvas cho pháo hoa */
+        #confetti-canvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="floating-bg" id="floating-bg"></div>
+
+    <div class="header-title glass">Giáo viên tạo: Ms MS Chí Nên</div>
+
+    <div id="app-container">
+        
+        <div class="left-pane">
+            
+            <div class="warning-box glass">
+                <h3>⚠️ THÔNG BÁO QUAN TRỌNG TỪ CÔ MS Chí Nên</h3>
+                <p>Chỉ có <strong>đọc kỹ giải thích</strong> và ghi chép lại <span style="color:#2196F3">Từ vựng</span> / <span style="color:#D32F2F; text-decoration:underline;">Cấu trúc</span> mới vào vở thì các con mới thực sự giỏi lên. Hãy cuộn bài đọc bên trái để tìm gợi ý nhé. Làm cho xong mà không đọc giải thích thì chỉ tốn thời gian vô ích! Kéo câu làm tới đâu, giải thích sẽ hiện ra tới đó. Cùng cố gắng nhé! 💖</p>
+            </div>
+
+            <div class="passage-box glass">
+                <h2>Task VII: Cloze Test (Dream School)</h2>
+                <p class="passage-content">
+                    My dream school is a quiet school <u>(1)</u> we have just two or three hours a day, in the morning. Then, in the afternoon, we can do many <u>(2)</u> like singing, dancing, playing soccer, basketball, rugby. We won't have tests and marks either. The teachers will not <u>(3)</u> homework, so we can do whatever we want after school. In my dream school, we can also choose the <u>(4)</u> we want: for example, you're not going to learn mathematics or physics if you hate <u>(5)</u>. So it's a free school where you can learn with calm and serenity and you can make <u>(6)</u> friends during afternoon activities!
+                </p>
+                <button class="translate-btn" onclick="toggleTrans('trans1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1" class="translation-text">
+                    Trường học mơ ước của tôi là một ngôi trường yên tĩnh (1) nơi mà chúng tôi chỉ học hai hoặc ba giờ một ngày, vào buổi sáng. Sau đó, vào buổi chiều, chúng tôi có thể tham gia nhiều (2) hoạt động như ca hát, khiêu vũ, chơi bóng đá, bóng rổ, bóng bầu dục. Chúng tôi cũng sẽ không có các bài kiểm tra và điểm số. Giáo viên sẽ không (3) giao bài tập về nhà, vì vậy chúng tôi có thể làm bất cứ điều gì mình muốn sau giờ học. Trong trường học mơ ước của tôi, chúng tôi cũng có thể chọn các (4) tiết học mà chúng tôi muốn: ví dụ, bạn sẽ không học toán hay vật lý nếu bạn ghét (5) nó. Vì vậy, đây là một ngôi trường tự do, nơi bạn có thể học tập trong sự bình tĩnh và thanh bình, và bạn có thể kết (6) rất nhiều bạn bè trong các hoạt động buổi chiều!
+                </div>
+            </div>
+
+            <div class="passage-box glass">
+                <h2>Task VIII: Reading Comprehension (Linda's First Day)</h2>
+                
+                <p class="passage-content">
+                    Hi, I'm Linda. I'm in the sixth grade. Today is my first day at secondary school. In the morning I put on my new uniform and get my new bag.
+                </p>
+                <button class="translate-btn" onclick="toggleTrans('trans2_1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2_1" class="translation-text">
+                    Xin chào, tôi là Linda. Tôi học lớp sáu. Hôm nay là ngày đầu tiên của tôi ở trường trung học cơ sở. Buổi sáng, tôi mặc đồng phục mới và lấy chiếc cặp mới của mình.
+                </div>
+
+                <p class="passage-content">
+                    My best friend and I walk to school together. We are both very nervous and excited. When we get to school, we are shown into our classroom with our new teacher. It is quite scary because I don't know most of the children. Then we go to our first lesson. We have lots of different subjects and the lessons are really fun. My favourite subjects are art and English.
+                </p>
+                <button class="translate-btn" onclick="toggleTrans('trans2_2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2_2" class="translation-text">
+                    Tôi và người bạn thân nhất cùng nhau đi bộ đến trường. Cả hai chúng tôi đều rất hồi hộp và háo hức. Khi đến trường, chúng tôi được đưa vào lớp cùng với giáo viên mới. Khá đáng sợ vì tôi không biết hầu hết những đứa trẻ ở đây. Sau đó, chúng tôi bắt đầu tiết học đầu tiên. Chúng tôi có rất nhiều môn học khác nhau và các bài học thực sự rất vui. Các môn học yêu thích của tôi là mỹ thuật và tiếng Anh.
+                </div>
+
+                <p class="passage-content">
+                    I really like my new school, all my teachers are lovely, the lessons are really interesting and I enjoy my first day. I can't wait to go back tomorrow!
+                </p>
+                <button class="translate-btn" onclick="toggleTrans('trans2_3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2_3" class="translation-text">
+                    Tôi thực sự thích ngôi trường mới của mình, tất cả giáo viên của tôi đều dễ thương, các bài học thực sự thú vị và tôi tận hưởng ngày đầu tiên của mình. Tôi nóng lòng muốn quay lại vào ngày mai!
+                </div>
+            </div>
+
+            <div class="glossary-box glass">
+                <h3>📚 Glossary (Bảng Từ Vựng Khó - B1/C2)</h3>
+                <table class="glossary-table">
+                    <tr><th>Vocabulary</th><th>Part of Speech</th><th>Vietnamese Meaning</th></tr>
+                    <tr><td class="vocab">Serenity</td><td class="pos">noun (n)</td><td>Sự thanh bình, tĩnh lặng</td></tr>
+                    <tr><td class="vocab">Rugby</td><td class="pos">noun (n)</td><td>Môn bóng bầu dục</td></tr>
+                    <tr><td class="vocab">Calm</td><td class="pos">adjective (adj)</td><td>Điềm tĩnh, bình tĩnh</td></tr>
+                    <tr><td class="vocab">Secondary school</td><td class="pos">noun phrase (n)</td><td>Trường trung học cơ sở</td></tr>
+                    <tr><td class="vocab">Uniform</td><td class="pos">noun (n)</td><td>Đồng phục</td></tr>
+                    <tr><td class="vocab">Nervous</td><td class="pos">adjective (adj)</td><td>Lo lắng, hồi hộp</td></tr>
+                    <tr><td class="vocab">Excited</td><td class="pos">adjective (adj)</td><td>Hào hứng, phấn khích</td></tr>
+                    <tr><td class="vocab">Scary</td><td class="pos">adjective (adj)</td><td>Đáng sợ, rùng rợn</td></tr>
+                    <tr><td class="vocab">Mathematics</td><td class="pos">noun (n)</td><td>Môn Toán học (thường viết tắt là Math)</td></tr>
+                    <tr><td class="vocab">Physics</td><td class="pos">noun (n)</td><td>Môn Vật lý</td></tr>
+                </table>
+            </div>
+
+        </div>
+
+        <div class="right-pane" id="quiz-container">
+            </div>
+
+    </div>
+
+    <div class="overlay" id="name-overlay">
+        <div class="popup">
+            <h2>Nhập tên để nộp bài nhé! 📝</h2>
+            <input type="text" id="student-name" placeholder="Ví dụ: Nguyễn Văn A" autocomplete="off">
+            <button class="popup-btn" onclick="submitName()">Bắt đầu Nộp Bài 🚀</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="result-overlay">
+        <div class="popup">
+            <h2>BẢNG ĐIỂM CỦA <span id="res-name" style="color: #0984e3;"></span></h2>
+            <img id="res-gif" class="result-meme" src="" alt="Meme">
+            <div class="score-text" id="res-score">0/12</div>
+            <div class="scaled-score" id="res-scaled">Quy đổi: 0.0/10 điểm</div>
+            <div class="teacher-cmt" id="res-cmt"></div>
+            <br>
+            <button class="popup-btn" style="background:#ff7675;" onclick="location.reload()">Làm Lại Từ Đầu 🔄</button>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <script>
+        // Data Câu hỏi (Đã chỉnh sửa loại bỏ trích dẫn ở đề bài theo yêu cầu)
+        const quizData = [
+            // TASK VII
+            {
+                qText: "Task VII - Câu (1): Select the best answer.",
+                options: [
+                    { text: "what", isCorrect: false },
+                    { text: "where", isCorrect: true },
+                    { text: "when", isCorrect: false },
+                    { text: "how", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống số (1).</div>
+                    <div class="ev-row">A. <span class='hl-red'>what</span> (cái gì) ❌ Sai vì không dùng để thay thế cho danh từ chỉ địa điểm.</div>
+                    <div class="ev-row">B. <span class='hl-green'>where</span> (nơi mà) ✅ Đúng.</div>
+                    <div class="ev-row">C. <span class='hl-red'>when</span> (khi nào) ❌ Sai vì dùng để thay thế cho thời gian.</div>
+                    <div class="ev-row">D. <span class='hl-red'>how</span> (như thế nào) ❌ Sai vì dùng để chỉ cách thức.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng: "My dream school is a quiet school (1) _____ we have just two or three hours a day..."<br>
+                        👉 Dịch: Trường học mơ ước của tôi là một ngôi trường yên tĩnh <span class='hl-green'>nơi mà</span> chúng tôi chỉ học hai hoặc ba giờ mỗi ngày...
+                    </div>
+                    <p>Giải thích thêm: Ở đây cần một <span class='p-grammar'>Trạng từ quan hệ (Relative Adverb)</span> thay thế cho danh từ chỉ nơi chốn <span class='p-word'>school</span> (n) - <span class='p-mean'>trường học</span>. Do đó ta bắt buộc dùng <span class='p-word'>where</span> (adv).</p>
+                `
+            },
+            {
+                qText: "Task VII - Câu (2): Select the best answer.",
+                options: [
+                    { text: "subjects", isCorrect: false },
+                    { text: "actions", isCorrect: false },
+                    { text: "activities", isCorrect: true },
+                    { text: "acts", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống số (2).</div>
+                    <div class="ev-row">A. <span class='hl-red'>subjects</span> (môn học) ❌ Sai vì ca hát, nhảy múa, đá bóng trong ngữ cảnh này được xem là hoạt động ngoại khóa, không phải môn học lý thuyết.</div>
+                    <div class="ev-row">B. <span class='hl-red'>actions</span> (hành động) ❌ Sai vì từ này chỉ hành vi vật lý cụ thể.</div>
+                    <div class="ev-row">C. <span class='hl-green'>activities</span> (hoạt động) ✅ Đúng.</div>
+                    <div class="ev-row">D. <span class='hl-red'>acts</span> (hành vi/hồi kịch) ❌ Sai nghĩa.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng: "...we can do many (2) _____ like singing, dancing, playing soccer, basketball, rugby."<br>
+                        👉 Dịch: "...chúng tôi có thể tham gia nhiều <span class='hl-green'>hoạt động</span> như ca hát, khiêu vũ, chơi bóng đá, bóng rổ, bóng bầu dục."
+                    </div>
+                    <p>Giải thích thêm: Cụm từ <span class='p-grammar'>do activities</span> mang nghĩa là tham gia các hoạt động bề nổi/ngoại khóa. <span class='p-word'>Activity</span> (n) - <span class='p-mean'>hoạt động</span> phù hợp nhất với liệt kê phía sau.</p>
+                `
+            },
+            {
+                qText: "Task VII - Câu (3): Select the best answer.",
+                options: [
+                    { text: "give", isCorrect: true },
+                    { text: "take", isCorrect: false },
+                    { text: "do", isCorrect: false },
+                    { text: "get", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống số (3).</div>
+                    <div class="ev-row">A. <span class='hl-green'>give</span> (giao/đưa) ✅ Đúng.</div>
+                    <div class="ev-row">B. <span class='hl-red'>take</span> (lấy đi) ❌ Sai ngữ nghĩa.</div>
+                    <div class="ev-row">C. <span class='hl-red'>do</span> (làm) ❌ Sai vì học sinh mới là người "do homework", giáo viên thì không.</div>
+                    <div class="ev-row">D. <span class='hl-red'>get</span> (nhận) ❌ Sai ngữ nghĩa.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng: "The teachers will not (3) _____ homework, so we can do whatever we want after school."<br>
+                        👉 Dịch: "Giáo viên sẽ không <span class='hl-green'>giao</span> bài tập về nhà, vì vậy chúng tôi có thể làm bất cứ điều gì mình muốn sau giờ học."
+                    </div>
+                    <p>Giải thích: Ta có cụm <span class='p-grammar'>Collocation</span> cố định là <span class='p-word'>give homework</span> (v) - <span class='p-mean'>giao bài tập về nhà</span> dành cho giáo viên.</p>
+                `
+            },
+            {
+                qText: "Task VII - Câu (4): Select the best answer.",
+                options: [
+                    { text: "class", isCorrect: false },
+                    { text: "classrooms", isCorrect: false },
+                    { text: "classmates", isCorrect: false },
+                    { text: "classes", isCorrect: true }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Chọn từ phù hợp nhất điền vào chỗ trống số (4).</div>
+                    <div class="ev-row">A. <span class='hl-red'>class</span> (lớp học - số ít) ❌ Sai vì việc chọn học "toán hay vật lý" cho thấy có nhiều môn học/tiết học để lựa chọn, cần dùng số nhiều.</div>
+                    <div class="ev-row">B. <span class='hl-red'>classrooms</span> (phòng học) ❌ Sai vì bạn không chọn "phòng", bạn chọn "tiết học/môn học".</div>
+                    <div class="ev-row">C. <span class='hl-red'>classmates</span> (bạn cùng lớp) ❌ Sai ngữ cảnh.</div>
+                    <div class="ev-row">D. <span class='hl-green'>classes</span> (các lớp học/tiết học - số nhiều) ✅ Đúng.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng: "...we can also choose the (4) _____ we want: for example, you're not going to learn mathematics or physics..."<br>
+                        👉 Dịch: "...chúng tôi cũng có thể chọn các <span class='hl-green'>tiết học/môn học</span> mà chúng tôi muốn: ví dụ, bạn sẽ không học toán hay vật lý..."
+                    </div>
+                    <p>Giải thích: Từ <span class='p-word'>classes</span> (n) - <span class='p-mean'>tiết học/lớp học</span> ở dạng số nhiều phản ánh sự đa dạng môn học. Toán và Vật lý chính là ví dụ cho các "classes" này.</p>
+                `
+            },
+            {
+                qText: "Task VII - Câu (5): Select the best answer.",
+                options: [
+                    { text: "it", isCorrect: true },
+                    { text: "them", isCorrect: false },
+                    { text: "her", isCorrect: false },
+                    { text: "him", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Chọn đại từ phù hợp nhất điền vào chỗ trống số (5).</div>
+                    <div class="ev-row">A. <span class='hl-green'>it</span> (nó) ✅ Đúng.</div>
+                    <div class="ev-row">B. <span class='hl-red'>them</span> (chúng) ❌ Sai. Mặc dù có hai môn học được nhắc tới, nhưng chúng nối với nhau bằng chữ "or" (hoặc) và kết thúc bằng "s" nhưng là danh từ chỉ môn học (số ít).</div>
+                    <div class="ev-row">C. <span class='hl-red'>her</span> (cô ấy) ❌ Sai vì chỉ người.</div>
+                    <div class="ev-row">D. <span class='hl-red'>him</span> (anh ấy) ❌ Sai vì chỉ người.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng: "...you're not going to learn mathematics or physics if you hate (5) _____."<br>
+                        👉 Dịch: "...bạn sẽ không phải học toán hay vật lý nếu bạn ghét <span class='hl-green'>nó</span>."
+                    </div>
+                    <p>Giải thích: Chữ <span class='p-word'>it</span> (pron) - <span class='p-mean'>nó</span> ở đây thay thế cho việc học môn <span class='p-word'>mathematics</span> (n) hoặc <span class='p-word'>physics</span> (n). Liên từ <span class='p-grammar'>or (hoặc)</span> thể hiện sự lựa chọn đơn lẻ. Các danh từ chỉ môn học dù có "s" ở cuối (mathematics, physics) vẫn luôn là <span class='p-grammar'>Danh từ số ít không đếm được</span> nên phải dùng đại từ "it".</p>
+                `
+            },
+            {
+                qText: "Task VII - Câu (6): Select the best answer.",
+                options: [
+                    { text: "much", isCorrect: false },
+                    { text: "few", isCorrect: false },
+                    { text: "any", isCorrect: false },
+                    { text: "lots of", isCorrect: true }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Chọn lượng từ phù hợp nhất điền vào chỗ trống số (6).</div>
+                    <div class="ev-row">A. <span class='hl-red'>much</span> (nhiều) ❌ Sai vì "much" chỉ đi với danh từ không đếm được. "friends" đếm được.</div>
+                    <div class="ev-row">B. <span class='hl-red'>few</span> (rất ít, hầu như không) ❌ Sai vì làm mất đi ý nghĩa tích cực của trường học mơ ước.</div>
+                    <div class="ev-row">C. <span class='hl-red'>any</span> (bất kỳ) ❌ Sai vì "any" chủ yếu dùng trong câu phủ định hoặc nghi vấn.</div>
+                    <div class="ev-row">D. <span class='hl-green'>lots of</span> (rất nhiều) ✅ Đúng.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng: "...and you can make (6) _____ friends during afternoon activities!"<br>
+                        👉 Dịch: "...và bạn có thể kết <span class='hl-green'>rất nhiều</span> bạn bè trong các hoạt động buổi chiều!"
+                    </div>
+                    <p>Giải thích: Danh từ <span class='p-word'>friends</span> (n) - <span class='p-mean'>những người bạn</span> là danh từ đếm được số nhiều. Cấu trúc <span class='p-grammar'>lots of + N (đếm được số nhiều / không đếm được)</span> hoàn toàn phù hợp về mặt ngữ pháp lẫn ý nghĩa tích cực của câu.</p>
+                `
+            },
+            // TASK VIII
+            {
+                qText: "Task VIII - Question 1: What grade is Linda in?",
+                options: [
+                    { text: "Fifth grade.", isCorrect: false },
+                    { text: "Sixth grade.", isCorrect: true },
+                    { text: "Seventh grade.", isCorrect: false },
+                    { text: "Eighth grade.", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Linda học lớp mấy?</div>
+                    <div class="ev-row">A. <span class='hl-red'>Fifth grade.</span> (Lớp năm) ❌ Sai.</div>
+                    <div class="ev-row">B. <span class='hl-green'>Sixth grade.</span> (Lớp sáu) ✅ Đúng.</div>
+                    <div class="ev-row">C. <span class='hl-red'>Seventh grade.</span> (Lớp bảy) ❌ Sai.</div>
+                    <div class="ev-row">D. <span class='hl-red'>Eighth grade.</span> (Lớp tám) ❌ Sai.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng (Đoạn 1): "Hi, I'm Linda. I'm in the sixth grade."<br>
+                        👉 Dịch: "Xin chào, tôi là Linda. Tôi học <span class='hl-green'>lớp sáu</span>."
+                    </div>
+                    <p>Giải thích: Cụm từ <span class='p-word'>sixth grade</span> (n) - <span class='p-mean'>lớp sáu</span> xuất hiện rõ ràng ngay ở câu thứ 2 của bài đọc.</p>
+                `
+            },
+            {
+                qText: "Task VIII - Question 2: Who does she go to school with?",
+                options: [
+                    { text: "Her parents.", isCorrect: false },
+                    { text: "Her sister.", isCorrect: false },
+                    { text: "Her best friend.", isCorrect: true },
+                    { text: "Her neighbor.", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Cô ấy đi học cùng với ai?</div>
+                    <div class="ev-row">A. <span class='hl-red'>Her parents.</span> (Bố mẹ cô ấy) ❌ Sai.</div>
+                    <div class="ev-row">B. <span class='hl-red'>Her sister.</span> (Chị gái cô ấy) ❌ Sai.</div>
+                    <div class="ev-row">C. <span class='hl-green'>Her best friend.</span> (Người bạn thân nhất của cô ấy) ✅ Đúng.</div>
+                    <div class="ev-row">D. <span class='hl-red'>Her neighbor.</span> (Hàng xóm của cô ấy) ❌ Sai.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng (Đoạn 2): "My best friend and I walk to school together."<br>
+                        👉 Dịch: "<span class='hl-green'>Người bạn thân nhất của tôi</span> và tôi cùng đi bộ đến trường với nhau."
+                    </div>
+                    <p>Giải thích: Từ khóa <span class='p-word'>best friend</span> (n) - <span class='p-mean'>bạn thân nhất</span> trả lời chính xác cho câu hỏi "Who" (ai).</p>
+                `
+            },
+            {
+                qText: "Task VIII - Question 3: How do they go to school?",
+                options: [
+                    { text: "By bus.", isCorrect: false },
+                    { text: "By car.", isCorrect: false },
+                    { text: "By bike.", isCorrect: false },
+                    { text: "They walk.", isCorrect: true }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Họ đến trường bằng phương tiện gì / như thế nào?</div>
+                    <div class="ev-row">A. <span class='hl-red'>By bus.</span> (Bằng xe buýt) ❌ Sai.</div>
+                    <div class="ev-row">B. <span class='hl-red'>By car.</span> (Bằng ô tô) ❌ Sai.</div>
+                    <div class="ev-row">C. <span class='hl-red'>By bike.</span> (Bằng xe đạp) ❌ Sai.</div>
+                    <div class="ev-row">D. <span class='hl-green'>They walk.</span> (Họ đi bộ) ✅ Đúng.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng (Đoạn 2): "My best friend and I walk to school together."<br>
+                        👉 Dịch: "Người bạn thân nhất của tôi và tôi cùng <span class='hl-green'>đi bộ</span> đến trường với nhau."
+                    </div>
+                    <p>Giải thích: Động từ <span class='p-word'>walk</span> (v) - <span class='p-mean'>đi bộ</span> cho biết cách thức di chuyển (How). Ta dùng nguyên mẫu "walk" vì chủ ngữ "They" (họ) là số nhiều.</p>
+                `
+            },
+            {
+                qText: "Task VIII - Question 4: Why does Linda feel scared?",
+                options: [
+                    { text: "Because the teacher is strict.", isCorrect: false },
+                    { text: "Because she doesn't know most of the children.", isCorrect: true },
+                    { text: "Because she forgot her bag.", isCorrect: false },
+                    { text: "Because the lessons are hard.", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Tại sao Linda cảm thấy sợ hãi?</div>
+                    <div class="ev-row">A. <span class='hl-red'>Because the teacher is strict.</span> (Vì giáo viên nghiêm khắc) ❌ Sai. Trong bài nói giáo viên "lovely" (dễ thương).</div>
+                    <div class="ev-row">B. <span class='hl-green'>Because she doesn't know most of the children.</span> (Vì cô ấy không biết hầu hết những đứa trẻ) ✅ Đúng.</div>
+                    <div class="ev-row">C. <span class='hl-red'>Because she forgot her bag.</span> (Vì cô quên cặp) ❌ Sai.</div>
+                    <div class="ev-row">D. <span class='hl-red'>Because the lessons are hard.</span> (Vì bài học khó) ❌ Sai. Cô ấy thấy bài học "fun" (vui).</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng (Đoạn 2): "It is quite scary because I don't know most of the children."<br>
+                        👉 Dịch: "Khá đáng sợ <span class='hl-green'>vì tôi không biết hầu hết những đứa trẻ (bạn cùng lớp)</span>."
+                    </div>
+                    <p>Giải thích: Câu hỏi "Why" (tại sao) thường được trả lời bằng mệnh đề bắt đầu bằng <span class='p-grammar'>because (bởi vì)</span>. Trích dẫn trong bài cung cấp đúng lý do này.</p>
+                `
+            },
+            {
+                qText: "Task VIII - Question 5: What are her favourite subjects?",
+                options: [
+                    { text: "Math and Science.", isCorrect: false },
+                    { text: "Art and Music.", isCorrect: false },
+                    { text: "Art and English.", isCorrect: true },
+                    { text: "English and History.", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Các môn học yêu thích của cô ấy là gì?</div>
+                    <div class="ev-row">A. <span class='hl-red'>Math and Science.</span> (Toán và Khoa học) ❌ Sai.</div>
+                    <div class="ev-row">B. <span class='hl-red'>Art and Music.</span> (Mỹ thuật và Âm nhạc) ❌ Sai.</div>
+                    <div class="ev-row">C. <span class='hl-green'>Art and English.</span> (Mỹ thuật và Tiếng Anh) ✅ Đúng.</div>
+                    <div class="ev-row">D. <span class='hl-red'>English and History.</span> (Tiếng Anh và Lịch sử) ❌ Sai.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng (Đoạn 2): "My favourite subjects are art and English."<br>
+                        👉 Dịch: "Các môn học yêu thích của tôi là <span class='hl-green'>mỹ thuật và tiếng Anh</span>."
+                    </div>
+                    <p>Giải thích: Tìm từ khóa <span class='p-word'>favourite subjects</span> (n) - <span class='p-mean'>môn học yêu thích</span> trong bài, ta thấy ngay đáp án là Art (Mỹ thuật) và English (Tiếng Anh).</p>
+                `
+            },
+            {
+                qText: "Task VIII - Question 6: Does she enjoy her first day at school?",
+                options: [
+                    { text: "Yes, she does.", isCorrect: true },
+                    { text: "No, she doesn't.", isCorrect: false },
+                    { text: "She isn't sure.", isCorrect: false },
+                    { text: "It's okay.", isCorrect: false }
+                ],
+                explanation: `
+                    <div class="q-translate">Dịch câu hỏi: Cô ấy có thích ngày đầu tiên đến trường không?</div>
+                    <div class="ev-row">A. <span class='hl-green'>Yes, she does.</span> (Có, cô ấy thích.) ✅ Đúng.</div>
+                    <div class="ev-row">B. <span class='hl-red'>No, she doesn't.</span> (Không, cô ấy không thích.) ❌ Sai.</div>
+                    <div class="ev-row">C. <span class='hl-red'>She isn't sure.</span> (Cô ấy không chắc.) ❌ Sai.</div>
+                    <div class="ev-row">D. <span class='hl-red'>It's okay.</span> (Cũng bình thường.) ❌ Sai.</div>
+                    <div class="quote">
+                        🔍 Dẫn chứng (Đoạn 3): "I really like my new school... and I enjoy my first day."<br>
+                        👉 Dịch: "Tôi thực sự thích ngôi trường mới... và tôi <span class='hl-green'>tận hưởng (thích)</span> ngày đầu tiên của mình."
+                    </div>
+                    <p>Giải thích: Đây là câu hỏi nghi vấn <span class='p-grammar'>Yes/No question</span> với trợ động từ "Does". Động từ <span class='p-word'>enjoy</span> (v) - <span class='p-mean'>tận hưởng/thích thú</span> cho thấy thái độ tích cực hoàn toàn, nên đáp án khẳng định "Yes, she does" là chính xác.</p>
+                `
+            }
+        ];
+
+        let score = 0;
+        let answeredCount = 0;
+        const totalQuestions = quizData.length;
+
+        // Render Background Emojis
+        const emojis = ['🏫', '🎒', '📚', '✏️', '🚌', '🌟', '🎓', '📝'];
+        const bgContainer = document.getElementById('floating-bg');
+        for(let i=0; i<20; i++){
+            const el = document.createElement('div');
+            el.className = 'emoji-float';
+            el.innerText = emojis[Math.floor(Math.random()*emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (15 + Math.random() * 15) + 's';
+            el.style.animationDelay = (Math.random() * -20) + 's';
+            el.style.fontSize = (2 + Math.random() * 2) + 'rem';
+            bgContainer.appendChild(el);
+        }
+
+        // Toggle Translation
+        function toggleTrans(id) {
+            const el = document.getElementById(id);
+            if(el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        // Shuffle Array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Web Audio API Sounds
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); // A6
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playBuzzer() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // Minimal Confetti
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+        
+        function fireConfetti() {
+            for(let i=0; i<80; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: -10,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 4 - 2,
+                    dy: Math.random() * 5 + 2,
+                    color: `hsl(${Math.random()*360}, 100%, 50%)`
+                });
+            }
+            requestAnimationFrame(renderConfetti);
+        }
+
+        function renderConfetti() {
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            let active = false;
+            particles.forEach(p => {
+                p.y += p.dy;
+                p.x += p.dx;
+                if(p.y < canvas.height) active = true;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            });
+            if(active) requestAnimationFrame(renderConfetti);
+            else particles = [];
+        }
+
+        // Render Quiz
+        const quizContainer = document.getElementById('quiz-container');
+        
+        quizData.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card glass';
+            
+            const title = document.createElement('div');
+            title.className = 'q-title';
+            title.innerText = q.qText;
+            card.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.className = 'options-grid';
+
+            // Shuffle options for display
+            let shuffledOptions = [...q.options];
+            shuffleArray(shuffledOptions);
+
+            const expBox = document.createElement('div');
+            expBox.className = 'explanation-box';
+            expBox.innerHTML = q.explanation;
+            
+            const btns = [];
+            let answered = false;
+
+            shuffledOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'glass-btn opt-btn';
+                btn.innerText = opt.text;
+                btns.push(btn);
+                
+                btn.onclick = () => {
+                    if(answered) return;
+                    answered = true;
+                    answeredCount++;
+                    
+                    // Disable all buttons in this question
+                    btns.forEach(b => {
+                        b.disabled = true;
+                        b.style.cursor = 'not-allowed';
+                        // Auto highlight correct answer
+                        const originOpt = shuffledOptions.find(o => o.text === b.innerText);
+                        if(originOpt.isCorrect) {
+                            b.classList.add('correct');
+                        }
+                    });
+
+                    if(opt.isCorrect) {
+                        btn.classList.add('correct');
+                        score++;
+                        playDing();
+                        fireConfetti();
+                    } else {
+                        btn.classList.add('wrong');
+                        playBuzzer();
+                    }
+
+                    // Show Explanation
+                    expBox.style.display = 'block';
+
+                    // Check if all answered to show submit
+                    if(answeredCount === totalQuestions) {
+                        document.getElementById('btn-submit-final').style.display = 'block';
+                        document.getElementById('btn-submit-final').scrollIntoView({behavior: "smooth"});
+                    }
+                };
+                grid.appendChild(btn);
+            });
+
+            card.appendChild(grid);
+            card.appendChild(expBox);
+            quizContainer.appendChild(card);
+        });
+
+        // Add Submit Button at the bottom
+        const submitBtn = document.createElement('button');
+        submitBtn.id = 'btn-submit-final';
+        submitBtn.className = 'submit-btn';
+        submitBtn.innerText = '🎯 Nộp Bài Tính Điểm & Xem Kết Quả';
+        submitBtn.style.display = 'none'; // Hidden until all answered
+        submitBtn.onclick = () => {
+            document.getElementById('name-overlay').style.display = 'flex';
+        };
+        quizContainer.appendChild(submitBtn);
+
+        // Submit Name & Show Result
+        function submitName() {
+            const name = document.getElementById('student-name').value.trim();
+            if(!name) {
+                alert("Con quên nhập tên rồi kìa!");
+                return;
+            }
+            
+            document.getElementById('name-overlay').style.display = 'none';
+            document.getElementById('res-name').innerText = name.toUpperCase();
+            document.getElementById('res-score').innerText = `${score} / ${totalQuestions}`;
+            
+            // 10-point scale
+            const scale10 = ((score / totalQuestions) * 10).toFixed(1);
+            document.getElementById('res-scaled').innerText = `Quy đổi: ${scale10}/10 điểm`;
+
+            const gifEl = document.getElementById('res-gif');
+            const cmtEl = document.getElementById('res-cmt');
+
+            if(score === totalQuestions) {
+                // Thiên tài
+                gifEl.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50' font-size='50' x='25'>🏆</text><text y='90' font-size='20' x='15'>Xuất sắc!</text></svg>";
+                cmtEl.innerText = "Trời ơi, con là thiên tài! Ms MS Chí Nên vô cùng tự hào về con! 100 điểm không có nhưng! 🎉💖";
+            } else if (score >= totalQuestions * 0.6) {
+                // Khá tốt
+                gifEl.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50' font-size='50' x='25'>👏</text><text y='90' font-size='20' x='10'>Làm tốt lắm!</text></svg>";
+                cmtEl.innerText = "Rất tốt! Con đã cố gắng rất nhiều. Đọc lại giải thích những câu sai để lần sau 100% nhé! High-five! ✋✨";
+            } else {
+                // Yếu
+                gifEl.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50' font-size='50' x='25'>🥺</text><text y='90' font-size='20' x='15'>Cố lên nha!</text></svg>";
+                cmtEl.innerText = "Chà, bài này hơi khó xíu đúng không? Không sao hết, quan trọng là con ghi chép lại phần Cô giải thích để học là sẽ tiến bộ ngay! Cố lên! 💪🌱";
+            }
+
+            document.getElementById('result-overlay').style.display = 'flex';
+            fireConfetti();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Grammar Explorer - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --space-1: #0f2027;
+            --space-2: #203a43;
+            --space-3: #2c5364;
+            --correct-glow: #00ffcc;
+            --wrong-glow: #ff007f;
+            --btn-bg: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-dark: #1e272e;
+        }
+
+        @keyframes galaxyMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatOrbit {
+            0% { transform: translateY(100vh) rotate(0deg) scale(0.8); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(-20vh) rotate(360deg) scale(1.2); opacity: 0; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px) rotate(-2deg); }
+            40%, 80% { transform: translateX(8px) rotate(2deg); }
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, var(--space-1), var(--space-2), var(--space-3), #000000);
+            background-size: 400% 400%;
+            animation: galaxyMove 20s ease infinite;
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .stars-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)), radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)), radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)), radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0));
+            background-repeat: repeat; background-size: 200px 200px;
+            z-index: 0; opacity: 0.5; pointer-events: none;
+        }
+
+        .floating-icon {
+            position: absolute; font-size: 2.5rem;
+            animation: floatOrbit linear infinite;
+            filter: drop-shadow(0px 0px 10px rgba(255,255,255,0.3));
+        }
+
+        .container {
+            max-width: 900px; margin: 0 auto; padding: 20px;
+            position: relative; z-index: 10;
+        }
+
+        header {
+            text-align: center; background: rgba(0, 0, 0, 0.6);
+            padding: 30px; border-radius: 30px;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+            margin-bottom: 30px; border: 2px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 { margin: 0; font-size: 2.5rem; color: #00ffcc; text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 10px #00ffcc;}
+        .teacher-name { font-size: 1.1rem; color: #fff; font-weight: 900; background: linear-gradient(45deg, #ff007f, #7000ff); display: inline-block; padding: 8px 25px; border-radius: 20px; margin-top: 15px; text-transform: uppercase;}
+
+        .score-board {
+            display: flex; justify-content: space-between;
+            background: rgba(0,0,0,0.5); padding: 15px 30px; border-radius: 20px;
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.3);
+            margin-bottom: 30px; font-size: 1.4rem; font-weight: 900; color: #ff007f;
+            border: 1px solid rgba(255,0,127,0.3); backdrop-filter: blur(5px);
+        }
+        .score-board span { color: #00ffcc; }
+
+        .card {
+            background: rgba(20, 30, 48, 0.85);
+            border-radius: 25px; padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 40px; transition: all 0.3s ease;
+            position: relative; border: 1px solid rgba(0, 255, 204, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .question-title {
+            font-size: 1.35rem; font-weight: 900; margin-bottom: 25px;
+            color: #ffffff; line-height: 1.6;
+            border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom: 20px;
+        }
+
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+
+        .option-btn {
+            background: var(--btn-bg); border: 2px solid rgba(255,255,255,0.2); border-radius: 20px;
+            padding: 18px 25px; font-size: 1.15rem; font-family: 'Nunito', sans-serif;
+            font-weight: 800; color: #ffffff; cursor: pointer;
+            transition: all 0.2s ease; text-align: left; backdrop-filter: blur(5px);
+        }
+
+        .option-btn:hover {
+            background: rgba(255,255,255,0.2); border-color: #00ffcc;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.4); transform: translateX(10px);
+        }
+
+        .option-btn.correct {
+            background: rgba(0, 255, 204, 0.2); color: #00ffcc;
+            border-color: var(--correct-glow); box-shadow: 0 0 20px rgba(0, 255, 204, 0.6) !important;
+        }
+
+        .option-btn.wrong {
+            background: rgba(255, 0, 127, 0.2); color: #ff007f;
+            border-color: var(--wrong-glow); box-shadow: 0 0 20px rgba(255, 0, 127, 0.6) !important;
+            animation: shake 0.4s;
+        }
+
+        .option-btn:disabled { cursor: not-allowed; pointer-events: none; }
+
+        .explanation {
+            display: none; margin-top: 25px; padding: 25px;
+            background: rgba(0, 0, 0, 0.6); border-left: 6px solid #ff007f;
+            border-radius: 15px; font-size: 1.1rem; line-height: 1.7; color: #e0e0e0;
+            animation: fadeIn 0.5s ease; border-right: 1px solid rgba(255,0,127,0.2);
+        }
+
+        .explanation h4 {
+            margin-top: 0; color: #00ffcc; font-size: 1.25rem;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .explanation b { color: #ffffff; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .submit-btn {
+            display: block; width: 100%; background: linear-gradient(90deg, #ff007f, #7000ff);
+            color: #ffffff; font-size: 1.8rem; font-weight: 900;
+            padding: 25px; border: none; border-radius: 25px;
+            box-shadow: 0 0 30px rgba(255, 0, 127, 0.5); cursor: pointer;
+            margin-bottom: 50px; font-family: 'Nunito', sans-serif; text-transform: uppercase;
+            letter-spacing: 2px; transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover { transform: scale(1.02); box-shadow: 0 0 50px rgba(255, 0, 127, 0.8); }
+
+        .confetti { position: fixed; width: 10px; height: 10px; z-index: 1000; pointer-events: none; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+
+        #popup {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9); z-index: 2000; justify-content: center; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .popup-content {
+            background: rgba(20, 30, 48, 1); padding: 50px; border-radius: 35px; text-align: center; max-width: 500px;
+            border: 4px solid #00ffcc; box-shadow: 0 0 50px rgba(0, 255, 204, 0.5);
+        }
+
+        .popup-content h2 { color: #00ffcc; font-size: 3rem; margin-top: 0; text-shadow: 0 0 20px rgba(0,255,204,0.5);}
+        .popup-content p { font-size: 2rem; font-weight: 900; color: #ffffff; margin: 20px 0;}
+        .popup-btn {
+            background: transparent; color: #ff007f; border: 3px solid #ff007f; padding: 18px 40px;
+            font-size: 1.4rem; border-radius: 20px; font-weight: 900; margin-top: 25px;
+            cursor: pointer; box-shadow: 0 0 15px rgba(255,0,127,0.3); font-family: 'Nunito', sans-serif; transition: 0.3s;
+        }
+        .popup-btn:hover { background: #ff007f; color: #fff; box-shadow: 0 0 30px rgba(255,0,127,0.8);}
+        
+        .part-title {
+            background: rgba(0,0,0,0.6); color: #00ffcc; padding: 15px 30px; border-radius: 20px;
+            display: inline-block; margin-bottom: 25px; font-weight: 900; box-shadow: 0 0 15px rgba(0,255,204,0.3);
+            font-size: 1.4rem; border: 1px solid rgba(0,255,204,0.5); text-transform: uppercase; letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars-bg"></div>
+    <div class="floating-bg" id="floatingBg"></div>
+
+    <div class="container">
+        <header>
+            <h1>Grammar Explorer</h1>
+            <div class="teacher-name">Mission Commander: Ms MS Chí Nên</div>
+        </header>
+
+        <div class="score-board">
+            <span>Tiến độ: <span style="color:#ffffff" id="current-q">0</span>/45</span>
+            <span>Năng lượng: <span style="color:#ffffff" id="score">0</span> ⚡</span>
+        </div>
+
+        <div id="quiz-container"></div>
+
+        <button class="submit-btn" onclick="showResults()">KẾT THÚC HÀNH TRÌNH 🚀</button>
+    </div>
+
+    <div id="popup">
+        <div class="popup-content">
+            <h2>Chinh Phục Vũ Trụ! 🌌</h2>
+            <p>Điểm của bạn: <span id="final-score"></span>/45</p>
+            <div id="feedback-msg" style="font-size: 1.4rem; margin: 20px 0; color: #e0e0e0; font-weight: bold; line-height: 1.6;"></div>
+            <button class="popup-btn" onclick="location.reload()">Bay Thêm Chuyến Nữa!</button>
+        </div>
+    </div>
+
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playDing() { 
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(2000, audioCtx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+}
+
+function playBuzz() { 
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+}
+
+function createConfetti() {
+    const colors = ['#00ffcc', '#ff007f', '#7000ff', '#ffffff', '#ffff00'];
+    for(let i=0; i<50; i++) {
+        const conf = document.createElement('div');
+        conf.classList.add('confetti');
+        conf.style.left = Math.random() * 100 + 'vw';
+        conf.style.top = '50vh'; 
+        conf.style.color = colors[Math.floor(Math.random() * colors.length)];
+        conf.style.backgroundColor = 'currentColor';
+        document.body.appendChild(conf);
+        
+        let angle = Math.random() * Math.PI * 2;
+        let speed = Math.random() * 15 + 5;
+        let x = Math.cos(angle) * speed;
+        let y = Math.sin(angle) * speed;
+        
+        const anim = setInterval(() => {
+            let currentTop = parseFloat(conf.style.top);
+            let currentLeft = parseFloat(conf.style.left);
+            conf.style.top = (currentTop + y) + 'vh';
+            conf.style.left = (currentLeft + x) + 'vw';
+            y += 0.2; 
+            if(currentTop > 100 || currentTop < -10 || currentLeft > 100 || currentLeft < -10) {
+                clearInterval(anim); conf.remove();
+            }
+        }, 20);
+    }
+}
+
+const bgIcons = ['🚀', '🛸', '🌍', '⭐', '🌙', '🪐', '☄️', '🌌'];
+const bgContainer = document.getElementById('floatingBg');
+for(let i=0; i<25; i++) {
+    const icon = document.createElement('div');
+    icon.classList.add('floating-icon');
+    icon.innerText = bgIcons[Math.floor(Math.random() * bgIcons.length)];
+    icon.style.left = Math.random() * 100 + 'vw';
+    icon.style.animationDuration = (Math.random() * 25 + 15) + 's';
+    icon.style.animationDelay = (Math.random() * -30) + 's';
+    bgContainer.appendChild(icon);
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+const quizData = [
+    // ================= BÀI 8 =================
+    {
+        part: "Exercise 8: Choose the best answer",
+        q: "This is _______ smart vehicle; _______ is over there.",
+        opts: [
+            { text: "her - ours", isCorrect: true },
+            { text: "hers - our", isCorrect: false },
+            { text: "her - our", isCorrect: false },
+            { text: "hers - ours", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Đây là phương tiện thông minh của cô ấy; cái của chúng tôi thì ở đằng kia.<br>
+        <b>2. Phân tích 4 đáp án:</b> A. Tính từ sở hữu(TTSH) - Đại từ sở hữu(ĐTSH) | B. ĐTSH - TTSH | C. TTSH - TTSH | D. ĐTSH - ĐTSH.<br>
+        <b>3. Tại sao đúng:</b> Vế 1 trước danh từ "vehicle" cần TTSH (her). Vế 2 đứng 1 mình làm chủ ngữ cần ĐTSH thay thế (ours).<br>
+        <b>4. Tại sao sai:</b> Lỗi đảo lộn vị trí giữa TTSH (phải đi kèm danh từ) và ĐTSH (đứng độc lập).`
+    },
+    {
+        q: "I believe means of transport in the future _______ petrol.",
+        opts: [
+            { text: "won't use", isCorrect: true },
+            { text: "don't use", isCorrect: false },
+            { text: "aren't using", isCorrect: false },
+            { text: "won't be using", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Tôi tin rằng các phương tiện trong tương lai sẽ không dùng xăng.<br>
+        <b>2. Phân tích:</b> A. Tương lai đơn | B. Hiện tại đơn | C. Hiện tại tiếp diễn | D. Tương lai tiếp diễn.<br>
+        <b>3. Tại sao đúng:</b> Dấu hiệu "in the future" và động từ "believe" chỉ dự đoán -> Tương lai đơn (won't use).<br>
+        <b>4. Tại sao sai:</b> A và B sai thì. D thường đi với giờ giấc cụ thể ở tương lai.`
+    },
+    {
+        q: "I'll come and see you before I _______ for the States.",
+        opts: [
+            { text: "leave", isCorrect: true },
+            { text: "will leave", isCorrect: false },
+            { text: "have left", isCorrect: false },
+            { text: "shall leave", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Tôi sẽ đến thăm bạn trước khi tôi đi Mỹ.<br>
+        <b>2. Phân tích:</b> Có liên từ thời gian "before".<br>
+        <b>3. Tại sao đúng:</b> QUY TẮC VÀNG: Trong mệnh đề thời gian (chứa before, after, when...), tuyệt đối KHÔNG DÙNG tương lai, chỉ dùng thì Hiện tại đơn -> leave.<br>
+        <b>4. Tại sao sai:</b> Bẫy "I'll come" ở vế trước làm nhiều bạn thuận miệng chọn "will leave".`
+    },
+    {
+        q: "At this time next month, we _______ the new safety system.",
+        opts: [
+            { text: "will be testing", isCorrect: true },
+            { text: "will test", isCorrect: false },
+            { text: "will be test", isCorrect: false },
+            { text: "will be tested", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Vào thời điểm này tháng sau, chúng tôi sẽ đang thử nghiệm hệ thống mới.<br>
+        <b>2. Phân tích:</b> Dấu hiệu "At this time next month" (Một thời điểm CỤ THỂ ở tương lai).<br>
+        <b>3. Tại sao đúng:</b> Cấu trúc Tương lai tiếp diễn (will be + V-ing) diễn tả hành động đang xảy ra tại 1 thời điểm xác định ở tương lai.<br>
+        <b>4. Tại sao sai:</b> "will test" dùng cho mốc tương lai chung chung. Các đáp án khác sai ngữ pháp cơ bản.`
+    },
+    {
+        q: "John loves Julie but does Julie love _______?",
+        opts: [
+            { text: "him", isCorrect: true },
+            { text: "he", isCorrect: false },
+            { text: "his", isCorrect: false },
+            { text: "he's", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> John yêu Julie nhưng Julie có yêu anh ấy không?<br>
+        <b>2. Phân tích:</b> Chỗ trống đứng sau động từ thường "love", làm Tân ngữ nhận hành động.<br>
+        <b>3. Tại sao đúng:</b> Đại từ tân ngữ của "He" là "him".<br>
+        <b>4. Tại sao sai:</b> "he" làm chủ ngữ đứng đầu câu. "his" là tính từ sở hữu.`
+    },
+    {
+        q: "He will take the dog out for a walk as soon as he _______ dinner.",
+        opts: [
+            { text: "finishes", isCorrect: true },
+            { text: "finished", isCorrect: false },
+            { text: "will finish", isCorrect: false },
+            { text: "finishing", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Anh ấy sẽ dắt chó đi dạo ngay sau khi ăn tối xong.<br>
+        <b>2. Phân tích:</b> Mệnh đề thời gian với "as soon as" (ngay khi).<br>
+        <b>3. Tại sao đúng:</b> Vế chính (Tương lai đơn) + as soon as + Vế phụ (Hiện tại đơn). Động từ "finish" chia theo he -> finishes.<br>
+        <b>4. Tại sao sai:</b> Lại là bẫy dùng "will" trong mệnh đề chỉ thời gian.`
+    },
+    {
+        q: "My friends and I are going to see the match. Would you like to come with _______?",
+        opts: [
+            { text: "us", isCorrect: true },
+            { text: "we", isCorrect: false },
+            { text: "our", isCorrect: false },
+            { text: "ours", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Bạn bè và tôi sẽ đi xem trận đấu. Bạn có muốn đi cùng chúng tôi không?<br>
+        <b>2. Phân tích:</b> Đứng sau giới từ "with" cần Tân ngữ. (My friends and I = We).<br>
+        <b>3. Tại sao đúng:</b> Đại từ tân ngữ của We là "us" (come with us).<br>
+        <b>4. Tại sao sai:</b> we (Chủ ngữ), our (Tính từ sở hữu), ours (Đại từ sở hữu) đều không đứng ngay sau giới từ trong ngữ cảnh này.`
+    },
+    {
+        q: "I _______ the parcel until I hear from you.",
+        opts: [
+            { text: "won't send", isCorrect: true },
+            { text: "don't send", isCorrect: false },
+            { text: "am not sending", isCorrect: false },
+            { text: "didn't send", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Tôi sẽ không gửi bưu kiện cho đến khi tôi nghe tin từ bạn.<br>
+        <b>2. Phân tích:</b> Cấu trúc "until" kết hợp vế sau là Hiện tại đơn (hear).<br>
+        <b>3. Tại sao đúng:</b> Mệnh đề chính lùi về Tương lai đơn -> won't send. (Sẽ không làm gì cho đến khi...).<br>
+        <b>4. Tại sao sai:</b> Các thì Hiện tại/Quá khứ ở mệnh đề chính đều sai logic với vế phụ tương lai.`
+    },
+    {
+        q: "I think we _______ have flying cars very soon.",
+        opts: [
+            { text: "will", isCorrect: true },
+            { text: "may", isCorrect: false },
+            { text: "might", isCorrect: false },
+            { text: "would", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Tôi nghĩ chúng ta sẽ sớm có ô tô bay.<br>
+        <b>2. Phân tích:</b> Có "I think" (dự đoán) và "very soon" (tương lai).<br>
+        <b>3. Tại sao đúng:</b> Tương lai đơn "will" đi kèm các cụm từ bày tỏ quan điểm như think, hope, believe...<br>
+        <b>4. Tại sao sai:</b> may/might chỉ khả năng yếu. would dùng cho quá khứ hoặc câu điều kiện.`
+    },
+    {
+        q: "With some special electrical devices, you disappear at a place, and then _______ in another place seconds later.",
+        opts: [
+            { text: "reappear", isCorrect: true },
+            { text: "appears", isCorrect: false },
+            { text: "appeared", isCorrect: false },
+            { text: "reappears", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Với thiết bị đặc biệt, bạn biến mất ở 1 nơi, rồi xuất hiện lại ở nơi khác vài giây sau.<br>
+        <b>2. Phân tích:</b> Động từ cần nối với vế trước "you disappear" qua liên từ "and".<br>
+        <b>3. Tại sao đúng:</b> Chủ ngữ là "you", động từ để nguyên thể -> reappear (có tiền tố re- mang nghĩa lặp lại, cực chuẩn logic).<br>
+        <b>4. Tại sao sai:</b> Thêm 's' là sai do chủ ngữ là 'you'.`
+    },
+    {
+        q: "This is Mary's coat, and those trousers are _______, too.",
+        opts: [
+            { text: "hers", isCorrect: true },
+            { text: "her", isCorrect: false },
+            { text: "our", isCorrect: false },
+            { text: "their", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Đây là áo của Mary, và mấy cái quần kia cũng là của cô ấy.<br>
+        <b>2. Phân tích:</b> Không có danh từ đứng sau chỗ trống.<br>
+        <b>3. Tại sao đúng:</b> Cần Đại từ sở hữu thay thế cho "her trousers" -> hers.<br>
+        <b>4. Tại sao sai:</b> her, our, their bắt buộc phải kẹp với danh từ mới có nghĩa.`
+    },
+    {
+        q: "Don't talk to me. I _______ to learn this page by heart.",
+        opts: [
+            { text: "am trying", isCorrect: true },
+            { text: "try", isCorrect: false },
+            { text: "will might try", isCorrect: false },
+            { text: "have tried", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Đừng nói chuyện với tôi. Tôi đang cố học thuộc trang này.<br>
+        <b>2. Phân tích:</b> Câu mệnh lệnh mở đầu "Don't talk" -> dấu hiệu sự việc đang diễn ra lúc nói.<br>
+        <b>3. Tại sao đúng:</b> Hiện tại tiếp diễn (am trying) chuẩn xác tuyệt đối.<br>
+        <b>4. Tại sao sai:</b> Hiện tại đơn chỉ thói quen. Các thì khác sai ngữ cảnh.`
+    },
+    {
+        q: "He _______ get up early when he worked for the previous company.",
+        opts: [
+            { text: "used to", isCorrect: true },
+            { text: "will", isCorrect: false },
+            { text: "get used to", isCorrect: false },
+            { text: "shall", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Anh ấy từng thức dậy sớm khi làm cho công ty cũ.<br>
+        <b>2. Phân tích:</b> Cấu trúc thói quen trong quá khứ nay không còn nữa.<br>
+        <b>3. Tại sao đúng:</b> used to + V (nguyên thể).<br>
+        <b>4. Tại sao sai:</b> get used to + V-ing (quen với việc gì). will/shall sai thì.`
+    },
+    {
+        q: "Which _______ of transport do you think will be used in the future?",
+        opts: [
+            { text: "means", isCorrect: true },
+            { text: "mean", isCorrect: false },
+            { text: "meaning", isCorrect: false },
+            { text: "meanings", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> Bạn nghĩ loại phương tiện giao thông nào sẽ được dùng trong tương lai?<br>
+        <b>2. Phân tích:</b> Cụm từ vựng cố định "phương tiện giao thông".<br>
+        <b>3. Tại sao đúng:</b> "means of transport" (chữ means luôn có 's' dù số ít hay số nhiều).<br>
+        <b>4. Tại sao sai:</b> mean (động từ), meaning (ý nghĩa).`
+    },
+    {
+        q: "- Good afternoon. Can I help you? - Yes. I _______ my watch to you for repair three weeks ago.",
+        opts: [
+            { text: "brought", isCorrect: true },
+            { text: "have brought", isCorrect: false },
+            { text: "bring", isCorrect: false },
+            { text: "will bring", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch câu hỏi:</b> ...Tôi đã mang đồng hồ đến sửa cách đây 3 tuần.<br>
+        <b>2. Phân tích:</b> Có "three weeks ago" (xác định rõ thời gian trong quá khứ).<br>
+        <b>3. Tại sao đúng:</b> Dùng Quá khứ đơn (V2 của bring là brought).<br>
+        <b>4. Tại sao sai:</b> Hiện tại hoàn thành (have brought) không dùng chung với từ "ago".`
+    },
+
+    // ================= BÀI 9: TÌM LỖI SAI (Đã xóa gạch chân) =================
+    {
+        part: "Exercise 9: Find and correct the mistakes",
+        q: "Lỗi sai ở đâu? It take me 45 minutes to go to school every day.",
+        opts: [
+            { text: "take (Sửa thành: takes)", isCorrect: true },
+            { text: "me (Sửa thành: I)", isCorrect: false },
+            { text: "to go (Sửa thành: going)", isCorrect: false },
+            { text: "every day (Sửa thành: everyday)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Tôi mất 45 phút đi học mỗi ngày.<br>
+        <b>2. Phân tích:</b> Cấu trúc "It takes sb + time + to V".<br>
+        <b>3. Tại sao đúng:</b> Chủ ngữ "It" là số ít, động từ ở thì HTĐ phải thêm 's' -> <b>takes</b>.<br>
+        <b>4. Bẫy:</b> Cứ ngỡ câu đã đúng mà quên để ý thì hiện tại đơn với chủ ngữ số ít.`
+    },
+    {
+        q: "Lỗi sai ở đâu? He lives very far from school but he never is late for class.",
+        opts: [
+            { text: "never is (Sửa thành: is never)", isCorrect: true },
+            { text: "lives (Sửa thành: live)", isCorrect: false },
+            { text: "far from (Sửa thành: near)", isCorrect: false },
+            { text: "for (Sửa thành: to)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Cậu ấy sống rất xa trường nhưng không bao giờ đi học muộn.<br>
+        <b>2. Phân tích:</b> Vị trí trạng từ tần suất: Đứng SAU động từ To-be.<br>
+        <b>3. Tại sao đúng:</b> Phải đảo lại thành "is never".<br>
+        <b>4. Bẫy:</b> Dịch tiếng Việt "không bao giờ (never) bị (is)" nghe rất xuôi tai nên dễ chọn sai.`
+    },
+    {
+        q: "Lỗi sai ở đâu? I will believe that she will pass the exam.",
+        opts: [
+            { text: "will believe (Sửa thành: believe)", isCorrect: true },
+            { text: "that (Sửa thành: which)", isCorrect: false },
+            { text: "will pass (Sửa thành: would pass)", isCorrect: false },
+            { text: "the exam (Sửa thành: a exam)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Tôi tin rằng cô ấy sẽ qua môn.<br>
+        <b>2. Phân tích:</b> Các động từ quan điểm (think, believe, hope) khi dẫn dắt mệnh đề tương lai thì bản thân nó luôn chia ở Hiện tại đơn.<br>
+        <b>3. Tại sao đúng:</b> Bỏ chữ "will" đi -> "I believe".<br>
+        <b>4. Bẫy:</b> Tưởng rằng 2 sự việc đều ở tương lai nên dùng 2 chữ will.`
+    },
+    {
+        q: "Lỗi sai ở đâu? They'll ring me as soon as they got home.",
+        opts: [
+            { text: "got (Sửa thành: get)", isCorrect: true },
+            { text: "ring (Sửa thành: rings)", isCorrect: false },
+            { text: "as soon as (Sửa thành: before)", isCorrect: false },
+            { text: "home (Sửa thành: to home)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Họ sẽ gọi cho tôi ngay khi họ về đến nhà.<br>
+        <b>2. Phân tích:</b> Cấu trúc as soon as nối tương lai đơn và HTĐ.<br>
+        <b>3. Tại sao đúng:</b> Không dùng Quá khứ đơn (got), đổi về nguyên thể <b>get</b>.<br>
+        <b>4. Bẫy:</b> home không đi kèm giới từ to.`
+    },
+    {
+        q: "Lỗi sai ở đâu? I will finish my homework before I will go to bed.",
+        opts: [
+            { text: "will go (Sửa thành: go)", isCorrect: true },
+            { text: "will finish (Sửa thành: finish)", isCorrect: false },
+            { text: "before (Sửa thành: after)", isCorrect: false },
+            { text: "to bed (Sửa thành: bed)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Tôi sẽ làm bài xong trước khi đi ngủ.<br>
+        <b>2. Phân tích:</b> Lại là mệnh đề thời gian (before).<br>
+        <b>3. Tại sao đúng:</b> Tuyệt đối KHÔNG DÙNG WILL trong vế sau before. Sửa thành -> <b>go</b>.<br>
+        <b>4. Bẫy:</b> Lỗi kinh điển khi dịch tiếng Việt (sẽ làm... trước khi SẼ ngủ).`
+    },
+    {
+        q: "Lỗi sai ở đâu? Did he met her in the street a moment ago?",
+        opts: [
+            { text: "met (Sửa thành: meet)", isCorrect: true },
+            { text: "Did (Sửa thành: Does)", isCorrect: false },
+            { text: "in (Sửa thành: on)", isCorrect: false },
+            { text: "ago (Sửa thành: before)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Anh ấy có gặp cô ấy trên phố lúc nãy không?<br>
+        <b>2. Phân tích:</b> Câu hỏi Quá khứ đơn đã mượn trợ động từ "Did".<br>
+        <b>3. Tại sao đúng:</b> Đã có Did thì động từ chính phải về Nguyên Thể. Sửa "met" thành <b>meet</b>.<br>
+        <b>4. Bẫy:</b> Chia động từ tận 2 lần (lỗi phổ biến ở người mới học).`
+    },
+    {
+        q: "Lỗi sai ở đâu? This is Mr. and Mrs. Nathan's family and these are theirs children.",
+        opts: [
+            { text: "theirs (Sửa thành: their)", isCorrect: true },
+            { text: "is (Sửa thành: are)", isCorrect: false },
+            { text: "these (Sửa thành: this)", isCorrect: false },
+            { text: "children (Sửa thành: childs)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Đây là gia đình nhà Nathan và đây là các con của họ.<br>
+        <b>2. Phân tích:</b> Đứng trước danh từ "children".<br>
+        <b>3. Tại sao đúng:</b> Phải dùng Tính từ sở hữu (their) chứ không dùng Đại từ sở hữu (theirs).<br>
+        <b>4. Bẫy:</b> Nhầm lẫn giữa 2 dạng sở hữu có "s" và không có "s".`
+    },
+    {
+        q: "Lỗi sai ở đâu? My brother will open the fridge as well as he arrives home.",
+        opts: [
+            { text: "as well as (Sửa thành: as soon as)", isCorrect: true },
+            { text: "will open (Sửa thành: opens)", isCorrect: false },
+            { text: "arrives (Sửa thành: arrive)", isCorrect: false },
+            { text: "home (Sửa thành: to home)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Em trai tôi sẽ mở tủ lạnh ngay khi về đến nhà.<br>
+        <b>2. Phân tích:</b> "as well as" nghĩa là (cũng như), "as soon as" là (ngay khi).<br>
+        <b>3. Tại sao đúng:</b> Sai từ vựng liên từ. Sửa thành cụm chỉ thời gian <b>as soon as</b> mới hợp logic.<br>
+        <b>4. Bẫy:</b> Lỗi nhầm lẫn mặt chữ do đọc lướt nhanh.`
+    },
+    {
+        q: "Lỗi sai ở đâu? My suitcase is on the ground and her is on the chair.",
+        opts: [
+            { text: "her (Sửa thành: hers)", isCorrect: true },
+            { text: "suitcase (Sửa thành: suitcases)", isCorrect: false },
+            { text: "on (Sửa thành: in)", isCorrect: false },
+            { text: "is (Sửa thành: are)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Vali của tôi ở trên đất còn của cô ấy ở trên ghế.<br>
+        <b>2. Phân tích:</b> Vế sau đóng vai trò Chủ ngữ, KHÔNG CÓ danh từ kẹp cùng.<br>
+        <b>3. Tại sao đúng:</b> Cần dùng Đại từ sở hữu thay thế cho "her suitcase" -> <b>hers</b>.<br>
+        <b>4. Bẫy:</b> Dùng "her" đứng bơ vơ làm chủ ngữ là sai nguyên tắc ngữ pháp.`
+    },
+    {
+        q: "Lỗi sai ở đâu? My father will teach mine how to swim when I grow up.",
+        opts: [
+            { text: "mine (Sửa thành: me)", isCorrect: true },
+            { text: "will teach (Sửa thành: teaches)", isCorrect: false },
+            { text: "how (Sửa thành: what)", isCorrect: false },
+            { text: "grow (Sửa thành: grew)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Bố tôi sẽ dạy tôi bơi khi tôi lớn.<br>
+        <b>2. Phân tích:</b> "teach sb" (Dạy ai đó). Cần một Tân ngữ chỉ người.<br>
+        <b>3. Tại sao đúng:</b> "mine" là ĐTSH (cái của tôi). Sửa thành <b>me</b> (tôi).<br>
+        <b>4. Bẫy:</b> Dùng sai loại từ (Tân ngữ vs Đại từ sở hữu).`
+    },
+    {
+        q: "Lỗi sai ở đâu? Do you have a minute? I'd like telling to you about something.",
+        opts: [
+            { text: "telling (Sửa thành: to tell)", isCorrect: true },
+            { text: "have (Sửa thành: has)", isCorrect: false },
+            { text: "to you (Sửa thành: you)", isCorrect: false },
+            { text: "about (Sửa thành: on)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Bạn rảnh 1 phút không? Tôi muốn nói với bạn chuyện này.<br>
+        <b>2. Phân tích:</b> Cấu trúc "would like" (I'd like).<br>
+        <b>3. Tại sao đúng:</b> would like + TO V. Sửa telling thành <b>to tell</b>.<br>
+        <b>4. Bẫy:</b> Nếu chỉ có "like" thì cộng V-ing được, nhưng có "would like" thì bắt buộc To V.`
+    },
+    {
+        q: "Lỗi sai ở đâu? She won't enjoy the trip untill you tell her what happened last week.",
+        opts: [
+            { text: "untill (Sửa thành: until)", isCorrect: true },
+            { text: "won't enjoy (Sửa thành: don't enjoy)", isCorrect: false },
+            { text: "tell (Sửa thành: telling)", isCorrect: false },
+            { text: "happened (Sửa thành: happen)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Cô ấy sẽ không thích chuyến đi cho tới khi bạn kể cô ấy nghe chuyện gì đã xảy ra.<br>
+        <b>2. Phân tích:</b> Lỗi chính tả cơ bản.<br>
+        <b>3. Tại sao đúng:</b> Từ <b>until</b> trong tiếng Anh chỉ có 1 chữ 'l'. (Till thì có 2 chữ l).<br>
+        <b>4. Bẫy:</b> Lỗi chính tả kinh điển học sinh rất hay mắc phải.`
+    },
+    {
+        q: "Lỗi sai ở đâu? Will we be travelled in driverless and high-speed cars in the future?",
+        opts: [
+            { text: "be travelled (Sửa thành: travel)", isCorrect: true },
+            { text: "in (Sửa thành: on)", isCorrect: false },
+            { text: "driverless (Sửa thành: driver)", isCorrect: false },
+            { text: "cars (Sửa thành: car)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Chúng ta sẽ đi lại bằng xe không người lái trong tương lai chứ?<br>
+        <b>2. Phân tích:</b> Chủ ngữ "we" (chúng ta) là người chủ động thực hiện hành vi di chuyển.<br>
+        <b>3. Tại sao đúng:</b> Không dùng thể bị động (be + V-ed) ở đây. Câu hỏi Tương lai đơn chủ động: Will we + V nguyên thể -> <b>travel</b>.<br>
+        <b>4. Bẫy:</b> Lạm dụng bị động sai logic.`
+    },
+    {
+        q: "Lỗi sai ở đâu? It probably will rain when you get back tonight.",
+        opts: [
+            { text: "probably will (Sửa thành: will probably)", isCorrect: true },
+            { text: "rain (Sửa thành: rains)", isCorrect: false },
+            { text: "when (Sửa thành: if)", isCorrect: false },
+            { text: "get (Sửa thành: getting)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Trời có lẽ sẽ mưa khi bạn về tối nay.<br>
+        <b>2. Phân tích:</b> Vị trí trạng từ chỉ mức độ (probably).<br>
+        <b>3. Tại sao đúng:</b> "probably" thường đứng SAU trợ động từ "will" trong câu khẳng định -> <b>will probably</b>.<br>
+        <b>4. Bẫy:</b> Đảo lộn trật tự từ so với văn phong người bản xứ.`
+    },
+    {
+        q: "Lỗi sai ở đâu? Your shoes will ready in twenty minutes.",
+        opts: [
+            { text: "will ready (Sửa thành: will be ready)", isCorrect: true },
+            { text: "shoes (Sửa thành: shoe)", isCorrect: false },
+            { text: "in (Sửa thành: at)", isCorrect: false },
+            { text: "minutes (Sửa thành: minute)", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Giày của bạn sẽ sẵn sàng trong 20 phút nữa.<br>
+        <b>2. Phân tích:</b> "ready" là một tính từ (Adjective), không phải động từ.<br>
+        <b>3. Tại sao đúng:</b> Sau "will" bắt buộc phải có Động từ. Để đi cùng tính từ, ta phải dùng động từ nối to-be -> <b>will be ready</b>.<br>
+        <b>4. Bẫy:</b> Quên mất từ loại của "ready".`
+    },
+
+    // ================= BÀI 10: VIẾT LẠI CÂU =================
+    {
+        part: "Exercise 10: Rewrite the sentences",
+        q: "My bike is black. (MINE)",
+        opts: [
+            { text: "The black bike is mine.", isCorrect: true },
+            { text: "Mine bike is black.", isCorrect: false },
+            { text: "The black bike is my.", isCorrect: false },
+            { text: "My bike is mine black.", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Xe đạp của tôi màu đen. -> Chiếc xe đen đó là của tôi.<br>
+        <b>2. Phân tích cấu trúc:</b> (Sở hữu) + Noun + is + Adj => The + Adj + Noun + is + Đại từ sở hữu.<br>
+        <b>3. Tại sao đúng:</b> Đẩy tính từ "black" lên trước danh từ, và chuyển "My" thành Đại từ sở hữu "mine" ở cuối câu.<br>
+        <b>4. Bẫy:</b> Mine không đứng trước danh từ (Mine bike là sai hoàn toàn).`
+    },
+    {
+        q: "She has a new skateboard. (HERS)",
+        opts: [
+            { text: "The new skateboard is hers.", isCorrect: true },
+            { text: "Hers has a new skateboard.", isCorrect: false },
+            { text: "The new skateboard is her.", isCorrect: false },
+            { text: "She has hers new skateboard.", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Cô ấy có một ván trượt mới. -> Chiếc ván mới đó là của cô ấy.<br>
+        <b>2. Phân tích:</b> S + has + Adj + Noun => The + Adj + Noun + is + Đại từ sở hữu.<br>
+        <b>3. Tại sao đúng:</b> Chuyển đại từ "She" sang sở hữu ở cuối câu là "hers".<br>
+        <b>4. Bẫy:</b> C thiếu "s" ở her. B và D dùng hers sai vị trí ngữ pháp.`
+    },
+    {
+        q: "I promise to phone you next week. (WILL)",
+        opts: [
+            { text: "I promise I will phone you next week.", isCorrect: true },
+            { text: "I will promise to phone you next week.", isCorrect: false },
+            { text: "I promise will phone you next week.", isCorrect: false },
+            { text: "I will phone you promise next week.", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Tôi hứa sẽ gọi cho bạn tuần sau.<br>
+        <b>2. Phân tích:</b> Đề yêu cầu chèn thêm chữ "will".<br>
+        <b>3. Tại sao đúng:</b> Cấu trúc I promise + S + will + V (Mệnh đề chỉ sự hứa hẹn). Thêm chủ ngữ I và will vào trước động từ chính.<br>
+        <b>4. Bẫy:</b> Đặt "will" sai vị trí trước chữ "promise".`
+    },
+    {
+        q: "Why don't we go and see a film tonight? (SHALL)",
+        opts: [
+            { text: "Shall we go and see a film tonight?", isCorrect: true },
+            { text: "Why don't shall we go and see a film tonight?", isCorrect: false },
+            { text: "Shall we going and see a film tonight?", isCorrect: false },
+            { text: "We shall go and see a film tonight?", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Tại sao chúng ta không đi xem phim tối nay nhỉ? -> Chúng ta cùng đi xem phim nhé?<br>
+        <b>2. Phân tích:</b> Cấu trúc đề xuất "Why don't we + V" = "Shall we + V?".<br>
+        <b>3. Tại sao đúng:</b> Thay thế cụm Why don't we bằng Shall we, động từ giữ nguyên.<br>
+        <b>4. Bẫy:</b> Dùng Shall we + V-ing là sai. Không đảo chữ Shall lên đầu (D) là sai loại câu hỏi.`
+    },
+    {
+        q: "Who does this bag belong to? (WHOSE)",
+        opts: [
+            { text: "Whose bag is this?", isCorrect: true },
+            { text: "Whose does this bag belong to?", isCorrect: false },
+            { text: "Whose is this bag belong?", isCorrect: false },
+            { text: "Who whose bag is this?", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Chiếc túi này thuộc về ai? -> Chiếc túi này của ai?<br>
+        <b>2. Phân tích:</b> Cấu trúc hỏi quyền sở hữu: Who... belong to? = Whose + Noun + is/are + Subject?<br>
+        <b>3. Tại sao đúng:</b> Kẹp ngay danh từ "bag" ra sau "Whose", cộng động từ tobe is this.<br>
+        <b>4. Bẫy:</b> Giữ nguyên các chữ "belong to" hoặc "does" khiến câu bị lủng củng ngữ pháp.`
+    },
+    {
+        q: "The train won't run because of the snow. (WILL PREVENT)",
+        opts: [
+            { text: "The snow will prevent the train from running.", isCorrect: true },
+            { text: "The snow will prevent the train run.", isCorrect: false },
+            { text: "The snow will prevent the train to run.", isCorrect: false },
+            { text: "Will prevent the snow the train from running.", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Tàu sẽ không chạy vì tuyết. -> Tuyết sẽ ngăn cản con tàu chạy.<br>
+        <b>2. Phân tích:</b> Cấu trúc siêu kinh điển: Prevent sb/sth + FROM + V-ing (Ngăn cản ai/cái gì làm gì).<br>
+        <b>3. Tại sao đúng:</b> Đưa the snow lên làm Chủ ngữ + will prevent + the train + from + running.<br>
+        <b>4. Bẫy:</b> Thiếu giới từ "from" hoặc không dùng đuôi V-ing sau giới từ.`
+    },
+    {
+        q: "This pencil belongs to my sister. (MY SISTER'S)",
+        opts: [
+            { text: "This is my sister's pencil.", isCorrect: true },
+            { text: "This pencil is my sister's pencil.", isCorrect: false },
+            { text: "My sister's is this pencil.", isCorrect: false },
+            { text: "This is pencil my sister's.", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Cây bút chì này thuộc về chị tôi. -> Đây là cây bút của chị tôi.<br>
+        <b>2. Phân tích:</b> Áp dụng "Sở hữu cách" (Possessive 's). Tên người + 's + Noun.<br>
+        <b>3. Tại sao đúng:</b> Sắp xếp theo trật tự: Chủ ngữ (This) + is + Sở hữu cách (my sister's) + Danh từ (pencil).<br>
+        <b>4. Bẫy:</b> Viết dài dòng lặp lại chữ pencil 2 lần, hoặc sai trật tự từ.`
+    },
+    {
+        q: "I hope to pass the exam. (WILL)",
+        opts: [
+            { text: "I hope I will pass the exam.", isCorrect: true },
+            { text: "I hope will pass the exam.", isCorrect: false },
+            { text: "I will hope to pass the exam.", isCorrect: false },
+            { text: "I hope I will to pass the exam.", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Tôi hy vọng đỗ kỳ thi. -> Tôi hy vọng (rằng) TÔI SẼ đỗ kỳ thi.<br>
+        <b>2. Phân tích:</b> Cấu trúc I hope (that) + Mệnh đề tương lai (S + will + V).<br>
+        <b>3. Tại sao đúng:</b> Phải thêm chủ ngữ "I" vào vế sau để tạo thành mệnh đề hoàn chỉnh đi cùng will.<br>
+        <b>4. Bẫy:</b> Nhét will vào trước chữ hope (sai logic ý nghĩa), hoặc dùng "will to pass".`
+    },
+    {
+        q: "How about going camping this weekend? (SHALL)",
+        opts: [
+            { text: "Shall we go camping this weekend?", isCorrect: true },
+            { text: "Shall we going camping this weekend?", isCorrect: false },
+            { text: "How about shall we go camping this weekend?", isCorrect: false },
+            { text: "Shall we go to camping this weekend?", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Còn việc đi cắm trại cuối tuần này thì sao? -> Chúng ta đi cắm trại nhé?<br>
+        <b>2. Phân tích:</b> How about + V-ing = Shall we + V nguyên thể?<br>
+        <b>3. Tại sao đúng:</b> Đổi "going" thành "go". (Từ camping đóng vai trò là danh động từ đi kèm cụm go camping).<br>
+        <b>4. Bẫy:</b> Giữ nguyên V-ing sau chữ Shall là sai bét ngữ pháp cơ bản.`
+    },
+    {
+        q: "The government is very likely to propose changes to the income tax system soon. (WILL)",
+        opts: [
+            { text: "The government will propose changes to the income tax system soon.", isCorrect: true },
+            { text: "The government will likely to propose changes...", isCorrect: false },
+            { text: "The government is will propose changes...", isCorrect: false },
+            { text: "Will the government propose changes...", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Chính phủ có khả năng cao sẽ đề xuất thay đổi... -> Chính phủ SẼ đề xuất...<br>
+        <b>2. Phân tích:</b> Cụm "is very likely to V" (có khả năng rất cao sẽ làm gì) tương đương nghĩa với "will + V" diễn tả dự đoán chắc chắn.<br>
+        <b>3. Tại sao đúng:</b> Thay thế toàn bộ cụm đó bằng 1 chữ "will" + V(propose).<br>
+        <b>4. Bẫy:</b> Giữ lại các chữ thừa như "is", "likely to" đi cùng will.`
+    },
+    {
+        q: "You can trust me to go home before 10. (I WILL)",
+        opts: [
+            { text: "I promise I will go home before 10.", isCorrect: true },
+            { text: "I will trust me to go home before 10.", isCorrect: false },
+            { text: "You can trust I will go home before 10.", isCorrect: false },
+            { text: "I will go home before 10 promise.", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Bạn có thể tin tôi sẽ về nhà trước 10h. -> Tôi hứa tôi sẽ về nhà trước 10h.<br>
+        <b>2. Phân tích:</b> Dựa theo Key gốc giáo viên, ý nghĩa "trust me to do sth" ngầm chứa một lời hứa. Cấu trúc: I promise I will...<br>
+        <b>3. Tại sao đúng:</b> Chuyển đổi ý nghĩa linh hoạt, dùng "I promise" dẫn dắt mệnh đề "I will...".<br>
+        <b>4. Bẫy:</b> Ghép chữ thô cứng mà không lột tả được ý "Hứa hẹn" theo chuẩn key.`
+    },
+    {
+        q: "She is not sure about the starting time of the new course. (WHEN THE NEW COURSE WILL)",
+        opts: [
+            { text: "She is not sure when the new course will start.", isCorrect: true },
+            { text: "She is not sure when the new course will starting.", isCorrect: false },
+            { text: "She is not sure about when the new course will start.", isCorrect: false },
+            { text: "When the new course will start she is not sure.", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Cô ấy không chắc về thời gian bắt đầu của khoá học mới. -> Cô ấy không chắc KHI NÀO khoá học mới sẽ bắt đầu.<br>
+        <b>2. Phân tích:</b> Biến đổi cụm Danh từ (starting time) thành Mệnh đề phụ danh ngữ (When + S + V).<br>
+        <b>3. Tại sao đúng:</b> "When" đóng vai trò từ nối + S(the new course) + will + V(start).<br>
+        <b>4. Bẫy:</b> Giữ lại giới từ "about", hoặc chia sai động từ sau will (starting).`
+    },
+    {
+        q: "What about buying some furniture for the house? (SHALL)",
+        opts: [
+            { text: "Shall we buy some furniture for the house?", isCorrect: true },
+            { text: "Shall we buying some furniture for the house?", isCorrect: false },
+            { text: "What about shall we buy some furniture...", isCorrect: false },
+            { text: "Shall we to buy some furniture...", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Còn việc mua chút nội thất cho ngôi nhà thì sao? -> Chúng ta mua nội thất nhé?<br>
+        <b>2. Phân tích:</b> Tương tự câu 9, What about + V-ing = Shall we + V nguyên thể.<br>
+        <b>3. Tại sao đúng:</b> Thay "What about" bằng "Shall we" và đổi "buying" thành "buy".<br>
+        <b>4. Bẫy:</b> Quên không lùi V-ing về V nguyên thể sau trợ động từ khuyết thiếu.`
+    },
+    {
+        q: "Should you know Japanese, you will understand what I mean. (IF)",
+        opts: [
+            { text: "If you know Japanese, you will understand what I mean.", isCorrect: true },
+            { text: "If should you know Japanese, you will...", isCorrect: false },
+            { text: "If you knew Japanese, you will...", isCorrect: false },
+            { text: "If you know Japanese, you would understand...", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Nếu bạn biết tiếng Nhật, bạn sẽ hiểu ý tôi.<br>
+        <b>2. Phân tích:</b> Câu gốc đang sử dụng cấu trúc "Đảo ngữ Câu điều kiện loại 1" (Should + S + V...). Đề bắt đưa về câu điều kiện If bình thường.<br>
+        <b>3. Tại sao đúng:</b> Đổi Should thành If, mệnh đề chia Hiện tại đơn bình thường (If + S + V_htđ), vế sau giữ nguyên.<br>
+        <b>4. Bẫy:</b> Lùi thì sai thành câu đk loại 2 (knew / would), hoặc giữ nguyên chữ should.`
+    },
+    {
+        q: "Shall we go out for a walk? (LET'S)",
+        opts: [
+            { text: "Let's go out for a walk!", isCorrect: true },
+            { text: "Let's we go out for a walk!", isCorrect: false },
+            { text: "Let's going out for a walk!", isCorrect: false },
+            { text: "Shall let's go out for a walk?", isCorrect: false }
+        ],
+        exp: `<b>1. Dịch:</b> Chúng ta đi dạo nhé? -> Hãy đi dạo nào!<br>
+        <b>2. Phân tích:</b> Chuyển từ Câu hỏi đề xuất (Shall we) sang Câu mệnh lệnh rủ rê (Let's + V nguyên thể).<br>
+        <b>3. Tại sao đúng:</b> Dùng "Let's" thay thế "Shall we", giữ nguyên động từ "go out". Chú ý dùng dấu chấm than (!) thay vì dấu hỏi (?).<br>
+        <b>4. Bẫy:</b> Dùng "Let's we" (sai vì Let's = Let us rồi), hoặc dùng đuôi V-ing.`
+    }
+];
+
+let currentScore = 0;
+let answeredQuestions = new Set();
+const quizContainer = document.getElementById('quiz-container');
+
+function renderQuiz() {
+    let currentPart = "";
+    
+    quizData.forEach((item, index) => {
+        if (item.part && item.part !== currentPart) {
+            const partEl = document.createElement('div');
+            partEl.className = 'part-title';
+            partEl.innerText = item.part;
+            quizContainer.appendChild(partEl);
+            currentPart = item.part;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = `q-card-${index}`;
+
+        const qTitle = document.createElement('div');
+        qTitle.className = 'question-title';
+        qTitle.innerHTML = `<strong>${index + 1}.</strong> ${item.q}`;
+        card.appendChild(qTitle);
+
+        const optionsGrid = document.createElement('div');
+        optionsGrid.className = 'options-grid';
+
+        const shuffledOpts = shuffleArray([...item.opts]);
+        const letters = ['A', 'B', 'C', 'D'];
+
+        shuffledOpts.forEach((opt, oIndex) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `<strong>${letters[oIndex]}.</strong> ${opt.text}`;
+            btn.onclick = () => handleAnswer(index, opt.isCorrect, btn, optionsGrid, item.exp);
+            optionsGrid.appendChild(btn);
+        });
+
+        card.appendChild(optionsGrid);
+
+        const expDiv = document.createElement('div');
+        expDiv.className = 'explanation';
+        expDiv.id = `exp-${index}`;
+        expDiv.innerHTML = `<h4>💡 GIẢI MÃ TÍN HIỆU:</h4><p>${item.exp}</p>`;
+        card.appendChild(expDiv);
+
+        quizContainer.appendChild(card);
+    });
+}
+
+function handleAnswer(qIndex, isCorrect, btnElement, gridElement, explanationHtml) {
+    if (answeredQuestions.has(qIndex)) return; 
+
+    answeredQuestions.add(qIndex);
+    document.getElementById('current-q').innerText = answeredQuestions.size;
+
+    const allBtns = gridElement.querySelectorAll('.option-btn');
+    allBtns.forEach(b => b.disabled = true); 
+
+    if (isCorrect) {
+        btnElement.classList.add('correct');
+        playDing();
+        createConfetti();
+        currentScore++;
+        document.getElementById('score').innerText = currentScore;
+    } else {
+        btnElement.classList.add('wrong');
+        playBuzz();
+        allBtns.forEach(b => {
+            const btnText = b.innerText.substring(3).trim();
+            const correctOpt = quizData[qIndex].opts.find(o => o.isCorrect).text;
+            if (btnText === correctOpt) {
+                b.style.border = "2px dashed #00ffcc";
+                b.style.color = "#00ffcc";
+                b.style.boxShadow = "0 0 15px rgba(0, 255, 204, 0.3) inset";
+            }
+        });
+    }
+
+    const expDiv = document.getElementById(`exp-${qIndex}`);
+    expDiv.style.display = 'block';
+}
+
+function showResults() {
+    if (answeredQuestions.size < quizData.length) {
+        alert("Khoan đã Phi hành gia! Bạn vẫn còn câu hỏi chưa khám phá hết! 🛸");
+        return;
+    }
+    document.getElementById('popup').style.display = 'flex';
+    document.getElementById('final-score').innerText = currentScore;
+    
+    let msg = "";
+    if (currentScore >= 40) msg = "Quá đỉnh! Bạn chính là Chúa Tể Dải Ngân Hà Ngữ Pháp! 👑🌌";
+    else if (currentScore >= 25) msg = "Chuyến bay rất tốt! Tàu vũ trụ của bạn bay rất xa! 🚀";
+    else msg = "Hệ thống báo lỗi năng lượng! Hãy đọc kỹ giải mã tín hiệu để bay tốt hơn lần sau! ☄️";
+    document.getElementById('feedback-msg').innerText = msg;
+    createConfetti();
+}
+
+renderQuiz();
+</script>
+</body>
+</html>

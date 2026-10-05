@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Quiz – Ms MS Chí Nên</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #0ea5e9;
+  --secondary: #6366f1;
+  --accent: #f59e0b;
+  --correct: #22c55e;
+  --wrong: #ef4444;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --card: rgba(255,255,255,0.07);
+  --radius: 16px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  background: #0f172a;
+}
+
+/* ── Animated BG ── */
+body::before {
+  content:''; position:fixed; inset:0; z-index:-2;
+  background: linear-gradient(135deg,#0f172a 0%,#1e1b4b 35%,#0c4a6e 65%,#0f172a 100%);
+  background-size:400% 400%;
+  animation: bgMove 14s ease infinite;
+}
+@keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+body::after {
+  content:''; position:fixed; inset:0; z-index:-1; opacity:.06;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Ctext y='55' font-size='38'%3E%F0%9F%9A%97%3C/text%3E%3Ctext x='95' y='120' font-size='36'%3E%E2%9C%88%EF%B8%8F%3C/text%3E%3Ctext x='20' y='175' font-size='32'%3E%F0%9F%9A%80%3C/text%3E%3Ctext x='130' y='45' font-size='30'%3E%F0%9F%A4%96%3C/text%3E%3C/svg%3E");
+  background-size:180px 180px;
+  animation: patternMove 25s linear infinite;
+}
+@keyframes patternMove{from{background-position:0 0}to{background-position:180px 180px}}
+
+/* ── HEADER ── */
+#site-header {
+  flex-shrink: 0;
+  padding: 8px 16px 6px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+}
+.header-title {
+  font-family:'Baloo 2',cursive; font-size:1.15rem;
+  background:linear-gradient(90deg,var(--primary),var(--accent));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.header-sub { font-size:.75rem; color:var(--muted); }
+.header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+/* ── TIMER ── */
+.timer-box { display:flex; align-items:center; gap:8px; }
+#timer-display {
+  font-family:'Baloo 2',cursive; font-size:1.5rem; color:var(--accent); min-width:72px; text-align:center;
+}
+#timer-display.urgent { color:#ef4444; animation:blink .7s infinite; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── SCORE BAR ── */
+#score-bar {
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; gap:24px;
+  padding:5px 16px;
+  background:rgba(255,255,255,0.03);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  font-size:.84rem;
+}
+.score-item { display:flex; align-items:center; gap:6px; font-weight:700; }
+.sdot { width:9px; height:9px; border-radius:50%; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding:7px 16px; border-radius:50px; border:none; cursor:pointer;
+  font-family:'Nunito',sans-serif; font-weight:800; font-size:.85rem;
+  transition:transform .15s, box-shadow .15s;
+  box-shadow:0 3px 10px rgba(0,0,0,.35);
+}
+.btn:hover { transform:scale(1.06); }
+.btn:active { transform:scale(.96); }
+.btn-start { background:linear-gradient(135deg,#f59e0b,#ef4444); color:#fff; }
+.btn-pause { background:linear-gradient(135deg,#6366f1,#0ea5e9); color:#fff; }
+.btn-submit { background:linear-gradient(135deg,#22c55e,#0ea5e9); color:#fff; font-size:.95rem; padding:11px 28px; }
+
+/* ── MAIN SPLIT LAYOUT ── */
+#main-split {
+  flex: 1 1 0;
+  display: flex;
+  overflow: hidden;    /* ← critical: children handle their own scroll */
+  min-height: 0;
+}
+
+/* LEFT */
+#left-panel {
+  width: 45%;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 16px 14px 24px;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+/* RIGHT */
+#right-panel {
+  width: 55%;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 16px 14px 24px;
+}
+
+/* scrollbar */
+#left-panel::-webkit-scrollbar,#right-panel::-webkit-scrollbar{width:5px}
+#left-panel::-webkit-scrollbar-thumb,#right-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
+#left-panel::-webkit-scrollbar-track,#right-panel::-webkit-scrollbar-track{background:transparent}
+
+/* ── PASSAGE BLOCK ── */
+.pass-block {
+  background:var(--card); backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:var(--radius); padding:16px;
+  margin-bottom:14px;
+}
+.pass-heading {
+  font-family:'Baloo 2',cursive; font-size:.95rem; color:var(--primary);
+  margin-bottom:10px; padding-bottom:8px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex; align-items:center; gap:6px;
+}
+
+/* ── PARAGRAPH ── */
+.para-wrap { margin-bottom:10px; }
+.para-text {
+  font-size:.95rem; line-height:1.78; color:#cbd5e1;
+}
+.para-title {
+  font-weight:900; font-size:1rem; color:#e2e8f0; text-align:center; margin-bottom:8px;
+}
+
+/* translate button per paragraph */
+.btn-trans-para {
+  margin-top:6px; display:inline-flex; align-items:center; gap:5px;
+  background:rgba(99,102,241,.2); border:1px solid rgba(99,102,241,.4);
+  color:#c7d2fe; padding:4px 13px; border-radius:50px;
+  font-size:.78rem; font-weight:800; cursor:pointer; transition:background .2s;
+  font-family:'Nunito',sans-serif;
+}
+.btn-trans-para:hover { background:rgba(99,102,241,.4); }
+
+.trans-box {
+  display:none; margin-top:8px; padding:11px 14px;
+  background:rgba(99,102,241,.1); border:1px solid rgba(99,102,241,.3);
+  border-radius:12px; font-size:.88rem; line-height:1.75; color:#c7d2fe;
+}
+.trans-box.open { display:block; }
+
+/* ── GLOSSARY ── */
+.gloss-title {
+  font-family:'Baloo 2',cursive; font-size:.88rem; color:var(--accent);
+  margin:14px 0 8px; display:flex; align-items:center; gap:5px;
+}
+.gloss-table { width:100%; border-collapse:collapse; font-size:.8rem; }
+.gloss-table th {
+  background:rgba(245,158,11,.18); color:var(--accent);
+  padding:6px 9px; text-align:left; border-bottom:2px solid rgba(245,158,11,.25);
+}
+.gloss-table td { padding:5px 9px; border-bottom:1px solid rgba(255,255,255,.05); color:#94a3b8; }
+.gloss-table tr:hover td { background:rgba(255,255,255,.03); }
+.wtag {
+  display:inline-block; background:rgba(14,165,233,.18); color:var(--primary);
+  border-radius:5px; padding:1px 6px; font-size:.75rem; font-weight:800;
+}
+
+/* ── EXERCISE CARD ── */
+.ex-card {
+  background:var(--card); backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:var(--radius); padding:16px;
+  margin-bottom:16px;
+}
+.ex-title {
+  font-family:'Baloo 2',cursive; font-size:.95rem; color:var(--accent);
+  margin-bottom:14px; padding-bottom:8px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+/* ── TRUE/FALSE ── */
+.tf-row {
+  padding:11px 13px; margin-bottom:8px;
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;
+}
+.tf-sentence { font-size:.95rem; line-height:1.6; color:#e2e8f0; margin-bottom:9px; }
+.qnum {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:24px; height:24px; border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:#fff; font-size:.78rem; font-weight:900; margin-right:6px; flex-shrink:0;
+}
+.tf-btns { display:flex; gap:10px; }
+.tf-choice {
+  flex:1; padding:9px 6px; border-radius:13px; border:2px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06); cursor:pointer;
+  font-family:'Nunito',sans-serif; font-size:1rem; font-weight:900;
+  color:#e2e8f0; text-align:center; transition:all .18s;
+  letter-spacing:.5px;
+}
+.tf-choice:not(.tf-done):hover { transform:scale(1.04); border-color:var(--primary); background:rgba(14,165,233,.18); }
+.tf-choice.tf-correct { background:rgba(34,197,94,.22)!important; border-color:var(--correct)!important; color:#86efac!important; }
+.tf-choice.tf-wrong   { background:rgba(239,68,68,.18)!important; border-color:var(--wrong)!important;   color:#fca5a5!important; animation:shake .4s ease; }
+
+/* ── MC OPTIONS ── */
+.opts-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px; }
+.opt-btn {
+  display:flex; align-items:center; gap:8px;
+  padding:10px 12px; border-radius:13px;
+  background:rgba(255,255,255,.06); border:2px solid rgba(255,255,255,.1);
+  cursor:pointer; text-align:left; transition:all .18s;
+  font-family:'Nunito',sans-serif; font-size:.93rem; font-weight:600; color:#e2e8f0;
+}
+.opt-btn:not(.done):hover {
+  background:rgba(14,165,233,.18); border-color:var(--primary); transform:scale(1.025);
+}
+.opt-lbl {
+  min-width:26px; height:26px; border-radius:7px;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:rgba(255,255,255,.1); font-weight:900; font-size:.8rem; flex-shrink:0;
+}
+/* states */
+.opt-btn.correct-ans {
+  background:rgba(34,197,94,.22) !important; border-color:var(--correct) !important; color:#86efac !important;
+}
+.opt-btn.correct-ans .opt-lbl { background:var(--correct); color:#fff; }
+.opt-btn.wrong-ans {
+  background:rgba(239,68,68,.18) !important; border-color:var(--wrong) !important; color:#fca5a5 !important;
+  animation:shake .4s ease;
+}
+.opt-btn.wrong-ans .opt-lbl { background:var(--wrong); color:#fff; }
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+.q-block { margin-bottom:16px; }
+.q-text { font-size:1rem; font-weight:700; color:#e2e8f0; margin-bottom:10px; line-height:1.5; }
+
+/* ── EXPLANATION ── */
+.expl-box {
+  display:none; margin-top:10px; padding:13px 15px;
+  background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.22);
+  border-radius:12px; font-size:.88rem; line-height:1.72;
+}
+.expl-box.show { display:block; }
+.expl-sec { margin-bottom:8px; }
+.expl-sec:last-child { margin-bottom:0; }
+.elabel { font-weight:900; color:var(--accent); display:block; margin-bottom:3px; }
+.evi { color:#c7d2fe; font-style:italic; }
+.ewhy { color:#fde68a; }
+.ewhy-not { color:#fca5a5; }
+
+/* ── SUBMIT ── */
+.submit-row { text-align:center; padding:10px 0 20px; }
+
+/* ── RESULT OVERLAY ── */
+#result-overlay {
+  display:none; position:fixed; inset:0; z-index:500;
+  background:rgba(0,0,0,.82); backdrop-filter:blur(10px);
+  align-items:center; justify-content:center;
+}
+#result-overlay.open { display:flex; }
+.result-card {
+  background:linear-gradient(135deg,#1e1b4b,#0c4a6e);
+  border:2px solid rgba(14,165,233,.35); border-radius:24px;
+  padding:36px 32px; max-width:460px; width:90%; text-align:center;
+  animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes popIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.r-emoji { font-size:3.5rem; margin-bottom:8px; }
+.r-title { font-family:'Baloo 2',cursive; font-size:1.7rem; background:linear-gradient(90deg,var(--primary),var(--accent)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.r-score { font-size:2.8rem; font-weight:900; color:var(--accent); margin:8px 0; }
+.r-msg { color:#c7d2fe; font-size:1rem; margin-bottom:16px; }
+.r-table { width:100%; text-align:left; font-size:.87rem; margin-bottom:18px; }
+.r-table tr { border-bottom:1px solid rgba(255,255,255,.07); }
+.r-table td { padding:5px 4px; color:#94a3b8; }
+.r-table td:last-child { font-weight:900; text-align:right; }
+.rc { color:var(--correct); } .rw { color:var(--wrong); }
+.btn-retry { background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#fff; padding:11px 30px; border-radius:50px; border:none; cursor:pointer; font-family:'Nunito'; font-weight:900; font-size:.95rem; }
+
+/* ── CONFETTI ── */
+.cf { position:fixed; width:8px; height:11px; z-index:600; pointer-events:none; border-radius:2px; animation:cfFall 2.2s ease forwards; }
+@keyframes cfFall{0%{transform:translateY(-10px) rotate(0deg);opacity:1}100%{transform:translateY(105vh) rotate(800deg);opacity:0}}
+
+/* ── TIMER NOTIF ── */
+#timer-notif {
+  display:none; position:fixed; top:70px; left:50%; transform:translateX(-50%);
+  z-index:400; background:linear-gradient(135deg,#ef4444,#f59e0b);
+  color:#fff; padding:12px 22px; border-radius:14px; font-weight:800; font-size:.9rem;
+  text-align:center; max-width:88vw; line-height:1.5;
+  box-shadow:0 6px 24px rgba(239,68,68,.5);
+  animation:slideDown .3s ease;
+}
+@keyframes slideDown{from{transform:translateX(-50%) translateY(-16px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+
+/* blank highlight in passage */
+.bk { display:inline-block; background:rgba(14,165,233,.2); border-bottom:2px solid var(--primary); color:var(--primary); font-weight:900; padding:0 6px; border-radius:4px; margin:0 1px; }
+
+/* divider */
+.divider { text-align:center; margin:12px 0 8px; position:relative; }
+.divider::before { content:''; position:absolute; top:50%; left:0; right:0; height:1px; background:rgba(255,255,255,.08); }
+.divider span { position:relative; background:#0f172a; padding:0 12px; font-size:.75rem; color:var(--muted); font-weight:700; }
+
+/* responsive */
+@media(max-width:680px){
+  #main-split{flex-direction:column; overflow:auto;}
+  #left-panel,#right-panel{width:100%; overflow:visible; height:auto;}
+  .opts-grid{grid-template-columns:1fr;}
+  html,body{height:auto; overflow:auto;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<div id="site-header">
+  <div>
+    <div class="header-title">🚗✈️ Future Transport – English Quiz</div>
+    <div class="header-sub">Giáo viên tạo: <strong>Ms. MS Chí Nên – ULIS</strong> &nbsp;|&nbsp; Tiếng Anh 7 – Global Success</div>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-start" id="btn-start" onclick="startTimer()">⏱ BẮT ĐẦU TÍNH GIỜ</button>
+    <div class="timer-box">
+      <div id="timer-display">10:00</div>
+      <button class="btn btn-pause" id="btn-pause" style="display:none" onclick="togglePause()">⏸ Tạm dừng</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCORE BAR ══ -->
+<div id="score-bar">
+  <div class="score-item"><div class="sdot" style="background:var(--correct)"></div>Đúng: <strong id="sc-c">0</strong></div>
+  <div class="score-item"><div class="sdot" style="background:var(--wrong)"></div>Sai: <strong id="sc-w">0</strong></div>
+  <div class="score-item"><div class="sdot" style="background:var(--muted)"></div>Tổng: <strong>22 câu</strong></div>
+</div>
+
+<!-- ══ MAIN SPLIT ══ -->
+<div id="main-split">
+
+  <!-- ════ LEFT: PASSAGES ════ -->
+  <div id="left-panel">
+
+    <!-- EX7 -->
+    <div class="pass-block">
+      <div class="pass-heading"><span>🚗</span> Exercise 7 – Bài đọc: The Autonomous Car</div>
+
+      <div class="para-wrap">
+        <div class="para-title">The Autonomous Car</div>
+        <div class="para-text">
+          It is the most spectacular revolution. Tomorrow, cars will be able to do without their drivers. "This development will be in stages: we start without feet and then do without hands and eventually without eyes," says Pascal Brier.
+        </div>
+        <button class="btn-trans-para" onclick="togglePara(this)">🌟 Dịch đoạn này</button>
+        <div class="trans-box">
+          Đây là cuộc cách mạng ngoạn mục nhất. Ngày mai, những chiếc xe có thể hoạt động mà không cần tài xế. "Sự phát triển này sẽ diễn ra theo từng giai đoạn: chúng ta bắt đầu với việc không dùng chân, rồi không dùng tay và cuối cùng không cần mắt," ông Pascal Brier nói.
+        </div>
+      </div>
+
+      <div class="para-wrap">
+        <div class="para-text">
+          The first two stages have already been completed. Cruise control has existed for several years: drivers can set a cruising speed and remove their feet from the pedals. And some cars now offer driver assistance systems that make it possible to remove the hands from the wheel in specific situations such as in traffic jams, or when parking, etc.
+        </div>
+        <button class="btn-trans-para" onclick="togglePara(this)">🌟 Dịch đoạn này</button>
+        <div class="trans-box">
+          Hai giai đoạn đầu tiên đã hoàn thành. Hệ thống kiểm soát hành trình (cruise control) đã tồn tại nhiều năm: tài xế có thể đặt tốc độ và nhấc chân khỏi bàn đạp. Và một số xe hiện nay cung cấp hệ thống hỗ trợ lái, cho phép tháo tay khỏi vô lăng trong các tình huống cụ thể như kẹt xe hay lúc đỗ xe, v.v.
+        </div>
+      </div>
+
+      <div class="para-wrap">
+        <div class="para-text">
+          The next step? 100% autonomy. Engineers are working to replace human eyes with a multitude of cameras, sensors and lasers that will reproduce the environment in 3D and allow the vehicle to make navigation decisions alone. Popularized by Google and its famous Google car, most manufacturers have begun looking at autonomy and are currently in the phase of conducting major tests on the roads.
+        </div>
+        <button class="btn-trans-para" onclick="togglePara(this)">🌟 Dịch đoạn này</button>
+        <div class="trans-box">
+          Bước tiếp theo? Tự lái 100%. Các kỹ sư đang nghiên cứu thay thế mắt người bằng vô số camera, cảm biến và laser để tái tạo môi trường 3D, cho phép xe tự ra quyết định điều hướng. Được phổ biến bởi Google với chiếc xe tự lái nổi tiếng, hầu hết các nhà sản xuất đã bắt đầu nghiên cứu tính tự lái và đang trong giai đoạn thử nghiệm lớn trên đường.
+        </div>
+      </div>
+
+      <div class="divider"><span>📚 Từ vựng quan trọng</span></div>
+      <table class="gloss-table">
+        <tr><th>Từ</th><th>Loại</th><th>Nghĩa tiếng Việt</th></tr>
+        <tr><td><span class="wtag">spectacular</span></td><td>adj</td><td>ngoạn mục, ấn tượng</td></tr>
+        <tr><td><span class="wtag">revolution</span></td><td>n</td><td>cuộc cách mạng</td></tr>
+        <tr><td><span class="wtag">autonomous</span></td><td>adj</td><td>tự động, tự lái</td></tr>
+        <tr><td><span class="wtag">stages</span></td><td>n</td><td>các giai đoạn</td></tr>
+        <tr><td><span class="wtag">cruise control</span></td><td>n</td><td>hệ thống kiểm soát hành trình</td></tr>
+        <tr><td><span class="wtag">pedals</span></td><td>n</td><td>bàn đạp (xe)</td></tr>
+        <tr><td><span class="wtag">assistance</span></td><td>n</td><td>sự hỗ trợ</td></tr>
+        <tr><td><span class="wtag">multitude</span></td><td>n</td><td>vô số, rất nhiều</td></tr>
+        <tr><td><span class="wtag">sensors</span></td><td>n</td><td>cảm biến</td></tr>
+        <tr><td><span class="wtag">navigation</span></td><td>n</td><td>điều hướng, dẫn đường</td></tr>
+        <tr><td><span class="wtag">manufacturers</span></td><td>n</td><td>nhà sản xuất</td></tr>
+        <tr><td><span class="wtag">popularized</span></td><td>v</td><td>được phổ biến hóa</td></tr>
+      </table>
+    </div>
+
+    <!-- EX8 -->
+    <div class="pass-block">
+      <div class="pass-heading"><span>✈️</span> Exercise 8 – Bài đọc: The A2 Hypersonic Plane</div>
+
+      <div class="para-wrap">
+        <div class="para-text">
+          It is a computer drawing of the plane of the future. British engineers and scientists have published plans for a new hypersonic plane called the A2. It will be very fast. At the moment, a flight from London in the UK to Sydney in Australia takes about twenty-one hours but with the A2 the same flight will take about four hours.
+        </div>
+        <button class="btn-trans-para" onclick="togglePara(this)">🌟 Dịch đoạn này</button>
+        <div class="trans-box">
+          Đây là bản vẽ máy tính về chiếc máy bay của tương lai. Các kỹ sư và nhà khoa học người Anh đã công bố kế hoạch về một chiếc máy bay siêu thanh mới có tên A2. Nó sẽ rất nhanh. Hiện tại, chuyến bay từ London (Anh) đến Sydney (Úc) mất khoảng 21 giờ, nhưng với A2, chuyến bay đó chỉ mất khoảng 4 giờ.
+        </div>
+      </div>
+
+      <div class="para-wrap">
+        <div class="para-text">
+          The flight will fly at 4,500 kilometers per hour and will fly at an altitude of over 10,000 meters. It will carry 300 passengers but it won't have any windows because scientists haven't found glass that is strong enough. It will be better for the environment than other planes because the engines won't produce gases that cause pollution. In the future, will people travel from London to Australia for the weekend? It's possible! But how much will a ticket cost? The planners say that it won't be very expensive – about £2,000. The A2 will be ready for its first flight next year.
+        </div>
+        <button class="btn-trans-para" onclick="togglePara(this)">🌟 Dịch đoạn này</button>
+        <div class="trans-box">
+          Máy bay sẽ bay ở tốc độ 4.500 km/h và ở độ cao hơn 10.000 mét. Nó chở được 300 hành khách nhưng sẽ không có cửa sổ vì các nhà khoa học chưa tìm được loại kính đủ cứng. Nó thân thiện với môi trường hơn vì động cơ không thải khí gây ô nhiễm. Trong tương lai, mọi người sẽ du lịch từ London đến Úc vào cuối tuần? Hoàn toàn có thể! Nhưng vé tốn bao nhiêu? Người lập kế hoạch cho biết sẽ không đắt lắm – khoảng £2.000. A2 sẽ sẵn sàng cho chuyến bay đầu tiên vào năm tới.
+        </div>
+      </div>
+
+      <div class="divider"><span>📚 Từ vựng</span></div>
+      <table class="gloss-table">
+        <tr><th>Từ</th><th>Loại</th><th>Nghĩa tiếng Việt</th></tr>
+        <tr><td><span class="wtag">hypersonic</span></td><td>adj</td><td>siêu thanh (rất nhanh)</td></tr>
+        <tr><td><span class="wtag">altitude</span></td><td>n</td><td>độ cao</td></tr>
+        <tr><td><span class="wtag">passengers</span></td><td>n</td><td>hành khách</td></tr>
+        <tr><td><span class="wtag">pollution</span></td><td>n</td><td>ô nhiễm môi trường</td></tr>
+        <tr><td><span class="wtag">environment</span></td><td>n</td><td>môi trường</td></tr>
+        <tr><td><span class="wtag">engines</span></td><td>n</td><td>động cơ</td></tr>
+        <tr><td><span class="wtag">published</span></td><td>v</td><td>công bố, xuất bản</td></tr>
+        <tr><td><span class="wtag">produce</span></td><td>v</td><td>tạo ra, sản xuất</td></tr>
+        <tr><td><span class="wtag">expensive</span></td><td>adj</td><td>đắt tiền</td></tr>
+        <tr><td><span class="wtag">planners</span></td><td>n</td><td>người lập kế hoạch</td></tr>
+      </table>
+    </div>
+
+    <!-- EX9 -->
+    <div class="pass-block">
+      <div class="pass-heading"><span>🛫</span> Exercise 9 – Bài đọc: Up, Up and Away!</div>
+
+      <div class="para-wrap">
+        <div class="para-title">Up, Up and Away!</div>
+        <div class="para-text">
+          Martin Halstead is only 19, but he already owns an airline company. Alpha One Airways will make its first flight on 14 December this year. The plane will fly from the Isle of Man (an island between England and Ireland) to Edinburgh, the capital of Scotland. It won't carry a lot of passengers because it is a small plane. The journey will take about 45 minutes. Tickets will be cheap, and passengers won't get any food or drink on the flight. Will the company make money? Nobody knows – but most people think that Martin Halstead will be successful one day.
+        </div>
+        <button class="btn-trans-para" onclick="togglePara(this)">🌟 Dịch đoạn này</button>
+        <div class="trans-box">
+          Martin Halstead mới 19 tuổi nhưng đã sở hữu một hãng hàng không. Alpha One Airways sẽ thực hiện chuyến bay đầu tiên vào ngày 14 tháng 12 năm nay. Máy bay sẽ bay từ đảo Man (một hòn đảo nằm giữa Anh và Ireland) đến Edinburgh, thủ đô của Scotland. Nó sẽ không chở được nhiều hành khách vì là máy bay nhỏ. Hành trình mất khoảng 45 phút. Vé sẽ rẻ và hành khách sẽ không được phục vụ đồ ăn hay thức uống. Công ty có kiếm tiền không? Không ai biết – nhưng hầu hết đều nghĩ Martin Halstead sẽ thành công một ngày nào đó.
+        </div>
+      </div>
+
+      <div class="divider"><span>📚 Từ vựng</span></div>
+      <table class="gloss-table">
+        <tr><th>Từ</th><th>Loại</th><th>Nghĩa tiếng Việt</th></tr>
+        <tr><td><span class="wtag">airline</span></td><td>n</td><td>hãng hàng không</td></tr>
+        <tr><td><span class="wtag">owns</span></td><td>v</td><td>sở hữu</td></tr>
+        <tr><td><span class="wtag">capital</span></td><td>n</td><td>thủ đô</td></tr>
+        <tr><td><span class="wtag">journey</span></td><td>n</td><td>hành trình</td></tr>
+        <tr><td><span class="wtag">cheap</span></td><td>adj</td><td>rẻ, giá thấp</td></tr>
+        <tr><td><span class="wtag">successful</span></td><td>adj</td><td>thành công</td></tr>
+        <tr><td><span class="wtag">isle</span></td><td>n</td><td>hòn đảo nhỏ</td></tr>
+        <tr><td><span class="wtag">eventually</span></td><td>adv</td><td>cuối cùng, rốt cuộc</td></tr>
+      </table>
+    </div>
+
+    <!-- EX10 -->
+    <div class="pass-block">
+      <div class="pass-heading"><span>🤖</span> Exercise 10 – Bài đọc: TF-X™ Flying Car</div>
+
+      <div class="para-wrap">
+        <div class="para-text">
+          I'm here at Noi Bai Airport to tell you about this amazing flying car. It just <span class="bk">(1)&nbsp;______</span> here at the airport 15 minutes ago.
+        </div>
+        <button class="btn-trans-para" onclick="togglePara(this)">🌟 Dịch đoạn này</button>
+        <div class="trans-box">
+          Tôi đang ở sân bay Nội Bài để giới thiệu với các bạn về chiếc xe bay tuyệt vời này. Nó vừa <strong>[hạ cánh]</strong> xuống đây tại sân bay 15 phút trước.
+        </div>
+      </div>
+
+      <div class="para-wrap">
+        <div class="para-text">
+          So this <span class="bk">(2)&nbsp;______</span> is called TF-X™. It was designed in 2013. But it will take a couple of years before you can own yours. It's a kind of driverless car and airplane. It has many benefits. With <span class="bk">(3)&nbsp;______</span> automated system, the car can avoid traffic. It drives at 300 kph — impressive, isn't it? It has four seats, so your family or friends can <span class="bk">(4)&nbsp;______</span> the ride. The coolest thing is learning to drive a TF-X™ is simple: you'll <span class="bk">(5)&nbsp;______</span> able to do it just after a few hours!
+        </div>
+        <button class="btn-trans-para" onclick="togglePara(this)">🌟 Dịch đoạn này</button>
+        <div class="trans-box">
+          Vậy thì <strong>[phương tiện]</strong> này tên là TF-X™. Nó được thiết kế vào năm 2013. Nhưng sẽ cần thêm vài năm nữa trước khi bạn có thể sở hữu chiếc của mình. Đây là loại kết hợp giữa xe không người lái và máy bay. Nó có nhiều lợi ích. Với hệ thống tự động <strong>[của nó]</strong>, xe có thể tránh tắc đường. Tốc độ 300 km/h – ấn tượng phải không? Nó có 4 chỗ ngồi để gia đình hay bạn bè có thể <strong>[cùng tham gia]</strong> chuyến đi. Điều tuyệt nhất là học lái TF-X™ rất đơn giản: bạn sẽ <strong>[có thể]</strong> làm được chỉ sau vài giờ!
+        </div>
+      </div>
+
+      <div class="divider"><span>📚 Từ vựng</span></div>
+      <table class="gloss-table">
+        <tr><th>Từ</th><th>Loại</th><th>Nghĩa tiếng Việt</th></tr>
+        <tr><td><span class="wtag">driverless</span></td><td>adj</td><td>không người lái</td></tr>
+        <tr><td><span class="wtag">automated</span></td><td>adj</td><td>tự động hóa</td></tr>
+        <tr><td><span class="wtag">vehicle</span></td><td>n</td><td>phương tiện giao thông</td></tr>
+        <tr><td><span class="wtag">avoid</span></td><td>v</td><td>tránh, né tránh</td></tr>
+        <tr><td><span class="wtag">impressive</span></td><td>adj</td><td>ấn tượng</td></tr>
+        <tr><td><span class="wtag">benefits</span></td><td>n</td><td>lợi ích</td></tr>
+        <tr><td><span class="wtag">designed</span></td><td>v</td><td>được thiết kế</td></tr>
+        <tr><td><span class="wtag">couple of</span></td><td>phr</td><td>vài, một đôi</td></tr>
+      </table>
+    </div>
+
+  </div><!-- /left-panel -->
+
+  <!-- ════ RIGHT: EXERCISES ════ -->
+  <div id="right-panel">
+
+    <!-- ── EX7 TRUE/FALSE ── -->
+    <div class="ex-card">
+      <div class="ex-title">📝 Exercise 7 – True / False &nbsp;<small style="font-weight:600;font-size:.75rem;color:var(--muted)">(Bấm TRUE hoặc FALSE để chọn đáp án)</small></div>
+
+      <div class="tf-row">
+        <div class="tf-sentence"><span class="qnum">1</span>The autonomous cars will be able to do without their drivers.</div>
+        <div class="tf-btns">
+          <button class="tf-choice" onclick="pickTF(this,1,'T','T')">✅ TRUE</button>
+          <button class="tf-choice" onclick="pickTF(this,1,'F','T')">❌ FALSE</button>
+        </div>
+      </div>
+      <div class="expl-box" id="tf-expl-1">
+        <div class="expl-sec"><span class="elabel">✅ Đáp án đúng: TRUE</span>
+          <span class="ewhy">Dẫn chứng: "Tomorrow, cars will be able to do without their drivers." — Câu hỏi nói đúng y chang bài đọc.</span></div>
+        <div class="expl-sec"><span class="elabel">🇻🇳 Dịch:</span><span class="evi">"Những chiếc xe tự lái sẽ có thể hoạt động mà không cần tài xế." → ĐÚNG ✔</span></div>
+      </div>
+
+      <div class="tf-row">
+        <div class="tf-sentence"><span class="qnum">2</span>The first two stages of the development are starting without feet and then doing without eyes.</div>
+        <div class="tf-btns">
+          <button class="tf-choice" onclick="pickTF(this,2,'T','F')">✅ TRUE</button>
+          <button class="tf-choice" onclick="pickTF(this,2,'F','F')">❌ FALSE</button>
+        </div>
+      </div>
+      <div class="expl-box" id="tf-expl-2">
+        <div class="expl-sec"><span class="elabel">❌ Đáp án đúng: FALSE</span>
+          <span class="ewhy">Dẫn chứng: "we start without feet and then do without <u><b>hands</b></u> and eventually without eyes." — Thứ tự đúng: chân → tay → mắt.</span></div>
+        <div class="expl-sec"><span class="elabel">🔍 Tại sao sai?</span><span class="ewhy-not">Câu hỏi bỏ qua bước "without hands" (không dùng tay), nhảy thẳng sang "without eyes" → Sai thứ tự.</span></div>
+        <div class="expl-sec"><span class="elabel">🇻🇳 Dịch:</span><span class="evi">"Hai giai đoạn đầu là không dùng chân rồi không dùng <b>tay</b> (không phải mắt)." → SAI ✖</span></div>
+      </div>
+
+      <div class="tf-row">
+        <div class="tf-sentence"><span class="qnum">3</span>The drivers can set a cruising speed and remove their feet from the pedals.</div>
+        <div class="tf-btns">
+          <button class="tf-choice" onclick="pickTF(this,3,'T','T')">✅ TRUE</button>
+          <button class="tf-choice" onclick="pickTF(this,3,'F','T')">❌ FALSE</button>
+        </div>
+      </div>
+      <div class="expl-box" id="tf-expl-3">
+        <div class="expl-sec"><span class="elabel">✅ Đáp án đúng: TRUE</span>
+          <span class="ewhy">Dẫn chứng: "drivers can set a cruising speed and remove their feet from the pedals." — Trích nguyên câu từ bài đọc.</span></div>
+        <div class="expl-sec"><span class="elabel">🇻🇳 Dịch:</span><span class="evi">"Tài xế có thể đặt tốc độ hành trình và nhấc chân khỏi bàn đạp." → ĐÚNG ✔</span></div>
+      </div>
+
+      <div class="tf-row">
+        <div class="tf-sentence"><span class="qnum">4</span>Most cars now offer driver assistance systems.</div>
+        <div class="tf-btns">
+          <button class="tf-choice" onclick="pickTF(this,4,'T','F')">✅ TRUE</button>
+          <button class="tf-choice" onclick="pickTF(this,4,'F','F')">❌ FALSE</button>
+        </div>
+      </div>
+      <div class="expl-box" id="tf-expl-4">
+        <div class="expl-sec"><span class="elabel">❌ Đáp án đúng: FALSE</span>
+          <span class="ewhy">Dẫn chứng: "<b>some</b> cars now offer driver assistance systems" — Bài dùng "some" (một số).</span></div>
+        <div class="expl-sec"><span class="elabel">🔍 Tại sao sai?</span><span class="ewhy-not">Câu hỏi đổi "some" → "most" (hầu hết). Bẫy phạm vi: "một số" ≠ "hầu hết".</span></div>
+        <div class="expl-sec"><span class="elabel">🇻🇳 Dịch:</span><span class="evi">"Bài nói <b>một số</b> xe, không phải hầu hết xe." → SAI ✖</span></div>
+      </div>
+
+      <div class="tf-row">
+        <div class="tf-sentence"><span class="qnum">5</span>Engineers are working to replace human hands with a multitude of cameras, sensors and lasers.</div>
+        <div class="tf-btns">
+          <button class="tf-choice" onclick="pickTF(this,5,'T','F')">✅ TRUE</button>
+          <button class="tf-choice" onclick="pickTF(this,5,'F','F')">❌ FALSE</button>
+        </div>
+      </div>
+      <div class="expl-box" id="tf-expl-5">
+        <div class="expl-sec"><span class="elabel">❌ Đáp án đúng: FALSE</span>
+          <span class="ewhy">Dẫn chứng: "Engineers are working to replace human <b>eyes</b> with a multitude of cameras…" — Thay thế mắt, không phải tay.</span></div>
+        <div class="expl-sec"><span class="elabel">🔍 Tại sao sai?</span><span class="ewhy-not">Câu hỏi đổi "eyes" (mắt) → "hands" (tay) → Sai từ khóa cốt lõi.</span></div>
+        <div class="expl-sec"><span class="elabel">🇻🇳 Dịch:</span><span class="evi">"Kỹ sư thay thế <b>mắt</b> người, không phải <b>tay</b> người." → SAI ✖</span></div>
+      </div>
+
+      <div class="tf-row">
+        <div class="tf-sentence"><span class="qnum">6</span>The autonomous cars can't make navigation decisions alone.</div>
+        <div class="tf-btns">
+          <button class="tf-choice" onclick="pickTF(this,6,'T','F')">✅ TRUE</button>
+          <button class="tf-choice" onclick="pickTF(this,6,'F','F')">❌ FALSE</button>
+        </div>
+      </div>
+      <div class="expl-box" id="tf-expl-6">
+        <div class="expl-sec"><span class="elabel">❌ Đáp án đúng: FALSE</span>
+          <span class="ewhy">Dẫn chứng: "allow the vehicle to make navigation decisions <b>alone</b>" — Xe có thể tự ra quyết định.</span></div>
+        <div class="expl-sec"><span class="elabel">🔍 Tại sao sai?</span><span class="ewhy-not">Câu hỏi dùng "can't" (không thể), ngược với bài đọc — câu phủ định trái nghĩa.</span></div>
+        <div class="expl-sec"><span class="elabel">🇻🇳 Dịch:</span><span class="evi">"Xe tự lái <b>có thể</b> tự ra quyết định điều hướng." → Câu phủ định này SAI ✖</span></div>
+      </div>
+    </div>
+
+    <!-- EX8, EX9, EX10 rendered by JS -->
+    <div class="ex-card" id="card-ex8">
+      <div class="ex-title">✈️ Exercise 8 – Multiple Choice: Máy bay A2</div>
+      <div id="qs-ex8"></div>
+    </div>
+
+    <div class="ex-card" id="card-ex9">
+      <div class="ex-title">🛫 Exercise 9 – Multiple Choice: Alpha One Airways</div>
+      <div id="qs-ex9"></div>
+    </div>
+
+    <div class="ex-card" id="card-ex10">
+      <div class="ex-title">🤖 Exercise 10 – Fill in the Blank: TF-X™</div>
+      <div id="qs-ex10"></div>
+    </div>
+
+    <div class="submit-row">
+      <button class="btn btn-submit" onclick="submitQuiz()">🏁 NỘP BÀI &amp; XEM KẾT QUẢ</button>
+    </div>
+  </div><!-- /right-panel -->
+</div><!-- /main-split -->
+
+<!-- RESULT -->
+<div id="result-overlay">
+  <div class="result-card">
+    <div class="r-emoji" id="r-emoji">🎉</div>
+    <div class="r-title" id="r-title">Kết quả</div>
+    <div class="r-score" id="r-score">0/22</div>
+    <div class="r-msg" id="r-msg"></div>
+    <table class="r-table" id="r-table"></table>
+    <button class="btn-retry" onclick="location.reload()">🔄 Làm lại bài</button>
+  </div>
+</div>
+
+<!-- TIMER NOTIF -->
+<div id="timer-notif">
+  ⏰ Đã hết giờ làm bài!<br>
+  <span style="font-size:.82rem;font-weight:600">Bạn vẫn có thể tiếp tục, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha 😊</span>
+</div>
+
+<script>
+/* ═══════════════════════════ DATA ═══════════════════════════ */
+const EX8 = [
+  { q:"How long does it take the A2 plane to fly from London to Sydney?",
+    opts:["21 hours","4 hours","10 hours","4,500 hours"], correct:1,
+    trans:"Mất bao lâu để máy bay A2 bay từ London đến Sydney?",
+    why:"Bài đọc: <b>'with the A2 the same flight will take about four hours'</b> → 4 giờ → Chọn B.",
+    whynot:"A (21 giờ) là thời gian của máy bay thông thường hiện nay, không phải A2. C và D không có trong bài." },
+
+  { q:"What is the speed of the plane?",
+    opts:["10,000 kilometers per hour","300 kilometers per hour","2,000 kilometers per hour","4,500 kilometers per hour"], correct:3,
+    trans:"Tốc độ của máy bay là bao nhiêu?",
+    why:"Bài đọc: <b>'The flight will fly at 4,500 kilometers per hour'</b> → Chọn D.",
+    whynot:"A (10,000) là độ cao (altitude), không phải tốc độ. B (300 km/h) là tốc độ của xe TF-X ở bài 10. C không xuất hiện." },
+
+  { q:"What is the altitude of the flight?",
+    opts:["Over 10,000 meters","Under 10,000 meters","4,500 meters","2,000 meters"], correct:0,
+    trans:"Độ cao của chuyến bay là bao nhiêu?",
+    why:"Bài đọc: <b>'will fly at an altitude of over 10,000 meters'</b> → Hơn 10.000 mét → Chọn A.",
+    whynot:"B sai vì bài dùng 'over' (hơn), không phải 'under' (dưới). C là tốc độ. D không đề cập." },
+
+  { q:"How many passengers can it carry?",
+    opts:["21","300","2,000","4,500"], correct:1,
+    trans:"Máy bay có thể chở bao nhiêu hành khách?",
+    why:"Bài đọc: <b>'It will carry 300 passengers'</b> → Chọn B.",
+    whynot:"A (21) là số giờ bay thông thường. C (2,000) là giá vé £2,000 (không phải số người). D (4,500) là tốc độ km/h — bẫy nhầm số liệu!" },
+
+  { q:"How much does a ticket cost?",
+    opts:["About £300","About £4,500","About £2,000","About £10,000"], correct:2,
+    trans:"Giá một tấm vé là bao nhiêu?",
+    why:"Bài đọc: <b>'it won't be very expensive – about £2,000'</b> → Chọn C.",
+    whynot:"A (£300) nhầm số hành khách. B (£4,500) nhầm tốc độ. D (£10,000) nhầm độ cao — đây là bẫy cổ điển nhầm lẫn số liệu!" }
+];
+
+const EX9 = [
+  { q:"When will Alpha One Airways make its first flight?",
+    opts:["14 November this year","14 December this year","19 December this year","Next year"], correct:1,
+    trans:"Alpha One Airways sẽ thực hiện chuyến bay đầu tiên vào khi nào?",
+    why:"Bài đọc: <b>'will make its first flight on 14 December this year'</b> → Chọn B.",
+    whynot:"A sai tháng (November ≠ December). C nhầm tuổi Martin (19) với ngày bay. D ('Next year') sai vì bài nói 'this year'." },
+
+  { q:"Where will the plane fly from?",
+    opts:["London","Edinburgh","Isle of Man","Ireland"], correct:2,
+    trans:"Máy bay sẽ bay từ đâu?",
+    why:"Bài đọc: <b>'The plane will fly from the Isle of Man'</b> → Chọn C.",
+    whynot:"B (Edinburgh) là điểm đến. A (London) không được nhắc đến. D (Ireland) chỉ dùng để mô tả vị trí của đảo Man." },
+
+  { q:"Where will it fly to?",
+    opts:["England","Edinburgh","Isle of Man","Sydney"], correct:1,
+    trans:"Máy bay bay đến đâu?",
+    why:"Bài đọc: <b>'fly... to Edinburgh, the capital of Scotland'</b> → Chọn B.",
+    whynot:"C (Isle of Man) là điểm xuất phát. A (England) không phải đích đến. D (Sydney) là đích đến của A2 ở bài 8." },
+
+  { q:"Will it carry a lot of passengers? Why or why not?",
+    opts:["Yes, because it is a big plane.","No, because the tickets are cheap.","Yes, because the journey is short.","No, because it is a small plane."], correct:3,
+    trans:"Máy bay có chở được nhiều hành khách không? Tại sao?",
+    why:"Bài đọc: <b>'It won't carry a lot of passengers because it is a small plane'</b> → Không, vì máy bay nhỏ → Chọn D.",
+    whynot:"A ngược (big ≠ small). B sai lý do (giá vé không liên quan đến sức chứa). C sai vì thời gian hành trình không ảnh hưởng đến số ghế." },
+
+  { q:"How long will the journey take?",
+    opts:["19 minutes","45 minutes","14 hours","4 hours"], correct:1,
+    trans:"Hành trình mất bao lâu?",
+    why:"Bài đọc: <b>'The journey will take about 45 minutes'</b> → Chọn B.",
+    whynot:"A (19 phút) nhầm tuổi Martin (19 tuổi). C (14 giờ) nhầm ngày 14 tháng 12. D (4 giờ) là thời gian của A2 ở bài 8." },
+
+  { q:"Will the passengers get any food or drink?",
+    opts:["Yes, they will get both food and drink.","Yes, but only food.","Yes, but only drinks.","No, they won't get any food or drink."], correct:3,
+    trans:"Hành khách có được phục vụ đồ ăn hay thức uống không?",
+    why:"Bài đọc: <b>'passengers won't get any food or drink on the flight'</b> → Không có gì hết → Chọn D.",
+    whynot:"A, B, C đều sai vì khẳng định có phục vụ. Bài dùng 'won't get any' nhấn mạnh không có cả thức ăn lẫn đồ uống." }
+];
+
+const EX10 = [
+  { q:"It just (1) ________ here at the airport 15 minutes ago.",
+    opts:["landed","landing","was landing","is landing"], correct:0,
+    trans:'"Nó vừa _______ xuống đây tại sân bay 15 phút trước."',
+    why:"<b>A. landed</b> (quá khứ đơn) vì có <b>'15 minutes ago'</b> — dấu hiệu của thì Quá Khứ Đơn (Simple Past). Cấu trúc: S + V-ed.",
+    whynot:"B. 'landing' thiếu 'to be' (phải là 'is/was landing'). C. 'was landing' (quá khứ tiếp diễn) không phù hợp vì 'ago' diễn tả hành động hoàn thành, không đang diễn ra. D. 'is landing' là hiện tại tiếp diễn, xung đột với 'ago'." },
+
+  { q:"So this (2) ________ is called TF-X™.",
+    opts:["toy","vehicle","system","seat"], correct:1,
+    trans:'"Vậy thì _______ này tên là TF-X™."',
+    why:"<b>B. vehicle</b> vì TF-X™ được mô tả là <b>'a kind of driverless car and airplane'</b> → đây là một phương tiện (vehicle). Đây là từ bao quát và chính xác nhất.",
+    whynot:"A. 'toy' (đồ chơi) — TF-X™ là phương tiện thật. C. 'system' (hệ thống) — TF-X™ không phải là một hệ thống. D. 'seat' (chỗ ngồi) — sai nghĩa hoàn toàn." },
+
+  { q:"With (3) ________ automated system, the car can avoid traffic.",
+    opts:["their","its","her","his"], correct:1,
+    trans:'"Với hệ thống tự động _______ của nó, xe tránh được tắc đường."',
+    why:"<b>B. its</b> vì 'the car' (chiếc xe) là danh từ chỉ vật → dùng tính từ sở hữu trung tính <b>'its'</b>.",
+    whynot:"A. 'their' dùng cho số nhiều. C. 'her' và D. 'his' dùng cho người (giống cái/đực) — không dùng cho xe." },
+
+  { q:"Your family or friends can (4) ________ the ride.",
+    opts:["go","come","join","buy"], correct:2,
+    trans:'"Gia đình hoặc bạn bè có thể _______ chuyến đi."',
+    why:"<b>C. join</b> vì <b>'join the ride'</b> = tham gia / cùng đi — đây là cụm từ cố định diễn tả sự cùng tham gia.",
+    whynot:"A. 'go the ride' — sai ngữ pháp. B. 'come the ride' — sai cú pháp. D. 'buy the ride' — mua chuyến đi không có nghĩa trong ngữ cảnh này." },
+
+  { q:"You'll (5) _______ able to do it just after a few hours!",
+    opts:["be","was","is","were"], correct:0,
+    trans:'"Bạn sẽ _______ có thể làm được chỉ sau vài giờ!"',
+    why:"<b>A. be</b> vì <b>'you'll'</b> = <b>'you will'</b> → sau 'will' bắt buộc dùng động từ nguyên mẫu không 'to'. Cấu trúc: will + <b>be</b> + adj.",
+    whynot:"B. 'was' và D. 'were' là dạng quá khứ — không dùng sau 'will'. C. 'is' là ngôi 3 số ít hiện tại — cũng không dùng sau 'will'." }
+];
+
+/* ═══════════════════════════ STATE ═══════════════════════════ */
+let nCorrect=0, nWrong=0;
+const answered={}; // qid → true/false
+let timerSec=600, timerOn=false, paused=false, timerID=null;
+
+/* ═══════════════════════════ RENDER MC ═══════════════════════ */
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;}
+
+function renderMC(containerId, data, prefix){
+  const wrap=document.getElementById(containerId);
+  data.forEach((item,qi)=>{
+    const qid=prefix+qi;
+    // shuffle: pair (text, origIndex)
+    const pairs=item.opts.map((t,i)=>({t,i}));
+    const sp=shuffle(pairs);
+    let btns=sp.map((p,si)=>{
+      const lbl=String.fromCharCode(65+si);
+      // store origIndex in data-oi; pass qid,si,p.i,item.correct to handler
+      return `<button class="opt-btn" id="ob-${qid}-${si}" data-oi="${p.i}"
+        onclick="pickAnswer('${qid}',${si},${p.i},${item.correct})">
+        <span class="opt-lbl">${lbl}</span>${p.t}</button>`;
+    }).join('');
+
+    wrap.innerHTML+=`
+    <div class="q-block" id="qb-${qid}">
+      <div class="q-text"><span class="qnum">${qi+1}</span>${item.q}</div>
+      <div class="opts-grid">${btns}</div>
+      <div class="expl-box" id="ex-${qid}">
+        <div class="expl-sec"><span class="elabel">🇻🇳 Dịch câu hỏi:</span><span class="evi">${item.trans}</span></div>
+        <div class="expl-sec"><span class="elabel">✅ Tại sao chọn đúng?</span><span class="ewhy">${item.why}</span></div>
+        <div class="expl-sec"><span class="elabel">❌ Tại sao loại đáp án khác?</span><span class="ewhy-not">${item.whynot}</span></div>
+      </div>
+    </div>`;
+  });
+}
+
+renderMC('qs-ex8',EX8,'e8q');
+renderMC('qs-ex9',EX9,'e9q');
+renderMC('qs-ex10',EX10,'e10q');
+
+/* ═══════════════════════════ PICK ANSWER ═════════════════════ */
+function pickAnswer(qid, si, origIdx, correctOrig){
+  if(answered[qid]!==undefined) return; // already answered
+
+  const isCorrect = (origIdx === correctOrig);
+  answered[qid] = isCorrect;
+
+  // lock all buttons in this question
+  const allBtns=document.querySelectorAll(`#qb-${qid} .opt-btn`);
+  allBtns.forEach(b=>{
+    b.classList.add('done');
+    b.style.cursor='default';
+    b.style.pointerEvents='none';
+  });
+
+  const clicked=document.getElementById(`ob-${qid}-${si}`);
+
+  if(isCorrect){
+    // user clicked the correct one → green
+    clicked.classList.add('correct-ans');
+    playCorrect(); spawnConfetti();
+    nCorrect++;
+  } else {
+    // user clicked wrong → red on clicked
+    clicked.classList.add('wrong-ans');
+    // reveal correct button in green
+    allBtns.forEach(b=>{
+      if(parseInt(b.dataset.oi)===correctOrig) b.classList.add('correct-ans');
+    });
+    playWrong();
+    nWrong++;
+  }
+
+  // show explanation
+  document.getElementById('ex-'+qid).classList.add('show');
+  updateScore();
+}
+
+/* ═══════════════════════════ TRUE/FALSE ══════════════════════ */
+// pickTF(clickedBtn, questionNum, chosenAnswer, correctAnswer)
+const tfDone={};
+function pickTF(btn, num, chosen, correct){
+  if(tfDone[num]) return;
+  tfDone[num] = chosen;
+
+  // lock both buttons in this row
+  const row = btn.closest('.tf-row');
+  const allBtns = row.querySelectorAll('.tf-choice');
+  allBtns.forEach(b => { b.classList.add('tf-done'); b.style.pointerEvents='none'; });
+
+  const isCorrect = (chosen === correct);
+  if(isCorrect){
+    btn.classList.add('tf-correct');
+    playCorrect(); spawnConfetti();
+    nCorrect++;
+  } else {
+    btn.classList.add('tf-wrong');
+    // highlight the correct button green
+    allBtns.forEach(b => {
+      // each button's second arg in onclick tells us which value it represents
+      // we detect by text: TRUE btn has "T" logic, FALSE btn has "F"
+      const isCorrectBtn = b.getAttribute('onclick').includes(`,'${correct}')`);
+      if(isCorrectBtn) b.classList.add('tf-correct');
+    });
+    playWrong();
+    nWrong++;
+  }
+
+  document.getElementById('tf-expl-'+num).classList.add('show');
+  updateScore();
+}
+
+/* ═══════════════════════════ SCORE ═══════════════════════════ */
+function updateScore(){
+  document.getElementById('sc-c').textContent=nCorrect;
+  document.getElementById('sc-w').textContent=nWrong;
+}
+
+/* ═══════════════════════════ TRANSLATE PARA ══════════════════ */
+function togglePara(btn){
+  const box=btn.nextElementSibling;
+  const open=box.classList.toggle('open');
+  btn.textContent=open?'🙈 Ẩn bản dịch':'🌟 Dịch đoạn này';
+}
+
+/* ═══════════════════════════ TIMER ═══════════════════════════ */
+function startTimer(){
+  if(timerOn) return;
+  timerOn=true;
+  document.getElementById('btn-start').style.display='none';
+  document.getElementById('btn-pause').style.display='inline-block';
+  timerID=setInterval(tick,1000);
+}
+function tick(){
+  if(paused||timerSec<=0) return;
+  timerSec--;
+  const m=0|timerSec/60, s=timerSec%60;
+  const d=document.getElementById('timer-display');
+  d.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if(timerSec<=60) d.classList.add('urgent');
+  if(timerSec===0){
+    clearInterval(timerID);
+    const n=document.getElementById('timer-notif');
+    n.style.display='block';
+    setTimeout(()=>n.style.display='none',9000);
+  }
+}
+function togglePause(){
+  paused=!paused;
+  document.getElementById('btn-pause').textContent=paused?'▶️ Tiếp tục':'⏸ Tạm dừng';
+}
+
+/* ═══════════════════════════ SUBMIT ══════════════════════════ */
+function submitQuiz(){
+  // count TF correct from state
+  const tfKey={1:'T',2:'F',3:'T',4:'F',5:'F',6:'F'};
+  let tfCorrect=0;
+  for(let i=1;i<=6;i++){
+    if(tfDone[i] === tfKey[i]) tfCorrect++;
+  }
+
+  // MC correct
+  const e8c=EX8.filter((_,i)=>answered['e8q'+i]===true).length;
+  const e9c=EX9.filter((_,i)=>answered['e9q'+i]===true).length;
+  const e10c=EX10.filter((_,i)=>answered['e10q'+i]===true).length;
+  const total=tfCorrect+e8c+e9c+e10c;
+  const pct=Math.round(total/22*100);
+
+  let emoji,title,msg;
+  if(pct>=95){emoji='🏆';title='Thiên Tài!';msg='Hoàn hảo tuyệt đối! Em thật sự xuất sắc 🌟';}
+  else if(pct>=80){emoji='🎉';title='Làm Tốt Lắm!';msg='Kết quả rất ấn tượng! Tiếp tục phát huy nha 💪';}
+  else if(pct>=60){emoji='👍';title='Khá Tốt!';msg='Cần ôn lại một vài phần. Em đang tiến bộ rồi đó!';}
+  else if(pct>=40){emoji='📚';title='Cố Lên Nhé!';msg='Hãy đọc kỹ bài đọc và ôn lại từ vựng, em sẽ làm được!';}
+  else{emoji='💪';title='Cần Cố Gắng!';msg='Đừng nản! Đọc lại bài đọc và thử lại, tiến bộ sẽ đến 😊';}
+
+  document.getElementById('r-emoji').textContent=emoji;
+  document.getElementById('r-title').textContent=title;
+  document.getElementById('r-score').textContent=`${total}/22`;
+  document.getElementById('r-msg').textContent=msg;
+  document.getElementById('r-table').innerHTML=`
+    <tr><td>📝 Exercise 7 (True/False)</td><td class="${tfCorrect>=4?'rc':'rw'}">${tfCorrect}/6</td></tr>
+    <tr><td>✈️ Exercise 8 (Máy bay A2)</td><td class="${e8c>=4?'rc':'rw'}">${e8c}/5</td></tr>
+    <tr><td>🛫 Exercise 9 (Alpha One)</td><td class="${e9c>=5?'rc':'rw'}">${e9c}/6</td></tr>
+    <tr><td>🤖 Exercise 10 (TF-X™)</td><td class="${e10c>=4?'rc':'rw'}">${e10c}/5</td></tr>
+    <tr style="border-top:2px solid rgba(255,255,255,.15)"><td style="font-weight:900;color:var(--text)">📊 Tổng điểm</td><td style="color:var(--accent);font-size:1.1rem">${pct}%</td></tr>`;
+
+  document.getElementById('result-overlay').classList.add('open');
+  if(pct>=70) spawnConfetti();
+}
+
+/* ═══════════════════════════ AUDIO ═══════════════════════════ */
+let actx;
+function getActx(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx;}
+function playCorrect(){
+  try{const c=getActx();[523,659,784].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f;o.type='sine';const t=c.currentTime+i*.1;g.gain.setValueAtTime(.3,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.start(t);o.stop(t+.3);});}catch(e){}
+}
+function playWrong(){
+  try{const c=getActx();[262,220,196].forEach((f,i)=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f;o.type='sawtooth';const t=c.currentTime+i*.12;g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.start(t);o.stop(t+.25);});}catch(e){}
+}
+
+/* ═══════════════════════════ CONFETTI ════════════════════════ */
+function spawnConfetti(){
+  const colors=['#f59e0b','#0ea5e9','#22c55e','#6366f1','#ec4899','#ef4444'];
+  for(let i=0;i<18;i++){
+    const c=document.createElement('div');c.className='cf';
+    c.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${colors[0|Math.random()*colors.length]};animation-duration:${1.6+Math.random()*1.4}s;animation-delay:${Math.random()*.4}s;`;
+    document.body.appendChild(c);setTimeout(()=>c.remove(),3200);
+  }
+}
+</script>
+</body>
+</html>

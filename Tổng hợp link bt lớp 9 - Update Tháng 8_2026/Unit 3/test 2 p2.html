@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Test Gamification - Ms MS Chí Nên</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* === BACKGROUND & ANIMATION === */
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes floatEmoji {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #e0c3fc, #8ec5fc);
+            background-size: 400% 400%;
+            animation: gradientMove 15s ease infinite;
+            color: #333;
+            overflow: hidden;
+        }
+
+        /* SVG Background Patterns - Chủ đề Mental Health / Reading */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
+        /* === GLASSMORPHISM === */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        /* === LAYOUT === */
+        .header {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4a4a4a;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+        }
+        
+        .sticky-notice {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 800px;
+            background: rgba(255, 243, 205, 0.85);
+            backdrop-filter: blur(10px);
+            border-left: 5px solid #ffeeba;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            color: #856404;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: justify;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            padding-top: 60px;
+            box-sizing: border-box;
+            gap: 20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+        }
+
+        .left-pane, .right-pane {
+            flex: 1;
+            overflow-y: auto;
+            border-radius: 20px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.8); border-radius: 10px; }
+
+        /* === READING SECTION === */
+        .reading-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        .trans-btn {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 5px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 5px;
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .trans-btn:hover { background: rgba(255, 255, 255, 0.9); transform: scale(1.05); }
+        .trans-content {
+            display: none;
+            background: rgba(200, 230, 255, 0.5);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            font-style: italic;
+            color: #333;
+        }
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .glossary-table th, .glossary-table td {
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 10px;
+            text-align: left;
+        }
+        .glossary-table th { background: rgba(255,255,255,0.7); }
+
+        /* === EXERCISES SECTION === */
+        .question-card {
+            margin-bottom: 25px;
+            padding: 20px;
+        }
+        .question-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #1a252f;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .option-btn {
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid transparent;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.05rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .option-btn:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        .option-btn.correct {
+            background: #d4edda !important;
+            border-color: #28a745 !important;
+            color: #155724;
+        }
+        .option-btn.wrong {
+            background: #f8d7da !important;
+            border-color: #dc3545 !important;
+            color: #721c24;
+            animation: shake 0.4s;
+        }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* === NEW SCIENTIFIC EXPLANATION UI === */
+        .explanation {
+            display: none;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,1);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .exp-header {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            color: white;
+            padding: 12px 20px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .exp-section {
+            padding: 15px 20px;
+            border-bottom: 1px dashed #ddd;
+        }
+        .exp-section:last-child { border-bottom: none; }
+        .exp-sec-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Options Grid */
+        .exp-opt-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+        .exp-opt-item {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .exp-opt-en { font-weight: bold; color: #0056b3; }
+        .exp-opt-vi { font-style: italic; color: #e67e22; font-weight: 600; }
+        
+        /* Correct/Wrong Reasons */
+        .reason {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            line-height: 1.7;
+            font-size: 0.95rem;
+            position: relative;
+        }
+        .reason:last-child { margin-bottom: 0; }
+        .reason.correct { 
+            background: #e8f5e9; 
+            border: 1px solid #c8e6c9;
+            border-left: 6px solid #28a745; 
+            color: #1b5e20; 
+        }
+        .reason.wrong { 
+            background: #ffebee; 
+            border: 1px solid #ffcdd2;
+            border-left: 6px solid #dc3545; 
+            color: #b71c1c; 
+        }
+        .reason b { display: block; margin-bottom: 5px; font-size: 1rem; }
+
+        /* Typography Highlights inside Explanations */
+        .p-word { font-weight: bold; color: #0056b3; }
+        .p-phonetic { color: #d63384; font-family: monospace; background: #fdf2f8; padding: 2px 4px; border-radius: 4px; }
+        .p-mean { font-style: italic; color: #e67e22; font-weight: bold; }
+        .p-grammar { font-weight: bold; background: #fff3cd; padding: 2px 6px; border-radius: 6px; color: #856404; border: 1px solid #ffeeba;}
+        .hl-green { color: #28a745; font-weight: bold; }
+        .hl-red { color: #dc3545; font-weight: bold; }
+
+        /* === SUBMIT & POPUP === */
+        .submit-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, #00b09b, #96c93d);
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+        .submit-btn:hover { transform: scale(1.02); }
+
+        .modal-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            width: 90%; max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .modal-content input {
+            width: 90%; padding: 10px; margin: 15px 0;
+            border-radius: 8px; border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+        .modal-content button {
+            background: #007bff; color: white; border: none;
+            padding: 10px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer;
+        }
+        .score-display { font-size: 2rem; font-weight: bold; color: #d63384; margin: 10px 0; }
+        .score-converted { font-size: 1.2rem; color: #28a745; margin-bottom: 15px; font-weight: bold; }
+        .gif-container img { max-width: 100%; border-radius: 10px; margin-top: 15px; }
+
+        .audio-btn {
+            background: #ff6b6b; color: white; border: none; padding: 10px 15px;
+            border-radius: 10px; cursor: pointer; font-weight: bold; display: block; margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG Floating Pattern -->
+    <svg class="bg-pattern" xmlns="http://www.w3.org/2000/svg">
+        <text x="10%" y="20%" font-size="60" style="animation: floatEmoji 6s ease-in-out infinite;">🧠</text>
+        <text x="80%" y="30%" font-size="80" style="animation: floatEmoji 8s ease-in-out infinite 1s;">📖</text>
+        <text x="50%" y="80%" font-size="70" style="animation: floatEmoji 7s ease-in-out infinite 2s;">😌</text>
+        <text x="20%" y="70%" font-size="50" style="animation: floatEmoji 9s ease-in-out infinite 0.5s;">🌿</text>
+    </svg>
+
+    <div class="header">Giáo viên tạo: Ms MS Chí Nên</div>
+
+    <!-- Sticky Notice -->
+    <div class="sticky-notice">
+        <b>🔔 Lời dặn từ Cô MS Chí Nên:</b> Tự giác tra cứu từ mới để hiểu rõ nội dung từng câu hỏi bằng Google Dịch/ChatGPT/Gemini chứ không được lười suy nghĩ mà chọn bừa. Tra cứu ngữ âm, trọng âm bằng từ điển Cambridge và nghe máy đọc sau đó đọc theo. Chỉ có đọc kỹ giải thích sau đó ghi lại từ/cấu trúc mới vào vở để học mới thực sự giỏi lên, làm cho xong mà không đọc giải thích hay đọc qua loa mà không ghi chép để học thì chỉ tốn thời gian vô ích!
+    </div>
+
+    <!-- Hidden Audio Elements -->
+    <audio id="audio-wrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3"></audio>
+    <audio id="audio-instruct" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/File%20nghe%20Ket%20A2/ti%E1%BA%BFng%20%C4%91%E1%BB%8Dc%20kh%C3%ADch%20l%E1%BB%87%20p1.mp3"></audio>
+
+    <div class="container">
+        <!-- LEFT PANE: READING PASSAGE -->
+        <div class="left-pane glass-panel">
+            <h2 style="text-align: center; color: #2c3e50;">READING PASSAGE</h2>
+            <button class="audio-btn" onclick="playInstruction(this)">🔊 Nghe dặn dò trước khi làm (Chỉ phát 1 lần)</button>
+            
+            <h3>Part I. Fill in each blank with an appropriate word.</h3>
+            <div class="reading-text">
+                Mental health activities help teens improve their overall well-being. These activities promote emotional balance, (30) _____ stress, and build self-esteem. Teenagers (31) _____ take part in mental health activities can deal with problems better. All these benefits make teens healthier and happier.
+                <button class="trans-btn" onclick="toggleTrans('trans1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1" class="trans-content">Các hoạt động chăm sóc sức khỏe tinh thần giúp thanh thiếu niên cải thiện sức khỏe tổng thể. Những hoạt động này thúc đẩy sự cân bằng cảm xúc, giảm căng thẳng và xây dựng lòng tự trọng. Những thanh thiếu niên tham gia vào các hoạt động sức khỏe tinh thần có thể giải quyết các vấn đề tốt hơn. Tất cả những lợi ích này làm cho thanh thiếu niên khỏe mạnh và hạnh phúc hơn.</div>
+            </div>
+            <div class="reading-text">
+                One of the most popular mental health activities is reading. Reading is a stress (32) _____ and a good escape. It stimulates the mind and enables teens to experience different ideas and worlds. Encouragement of different genres and topics might keep reading interesting. Reading also helps with (33) _____ and improves critical thinking skills.
+                <button class="trans-btn" onclick="toggleTrans('trans2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2" class="trans-content">Một trong những hoạt động chăm sóc sức khỏe tinh thần phổ biến nhất là đọc sách. Đọc sách là một cách giảm căng thẳng và là một lối thoát tốt. Nó kích thích tâm trí và cho phép thanh thiếu niên trải nghiệm những ý tưởng và thế giới khác nhau. Việc khuyến khích các thể loại và chủ đề khác nhau có thể giữ cho việc đọc trở nên thú vị. Đọc sách cũng giúp tăng cường sự tập trung và cải thiện kỹ năng tư duy phản biện.</div>
+            </div>
+            <div class="reading-text">
+                Joining book clubs or chatting about books with close friends can turn reading into a (34) _____ activity. Sharing thoughts and opinions about books will assist with understanding and building community. (35) _____, it develops imagination and empathy for personal development and mental well-being.
+                <button class="trans-btn" onclick="toggleTrans('trans3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans3" class="trans-content">Tham gia các câu lạc bộ sách hoặc trò chuyện về sách với bạn bè thân thiết có thể biến việc đọc sách thành một hoạt động xã hội. Chia sẻ suy nghĩ và ý kiến về sách sẽ hỗ trợ việc thấu hiểu và xây dựng cộng đồng. Hơn nữa, nó phát triển trí tưởng tượng và sự đồng cảm cho sự phát triển cá nhân và sức khỏe tinh thần.</div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px dashed rgba(0,0,0,0.3); margin: 30px 0;">
+
+            <h3>Part II. Reading Comprehension</h3>
+            <div class="reading-text">
+                For teens or anyone else, anxiety is a normal reaction to stress. Things like tests, meeting new people, speaking in public, and competing in sports can make us feel frightened or uneasy. But some teens react much more strongly to stressful situations than others. Even thinking about the situations may upset them greatly.
+                <button class="trans-btn" onclick="toggleTrans('trans4')">Mở dịch đoạn này 🌟</button>
+                <div id="trans4" class="trans-content">Đối với thanh thiếu niên hoặc bất kỳ ai khác, lo âu là một phản ứng bình thường đối với căng thẳng. Những việc như kiểm tra, gặp gỡ người mới, nói trước đám đông và thi đấu thể thao có thể khiến chúng ta cảm thấy sợ hãi hoặc bồn chồn khó chịu. Nhưng một số thanh thiếu niên phản ứng mạnh mẽ hơn nhiều với các tình huống căng thẳng so với những người khác. Thậm chí chỉ nghĩ về các tình huống đó cũng có thể làm họ vô cùng buồn bực.</div>
+            </div>
+            <div class="reading-text">
+                Anxiety can be a good thing when it helps you deal with a tense situation. For example, when you’re studying for a test, a little anxiety can make you want to study hard so you do well. But at other times, too much anxiety can be harmful and prevents you from being able to focus or complete a task, leading to avoidance of the task.
+                <button class="trans-btn" onclick="toggleTrans('trans5')">Mở dịch đoạn này 🌟</button>
+                <div id="trans5" class="trans-content">Lo âu có thể là một điều tốt khi nó giúp bạn đối phó với một tình huống căng thẳng. Ví dụ, khi bạn đang ôn thi, một chút lo âu có thể khiến bạn muốn học tập chăm chỉ để làm bài tốt. Nhưng vào những lúc khác, quá nhiều lo âu có thể gây hại và ngăn cản bạn có khả năng tập trung hoặc hoàn thành một nhiệm vụ, dẫn đến việc né tránh nhiệm vụ đó.</div>
+            </div>
+            <div class="reading-text">
+                Many teens find ways to cope with the high anxiety they feel. It’s important to recognise your emotions, know what you’re feeling, why you’re feeling that way, and then find healthy ways to cope with anxiety. Sometimes just admitting that a situation is stressful and being prepared to deal with it can reduce your anxiety. If you try these simple measures and still have too much anxiety, getting treatment from a health care professional or therapist is the next step.
+                <button class="trans-btn" onclick="toggleTrans('trans6')">Mở dịch đoạn này 🌟</button>
+                <div id="trans6" class="trans-content">Nhiều thanh thiếu niên tìm cách đối phó với sự lo âu cao độ mà họ cảm thấy. Điều quan trọng là phải nhận ra cảm xúc của bạn, biết bạn đang cảm thấy gì, tại sao bạn lại cảm thấy như vậy, và sau đó tìm những cách lành mạnh để đối phó với lo âu. Đôi khi chỉ cần thừa nhận rằng một tình huống đang gây căng thẳng và sẵn sàng đối phó với nó có thể làm giảm lo âu của bạn. Nếu bạn thử các biện pháp đơn giản này mà vẫn còn quá nhiều lo âu, việc tiếp nhận điều trị từ một chuyên gia chăm sóc sức khỏe hoặc bác sĩ tâm lý là bước tiếp theo.</div>
+            </div>
+
+            <!-- GLOSSARY -->
+            <h3 style="margin-top: 30px; color: #0056b3;">📖 Academic Glossary (Bảng từ vựng B1-C2)</h3>
+            <table class="glossary-table">
+                <tr><th>Từ vựng (Word)</th><th>Loại từ (POS)</th><th>Nghĩa tiếng Việt (Meaning)</th></tr>
+                <tr><td><strong>well-being</strong></td><td>n</td><td>tình trạng hạnh phúc, khỏe mạnh</td></tr>
+                <tr><td><strong>self-esteem</strong></td><td>n</td><td>lòng tự trọng, sự tự tôn</td></tr>
+                <tr><td><strong>stimulate</strong></td><td>v</td><td>kích thích, khơi dậy</td></tr>
+                <tr><td><strong>empathy</strong></td><td>n</td><td>sự đồng cảm, sự thấu cảm</td></tr>
+                <tr><td><strong>anxiety</strong></td><td>n</td><td>sự lo âu, mối bận tâm</td></tr>
+                <tr><td><strong>uneasy</strong></td><td>adj</td><td>bồn chồn, không yên</td></tr>
+                <tr><td><strong>tense</strong></td><td>adj</td><td>căng thẳng (tình huống/tâm lý)</td></tr>
+                <tr><td><strong>avoidance</strong></td><td>n</td><td>sự trốn tránh, sự né tránh</td></tr>
+                <tr><td><strong>cope with</strong></td><td>v</td><td>đối phó, đương đầu với</td></tr>
+                <tr><td><strong>therapist</strong></td><td>n</td><td>bác sĩ tâm lý, nhà trị liệu</td></tr>
+            </table>
+        </div>
+
+        <!-- RIGHT PANE: EXERCISES -->
+        <div class="right-pane glass-panel">
+            <h2 style="text-align: center; color: #2c3e50;">EXERCISES</h2>
+            <div id="quiz-container"></div>
+            <button class="submit-btn" onclick="showSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+        </div>
+    </div>
+
+    <!-- MODAL FOR SUBMISSION -->
+    <div class="modal-overlay" id="submit-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Nhập tên để nộp bài</h2>
+            <input type="text" id="student-name" placeholder="Nhập họ và tên của con..." required>
+            <button id="modal-action-btn" onclick="processSubmit()">Nộp bài ngay</button>
+            
+            <div id="result-section" style="display: none;">
+                <h3 id="result-name"></h3>
+                <div class="score-display" id="result-score"></div>
+                <div class="score-converted" id="result-converted"></div>
+                <p id="result-comment" style="font-weight:bold;"></p>
+                <div class="gif-container" id="result-gif"></div>
+                <button onclick="closeModal()" style="margin-top:15px; background: #6c757d;">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+/* === AUDIO CONTEXT === */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playDing() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+}
+
+function playDuck() {
+    const audio = document.getElementById('audio-wrong');
+    audio.currentTime = 0;
+    audio.play();
+}
+
+function playInstruction(btn) {
+    const audio = document.getElementById('audio-instruct');
+    audio.play();
+    btn.disabled = true;
+    btn.style.background = '#ccc';
+    btn.innerText = "🔊 Đang phát dặn dò...";
+}
+
+function toggleTrans(id) {
+    const el = document.getElementById(id);
+    if(el.style.display === "none" || el.style.display === "") {
+        el.style.display = "block";
+    } else {
+        el.style.display = "none";
+    }
+}
+
+/* === QUIZ DATA (NO QUESTION TRANSLATIONS) === */
+const quizData = [
+    {
+        id: 30,
+        question: "Câu 30: Select the best answer",
+        options: [
+            { text: "reduce", vi: "giảm (v)" },
+            { text: "concentration", vi: "sự tập trung (n)" },
+            { text: "furthermore", vi: "hơn nữa (adv)" },
+            { text: "social", vi: "thuộc về xã hội (adj)" }
+        ],
+        correct: "reduce",
+        correct_exp: "Đáp án đúng là <span class='p-word'>reduce</span>. Phân tích ngữ cảnh: \"promote emotional balance, _____ stress, and build self-esteem\". Ta thấy đây là liệt kê 3 động từ tạo ra lợi ích. Cụm từ <span class='p-grammar'>reduce stress</span> mang nghĩa là \"giảm căng thẳng\", tạo thành một collocation vô cùng hoàn hảo và hợp logic.",
+        wrong_exp: "Các từ còn lại trong Box không phù hợp: <span class='p-word'>concentration</span> (sự tập trung - Noun) làm sai cấu trúc ngữ pháp vì ở đây cần Động từ; <span class='p-word'>furthermore</span> (hơn nữa) và <span class='p-word'>social</span> (xã hội) hoàn toàn không thể ghép với \"stress\" để tạo thành nghĩa hợp lý."
+    },
+    {
+        id: 31,
+        question: "Câu 31: Select the best answer",
+        options: [
+            { text: "who", vi: "người mà (Đại từ quan hệ)" },
+            { text: "reliever", vi: "thuốc/phương pháp giảm nhẹ (n)" },
+            { text: "social", vi: "thuộc về xã hội (adj)" },
+            { text: "reduce", vi: "giảm (v)" }
+        ],
+        correct: "who",
+        correct_exp: "Đáp án đúng là <span class='p-word'>who</span>. Phân tích cấu trúc: \"Teenagers _____ take part in mental health activities...\". Chỗ trống đứng ngay sau danh từ chỉ người \"Teenagers\" (thanh thiếu niên) và làm chủ ngữ cho động từ \"take part in\" phía sau. Bắt buộc phải dùng đại từ quan hệ chỉ người là <span class='p-grammar'>who</span>.",
+        wrong_exp: "Việc điền <span class='p-word'>reliever</span>, <span class='p-word'>social</span> hay <span class='p-word'>reduce</span> vào vị trí này sẽ phá vỡ hoàn toàn cấu trúc ngữ pháp của câu, vì câu đang thiếu một từ nối để tạo thành Mệnh đề quan hệ (Relative Clause) bổ nghĩa cho danh từ chỉ người."
+    },
+    {
+        id: 32,
+        question: "Câu 32: Select the best answer",
+        options: [
+            { text: "reliever", vi: "thuốc/phương pháp giảm nhẹ (n)" },
+            { text: "concentration", vi: "sự tập trung (n)" },
+            { text: "reduce", vi: "giảm (v)" },
+            { text: "social", vi: "thuộc về xã hội (adj)" }
+        ],
+        correct: "reliever",
+        correct_exp: "Đáp án đúng là <span class='p-word'>reliever</span>. Ta có danh từ ghép (Compound Noun) <span class='p-grammar'>stress reliever</span> mang nghĩa là \"phương pháp / thứ giúp giải tỏa căng thẳng\". \"Reading is a stress reliever...\" (Đọc sách là một phương pháp giảm căng thẳng).",
+        wrong_exp: "Không thể dùng <span class='p-word'>reduce</span> vì \"a\" mạo từ cần đi với một cụm Danh từ, không thể đi với động từ. <span class='p-word'>concentration</span> (sự tập trung) và <span class='p-word'>social</span> không tạo thành danh từ ghép có nghĩa với từ \"stress\"."
+    },
+    {
+        id: 33,
+        question: "Câu 33: Select the best answer",
+        options: [
+            { text: "concentration", vi: "sự tập trung (n)" },
+            { text: "furthermore", vi: "hơn nữa (adv)" },
+            { text: "reliever", vi: "thuốc/phương pháp giảm nhẹ (n)" },
+            { text: "who", vi: "người mà (Đại từ quan hệ)" }
+        ],
+        correct: "concentration",
+        correct_exp: "Đáp án đúng là <span class='p-word'>concentration</span> <span class='p-phonetic'>/ˌkɒnsnˈtreɪʃn/</span>. Sau giới từ \"with\" cần một Danh từ/V_ing. \"Reading also helps with _____ and improves critical thinking skills\" (Đọc sách cũng giúp tăng cường _____ và cải thiện kỹ năng tư duy). Về mặt logic, đọc sách giúp tăng cường <span class='p-mean'>sự tập trung</span>.",
+        wrong_exp: "<span class='p-word'>furthermore</span> (trạng từ) và <span class='p-word'>who</span> (đại từ) sai từ loại cơ bản khi đứng sau giới từ \"with\". <span class='p-word'>reliever</span> (sự giảm nhẹ) lắp vào không mang ý nghĩa logic bổ trợ song song với kỹ năng tư duy (critical thinking) như concentration."
+    },
+    {
+        id: 34,
+        question: "Câu 34: Select the best answer",
+        options: [
+            { text: "social", vi: "thuộc về xã hội / giao tiếp (adj)" },
+            { text: "concentration", vi: "sự tập trung (n)" },
+            { text: "reduce", vi: "giảm (v)" },
+            { text: "furthermore", vi: "hơn nữa (adv)" }
+        ],
+        correct: "social",
+        correct_exp: "Đáp án đúng là <span class='p-word'>social</span>. Trước danh từ \"activity\" (hoạt động) cần một Tính từ bổ nghĩa. \"Joining book clubs... can turn reading into a _____ activity\" (Tham gia CLB sách biến việc đọc thành một hoạt động...). Việc kết nối, trò chuyện với mọi người chính là đặc tính của một hoạt động mang tính chất <span class='p-mean'>xã hội / giao tiếp</span>.",
+        wrong_exp: "Các từ <span class='p-word'>concentration</span>, <span class='p-word'>reduce</span>, <span class='p-word'>furthermore</span> hoàn toàn sai từ loại (Word form) vì chúng không phải là tính từ để có thể đứng trước và bổ nghĩa trực tiếp cho danh từ \"activity\"."
+    },
+    {
+        id: 35,
+        question: "Câu 35: Select the best answer",
+        options: [
+            { text: "Furthermore", vi: "Hơn nữa / Ngoài ra (adv)" },
+            { text: "reliever", vi: "phương pháp giảm nhẹ (n)" },
+            { text: "who", vi: "người mà (Đại từ)" },
+            { text: "social", vi: "thuộc về xã hội (adj)" }
+        ],
+        correct: "Furthermore",
+        correct_exp: "Đáp án đúng là <span class='p-word'>Furthermore</span>. Khoảng trống nằm ở đầu câu, đứng trước dấu phẩy \",\", có chức năng liên kết ý với câu trước đó. Đoạn văn đang tiếp tục liệt kê thêm những lợi ích của việc đọc sách (develops imagination and empathy). Do đó dùng Trạng từ liên kết chỉ sự bổ sung <span class='p-grammar'>Furthermore</span> là chính xác tuyệt đối.",
+        wrong_exp: "Các từ <span class='p-word'>reliever</span>, <span class='p-word'>who</span>, <span class='p-word'>social</span> không có chức năng ngữ pháp làm từ nối (linker/connector) đứng đầu câu tách biệt bằng dấu phẩy để liên kết hai luận điểm."
+    },
+    {
+        id: 36,
+        question: "Câu 36: There's no difference in the way each teenager reacts towards stressful situations.",
+        options: [
+            { text: "True", vi: "Đúng" },
+            { text: "False", vi: "Sai" }
+        ],
+        correct: "False",
+        correct_exp: "Đáp án đúng là <span class='p-word'>False</span>. Câu này khẳng định \"Không có sự khác biệt nào\" (no difference). Tuy nhiên, dẫn chứng trong đoạn 4 bài đọc nói rất rõ: <span class='p-grammar'>\"But some teens react much more strongly to stressful situations than others.\"</span> (Nhưng một số thanh thiếu niên phản ứng mạnh mẽ hơn nhiều... so với những người khác). -> Rõ ràng CÓ SỰ KHÁC BIỆT.",
+        wrong_exp: "Nếu chọn True thì bạn đã không đọc kỹ từ khóa quan trọng \"no difference\" trong câu hỏi đi ngược hoàn toàn với thông tin tác giả cung cấp trong đoạn văn."
+    },
+    {
+        id: 37,
+        question: "Câu 37: A little anxiety can motivate you to study harder, especially before exams.",
+        options: [
+            { text: "True", vi: "Đúng" },
+            { text: "False", vi: "Sai" }
+        ],
+        correct: "True",
+        correct_exp: "Đáp án đúng là <span class='p-word'>True</span>. Dẫn chứng hoàn hảo nằm ở đoạn 5: <span class='p-grammar'>\"For example, when you’re studying for a test, a little anxiety can make you want to study hard so you do well.\"</span> (Ví dụ, khi bạn đang ôn thi, một chút lo âu có thể khiến bạn muốn học tập chăm chỉ để làm bài tốt). Điều này hoàn toàn khớp với ý của câu hỏi.",
+        wrong_exp: "Không thể chọn False vì câu hỏi diễn đạt lại (paraphrase) một cách chính xác từng ý của bài đọc (\"motivate to study harder\" = \"make you want to study hard\")."
+    },
+    {
+        id: 38,
+        question: "Câu 38: If anxiety becomes too overwhelming, it can result in teens avoiding doing tasks.",
+        options: [
+            { text: "True", vi: "Đúng" },
+            { text: "False", vi: "Sai" }
+        ],
+        correct: "True",
+        correct_exp: "Đáp án đúng là <span class='p-word'>True</span>. Dẫn chứng ở cuối đoạn 5: <span class='p-grammar'>\"But at other times, too much anxiety can be harmful... leading to avoidance of the task.\"</span> (Nhưng vào những lúc khác, quá nhiều lo âu có thể gây hại... dẫn đến việc né tránh nhiệm vụ). Từ \"overwhelming\" đồng nghĩa với \"too much\".",
+        wrong_exp: "Không thể chọn False vì tác giả đã chỉ ra rất rõ hậu quả tiêu cực của việc lo âu quá mức chính là dẫn tới sự lảng tránh (avoidance)."
+    },
+    {
+        id: 39,
+        question: "Câu 39: It's not necessary to see a therapist when you suffer from too much anxiety.",
+        options: [
+            { text: "True", vi: "Đúng" },
+            { text: "False", vi: "Sai" }
+        ],
+        correct: "False",
+        correct_exp: "Đáp án đúng là <span class='p-word'>False</span>. Câu hỏi khẳng định \"Không cần thiết\" (not necessary) phải gặp bác sĩ tâm lý. Tuy nhiên, câu cuối cùng của bài đọc dặn dò rất kỹ: <span class='p-grammar'>\"If you try these simple measures and still have too much anxiety, getting treatment from a health care professional or therapist is the next step.\"</span> (Nếu vẫn còn quá nhiều lo âu, điều trị từ chuyên gia/bác sĩ trị liệu là bước tiếp theo). -> Tức là RẤT CẦN THIẾT.",
+        wrong_exp: "Chọn True là rơi vào bẫy đọc lướt, bỏ qua câu chốt quan trọng nhất của cả bài đọc liên quan đến giải pháp y tế (treatment)."
+    },
+    {
+        id: 40,
+        question: "Câu 40: Which of the following activities can cause anxiety?",
+        options: [
+            { text: "Speaking in front of a lot of people", vi: "Nói trước mặt rất nhiều người" },
+            { text: "Meeting your usual friends", vi: "Gặp gỡ những người bạn thông thường của bạn" },
+            { text: "Thinking about how to cope with anxiety", vi: "Suy nghĩ về cách đối phó với lo âu" },
+            { text: "Trying all the measures to fight anxiety", vi: "Thử tất cả các biện pháp để chống lại lo âu" }
+        ],
+        correct: "Speaking in front of a lot of people",
+        correct_exp: "Đáp án đúng là <span class='p-word'>Speaking in front of a lot of people</span>. Dẫn chứng rành rành ở câu 2 đoạn 4: <span class='p-grammar'>\"Things like tests, meeting new people, speaking in public... can make us feel frightened or uneasy.\"</span> (Những việc như kiểm tra, gặp người MỚI, nói trước đám đông... có thể khiến chúng ta sợ hãi). \"Speaking in public\" chính là \"Speaking in front of a lot of people\".",
+        wrong_exp: "<span class='p-word'>Meeting your usual friends</span> sai vì bài đọc nói là gặp người MỚI (new people), không phải bạn bè bình thường.<br>Các hành động như nghĩ cách đối phó hay thử biện pháp là GIAI ĐOẠN SAU (giải quyết lo âu), chứ không phải là NGUYÊN NHÂN gây ra sự lo âu ban đầu."
+    },
+    {
+        id: 41,
+        question: "Câu 41: When dealing with high anxiety, it's important to ____.",
+        options: [
+            { text: "get ready to deal with the anxiety by yourself", vi: "chuẩn bị sẵn sàng để tự mình đối phó với lo âu" },
+            { text: "recognise a stressful situation and stop thinking about it", vi: "nhận ra tình huống căng thẳng và ngừng suy nghĩ về nó" },
+            { text: "know and understand your own emotions", vi: "biết và hiểu những cảm xúc của chính bạn" },
+            { text: "talk about the stressful situation in public", vi: "nói về tình huống căng thẳng ở nơi công cộng" }
+        ],
+        correct: "know and understand your own emotions",
+        correct_exp: "Đáp án đúng là <span class='p-word'>know and understand your own emotions</span>. Dẫn chứng rõ ràng ngay đầu đoạn cuối: <span class='p-grammar'>\"It’s important to recognise your emotions, know what you’re feeling, why you’re feeling that way...\"</span> (Điều quan trọng là phải nhận ra cảm xúc của bạn, biết bạn đang cảm thấy gì, tại sao bạn lại cảm thấy như vậy...).",
+        wrong_exp: "<span class='p-word'>...by yourself</span> sai vì đôi khi ta cần bác sĩ trị liệu (therapist), không phải lúc nào cũng \"tự mình\" (by yourself).<br><span class='p-word'>...stop thinking about it</span> sai vì bài khuyến khích đối mặt và thấu hiểu, chứ không xúi giục lờ đi.<br><span class='p-word'>...in public</span> sai hoàn toàn, bài đọc không hề khuyên phải mang chuyện căng thẳng ra rêu rao giữa chốn đông người."
+    }
+];
+
+/* === RENDER LOGIC === */
+let userAnswers = {};
+let score = 0;
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function renderQuiz() {
+    const container = document.getElementById('quiz-container');
+    quizData.forEach((q, index) => {
+        let clonedOptions = [...q.options];
+        // Không xáo trộn đối với câu True/False để đảm bảo logic tự nhiên
+        if(clonedOptions.length > 2) {
+            shuffleArray(clonedOptions); 
+        }
+
+        const card = document.createElement('div');
+        card.className = 'glass-panel question-card';
+        card.id = `q-${q.id}`;
+        
+        // Loại bỏ phần hiển thị dịch câu hỏi trên UI theo đúng yêu cầu
+        let html = `
+            <div class="question-title">${q.question}</div>
+            <div class="options-grid">
+        `;
+
+        clonedOptions.forEach((opt) => {
+            html += `<button class="option-btn" onclick="checkAnswer(${q.id}, '${opt.text}', this, '${q.correct}')">${opt.text}</button>`;
+        });
+
+        // Box dịch 4 đáp án khoa học dạng Grid
+        let expOptionsHtml = q.options.map(o => `
+            <div class="exp-opt-item">
+                <span class="exp-opt-en">${o.text}</span> ➔ <span class="exp-opt-vi">${o.vi}</span>
+            </div>
+        `).join('');
+
+        html += `</div>
+            <div class="explanation" id="exp-${q.id}">
+                <div class="exp-header">🎓 PHÂN TÍCH & GIẢI THÍCH CHI TIẾT TỪ CÔ MS Chí Nên</div>
+                
+                <div class="exp-section">
+                    <div class="exp-sec-title">📖 Dịch & Phân tích các đáp án:</div>
+                    <div class="exp-opt-list">
+                        ${expOptionsHtml}
+                    </div>
+                </div>
+
+                <div class="exp-section">
+                    <div class="exp-sec-title">📝 Lời giải chi tiết:</div>
+                    <div class="reason correct">
+                        <b>✅ Tại sao đúng:</b> ${q.correct_exp}
+                    </div>
+                    <div class="reason wrong">
+                        <b>❌ Tại sao sai:</b> ${q.wrong_exp}
+                    </div>
+                </div>
+            </div>
+        `;
+        card.innerHTML = html;
+        container.appendChild(card);
+    });
+}
+
+function checkAnswer(qId, selectedText, btnEl, correctText) {
+    if (userAnswers[qId] !== undefined) return;
+    
+    userAnswers[qId] = selectedText;
+    const parent = btnEl.parentElement;
+    const buttons = parent.querySelectorAll('.option-btn');
+    
+    buttons.forEach(b => b.style.pointerEvents = 'none');
+
+    if (selectedText === correctText) {
+        btnEl.classList.add('correct');
+        score++;
+        playDing();
+        fireConfetti(btnEl);
+    } else {
+        btnEl.classList.add('wrong');
+        playDuck();
+        buttons.forEach(b => {
+            if (b.innerText === correctText) {
+                b.classList.add('correct');
+            }
+        });
+    }
+
+    document.getElementById(`exp-${qId}`).style.display = 'block';
+}
+
+function fireConfetti(btn) {
+    const rect = btn.getBoundingClientRect();
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+    confetti({
+        particleCount: 60,
+        spread: 70,
+        origin: { x: x, y: y },
+        colors: ['#a1c4fd', '#c2e9fb', '#e0c3fc', '#8ec5fc']
+    });
+}
+
+function showSubmitModal() {
+    const totalQ = quizData.length;
+    if (Object.keys(userAnswers).length < totalQ) {
+        alert("Con hãy trả lời đầy đủ 100% các câu hỏi trước khi nộp bài nhé!");
+        return;
+    }
+    document.getElementById('submit-modal').style.display = 'flex';
+    document.getElementById('student-name').style.display = 'block';
+    document.getElementById('modal-action-btn').style.display = 'inline-block';
+    document.getElementById('result-section').style.display = 'none';
+}
+
+function processSubmit() {
+    const nameInput = document.getElementById('student-name').value.trim();
+    if (!nameInput) {
+        alert("Con chưa nhập tên kìa!");
+        return;
+    }
+    
+    const totalQ = quizData.length;
+    const convertedScore = ((score / totalQ) * 10).toFixed(2);
+    const percentage = score / totalQ;
+
+    let gifSrc = "";
+    let comment = "";
+
+    if (percentage === 1) {
+        gifSrc = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; 
+        comment = "Lời phê của Ms MS Chí Nên: Quá xuất sắc! Con đúng là một thiên tài ngôn ngữ! 🏆 Cứ giữ vững phong độ này nhé!";
+        fireConfettiBig();
+    } else if (percentage >= 0.6) {
+        gifSrc = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"; 
+        comment = "Lời phê của Ms MS Chí Nên: Rất tốt! Con đã nắm bắt bài khá vững. Hãy tự giác tra cứu thêm và đọc kỹ phần giải thích chi tiết ở bên dưới để rèn luyện nhé! 👏";
+    } else {
+        gifSrc = "https://media.giphy.com/media/26FPpSuhgHvUqcJUI/giphy.gif"; 
+        comment = "Lời phê của Ms MS Chí Nên: Đừng nản chí nhé! Quan trọng nhất là con ghi chép lại toàn bộ từ vựng và xem kỹ giải thích chi tiết của cô bên dưới. Tự học và sửa sai mới là cách tiến bộ nhanh nhất! 💪 Mãi yêu!";
+    }
+
+    document.getElementById('modal-title').innerText = "KẾT QUẢ CỦA CON";
+    document.getElementById('student-name').style.display = 'none';
+    document.getElementById('modal-action-btn').style.display = 'none';
+    
+    const resSec = document.getElementById('result-section');
+    resSec.style.display = 'block';
+    
+    document.getElementById('result-name').innerText = `Học sinh: ${nameInput}`;
+    document.getElementById('result-score').innerText = `Số câu đúng: ${score}/${totalQ}`;
+    document.getElementById('result-converted').innerText = `Điểm hệ 10: ${convertedScore}/10 điểm`;
+    document.getElementById('result-comment').innerText = comment;
+    document.getElementById('result-gif').innerHTML = `<img src="${gifSrc}" alt="Meme">`;
+}
+
+function closeModal() {
+    document.getElementById('submit-modal').style.display = 'none';
+}
+
+function fireConfettiBig() {
+    var duration = 3 * 1000;
+    var animationEnd = Date.now() + duration;
+    var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 3000 };
+    function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+    var interval = setInterval(function() {
+        var timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+        var particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+    }, 250);
+}
+
+window.onload = renderQuiz;
+</script>
+</body>
+</html>

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đấu Trường Ngôn Ngữ cùng Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Comfortaa:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --p-word: #3b82f6;      /* Xanh dương: Từ vựng */
+            --p-mean: #a34223;      /* Đất nung: Nghĩa tiếng Việt */
+            --p-grammar: #ef4444;   /* Đỏ gạch chân: Ngữ pháp */
+            --hl-green: #16a34a;    /* Xanh lá: Đáp án đúng/Từ khóa chính */
+            --hl-red: #991b1b;      /* Đỏ sậm: Lỗi sai/Bẫy (Không gạch ngang) */
+            --glass: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.5);
+        }
+
+        * { box-sizing: border-box; font-family: 'Quicksand', sans-serif; }
+
+        body {
+            margin: 0; padding: 0; height: 100vh; overflow: hidden;
+            background: linear-gradient(-45deg, #ffafcc, #bde0fe, #ffc8dd, #a2d2ff);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex; flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Tương tác nổi Emoji SVG */
+        .bg-pattern {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none;
+        }
+
+        /* Ghi chú Cố định - Sticky Warning - Nhỏ gọn nhưng nổi bật */
+        .sticky-warning {
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(255, 243, 205, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 8px 15px; text-align: justify; font-weight: 700; font-size: 0.85rem; line-height: 1.4;
+            color: #856404; border-bottom: 2px solid #ffeeba; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header { text-align: center; padding: 8px; flex-shrink: 0; }
+        header h5 { margin: 0; font-size: 0.8rem; color: #444; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;}
+        header h1 { margin: 3px 0; font-family: 'Comfortaa', cursive; font-size: 1.6rem; color: #2d3436; text-shadow: 1px 1px 3px rgba(255,255,255,0.7); }
+
+        .main-layout {
+            display: flex; flex: 1; overflow: hidden; padding: 5px 20px 20px; gap: 20px;
+        }
+
+        /* Glassmorphism Panels */
+        .column {
+            flex: 1; overflow-y: auto; scroll-behavior: smooth;
+            background: var(--glass);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 25px; box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+        }
+        
+        .column::-webkit-scrollbar { width: 8px; }
+        .column::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.6); border-radius: 10px; }
+
+        /* Reading Section */
+        .passage h2 { color: #1e293b; border-left: 6px solid #ffafcc; padding-left: 15px; font-size: 1.3rem; margin-top: 0; }
+        .paragraph { margin-bottom: 20px; line-height: 1.8; font-size: 1.05rem; color: #0f172a; font-weight: 500; }
+        
+        .trans-btn {
+            background: linear-gradient(135deg, #a2d2ff, #bde0fe); border: 1px solid white;
+            padding: 6px 12px; border-radius: 15px; font-size: 0.8rem; font-weight: 700;
+            cursor: pointer; margin-top: 5px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #333;
+        }
+        .trans-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 10px rgba(0,0,0,0.1); }
+        .trans-content {
+            display: none; margin-top: 10px; padding: 12px;
+            background: rgba(255,255,255,0.6); border-left: 4px solid #ffafcc;
+            border-radius: 10px; font-style: italic; color: #334155; line-height: 1.6; font-size: 0.95rem;
+        }
+
+        /* Glossary Table */
+        .glossary-title { color: #1e293b; border-left: 6px solid #a2d2ff; padding-left: 15px; font-size: 1.2rem; margin-top: 30px; }
+        .glossary { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.5); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .glossary th { background: #ffc8dd; padding: 10px; text-align: left; font-size: 0.95rem; color: #333; }
+        .glossary td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.4); font-size: 0.9rem; font-weight: 600; color: #1e293b; }
+        .glossary tr:last-child td { border-bottom: none; }
+
+        /* Quiz Section */
+        .q-card {
+            background: rgba(255,255,255,0.6); padding: 20px; border-radius: 15px;
+            margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        .q-text { font-weight: 700; font-size: 1.15rem; margin-bottom: 15px; color: #0f172a; line-height: 1.5; }
+        .options { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .opt-btn {
+            background: white; border: 2px solid transparent; padding: 12px 18px; border-radius: 12px;
+            text-align: left; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.05); color: #334155;
+        }
+        .opt-btn:hover:not(.disabled) { transform: translateY(-2px); background: #f8fafc; border-color: #cbd5e1; }
+        .opt-btn.correct { background: #4ade80 !important; color: white; box-shadow: 0 4px 0 #166534; border-color: #4ade80; }
+        .opt-btn.wrong { background: #fb7185 !important; color: white; box-shadow: 0 4px 0 #991b1b; border-color: #fb7185; animation: shake 0.4s; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Giải thích Master */
+        .exp-box {
+            display: none; margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.9);
+            border-radius: 12px; border-left: 5px solid #3b82f6; font-size: 0.95rem; line-height: 1.7;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .p-word { color: var(--p-word); font-weight: 600; } 
+        .p-mean { color: var(--p-mean); font-weight: 700; }    
+        .p-grammar { text-decoration: underline wavy var(--p-grammar); font-weight: 700; }
+        .hl-green { color: var(--hl-green); font-weight: 700; }
+        .hl-red { color: var(--hl-red); font-weight: 700; }     
+        .quote-box { background: #f1f5f9; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #94a3b8; font-family: Georgia, serif; font-style: italic;}
+
+        .submit-all {
+            width: 100%; padding: 15px; background: linear-gradient(135deg, #4ade80, #22c55e); color: white;
+            border: none; border-radius: 15px; font-size: 1.2rem; font-weight: 800; cursor: pointer;
+            box-shadow: 0 6px 0 #15803d; margin-top: 10px; transition: 0.2s;
+        }
+        .submit-all:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #15803d; }
+        .submit-all:active { transform: translateY(4px); box-shadow: 0 2px 0 #15803d; }
+
+        /* Popup */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(8px); }
+        .popup { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 90%; max-width: 450px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .popup h2 { margin-top: 0; color: #1e293b; font-family: 'Comfortaa', cursive; font-size: 1.5rem; }
+        .popup input { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid #cbd5e1; margin: 15px 0; font-size: 1rem; outline: none; transition: 0.3s; }
+        .popup input:focus { border-color: #a2d2ff; box-shadow: 0 0 0 4px rgba(162, 210, 255, 0.3); }
+        .score-num { font-size: 3rem; font-weight: 800; color: #22c55e; margin: 5px 0; }
+        .scale-10 { font-size: 1.2rem; font-weight: 700; color: #ef4444; margin-bottom: 15px; background: #fee2e2; padding: 5px 15px; border-radius: 20px; display: inline-block; }
+        .meme-img { width: 100%; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .comment { font-size: 1rem; font-weight: 600; color: #475569; margin-bottom: 20px; line-height: 1.5; }
+
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; overflow-y: auto; }
+            .column { overflow-y: visible; flex: none; }
+            body { overflow: auto; height: auto; min-height: 100vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG Floating Patterns -->
+    <svg class="bg-pattern" viewBox="0 0 100 100">
+        <text x="10" y="15" font-size="6" opacity="0.4" transform="rotate(-15, 10, 15)">📱</text>
+        <text x="85" y="25" font-size="8" opacity="0.4" transform="rotate(20, 85, 25)">🎵</text>
+        <text x="15" y="85" font-size="7" opacity="0.4" transform="rotate(10, 15, 85)">💻</text>
+        <text x="80" y="80" font-size="9" opacity="0.4" transform="rotate(-10, 80, 80)">🌐</text>
+        <text x="50" y="50" font-size="10" opacity="0.2">🎧</text>
+    </svg>
+
+    <!-- Bảng nhắc nhở Sticky (Nội dung y hệt yêu cầu) -->
+    <div class="sticky-warning">
+        ⚠️ Tự giác tra cứu từ mới để hiểu rõ nội dung từng câu hỏi bằng google dịch/chat gpt/gemini chứ không được lười suy nghĩ mà chọn bừa. Tra cứu ngữ âm, trọng âm bằng từ điển Cambridge và nghe máy đọc sau đó đọc theo. Chỉ có đọc kỹ giải thích sau đó ghi lại từ/cấu trúc mới vào vở để học mới thực sự giỏi lên, làm cho xong mà không đọc giải thích hay đọc qua loa mà không ghi chép để học thì chỉ tốn thời gian vô ích.
+    </div>
+
+    <header>
+        <h5>Giáo viên tạo: Ms MS Chí Nên</h5>
+        <h1>Đấu Trường Ngôn Ngữ Master 🏆</h1>
+    </header>
+
+    <div class="main-layout">
+        <!-- CỘT BÊN TRÁI: BÀI ĐỌC -->
+        <div class="column passage">
+            <h2>IX. Choose the word or phrase which best fits each gap.</h2>
+            
+            <div class="paragraph">
+                My favourite (1)________ now is to learn new TikTok dance and trends. You might be cringy right now but trust me it is super addictive. To be very fair, when I first downloaded TikTok, I had no idea (2)________ to use that app, or sometimes I would wonder to myself “how did he/she learn the dance move?”
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Sở thích yêu thích của tôi bây giờ là học các điệu nhảy và xu hướng mới trên TikTok. Bạn có thể thấy hơi ngượng ngùng lúc này nhưng tin tôi đi, nó cực kỳ dễ gây nghiện. Nói một cách công bằng, khi tôi mới tải TikTok, tôi không biết làm thế nào để sử dụng ứng dụng đó, hoặc thỉnh thoảng tôi tự hỏi bản thân "làm sao mà anh ấy/cô ấy học được điệu nhảy đó vậy?"</div>
+            </div>
+            
+            <div class="paragraph">
+                Then came that day when I actually tried one of the dance moves, and I never stopped from (3)________ on. I think it is partly because on TikTok it is easier for people to “notice” you in a way.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Rồi cái ngày mà tôi thực sự thử một trong những điệu nhảy đã đến, và tôi không bao giờ dừng lại kể từ lúc đó trở đi. Tôi nghĩ một phần là vì trên TikTok, mọi người dễ dàng "chú ý" đến bạn hơn theo một cách nào đó.</div>
+            </div>
+
+            <div class="paragraph">
+                When I first posted my video, I did not check it (4)________ the next few days and when I did I was in shock because I had 3k views but only 10 followers. That was what kept me (5)________ to post more and more every day. 
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Khi tôi đăng video đầu tiên của mình, tôi đã không kiểm tra nó cho đến vài ngày sau và khi tôi mở ra, tôi đã bị sốc vì tôi có 3k lượt xem nhưng chỉ có 10 người theo dõi. Đó chính là điều đã giữ cho tôi có động lực để đăng ngày càng nhiều hơn mỗi ngày.</div>
+            </div>
+
+            <div class="paragraph">
+                I also do it because I feel like it is really fun and it (6)________ me happy whenever I do, it feels like I am just running away (7)________ my stress for a moment. Till today, one of the most viewed TikTok videos that I posted has 85k views and it low-key makes me feel (8)________. TikTok has really occupied my free time these past few months.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Tôi cũng làm điều đó vì tôi cảm thấy nó thực sự vui và nó làm tôi vui vẻ mỗi khi tôi nhảy, cảm giác giống như tôi chỉ đang trốn chạy khỏi căng thẳng của mình trong một khoảnh khắc. Cho đến hôm nay, một trong những video TikTok được xem nhiều nhất mà tôi đăng có 85k lượt xem và nó âm thầm làm tôi cảm thấy tự hào. TikTok đã thực sự chiếm trọn thời gian rảnh rỗi của tôi trong vài tháng qua.</div>
+            </div>
+
+            <hr style="border:1px solid #ffafcc; margin: 30px 0;">
+
+            <h2>X. Read the passage carefully, then choose the correct answers.</h2>
+            <div class="paragraph">
+                The latest addiction to trap thousands of people is the Internet, which has been blamed for broken relationships, job losses, financial ruin, and even suicide. Psychologists now recognize Internet Addiction Syndrome (IAS) as a new illness that could cause serious problems and ruin many lives. IAS is similar to other problems like gambling, smoking and drinking: addicts have dreams about the Internet; they need to use it first thing in the morning; they lie to their parents and partners about how much time they spent online; they wish they could cut down, but are unable to do so. A recent study found that many users spend up to 40 hours a week on the Internet.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Cơn nghiện mới nhất gài bẫy hàng nghìn người là Internet, thứ đã bị đổ lỗi cho những mối quan hệ đổ vỡ, mất việc làm, sự suy sụp tài chính, và thậm chí là tự tử. Các nhà tâm lý học hiện nay công nhận Hội chứng Nghiện Internet (IAS) là một căn bệnh mới có thể gây ra các vấn đề nghiêm trọng và hủy hoại nhiều cuộc đời. IAS tương tự như các vấn đề khác như cờ bạc, hút thuốc và uống rượu: những người nghiện có những giấc mơ về Internet; họ cần sử dụng nó ngay việc đầu tiên vào buổi sáng; họ nói dối cha mẹ và bạn đời về việc họ dành bao nhiêu thời gian trực tuyến; họ ước mình có thể cắt giảm, nhưng không thể làm vậy. Một nghiên cứu gần đây phát hiện ra rằng nhiều người dùng dành lên tới 40 giờ một tuần trên Internet.</div>
+            </div>
+
+            <div class="paragraph">
+                Almost anyone can be at risk. Some of the addicts are teenagers who are already hooked on computer games and who find it very difficult to resist the games on the Internet. Surprisingly, however, psychologists say that most victims are middle-aged housewives who have never used a computer before.
+                <br><button class="trans-btn" onclick="toggleT(this)">Mở dịch đoạn này 🌟</button>
+                <div class="trans-content">Hầu như bất kỳ ai cũng có thể gặp rủi ro. Một số người nghiện là thanh thiếu niên đã bị nghiện các trò chơi máy tính và những người cảm thấy rất khó để cưỡng lại các trò chơi trên Internet. Tuy nhiên, đáng ngạc nhiên là các nhà tâm lý học nói rằng hầu hết các nạn nhân là những bà nội trợ trung niên chưa từng sử dụng máy tính trước đây.</div>
+            </div>
+
+            <h3 class="glossary-title">Bảng Từ Vựng Học Thuật (Glossary)</h3>
+            <table class="glossary">
+                <tr><th>English Word</th><th>Type</th><th>Vietnamese Meaning</th></tr>
+                <tr><td>Addictive</td><td>adj.</td><td>Có tính gây nghiện</td></tr>
+                <tr><td>Motivated</td><td>adj.</td><td>Có động lực, quyết tâm</td></tr>
+                <tr><td>Occupy</td><td>v.</td><td>Chiếm giữ, chiếm trọn (thời gian)</td></tr>
+                <tr><td>Psychologist</td><td>n.</td><td>Nhà tâm lý học</td></tr>
+                <tr><td>Syndrome</td><td>n.</td><td>Hội chứng (bệnh)</td></tr>
+                <tr><td>Financial ruin</td><td>n.</td><td>Sự phá sản, suy sụp tài chính</td></tr>
+                <tr><td>Hooked on</td><td>adj.</td><td>Bị nghiện, đam mê cái gì</td></tr>
+                <tr><td>Resist</td><td>v.</td><td>Chống lại, kháng cự lại</td></tr>
+                <tr><td>Victim</td><td>n.</td><td>Nạn nhân</td></tr>
+                <tr><td>Middle-aged</td><td>adj.</td><td>Trung niên</td></tr>
+            </table>
+        </div>
+
+        <!-- CỘT BÊN PHẢI: BÀI TẬP -->
+        <div class="column" id="quiz-area">
+            <!-- JS sẽ tự động bơm 13 câu hỏi vào đây -->
+        </div>
+    </div>
+
+    <!-- POPUPS -->
+    <div class="overlay" id="name-overlay">
+        <div class="popup">
+            <h2>Nhập tên để nộp bài ✍️</h2>
+            <input type="text" id="student-name" placeholder="Tên của con là (VD: Nguyễn Văn A)..." autocomplete="off">
+            <button class="submit-all" onclick="finishTest()">XEM ĐIỂM & ĐÁNH GIÁ 🚀</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="result-overlay">
+        <div class="popup">
+            <h2 id="final-name"></h2>
+            <div class="score-num" id="final-score">0/13</div>
+            <div class="scale-10" id="grade-10">Điểm hệ 10: 0.0</div>
+            <img src="" class="meme-img" id="meme">
+            <div class="comment" id="comment"></div>
+            <button class="submit-all" onclick="location.reload()">🔄 LÀM LẠI ĐỂ ĐẠT ĐIỂM CAO HƠN</button>
+        </div>
+    </div>
+
+    <!-- AUDIO FILES -->
+    <audio id="s-ding" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" preload="auto"></audio>
+    <audio id="s-wrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Am_thanh_meme_Oi_doi_oi_huan_hoa_hong-www_tiengdong_com.mp3" preload="auto"></audio>
+    <audio id="s-intro" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_7wcKV5pKUrQYWyi7XgktJM.mp3" preload="auto"></audio>
+
+    <script>
+        const quizData = [
+            // === PART IX === (Đục lỗ từ - Đã xóa trích dẫn câu hỏi, bắt học sinh cuộn sang trái tìm ngữ cảnh)
+            { id: 1, q: "Câu (1): Select the best answer", options: ["action", "hobby", "leisure", "skill"], correct: "hobby", 
+              exp: "Dịch: A. <span class='p-word'>action</span> (<span class='p-mean'>n. hành động</span>) ❌<br>B. <span class='p-word'>hobby</span> (<span class='p-mean'>n. sở thích</span>) ✅ <span class='hl-green'>Đúng</span>.<br>C. <span class='p-word'>leisure</span> (<span class='p-mean'>n. sự thư giãn</span>) ❌<br>D. <span class='p-word'>skill</span> (<span class='p-mean'>n. kỹ năng</span>) ❌<br><div class='quote-box'>🔍 Dẫn chứng trong bài: 'My favourite (1)____ now is to learn new TikTok dance...'</div>👉 Giải thích: Cụm từ cố định (Collocation) <span class='p-grammar'>favourite hobby</span> nghĩa là 'sở thích yêu thích nhất'." },
+            { id: 2, q: "Câu (2): Select the best answer", options: ["how", "when", "what", "who"], correct: "how",
+              exp: "Dịch: A. <span class='p-word'>how</span> (<span class='p-mean'>adv. làm cách nào</span>) ✅ <span class='hl-green'>Đúng</span>.<br>B. <span class='p-word'>when</span> (<span class='p-mean'>khi nào</span>) ❌<br>C. <span class='p-word'>what</span> (<span class='p-mean'>cái gì</span>) ❌<br>D. <span class='p-word'>who</span> (<span class='p-mean'>ai</span>) ❌<br><div class='quote-box'>🔍 Dẫn chứng: 'I had no idea (2)____ to use that app...'</div>👉 Giải thích: Cấu trúc <span class='p-grammar'>have no idea how to + V(nguyên thể)</span> nghĩa là 'không biết làm cách nào để...'. (Không biết cách dùng app)." },
+            { id: 3, q: "Câu (3): Select the best answer", options: ["now", "time", "that", "then"], correct: "then",
+              exp: "Dịch: A. <span class='p-word'>now</span> (<span class='p-mean'>bây giờ</span>) ❌<br>B. <span class='p-word'>time</span> (<span class='p-mean'>thời gian</span>) ❌<br>C. <span class='p-word'>that</span> (<span class='p-mean'>điều đó</span>) ❌<br>D. <span class='p-word'>then</span> (<span class='p-mean'>adv. lúc đó, sau đó</span>) ✅ <span class='hl-green'>Đúng</span>.<br><div class='quote-box'>🔍 Dẫn chứng: 'and I never stopped from (3)____ on.'</div>👉 Giải thích: Cụm thành ngữ <span class='p-grammar'>from then on</span> nghĩa là 'kể từ lúc đó trở đi'. Tác giả không bao giờ dừng nhảy kể từ khoảnh khắc đó." },
+            { id: 4, q: "Câu (4): Select the best answer", options: ["on", "in", "until", "during"], correct: "until",
+              exp: "Dịch: A. <span class='p-word'>on</span> ❌<br>B. <span class='p-word'>in</span> ❌<br>C. <span class='p-word'>until</span> (<span class='p-mean'>prep. cho đến khi</span>) ✅ <span class='hl-green'>Đúng</span>.<br>D. <span class='p-word'>during</span> (<span class='p-mean'>trong suốt</span>) ❌<br><div class='quote-box'>🔍 Dẫn chứng: 'I did not check it (4)____ the next few days...'</div>👉 Giải thích: Cấu trúc <span class='p-grammar'>not... until...</span> nghĩa là 'không làm gì... mãi cho đến khi...'. Tác giả đã không kiểm tra video cho đến vài ngày sau." },
+            { id: 5, q: "Câu (5): Select the best answer", options: ["motivated", "crazy", "amused", "exciting"], correct: "motivated",
+              exp: "Dịch: A. <span class='p-word'>motivated</span> (<span class='p-mean'>adj. có động lực</span>) ✅ <span class='hl-green'>Đúng</span>.<br>B. <span class='p-word'>crazy</span> (<span class='p-mean'>adj. điên rồ</span>) ❌<br>C. <span class='p-word'>amused</span> (<span class='p-mean'>adj. buồn cười, giải trí</span>) ❌<br>D. <span class='p-word'>exciting</span> (<span class='p-mean'>adj. thú vị</span>) ❌<br><div class='quote-box'>🔍 Dẫn chứng: 'That was what kept me (5)____ to post more...'</div>👉 Giải thích: Cấu trúc <span class='p-grammar'>keep sb + adj/V-ing</span> (giữ cho ai đó ở trạng thái nào). Lượt view cao đã giúp tác giả 'có động lực' (motivated) đăng video mỗi ngày." },
+            { id: 6, q: "Câu (6): Select the best answer", options: ["seems", "brings", "finds", "makes"], correct: "makes",
+              exp: "Dịch: A. <span class='p-word'>seems</span> (<span class='p-mean'>dường như</span>) ❌<br>B. <span class='p-word'>brings</span> (<span class='p-mean'>mang lại</span>) ❌<br>C. <span class='p-word'>finds</span> (<span class='p-mean'>tìm thấy</span>) ❌<br>D. <span class='p-word'>makes</span> (<span class='p-mean'>v. làm cho</span>) ✅ <span class='hl-green'>Đúng</span>.<br><div class='quote-box'>🔍 Dẫn chứng: '...and it (6)____ me happy whenever I do...'</div>👉 Giải thích: Cấu trúc <span class='p-grammar'>make sb + adj</span> (làm cho ai đó cảm thấy thế nào). Ở đây là 'làm cho tôi vui' (makes me happy)." },
+            { id: 7, q: "Câu (7): Select the best answer", options: ["for", "from", "with", "off"], correct: "from",
+              exp: "Dịch: A. <span class='p-word'>for</span> ❌<br>B. <span class='p-word'>from</span> (<span class='p-mean'>prep. khỏi, từ</span>) ✅ <span class='hl-green'>Đúng</span>.<br>C. <span class='p-word'>with</span> ❌<br>D. <span class='p-word'>off</span> ❌<br><div class='quote-box'>🔍 Dẫn chứng: 'feels like I am just running away (7)____ my stress...'</div>👉 Giải thích: Cụm động từ (Phrasal verb) <span class='p-grammar'>run away from sth</span> nghĩa là 'chạy trốn khỏi cái gì đó' (ở đây là trốn khỏi căng thẳng)." },
+            { id: 8, q: "Câu (8): Select the best answer", options: ["pride", "prided", "proud", "proudly"], correct: "proud",
+              exp: "Dịch: A. <span class='p-word'>pride</span> (<span class='p-mean'>n. niềm tự hào</span>) ❌<br>B. <span class='p-word'>prided</span> (<span class='p-mean'>v-ed</span>) ❌<br>C. <span class='p-word'>proud</span> (<span class='p-mean'>adj. tự hào</span>) ✅ <span class='hl-green'>Đúng</span>.<br>D. <span class='p-word'>proudly</span> (<span class='p-mean'>adv. một cách tự hào</span>) ❌<br><div class='quote-box'>🔍 Dẫn chứng: '...and it low-key makes me feel (8)____.'</div>👉 Giải thích: Động từ chỉ cảm giác <span class='p-grammar'>feel + Adjective (Tính từ)</span>. Do đó cần chọn tính từ 'proud' (cảm thấy tự hào)." },
+
+            // === PART X === (Đọc hiểu - Vẫn giữ câu hỏi nhưng không trích dẫn tiếng Anh để bắt học sinh dịch nguyên câu)
+            { id: 9, q: "Câu (9): The passage mainly talks about ____.", options: ["the advantage of the Internet", "the Internet addiction", "the impact of the Internet on teens", "the Internet revolution"], correct: "the Internet addiction",
+              exp: "Dịch câu hỏi: Đoạn văn chủ yếu nói về ____.<br>A. <span class='p-word'>the advantage...</span> (<span class='p-mean'>lợi ích của Internet</span>) ❌ Sai vì bài viết toàn nói về tác hại.<br>B. <span class='p-word'>the Internet addiction</span> (<span class='p-mean'>Sự nghiện Internet</span>) ✅ <span class='hl-green'>Đúng</span>.<br>C. <span class='p-word'>impact... on teens</span> (<span class='p-mean'>tác động lên thanh thiếu niên</span>) ❌ Sai vì teens chỉ là 1 nhóm nhỏ được nhắc đến ở đoạn 2.<br>D. <span class='p-word'>Internet revolution</span> (<span class='p-mean'>cuộc cách mạng mạng</span>) ❌ Sai.<br><div class='quote-box'>🔍 Dẫn chứng: Xuyên suốt đoạn văn nhắc đến 'addiction', 'Internet Addiction Syndrome (IAS)', 'addicts'. Ý chính bao trùm toàn bài là Sự nghiện Internet.</div>" },
+            { id: 10, q: "Câu (10): According to the writer, internet addiction ____.", options: ["is not the same as gambling", "is most common among young people", "can lead to financial problems", "causes no harm to life"], correct: "can lead to financial problems",
+              exp: "Dịch câu hỏi: Theo tác giả, nghiện internet ____.<br>A. <span class='p-word'>not the same as gambling</span> (<span class='p-mean'>không giống cờ bạc</span>) ❌ Sai, bài đọc ghi 'IAS is similar to... gambling' (nó giống).<br>B. <span class='p-word'>most common among young people</span> (<span class='p-mean'>phổ biến nhất ở người trẻ</span>) ❌ Sai, bài đọc ghi nạn nhân hầu hết là 'middle-aged housewives' (bà nội trợ trung niên).<br>C. <span class='p-word'>can lead to financial problems</span> (<span class='p-mean'>có thể dẫn đến vấn đề tài chính</span>) ✅ <span class='hl-green'>Đúng</span>.<br>D. <span class='p-word'>causes no harm</span> (<span class='p-mean'>không gây hại</span>) ❌ Sai hoàn toàn.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 1): '...the Internet, which has been blamed for... financial ruin...'</div>👉 Dịch: 'Internet, thứ đã bị đổ lỗi cho... <span class='hl-green'>sự suy sụp tài chính</span> (tương đương financial problems).'" },
+            { id: 11, q: "Câu (11): Internet addicts find it impossible ____.", options: ["to surf the Internet in the morning", "to lie about the time they use the Internet", "to be hooked on the Internet", "to cut down on their time spent online"], correct: "to cut down on their time spent online",
+              exp: "Dịch câu hỏi: Người nghiện Internet cảm thấy KHÔNG THỂ ____.<br>A. <span class='p-word'>surf... in the morning</span> (<span class='p-mean'>lướt mạng buổi sáng</span>) ❌ Sai, họ RẤT CẦN lướt vào buổi sáng.<br>B. <span class='p-word'>lie about the time</span> (<span class='p-mean'>nói dối về thời gian</span>) ❌ Sai, họ thường xuyên nói dối.<br>D. <span class='p-word'>to cut down on their time spent online</span> (<span class='p-mean'>cắt giảm thời gian dùng mạng của họ</span>) ✅ <span class='hl-green'>Đúng</span>.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 1): 'they wish they could cut down, but are unable to do so.'</div>👉 Dịch: 'Họ ước họ có thể cắt giảm, nhưng <span class='hl-green'>không thể làm vậy (unable to do so = impossible)</span>.'" },
+            { id: 12, q: "Câu (12): The idiom 'at risk' in paragraph 2 means ____.", options: ["in danger", "in advance", "in common", "for certain"], correct: "in danger",
+              exp: "Dịch câu hỏi: Thành ngữ 'at risk' ở đoạn 2 có nghĩa là ____.<br>A. <span class='p-word'>in danger</span> (<span class='p-mean'>gặp nguy hiểm, rủi ro</span>) ✅ <span class='hl-green'>Đúng</span>. Đồng nghĩa với 'at risk'.<br>B. <span class='p-word'>in advance</span> (<span class='p-mean'>trước</span>) ❌<br>C. <span class='p-word'>in common</span> (<span class='p-mean'>điểm chung</span>) ❌<br>D. <span class='p-word'>for certain</span> (<span class='p-mean'>chắc chắn</span>) ❌<br><div class='quote-box'>🔍 Dẫn chứng: 'Almost anyone can be at risk.' (Hầu như ai cũng có thể <span class='hl-green'>gặp nguy hiểm/rủi ro</span> bị nghiện).</div>" },
+            { id: 13, q: "Câu (13): Which of the followings is NOT true?", options: ["IAS is recognised as a new illness.", "Internet addiction can cause suicide behaviours.", "Many internet addicts spend more than 40 hours a week online.", "Teenagers who are hooked on computer games can suffer from IAS."], correct: "Many internet addicts spend more than 40 hours a week online.",
+              exp: "Dịch câu hỏi: Điều nào sau đây là KHÔNG đúng (NOT true)?<br>A, B, D đều là thông tin CÓ THẬT trong bài ❌.<br>C. <span class='p-word'>...spend MORE THAN 40 hours a week...</span> (<span class='p-mean'>dành NHIỀU HƠN 40 giờ một tuần</span>) ✅ <span class='hl-green'>Đúng là thông tin SAI sự thật</span>.<br><div class='quote-box'>🔍 Dẫn chứng (Đoạn 1): 'A recent study found that many users spend up to 40 hours a week...'</div>👉 Giải thích: Bài đọc dùng cụm <span class='hl-red'>up to (lên đến / tối đa là)</span> 40 giờ. Trong khi đáp án C lại bảo là <span class='hl-red'>more than (nhiều hơn)</span> 40 giờ. Bẫy từ vựng kinh điển!" }
+        ];
+
+        let score = 0;
+        let answeredQuestions = 0;
+        let hasPlayedIntro = false;
+
+        // Shuffle thuật toán xáo trộn mảng
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Ẩn/Hiện dịch đoạn văn
+        function toggleT(btn) {
+            const content = btn.nextElementSibling;
+            if(content.style.display === "block") {
+                content.style.display = "none";
+                btn.innerText = "Mở dịch đoạn này 🌟";
+                btn.style.background = "linear-gradient(135deg, #a2d2ff, #bde0fe)";
+            } else {
+                content.style.display = "block";
+                btn.innerText = "Thu gọn dịch ❌";
+                btn.style.background = "#ffc8dd";
+            }
+        }
+
+        // Khởi tạo bài tập
+        function initQuiz() {
+            const quizArea = document.getElementById('quiz-area');
+            
+            quizData.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'q-card';
+                
+                // Trộn đáp án để chống học vẹt (Gamification)
+                const shuffledOptions = shuffleArray([...item.options]);
+                
+                let optionsHTML = '';
+                shuffledOptions.forEach(opt => {
+                    // Xử lý chuỗi nháy đơn bên trong đáp án (nếu có)
+                    const safeOpt = opt.replace(/'/g, "\\'");
+                    optionsHTML += `<button class="opt-btn" onclick="checkAnswer(this, ${item.id}, '${safeOpt}')">${opt}</button>`;
+                });
+
+                card.innerHTML = `
+                    <div class="q-text">💡 ${item.q}</div>
+                    <div class="options" id="opts-${item.id}">
+                        ${optionsHTML}
+                    </div>
+                    <div class="exp-box" id="exp-${item.id}"></div>
+                `;
+                quizArea.appendChild(card);
+            });
+
+            const submitBtn = document.createElement('button');
+            submitBtn.className = 'submit-all';
+            submitBtn.innerHTML = "🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ";
+            submitBtn.onclick = () => {
+                if (answeredQuestions < quizData.length) {
+                    alert("⚠️ Cảnh báo từ Ms MS Chí Nên: Con chưa làm hết bài! Hãy cuộn lên và hoàn thành toàn bộ 13 câu trước khi nộp nhé!");
+                    return;
+                }
+                document.getElementById('name-overlay').style.display = 'flex';
+                document.getElementById('student-name').focus();
+            };
+            quizArea.appendChild(submitBtn);
+
+            // Bắt sự kiện click đầu tiên vào trang để phát Intro Audio
+            document.body.addEventListener('click', () => {
+                if(!hasPlayedIntro) {
+                    const introAudio = document.getElementById('s-intro');
+                    introAudio.play().catch(e => console.log("Trình duyệt chặn autoplay audio"));
+                    hasPlayedIntro = true;
+                }
+            });
+        }
+
+        // Xử lý khi chọn đáp án
+        function checkAnswer(btn, qId, selectedOption) {
+            const questionData = quizData.find(q => q.id === qId);
+            const optContainer = document.getElementById(`opts-${qId}`);
+            const allButtons = optContainer.querySelectorAll('.opt-btn');
+            const expBox = document.getElementById(`exp-${qId}`);
+
+            // Chống click nhiều lần
+            if (btn.classList.contains('disabled')) return;
+
+            // Khóa tất cả nút trong câu này
+            allButtons.forEach(b => {
+                b.classList.add('disabled');
+                b.style.cursor = 'not-allowed';
+            });
+
+            // Kiểm tra đúng sai
+            if (selectedOption === questionData.correct) {
+                btn.classList.add('correct');
+                document.getElementById('s-ding').currentTime = 0;
+                document.getElementById('s-ding').play();
+                score++;
+                
+                // Hiệu ứng pháo hoa Confetti
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#4ade80', '#fbbf24', '#ffafcc']
+                });
+            } else {
+                btn.classList.add('wrong');
+                document.getElementById('s-wrong').currentTime = 0;
+                document.getElementById('s-wrong').play();
+                
+                // Tự động highlight đáp án đúng
+                allButtons.forEach(b => {
+                    if (b.innerText === questionData.correct) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            // Hiện khung giải thích siêu chi tiết
+            expBox.innerHTML = `<strong>👩‍🏫 Ms MS Chí Nên giải thích chi tiết:</strong><br><br>${questionData.exp}`;
+            expBox.style.display = "block";
+            
+            // Cuộn mượt đến phần giải thích
+            expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            answeredQuestions++;
+        }
+
+        // Xử lý nộp bài
+        function finishTest() {
+            const studentName = document.getElementById('student-name').value.trim();
+            if (!studentName) {
+                alert("Con phải nhập tên thật của mình vào ô trống để Ms MS Chí Nên ghi sổ điểm nhé!");
+                return;
+            }
+
+            // Tính toán điểm số hệ 10
+            const totalQuestions = quizData.length;
+            const scoreScale10 = ((score / totalQuestions) * 10).toFixed(2);
+
+            // Cập nhật UI kết quả
+            document.getElementById('name-overlay').style.display = 'none';
+            document.getElementById('result-overlay').style.display = 'flex';
+            
+            document.getElementById('final-name').innerText = `Bảng Điểm Của: ${studentName.toUpperCase()} 🌟`;
+            document.getElementById('final-score').innerText = `${score} / ${totalQuestions}`;
+            document.getElementById('grade-10').innerText = `Điểm hệ 10: ${scoreScale10} / 10`;
+
+            // Logic thay đổi Meme & Lời phê theo chuẩn Gamification
+            const memeImg = document.getElementById('meme');
+            const commentTxt = document.getElementById('comment');
+
+            if (scoreScale10 == 10) {
+                memeImg.src = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHJmZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqJmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/l41lI4bYusHOOCY2k/giphy.gif"; // Thiên tài
+                commentTxt.innerHTML = "Tuyệt đỉnh xuất chúng! 🔥 Con chính là thiên tài tiếng Anh! Ms MS Chí Nên cực kỳ tự hào về con. 100 điểm không có nhưng!";
+            } else if (scoreScale10 >= 8) {
+                memeImg.src = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJmZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqJmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/3o7abKhOpuMGPtYW40/giphy.gif"; // Rất tốt, high five
+                commentTxt.innerHTML = "Rất xuất sắc! 👏 Con đã nắm bắt từ vựng và ngữ pháp rất chắc chắn. Hãy ghi lại vài lỗi sai nhỏ vào vở để lần sau đạt điểm tuyệt đối nhé!";
+            } else if (scoreScale10 >= 5) {
+                memeImg.src = "https://media.giphy.com/media/l3q2XhfQ8oCkm1Ts4/giphy.gif"; // Khá, vỗ tay động viên
+                commentTxt.innerHTML = "Làm tốt lắm nhưng vẫn có thể tốt hơn! 🤔 Con cần chú ý đọc kỹ các giải thích màu đỏ của cô để tránh rơi vào bẫy từ vựng nhé. Cố lên!";
+            } else {
+                memeImg.src = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJmZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqZzBqJmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/OPU6wUKARAOAnE2oR/giphy.gif"; // Khóc hài hước
+                commentTxt.innerHTML = "Ôi dồi ôi! 😭 Con đã làm bài hơi vội vàng rồi đúng không? Đừng buồn, hãy đọc lại bảng giải thích chi tiết của cô MS Chí Nên, tra từ điển và làm lại bài lần nữa nhé. Không có gì là không thể!";
+            }
+            
+            // Bắn pháo hoa liên tục nếu điểm cao
+            if (scoreScale10 >= 8) {
+                let duration = 3 * 1000;
+                let animationEnd = Date.now() + duration;
+                let defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 3000 };
+                let interval = setInterval(function() {
+                    let timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) { return clearInterval(interval); }
+                    let particleCount = 50 * (timeLeft / duration);
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                    confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+                }, 250);
+            }
+        }
+
+        function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+        // Khởi chạy khi load trang
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>

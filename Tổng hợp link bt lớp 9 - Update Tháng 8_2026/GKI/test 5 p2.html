@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified English Quiz - Ms MS Chí Nên</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.35);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --primary-color: #0984e3;
+            --success-color: #00b894;
+            --error-color: #d63031;
+            --text-main: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* NEW THEME: Fresh Morning (Blue to Mint Green) */
+        body {
+            background: linear-gradient(-45deg, #a1c4fd, #c2e9fb, #d4fc79, #96e6a1);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Floating Pattern Background */
+        .svg-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.6;
+            animation: floatEmoji 25s linear infinite alternate;
+        }
+
+        @keyframes floatEmoji {
+            0% { transform: translateY(0px) rotate(0deg); }
+            100% { transform: translateY(-30px) rotate(10deg); }
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 10;
+        }
+        
+        header h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #34495e;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Split Screen Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            overflow-y: auto;
+            position: relative;
+            scroll-behavior: smooth;
+        }
+
+        .panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        .panel::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.8);
+            border-radius: 10px;
+        }
+
+        /* Reading Passage Styles */
+        .passage-title {
+            font-size: 22px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 1px 1px 3px rgba(255,255,255,0.9);
+        }
+
+        .paragraph-box {
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 17px;
+            background: rgba(255,255,255,0.5);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.6);
+            transition: all 0.3s;
+        }
+
+        .paragraph-box:hover {
+            background: rgba(255,255,255,0.7);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .translate-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #0984e3, #74b9ff);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .translate-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .vietnamese-text {
+            display: none;
+            margin-top: 10px;
+            color: #2c3e50;
+            font-style: italic;
+            border-left: 3px solid var(--primary-color);
+            padding-left: 10px;
+            background: rgba(255,255,255,0.6);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        /* Glossary Table */
+        .glossary-title {
+            margin-top: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.8);
+            text-align: left;
+        }
+        .glossary-table th {
+            background: rgba(9, 132, 227, 0.2);
+            font-weight: bold;
+        }
+
+        /* Question Styles */
+        .question-card {
+            background: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2d3436;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: rgba(255,255,255,0.9);
+            border: 2px solid rgba(255,255,255,1);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-weight: 500;
+            color: #2d3436;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            background: #ffffff;
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 10px rgba(9, 132, 227, 0.2);
+        }
+
+        .option-btn.correct {
+            background: var(--success-color) !important;
+            color: white !important;
+            border-color: var(--success-color) !important;
+            box-shadow: 0 0 15px rgba(0, 184, 148, 0.5);
+        }
+
+        .option-btn.incorrect {
+            background: var(--error-color) !important;
+            color: white !important;
+            border-color: var(--error-color) !important;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        /* Explanations */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+            font-size: 15px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Detailed styling for explanations */
+        .p-word { background: #e0f2fe; color: #0284c7; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+        .p-phonetic { color: #64748b; font-style: italic; }
+        .p-mean { background: #fef08a; color: #a16207; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .p-grammar { background: #fce7f3; color: #be185d; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px dashed #be185d; }
+        .hl-green { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 5px; }
+        .hl-red { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 5px; }
+        
+        .exp-section { margin-bottom: 10px; }
+        .exp-options-list { list-style-type: none; padding-left: 10px; margin: 10px 0; }
+        .exp-options-list li { margin-bottom: 5px; padding-left: 15px; position: relative; }
+        .exp-options-list li::before { content: "•"; position: absolute; left: 0; color: var(--primary-color); font-weight: bold;}
+
+        /* Submit Area */
+        .submit-area {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #ff7675, #d63031);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(214, 48, 49, 0.4);
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(214, 48, 49, 0.6);
+        }
+
+        /* Modal / Popup */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 2px solid #74b9ff;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .modal-input:focus {
+            border-color: #0984e3;
+        }
+
+        .confirm-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+
+        .confirm-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Result Card */
+        .result-card {
+            display: none;
+            text-align: center;
+        }
+        
+        .score-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .score-scale {
+            font-size: 20px;
+            color: #e17055;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .feedback-msg {
+            font-size: 18px;
+            color: #2d3436;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .result-gif {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG Background Elements: Fresh Theme -->
+    <svg class="svg-bg" xmlns="http://www.w3.org/2000/svg">
+        <text x="10%" y="20%" font-size="50" opacity="0.4">🏙️</text>
+        <text x="85%" y="15%" font-size="45" opacity="0.4">🍎</text>
+        <text x="15%" y="80%" font-size="55" opacity="0.4">🚗</text>
+        <text x="75%" y="85%" font-size="45" opacity="0.4">🏃‍♂️</text>
+        <text x="50%" y="60%" font-size="40" opacity="0.3">🥦</text>
+        <text x="40%" y="10%" font-size="45" opacity="0.3">🥛</text>
+    </svg>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>
+        <h2>Giáo viên tạo: Ms MS Chí Nên</h2>
+    </header>
+
+    <div class="main-container">
+        <!-- LEFT PANEL: READING -->
+        <div class="panel left-panel">
+            
+            <!-- PASSAGE 1 (V) -->
+            <h2 class="passage-title">PASSAGE 1: LIVING IN A BIG CITY</h2>
+            
+            <div class="paragraph-box">
+                People who routinely visit or work in a big city know that they can be a hassle. Major cities have more people, traffic, and neighbourhoods that can make navigating through the city (17) _____.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans1')">Mở dịch đoạn này 🌟</button>
+                <div id="trans1" class="vietnamese-text">Những người thường xuyên ghé thăm hoặc làm việc ở một thành phố lớn đều biết rằng chúng có thể là một sự phiền phức. Các thành phố lớn có nhiều người, nhiều xe cộ và nhiều khu dân cư hơn, điều này có thể khiến việc đi lại quanh thành phố (17) _____.</div>
+            </div>
+
+            <div class="paragraph-box">
+                The higher cost of living is the first disadvantage that people typically think of (18) _____ considering moving to a city. Major cities always have a higher cost of living than the (19) _____ suburbs. For instance, New York has the highest cost of living in the U.S.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans2')">Mở dịch đoạn này 🌟</button>
+                <div id="trans2" class="vietnamese-text">Chi phí sinh hoạt cao hơn là bất lợi đầu tiên mà mọi người thường nghĩ đến (18) _____ cân nhắc chuyển đến một thành phố. Các thành phố lớn luôn có chi phí sinh hoạt cao hơn các vùng ngoại ô (19) _____. Ví dụ, New York có chi phí sinh hoạt cao nhất ở Hoa Kỳ.</div>
+            </div>
+
+            <div class="paragraph-box">
+                Secondly, the noise level in major cities is higher than in the suburbs. Cities have more people and more traffic that contribute (20) _____ the noise, as well as trains and nearby airports with loud planes flying in and out.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans3')">Mở dịch đoạn này 🌟</button>
+                <div id="trans3" class="vietnamese-text">Thứ hai, mức độ tiếng ồn ở các thành phố lớn cao hơn ở vùng ngoại ô. Các thành phố có nhiều người và nhiều phương tiện giao thông hơn góp phần (20) _____ tiếng ồn, cũng như tàu hỏa và các sân bay gần đó với những chiếc máy bay ồn ào bay đến và bay đi.</div>
+            </div>
+
+            <div class="paragraph-box">
+                Lastly, cities often struggle with various forms of (21) _____ that impact residents’ daily lives. The most noticeable among these is air pollution, stemming from congested streets, heavy traffic, and industrial activities. Breathing polluted air can lead to (22) _____ issues and long-term health problems.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans4')">Mở dịch đoạn này 🌟</button>
+                <div id="trans4" class="vietnamese-text">Cuối cùng, các thành phố thường phải vật lộn với nhiều hình thức (21) _____ tác động đến cuộc sống hàng ngày của người dân. Dễ nhận thấy nhất trong số này là ô nhiễm không khí, bắt nguồn từ những con phố tắc nghẽn, giao thông đông đúc và các hoạt động công nghiệp. Việc hít thở không khí ô nhiễm có thể dẫn đến các vấn đề về (22) _____ và các vấn đề sức khỏe lâu dài.</div>
+            </div>
+
+            <h3 class="glossary-title">📚 Glossary - Passage 1</h3>
+            <table class="glossary-table">
+                <tr><th>Word</th><th>POS</th><th>Vietnamese Meaning</th></tr>
+                <tr><td>Routinely</td><td>adv</td><td>Thường xuyên, như một thói quen</td></tr>
+                <tr><td>Hassle</td><td>n</td><td>Sự phiền phức, rắc rối</td></tr>
+                <tr><td>Navigate</td><td>v</td><td>Định vị, đi lại, di chuyển</td></tr>
+                <tr><td>Disadvantage</td><td>n</td><td>Bất lợi, nhược điểm</td></tr>
+                <tr><td>Suburb</td><td>n</td><td>Vùng ngoại ô</td></tr>
+                <tr><td>Contribute</td><td>v</td><td>Đóng góp, góp phần</td></tr>
+                <tr><td>Noticeable</td><td>adj</td><td>Đáng chú ý, dễ nhận thấy</td></tr>
+                <tr><td>Congested</td><td>adj</td><td>Tắc nghẽn, đông nghịt</td></tr>
+                <tr><td>Respiratory</td><td>adj</td><td>Thuộc về đường hô hấp</td></tr>
+            </table>
+
+            <hr style="border: 1px dashed rgba(255,255,255,0.8); margin: 40px 0;">
+
+            <!-- PASSAGE 2 (VI) -->
+            <h2 class="passage-title">PASSAGE 2: A HEALTHY TEENAGE DIET</h2>
+            
+            <div class="paragraph-box">
+                Your teenage years are an important time for growth and development. A healthy, varied diet is essential to ensure that you receive all the energy and nutrients you need to stay healthy, concentrate at school, and take part in physical activities.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans5')">Mở dịch đoạn này 🌟</button>
+                <div id="trans5" class="vietnamese-text">Những năm tháng tuổi vị thành niên của bạn là thời điểm quan trọng cho sự tăng trưởng và phát triển. Một chế độ ăn uống lành mạnh, đa dạng là rất cần thiết để đảm bảo rằng bạn nhận được tất cả năng lượng và chất dinh dưỡng cần thiết để giữ gìn sức khỏe, tập trung ở trường và tham gia các hoạt động thể chất.</div>
+            </div>
+
+            <div class="paragraph-box">
+                By the time you get up in the morning, it has been a long time since you last ate, so a good breakfast will boost your energy levels. Some quick breakfast ideas include a bowl of cereal with low-fat milk and an apple, or a boiled egg, wholegrain toast and a fruit smoothie. Furthermore, make sure you eat three meals a day, and each meal includes at least one portion of fruit or vegetables since they contain lots of vitamins and minerals.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans6')">Mở dịch đoạn này 🌟</button>
+                <div id="trans6" class="vietnamese-text">Đến lúc bạn thức dậy vào buổi sáng, đã là một khoảng thời gian dài kể từ lần cuối bạn ăn, do đó một bữa sáng chất lượng sẽ thúc đẩy mức năng lượng của bạn. Một số ý tưởng bữa sáng nhanh gọn bao gồm một bát ngũ cốc với sữa ít béo và một quả táo, hoặc một quả trứng luộc, bánh mì nướng ngũ cốc nguyên hạt và một ly sinh tố trái cây. Hơn nữa, hãy đảm bảo bạn ăn ba bữa một ngày, và mỗi bữa ăn bao gồm ít nhất một phần trái cây hoặc rau củ vì chúng chứa rất nhiều vitamin và khoáng chất.</div>
+            </div>
+
+            <div class="paragraph-box">
+                When taking part in exercise and physical activity, remember to drink plenty of fluids. Aim for about 6 to 8 glasses each day. The best source of fluid includes water and low-fat milk. Try to avoid too many sugary drinks and energy drinks, especially between meals as they could harm your teeth.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans7')">Mở dịch đoạn này 🌟</button>
+                <div id="trans7" class="vietnamese-text">Khi tham gia tập thể dục và hoạt động thể chất, hãy nhớ uống nhiều nước. Đặt mục tiêu khoảng 6 đến 8 ly mỗi ngày. Nguồn chất lỏng tốt nhất bao gồm nước và sữa ít béo. Cố gắng tránh quá nhiều đồ uống có đường và nước tăng lực, đặc biệt là giữa các bữa ăn vì chúng có thể gây hại cho răng của bạn.</div>
+            </div>
+
+            <div class="paragraph-box">
+                Most importantly, limit how much fast food you eat. These foods can be high in saturated fat, salt, and sugars, which can be bad for your health when eaten in large amounts.
+                <br>
+                <button class="translate-btn" onclick="toggleTranslation('trans8')">Mở dịch đoạn này 🌟</button>
+                <div id="trans8" class="vietnamese-text">Quan trọng nhất, hãy giới hạn lượng thức ăn nhanh bạn ăn. Những thực phẩm này có thể chứa nhiều chất béo bão hòa, muối và đường, những thứ có thể gây hại cho sức khỏe của bạn khi ăn với số lượng lớn.</div>
+            </div>
+
+            <h3 class="glossary-title">📚 Glossary - Passage 2</h3>
+            <table class="glossary-table">
+                <tr><th>Word</th><th>POS</th><th>Vietnamese Meaning</th></tr>
+                <tr><td>Nutrient</td><td>n</td><td>Chất dinh dưỡng</td></tr>
+                <tr><td>Concentrate</td><td>v</td><td>Tập trung</td></tr>
+                <tr><td>Boost</td><td>v</td><td>Thúc đẩy, làm tăng lên</td></tr>
+                <tr><td>Wholegrain</td><td>adj</td><td>Ngũ cốc nguyên hạt</td></tr>
+                <tr><td>Portion</td><td>n</td><td>Khẩu phần, phần ăn</td></tr>
+                <tr><td>Fluid</td><td>n</td><td>Chất lỏng, nước</td></tr>
+                <tr><td>Beneficial</td><td>adj</td><td>Có lợi, có ích</td></tr>
+                <tr><td>Saturated fat</td><td>n phrase</td><td>Chất béo bão hòa</td></tr>
+            </table>
+
+        </div>
+
+        <!-- RIGHT PANEL: QUESTIONS -->
+        <div class="panel right-panel" id="questions-container">
+            <!-- Questions will be injected here by JS -->
+            
+            <div class="submit-area">
+                <button class="submit-btn" onclick="showSubmitPopup()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Popup -->
+    <div class="modal-overlay" id="submit-modal">
+        <div class="modal-content" id="modal-input-section">
+            <h2>Nhập tên của con để nộp bài nhé! 🌟</h2>
+            <input type="text" id="student-name" class="modal-input" placeholder="VD: Tiến Vinh, Tuệ Minh...">
+            <button class="confirm-btn" onclick="calculateScore()">Nộp bài ngay!</button>
+        </div>
+        
+        <div class="modal-content result-card" id="modal-result-section">
+            <h2 id="result-name">Chúc mừng con!</h2>
+            <div class="score-display" id="result-score">0/12</div>
+            <div class="score-scale" id="result-scale">0.00 / 10 Điểm</div>
+            <div class="feedback-msg" id="result-feedback">Ms MS Chí Nên rất tự hào về con!</div>
+            <img src="" id="result-gif" class="result-gif" alt="Result GIF">
+            <br><br>
+            <button class="confirm-btn" onclick="closeModal()">Xem lại đáp án chi tiết</button>
+        </div>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); 
+            gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playBuzzer() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            const colors = ['#0984e3', '#00b894', '#fdcb6e', '#e17055', '#d63031', '#6c5ce7'];
+            
+            for(let i = 0; i < 100; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 100,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * -10 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach((p, index) => {
+                    p.x += p.dx;
+                    p.y += p.dy;
+                    p.dy += 0.2; 
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    
+                    if (p.y > canvas.height) {
+                        particles.splice(index, 1);
+                    }
+                });
+            }
+            animate();
+            
+            setTimeout(() => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }, 3000);
+        }
+
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        const questionsData = [
+            // PASSAGE 1 (V)
+            {
+                id: 17,
+                text: "Câu 17: Select the best answer.",
+                options: [
+                    { text: "as difficult", correct: false },
+                    { text: "more difficult", correct: true },
+                    { text: "most difficult", correct: false },
+                    { text: "most difficultly", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>as difficult ➔ Dịch: <span class='p-mean'>khó bằng (so sánh bằng)</span></li>
+                            <li>more difficult ➔ Dịch: <span class='p-mean'>khó hơn (so sánh hơn)</span></li>
+                            <li>most difficult ➔ Dịch: <span class='p-mean'>khó nhất (so sánh nhất)</span></li>
+                            <li>most difficultly ➔ Dịch: <span class='p-mean'>sai từ loại (adv)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>more difficult</strong>. Áp dụng cấu trúc <span class='p-grammar'>make + O + adj</span> (làm cho cái gì trở nên như thế nào). Trong ngữ cảnh này, tác giả đang liệt kê những thứ mà thành phố lớn CÓ NHIỀU HƠN (more people, traffic...), từ đó ngầm so sánh rằng những yếu tố này làm cho việc đi lại quanh thành phố trở nên <span class='p-mean'>khó khăn hơn</span>. Do đó ta dùng dạng so sánh hơn.
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> "most difficult" bị thiếu mạo từ "the" và không hợp logic so sánh hơn ở đây. "as difficult" thiếu "as" thứ hai. "most difficultly" sai vì cấu trúc "make something..." cần đi với tính từ (Adj), không đi với trạng từ (Adv).
+                    </div>`
+            },
+            {
+                id: 18,
+                text: "Câu 18: Select the best answer.",
+                options: [
+                    { text: "as", correct: false },
+                    { text: "until", correct: false },
+                    { text: "when", correct: true },
+                    { text: "by", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>as ➔ Dịch: <span class='p-mean'>khi / bởi vì</span></li>
+                            <li>until ➔ Dịch: <span class='p-mean'>cho đến khi</span></li>
+                            <li>when ➔ Dịch: <span class='p-mean'>khi</span></li>
+                            <li>by ➔ Dịch: <span class='p-mean'>bằng cách / bởi</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>when</strong>. Đây là cấu trúc <span class='p-grammar'>rút gọn mệnh đề trạng ngữ chỉ thời gian</span> có cùng chủ ngữ. Câu gốc là: "...that people typically think of <span class='p-word'>when they consider</span> moving to a city". Khi rút gọn, ta bỏ chủ ngữ và biến động từ thành V-ing: "when considering..." (KHI cân nhắc việc chuyển đến thành phố).
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> "as" hiếm khi đi trực tiếp với V-ing trong cấu trúc rút gọn kiểu này so với "when". "until" (cho đến khi) và "by" (bằng cách cân nhắc) hoàn toàn sai lệch ý nghĩa ngữ cảnh.
+                    </div>`
+            },
+            {
+                id: 19,
+                text: "Câu 19: Select the best answer.",
+                options: [
+                    { text: "overcrowded", correct: false },
+                    { text: "dangerous", correct: false },
+                    { text: "bustling", correct: false },
+                    { text: "surrounding", correct: true }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>overcrowded ➔ Dịch: <span class='p-mean'>quá đông đúc (adj)</span></li>
+                            <li>dangerous ➔ Dịch: <span class='p-mean'>nguy hiểm (adj)</span></li>
+                            <li>bustling ➔ Dịch: <span class='p-mean'>nhộn nhịp, hối hả (adj)</span></li>
+                            <li>surrounding ➔ Dịch: <span class='p-mean'>bao quanh, lân cận (adj)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>surrounding</strong>. Câu nói rằng: Các thành phố lớn luôn có chi phí sinh hoạt cao hơn các vùng ngoại ô ______ (than the ______ suburbs). Đáp án hợp lý nhất là <span class='p-word'>surrounding suburbs</span> - tức là các vùng ngoại ô lân cận/bao xung quanh thành phố đó.
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Các tính từ như <span class='p-word'>overcrowded</span> hay <span class='p-word'>bustling</span> thường dùng để miêu tả trung tâm thành phố chứ không ai dùng để miêu tả vùng ngoại ô trong bối cảnh đang so sánh sự khác biệt này. <span class='p-word'>dangerous</span> không liên quan đến chi phí sống.
+                    </div>`
+            },
+            {
+                id: 20,
+                text: "Câu 20: Select the best answer.",
+                options: [
+                    { text: "to", correct: true },
+                    { text: "for", correct: false },
+                    { text: "with", correct: false },
+                    { text: "at", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>to ➔ Dịch: <span class='p-mean'>đến, vào (giới từ)</span></li>
+                            <li>for ➔ Dịch: <span class='p-mean'>cho (giới từ)</span></li>
+                            <li>with ➔ Dịch: <span class='p-mean'>với (giới từ)</span></li>
+                            <li>at ➔ Dịch: <span class='p-mean'>tại (giới từ)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>to</strong>. Trong tiếng Anh, chúng ta có một <span class='p-grammar'>Collocation (cụm từ cố định)</span> là: <span class='p-word'>contribute TO something</span> (đóng góp vào, góp phần làm tăng thêm cái gì). "...more traffic that contribute <span class='p-word'>to</span> the noise" (nhiều xe cộ góp phần làm tăng tiếng ồn).
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Các giới từ "for", "with", "at" tuyệt đối không bao giờ đứng sau động từ "contribute". Đây là lỗi học thuộc lòng giới từ.
+                    </div>`
+            },
+            {
+                id: 21,
+                text: "Câu 21: Select the best answer.",
+                options: [
+                    { text: "pollution", correct: true },
+                    { text: "biogas", correct: false },
+                    { text: "waste", correct: false },
+                    { text: "dust", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>pollution ➔ Dịch: <span class='p-mean'>sự ô nhiễm (n)</span></li>
+                            <li>biogas ➔ Dịch: <span class='p-mean'>khí sinh học (n)</span></li>
+                            <li>waste ➔ Dịch: <span class='p-mean'>rác thải (n)</span></li>
+                            <li>dust ➔ Dịch: <span class='p-mean'>bụi (n)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>pollution</strong>. Câu ngay phía sau giải thích rõ: "The most noticeable among these is <span class='p-word'>air pollution</span>..." (Dễ thấy nhất trong số này là ô nhiễm không khí). Do đó, chỗ trống ở câu trước phải là một từ chung nhất bao hàm nó: "...struggle with various forms of <span class='p-word'>pollution</span>" (vật lộn với nhiều hình thức ô nhiễm khác nhau).
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> "biogas" là khí gas tự nhiên có ích chứ không phải vấn đề. "waste" (rác thải) hay "dust" (bụi) không thể dùng làm từ loại chung để bao hàm "air pollution" ở câu sau được.
+                    </div>`
+            },
+            {
+                id: 22,
+                text: "Câu 22: Select the best answer.",
+                options: [
+                    { text: "respiration", correct: false },
+                    { text: "respirator", correct: false },
+                    { text: "respiratory", correct: true },
+                    { text: "respire", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Select the best answer.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Chọn đáp án đúng nhất.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>respiration ➔ Dịch: <span class='p-mean'>sự hô hấp (Danh từ)</span></li>
+                            <li>respirator ➔ Dịch: <span class='p-mean'>máy thở, mặt nạ phòng độc (Danh từ)</span></li>
+                            <li>respiratory ➔ Dịch: <span class='p-mean'>thuộc về đường hô hấp (Tính từ)</span></li>
+                            <li>respire ➔ Dịch: <span class='p-mean'>hô hấp, thở (Động từ)</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>respiratory</strong>. Phân tích từ loại: Chỗ trống đứng trước danh từ "issues" (các vấn đề), vì vậy ta cần một <span class='p-grammar'>Tính từ (Adjective)</span> để bổ nghĩa cho nó. Tính từ <span class='p-word'>respiratory</span> ghép với "issues" tạo thành cụm "respiratory issues" mang nghĩa là "các vấn đề/bệnh lý về đường hô hấp". 
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Cả 3 đáp án còn lại đều sai về từ loại (Word form). Một danh từ (A, B) hay động từ (D) không thể đứng trước danh từ "issues" để miêu tả tính chất trong trường hợp này.
+                    </div>`
+            },
+
+            // PASSAGE 2 (VI)
+            {
+                id: 23,
+                text: "Câu 23: Your concentration level isn't affected by the food you eat every day.",
+                options: [
+                    { text: "True", correct: false },
+                    { text: "False", correct: true }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Your concentration level isn't affected by the food you eat every day.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Mức độ tập trung của bạn KHÔNG bị ảnh hưởng bởi thức ăn bạn ăn mỗi ngày.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>True ➔ Dịch: <span class='p-mean'>Đúng</span></li>
+                            <li>False ➔ Dịch: <span class='p-mean'>Sai</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án là <strong>False (Sai)</strong>. Dẫn chứng ở ngay câu thứ hai của đoạn 1: "A healthy, varied diet is essential to ensure that you receive all the energy and nutrients you need to stay healthy, <span class='p-word'>concentrate at school</span>...". (Một chế độ ăn uống lành mạnh là cần thiết để đảm bảo bạn có năng lượng... tập trung ở trường). Rõ ràng là thức ăn CÓ ảnh hưởng trực tiếp đến sự tập trung, đề bài nói "isn't affected" (không bị ảnh hưởng) là sai hoàn toàn.
+                    </div>`
+            },
+            {
+                id: 24,
+                text: "Câu 24: Skipping breakfast is not good because it's been a short time since your last meal.",
+                options: [
+                    { text: "True", correct: false },
+                    { text: "False", correct: true }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Skipping breakfast is not good because it's been a short time since your last meal.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Bỏ bữa sáng là không tốt bởi vì mới chỉ trải qua một thời gian NGẮN kể từ bữa ăn cuối cùng của bạn.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>True ➔ Dịch: <span class='p-mean'>Đúng</span></li>
+                            <li>False ➔ Dịch: <span class='p-mean'>Sai</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án là <strong>False (Sai)</strong>. Bẫy thông tin cực kỳ tinh vi! Dẫn chứng ở câu đầu đoạn 2: "By the time you get up in the morning, <span class='p-word'>it has been a long time</span> since you last ate...". (Đến lúc thức dậy, đã là một khoảng thời gian DÀI kể từ lần cuối bạn ăn). Đề bài cố tình sửa chữ "long time" thành "short time" (thời gian ngắn) để đánh lừa học sinh.
+                    </div>`
+            },
+            {
+                id: 25,
+                text: "Câu 25: Whether it's breakfast, lunch, or dinner, you should include fruit or vegetables.",
+                options: [
+                    { text: "True", correct: true },
+                    { text: "False", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Whether it's breakfast, lunch, or dinner, you should include fruit or vegetables.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Dù đó là bữa sáng, bữa trưa hay bữa tối, bạn đều nên bổ sung thêm trái cây hoặc rau củ.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>True ➔ Dịch: <span class='p-mean'>Đúng</span></li>
+                            <li>False ➔ Dịch: <span class='p-mean'>Sai</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án là <strong>True (Đúng)</strong>. Dẫn chứng ở cuối đoạn 2: "...make sure you eat three meals a day, and <span class='p-word'>each meal includes at least one portion of fruit or vegetables</span>...". (Đảm bảo ăn 3 bữa một ngày, và MỖI BỮA đều bao gồm ít nhất một phần trái cây hoặc rau củ). 3 bữa một ngày chính là sáng, trưa, tối. Thông tin này hoàn toàn trùng khớp.
+                    </div>`
+            },
+            {
+                id: 26,
+                text: "Câu 26: Not all sources of fluids are beneficial to teenagers' health.",
+                options: [
+                    { text: "True", correct: true },
+                    { text: "False", correct: false }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Not all sources of fluids are beneficial to teenagers' health.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> KHÔNG PHẢI tất cả các nguồn chất lỏng đều có lợi cho sức khỏe của thanh thiếu niên.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>True ➔ Dịch: <span class='p-mean'>Đúng</span></li>
+                            <li>False ➔ Dịch: <span class='p-mean'>Sai</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án là <strong>True (Đúng)</strong>. Dẫn chứng ở đoạn 3: "Try to avoid too many sugary drinks and energy drinks... <span class='p-word'>as they could harm your teeth</span>." (Hãy tránh thức uống có đường và nước tăng lực... vì chúng có thể làm HẠI răng của bạn). Vì có những chất lỏng gây hại như thế, nên câu khẳng định "không phải loại nước nào cũng có lợi" là một nhận định hoàn toàn chính xác.
+                    </div>`
+            },
+            {
+                id: 27,
+                text: "Câu 27: According to the passage, a good breakfast is essential because _____.",
+                options: [
+                    { text: "it provides all the energy and nutrients you need", correct: false },
+                    { text: "it won't harm your teeth since it doesn't contain sugar", correct: false },
+                    { text: "it makes you full so you won't eat fast food later", correct: false },
+                    { text: "it helps recharge your energy for the day ahead", correct: true }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> According to the passage, a good breakfast is essential because _____.</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Theo đoạn văn, một bữa sáng chất lượng là cần thiết bởi vì _____.</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>it provides all the energy and nutrients you need ➔ Dịch: <span class='p-mean'>nó cung cấp tất cả năng lượng và dinh dưỡng bạn cần.</span></li>
+                            <li>it won't harm your teeth since it doesn't contain sugar ➔ Dịch: <span class='p-mean'>nó không hại răng vì không chứa đường.</span></li>
+                            <li>it makes you full so you won't eat fast food later ➔ Dịch: <span class='p-mean'>nó làm bạn no nên bạn sẽ không ăn đồ ăn nhanh sau đó.</span></li>
+                            <li>it helps recharge your energy for the day ahead ➔ Dịch: <span class='p-mean'>nó giúp nạp lại năng lượng cho ngày mới phía trước.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>it helps recharge your energy for the day ahead</strong>. Dẫn chứng ở đầu đoạn 2: "...so a good breakfast will <span class='p-word'>boost your energy levels</span>." (một bữa sáng tốt sẽ thúc đẩy/nạp lại mức năng lượng của bạn sau một đêm dài không ăn).
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Đáp án đầu tiên bị sai vì việc cung cấp "tất cả dinh dưỡng" là nhiệm vụ của TỔNG THỂ chế độ ăn ("a healthy, varied diet" ở đoạn 1), chứ không phải chỉ riêng một bữa sáng. Vấn đề "hại răng" và "tránh đồ ăn nhanh" không được bài đọc nhắc đến như là công dụng cốt lõi của bữa sáng.
+                    </div>`
+            },
+            {
+                id: 28,
+                text: "Câu 28: Which of the following tips on a healthy diet is mentioned in the text?",
+                options: [
+                    { text: "Drink at least 8 glasses of any fluids a day.", correct: false },
+                    { text: "Eat more than three meals a day with fruit and vegetables.", correct: false },
+                    { text: "Have some energy drinks between meals.", correct: false },
+                    { text: "Avoid eating fast food as much as possible.", correct: true }
+                ],
+                explanation: `
+                    <div class="exp-section"><strong>Đề bài:</strong> Which of the following tips on a healthy diet is mentioned in the text?</div>
+                    <div class="exp-section"><strong>Dịch đề bài:</strong> Lời khuyên nào sau đây về chế độ ăn uống lành mạnh ĐƯỢC ĐỀ CẬP trong bài?</div>
+                    <div class="exp-section"><strong>Các đáp án:</strong>
+                        <ul class="exp-options-list">
+                            <li>Drink at least 8 glasses of any fluids a day. ➔ Dịch: <span class='p-mean'>Uống ít nhất 8 ly BẤT KỲ LOẠI nước nào mỗi ngày.</span></li>
+                            <li>Eat more than three meals a day with fruit and vegetables. ➔ Dịch: <span class='p-mean'>Ăn NHIỀU HƠN 3 bữa một ngày với trái cây và rau củ.</span></li>
+                            <li>Have some energy drinks between meals. ➔ Dịch: <span class='p-mean'>Uống một ít nước tăng lực GIỮA các bữa ăn.</span></li>
+                            <li>Avoid eating fast food as much as possible. ➔ Dịch: <span class='p-mean'>Tránh ăn thức ăn nhanh nhiều nhất có thể.</span></li>
+                        </ul>
+                    </div>
+                    <div class="exp-section"><strong>Giải thích chi tiết:</strong><br>
+                        <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>Avoid eating fast food as much as possible.</strong>. Dẫn chứng ở đoạn cuối: "Most importantly, <span class='p-word'>limit how much fast food you eat</span>." Giới hạn tối đa (limit) mang ý nghĩa đồng nhất với việc Tránh xa nhiều nhất có thể (avoid as much as possible).
+                        <br><br>
+                        <span class='hl-red'>Tại sao sai:</span> Đáp án 1 sai từ "any fluids" (bất kỳ loại nào) vì bài cấm uống nước có đường. Đáp án 2 sai chữ "more than three" (nhiều hơn 3) vì bài chỉ khuyên ăn đủ 3 bữa. Đáp án 3 sai ngược hoàn toàn vì bài nói "avoid energy drinks between meals".
+                    </div>`
+            }
+        ];
+
+        let currentScore = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = questionsData.length;
+
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            
+            questionsData.forEach((q, index) => {
+                let shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+                
+                let html = `
+                    <div class="question-card" id="q-card-${q.id}">
+                        <div class="question-text">${q.text}</div>
+                        <div class="options-grid" id="options-${q.id}">
+                `;
+
+                shuffledOptions.forEach(opt => {
+                    html += `<button class="option-btn" onclick="checkAnswer(this, ${q.id}, ${opt.correct})">${opt.text}</button>`;
+                });
+
+                html += `
+                        </div>
+                        <div class="explanation-box" id="exp-${q.id}">
+                            ${q.explanation}
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function checkAnswer(btn, qId, isCorrect) {
+            const optionsContainer = document.getElementById(`options-${qId}`);
+            const allBtns = optionsContainer.querySelectorAll('.option-btn');
+            
+            allBtns.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playDing();
+                fireConfetti();
+                currentScore++;
+            } else {
+                btn.classList.add('incorrect');
+                playBuzzer();
+                allBtns.forEach(b => {
+                    const qData = questionsData.find(x => x.id === qId);
+                    const originalCorrectText = qData.options.find(o => o.correct).text;
+                    if (b.innerText === originalCorrectText) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            document.getElementById(`exp-${qId}`).style.display = 'block';
+            answeredQuestions++;
+        }
+
+        function showSubmitPopup() {
+            if (answeredQuestions < totalQuestions) {
+                alert("Con chưa hoàn thành hết các câu hỏi. Hãy làm đầy đủ để có điểm chuẩn nhất nhé!");
+                return;
+            }
+            document.getElementById('submit-modal').style.display = 'flex';
+        }
+
+        function calculateScore() {
+            const nameInput = document.getElementById('student-name').value.trim();
+            if (!nameInput) {
+                alert("Con hãy nhập tên của mình vào nhé!");
+                return;
+            }
+
+            document.getElementById('modal-input-section').style.display = 'none';
+            const resultSection = document.getElementById('modal-result-section');
+            resultSection.style.display = 'block';
+
+            document.getElementById('result-name').innerText = `Chúc mừng ${nameInput}!`;
+            document.getElementById('result-score').innerText = `${currentScore} / ${totalQuestions}`;
+            
+            const scale10 = (currentScore / totalQuestions) * 10;
+            document.getElementById('result-scale').innerText = `${scale10.toFixed(2)} / 10 Điểm`;
+
+            let feedback = "";
+            let gifUrl = "";
+            const percentage = currentScore / totalQuestions;
+
+            if (percentage === 1) {
+                feedback = "Thiên tài xuất hiện! Cô MS Chí Nên quá đỗi tự hào về con! Đỉnh của chóp! 🏆";
+                gifUrl = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif";
+            } else if (percentage >= 0.6) {
+                feedback = "Rất xuất sắc! Con đã nắm chắc bài học, hãy tiếp tục phát huy nhé! 🌟";
+                gifUrl = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"; 
+            } else {
+                feedback = "Kết quả này chưa phản ánh đúng khả năng của con. Hãy xem lại phần giải thích chi tiết và cố gắng hơn nhé! ❤️";
+                gifUrl = "https://media.giphy.com/media/OPU6wzx8KTlQA/giphy.gif"; 
+            }
+
+            document.getElementById('result-feedback').innerText = feedback;
+            document.getElementById('result-gif').src = gifUrl;
+        }
+
+        function closeModal() {
+            document.getElementById('submit-modal').style.display = 'none';
+        }
+
+        window.onload = renderQuestions;
+    </script>
+</body>
+</html>

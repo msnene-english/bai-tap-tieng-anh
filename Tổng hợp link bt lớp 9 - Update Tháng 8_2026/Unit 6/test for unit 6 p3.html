@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified Reading Test - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color-1: #ff9a9e;
+            --bg-color-2: #fecfef;
+            --bg-color-3: #a1c4fd;
+            --bg-color-4: #c2e9fb;
+            --glass-bg: rgba(255, 255, 255, 0.35);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --text-dark: #2d3436;
+            --btn-default: rgba(255, 255, 255, 0.7);
+            --btn-hover: rgba(255, 255, 255, 0.9);
+            --correct-color: #00b894;
+            --wrong-color: #ff7675;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            overflow: hidden;
+            color: var(--text-dark);
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Animated Gradient Background */
+        .bg-animated {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(45deg, var(--bg-color-1), var(--bg-color-2), var(--bg-color-3), var(--bg-color-4));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            z-index: -2;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating SVG Pattern */
+        .floating-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* Split Screen Layout */
+        .header-top {
+            position: fixed;
+            top: 10px; left: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            z-index: 10;
+            background: rgba(0,0,0,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            padding: 20px;
+            padding-top: 50px;
+            gap: 20px;
+        }
+
+        .panel {
+            flex: 1;
+            height: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.6); border-radius: 10px; }
+
+        /* Typography & Reading Panel */
+        h1, h2, h3 { color: #2d3436; margin-bottom: 15px; }
+        .reading-title { font-size: 24px; font-weight: 900; text-align: center; color: #6c5ce7; text-transform: uppercase; margin-top: 20px;}
+        .paragraph-box {
+            background: rgba(255,255,255,0.4);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 18px;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+        
+        .translate-btn {
+            display: block;
+            margin-top: 10px;
+            background: #ffeaa7;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #d63031;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .translate-btn:hover { transform: translateY(-2px); background: #fdcb6e; }
+        .translation-text {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 234, 167, 0.4);
+            border-left: 4px solid #fdcb6e;
+            border-radius: 0 10px 10px 0;
+            font-style: italic;
+            color: #d63031;
+        }
+
+        /* Glossary Table */
+        .glossary-box {
+            background: rgba(255,255,255,0.5);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .glossary-title { text-align: center; color: #e17055; font-weight: 800; font-size: 20px;}
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        th { background: rgba(0,0,0,0.05); color: #2d3436; }
+        td:nth-child(1) { font-weight: bold; color: #0984e3; }
+        td:nth-child(2) { font-style: italic; color: #636e72; }
+        td:nth-child(3) { font-weight: 600; color: #d63031; }
+
+        /* Quiz Panel */
+        .question-card {
+            background: rgba(255,255,255,0.6);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 2px solid transparent;
+            transition: 0.3s;
+        }
+        .q-text { font-size: 20px; font-weight: 800; margin-bottom: 15px; color: #2d3436;}
+        
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option-btn {
+            background: var(--btn-default);
+            border: 2px solid rgba(255,255,255,0.8);
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3436;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            background: var(--btn-hover);
+            border-color: #a29bfe;
+        }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+        
+        .correct { background: var(--correct-color) !important; color: white !important; border-color: #00cec9 !important; box-shadow: 0 0 15px rgba(0,184,148,0.5); }
+        .wrong { background: var(--wrong-color) !important; color: white !important; border-color: #ff4757 !important; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 15px;
+            border-left: 5px solid #6c5ce7;
+            font-size: 16px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Explanation Tags */
+        .p-word { color: #d63031; font-weight: 800; }
+        .p-phonetic { color: #0984e3; font-style: italic; }
+        .p-mean { color: #00b894; font-weight: 700; }
+        .p-grammar { color: #fff; font-weight: 700; background: #6c5ce7; padding: 3px 8px; border-radius: 6px; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        .hl-green { color: #00b894; font-weight: 900; text-transform: uppercase; background: rgba(0,184,148,0.1); padding: 2px 6px; border-radius: 4px;}
+        .hl-red { color: #d63031; font-weight: 900; text-transform: uppercase; background: rgba(214,48,49,0.1); padding: 2px 6px; border-radius: 4px;}
+
+        /* Submit Button & Modals */
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 40px;
+            box-shadow: 0 10px 20px rgba(108, 92, 231, 0.3);
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .submit-btn:hover { transform: translateY(-5px); box-shadow: 0 15px 25px rgba(108, 92, 231, 0.5); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal {
+            background: rgba(255,255,255,0.9);
+            padding: 40px; border-radius: 30px;
+            text-align: center; max-width: 500px; width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .modal input {
+            width: 100%; padding: 15px; font-size: 18px; border: 2px solid #a29bfe; border-radius: 12px; margin: 20px 0; outline: none; text-align: center; font-weight: bold;
+        }
+        .modal button {
+            background: #00b894; color: white; border: none; padding: 15px 30px; font-size: 20px; font-weight: bold; border-radius: 12px; cursor: pointer; transition: 0.2s;
+        }
+        .modal button:hover { background: #00cec9; transform: scale(1.05); }
+
+        .score-display { font-size: 60px; font-weight: 900; color: #6c5ce7; margin: 10px 0; }
+        .score-10 { font-size: 30px; color: #e17055; font-weight: 800; margin-bottom: 20px; }
+        .teacher-comment { font-size: 22px; font-weight: 700; color: #2d3436; margin-bottom: 20px; }
+        .gif-container img { max-width: 100%; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-animated"></div>
+    <!-- Floating SVG -->
+    <svg class="floating-bg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <radialGradient id="grad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(255,255,255,0.8)" />
+                <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+            </radialGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grad)" />
+        <text x="10%" y="20%" font-size="60" opacity="0.6">🏫</text>
+        <text x="80%" y="15%" font-size="80" opacity="0.5">🎓</text>
+        <text x="20%" y="80%" font-size="70" opacity="0.5">📜</text>
+        <text x="85%" y="85%" font-size="90" opacity="0.4">🌸</text>
+        <text x="50%" y="50%" font-size="120" opacity="0.2">📖</text>
+    </svg>
+
+    <div class="header-top">Giáo viên tạo: Ms MS Chí Nên 🎓</div>
+
+    <div class="container">
+        <!-- LEFT PANEL: READING -->
+        <div class="panel left-panel">
+            
+            <!-- PASSAGE 1 -->
+            <h2 class="reading-title">🌟 Passage 1: Quoc Hoc - Hue 🌟</h2>
+            
+            <div class="paragraph-box">
+                Quoc Hoc - Hue High School for the Gifted is a (1)_______ magnet and gifted high school in Thua Thien - Hue, Vietnam. Founded in 1896, Quoc Hoc - Hue is one of the oldest high schools in Vietnam. The school is recognised for (2)_______ strong academic results, students' qualities and staffs' levels. It has always been ranked in the top three high schools in the nation in (3)_______ of the quality of education. Other schools include Chu Van An High School in Hanoi and Le Hong Phong High School in Ho Chi Minh City. The school is also (4)_______ for the notable political leaders who graduated from it, including: President Ho Chi Minh, General Vo Nguyen Giap, Prime Minister Pham Van Dong, etc.
+                <button class="translate-btn" onclick="toggleTranslation('t1_p1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t1_p1">Trường Trung học phổ thông chuyên Quốc Học - Huế là một trường trung học phổ thông chuyên và năng khiếu cấp quốc gia tại Thừa Thiên - Huế, Việt Nam. Được thành lập vào năm 1896, Quốc Học - Huế là một trong những trường trung học phổ thông lâu đời nhất Việt Nam. Trường được công nhận vì kết quả học tập xuất sắc, chất lượng học sinh và trình độ của cán bộ nhân viên. Trường luôn được xếp hạng trong top 3 trường trung học phổ thông trên toàn quốc xét về chất lượng giáo dục. Các trường khác bao gồm Trường THPT Chu Văn An ở Hà Nội và Trường THPT Lê Hồng Phong ở Thành phố Hồ Chí Minh. Trường cũng nổi tiếng vì những nhà lãnh đạo chính trị xuất chúng từng tốt nghiệp tại đây, bao gồm: Chủ tịch Hồ Chí Minh, Đại tướng Võ Nguyên Giáp, Thủ tướng Phạm Văn Đồng, v.v.</div>
+            </div>
+
+            <div class="paragraph-box">
+                Since 2012, with the target of becoming a featured specialised school, the school offers only specialised classes which focus on one particular (5)_______, including Mathematics, Physics, Chemistry, Biology, Computer Science, Vietnamese Literature, History, (6)_______, English, Japanese and French.
+                <button class="translate-btn" onclick="toggleTranslation('t1_p2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t1_p2">Kể từ năm 2012, với mục tiêu trở thành một trường chuyên đặc trưng, trường chỉ cung cấp các lớp chuyên tập trung vào một môn học cụ thể, bao gồm Toán học, Vật lý, Hóa học, Sinh học, Khoa học Máy tính, Ngữ văn, Lịch sử, Địa lý, Tiếng Anh, Tiếng Nhật và Tiếng Pháp.</div>
+            </div>
+
+            <div class="paragraph-box">
+                Quoc Hoc - Hue (7)_______ first nationally in the 2012 Vietnam university admission ranking. Many school (8)_______ have also got admitted to prestigious universities and colleges in the world, including: MIT, National University of Singapore, Nanyang Technological University, Osaka University, and KAIST, etc.
+                <button class="translate-btn" onclick="toggleTranslation('t1_p3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t1_p3">Quốc Học - Huế được xếp hạng nhất toàn quốc trong bảng xếp hạng tuyển sinh đại học Việt Nam năm 2012. Nhiều học sinh tốt nghiệp của trường cũng đã được nhận vào các trường đại học và cao đẳng danh tiếng trên thế giới, bao gồm: MIT, Đại học Quốc gia Singapore, Đại học Công nghệ Nanyang, Đại học Osaka, và KAIST, v.v.</div>
+            </div>
+
+            <div class="glossary-box">
+                <h3 class="glossary-title">📚 Glossary - Passage 1 📚</h3>
+                <table>
+                    <tr><th>Vocabulary</th><th>Type</th><th>Vietnamese Meaning</th></tr>
+                    <tr><td>Magnet school</td><td>n</td><td>Trường chuyên, trường thu hút nhân tài</td></tr>
+                    <tr><td>Gifted</td><td>adj</td><td>Có năng khiếu, tài năng thiên bẩm</td></tr>
+                    <tr><td>Recognise</td><td>v</td><td>Công nhận, thừa nhận</td></tr>
+                    <tr><td>Academic</td><td>adj</td><td>Thuộc về học thuật, học tập</td></tr>
+                    <tr><td>In terms of</td><td>idiom</td><td>Xét về mặt, liên quan tới</td></tr>
+                    <tr><td>Notable</td><td>adj</td><td>Đáng chú ý, xuất chúng, có tiếng</td></tr>
+                    <tr><td>Specialised</td><td>adj</td><td>Chuyên biệt, chuyên môn hóa</td></tr>
+                    <tr><td>Admission</td><td>n</td><td>Sự nhận vào, tuyển sinh</td></tr>
+                    <tr><td>Admit</td><td>v</td><td>Nhận vào (trường học), thừa nhận</td></tr>
+                    <tr><td>Prestigious</td><td>adj</td><td>Danh giá, có uy tín</td></tr>
+                </table>
+            </div>
+
+            <!-- PASSAGE 2 -->
+            <h2 class="reading-title" style="margin-top: 40px;">🌟 Passage 2: Temple of Literature 🌟</h2>
+            
+            <div class="paragraph-box">
+                The Temple of Literature (Van Mieu) was constructed in 1070 under the reign of King Ly Thanh Tong. The temple was originally dedicated to Confucius as well as other scholars and sages. Six years later, the Imperial Academy (Quoc Tu Giam), Vietnam's first university, was founded by King Ly Nhan Tong on the grounds of the temple. Initially, the Imperial Academy was the school for princes and sons from royal families and then expanded to admit brilliant students from all over the country. In 1484 Emperor Le Thanh Tong ordered the erection of the first stone tablets that were carved with the names, places of birth and achievements of doctors. The university operated for more than 700 years, from 1076 to 1779.
+                <button class="translate-btn" onclick="toggleTranslation('t2_p1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t2_p1">Văn Miếu được xây dựng vào năm 1070 dưới triều đại vua Lý Thánh Tông. Ngôi đền ban đầu được dành để thờ Khổng Tử cũng như các học giả và bậc hiền triết khác. Sáu năm sau, Quốc Tử Giám, trường đại học đầu tiên của Việt Nam, được vua Lý Nhân Tông thành lập ngay trong khuôn viên của đền. Ban đầu, Quốc Tử Giám là trường học dành cho các hoàng tử và con trai từ các gia đình hoàng gia và sau đó được mở rộng để nhận những sinh viên xuất chúng từ khắp nơi trên cả nước. Năm 1484, Hoàng đế Lê Thánh Tông ra lệnh dựng những tấm bia đá đầu tiên được khắc tên, nơi sinh và thành tựu của các tiến sĩ. Trường đại học này hoạt động trong hơn 700 năm, từ 1076 đến 1779.</div>
+            </div>
+
+            <div class="paragraph-box">
+                Nowadays, the Temple of Literature - Imperial Academy (Van Mieu - Quoc Tu Giam) is one of the most famous historic and cultural heritages of Vietnam. And the 82 Doctors' stone tablets were recognised by UNESCO as World Documentary Heritage in 2010.
+                <button class="translate-btn" onclick="toggleTranslation('t2_p2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="t2_p2">Ngày nay, Văn Miếu - Quốc Tử Giám là một trong những di sản văn hóa và lịch sử nổi tiếng nhất của Việt Nam. Và 82 bia đá Tiến sĩ đã được UNESCO công nhận là Di sản Tư liệu Thế giới vào năm 2010.</div>
+            </div>
+
+            <div class="glossary-box">
+                <h3 class="glossary-title">📚 Glossary - Passage 2 📚</h3>
+                <table>
+                    <tr><th>Vocabulary</th><th>Type</th><th>Vietnamese Meaning</th></tr>
+                    <tr><td>Construct</td><td>v</td><td>Xây dựng, kiến thiết</td></tr>
+                    <tr><td>Reign</td><td>n</td><td>Triều đại, thời kỳ trị vì</td></tr>
+                    <tr><td>Dedicate (to)</td><td>v</td><td>Dành riêng để tưởng nhớ/thờ phụng</td></tr>
+                    <tr><td>Scholar</td><td>n</td><td>Học giả, nhà thông thái</td></tr>
+                    <tr><td>Sage</td><td>n</td><td>Bậc hiền triết, thánh nhân</td></tr>
+                    <tr><td>Expand</td><td>v</td><td>Mở rộng, phát triển</td></tr>
+                    <tr><td>Brilliant</td><td>adj</td><td>Cực kỳ thông minh, xuất chúng</td></tr>
+                    <tr><td>Erection</td><td>n</td><td>Sự dựng lên, xây dựng (tượng, bia)</td></tr>
+                    <tr><td>Carve</td><td>v</td><td>Chạm khắc, đục đẽo</td></tr>
+                    <tr><td>Heritage</td><td>n</td><td>Di sản (văn hóa, lịch sử)</td></tr>
+                </table>
+            </div>
+
+        </div>
+
+        <!-- RIGHT PANEL: QUIZ -->
+        <div class="panel right-panel" id="quiz-container">
+            <!-- Questions will be injected here via JS -->
+            <button class="submit-btn" onclick="openSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="nameModal">
+        <div class="modal">
+            <h2>Đăng nhập để nhận bảng điểm 🏆</h2>
+            <input type="text" id="studentName" placeholder="Nhập tên của chiến binh">
+            <button onclick="submitTest()">Xác nhận nộp bài</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="scoreModal">
+        <div class="modal">
+            <h2 id="resultName">Tên học sinh</h2>
+            <div class="score-display" id="resultScore">0/17</div>
+            <div class="score-10" id="result10">Điểm: 0.00/10</div>
+            <div class="teacher-comment" id="resultComment">Lời phê</div>
+            <div class="gif-container"><img id="resultGif" src="" alt="Reaction GIF"></div>
+            <button style="margin-top: 20px; background: #6c5ce7;" onclick="location.reload()">Làm lại bài</button>
+        </div>
+    </div>
+
+    <script>
+        // Data structure for questions
+        const quizData = [
+            // PART 1: FILL IN THE BLANK
+            {
+                id: 1,
+                question: "Quoc Hoc - Hue High School for the Gifted is a (1) _______ magnet and gifted high school in Thua Thien - Hue, Vietnam.",
+                correct: "national",
+                options: ["national", "famous", "ranked", "subject"],
+                explanation: `<b>Câu 1</b><br>
+                <b>Đề bài:</b> Quoc Hoc - Hue High School for the Gifted is a (1) _______ magnet and gifted high school in Thua Thien - Hue, Vietnam.<br>
+                <b>Dịch đề bài:</b> Trường THPT Chuyên Quốc Học - Huế là một trường THPT chuyên và năng khiếu (1) _______ tại Thừa Thiên - Huế, Việt Nam.<br>
+                <b>Các đáp án:</b><br>
+                * national ➔ Dịch: <span class='p-mean'>(adj) thuộc về quốc gia, cấp quốc gia</span><br>
+                * famous ➔ Dịch: <span class='p-mean'>(adj) nổi tiếng</span><br>
+                * ranked ➔ Dịch: <span class='p-mean'>(v-ed) được xếp hạng</span><br>
+                * subject ➔ Dịch: <span class='p-mean'>(n) môn học</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>national</b>. Chỗ trống cần một tính từ bổ nghĩa cho cụm danh từ <span class='p-word'>magnet and gifted high school</span>. Kết hợp lại ta có cụm <span class='p-grammar'>national high school</span> mang ý nghĩa là trường cấp quốc gia.<br>
+                * <span class='hl-red'>Tại sao sai:</span> Các đáp án còn lại sai ngữ cảnh. <span class='p-word'>famous</span> có nghĩa là <span class='p-mean'>nổi tiếng</span> nhưng cụm từ gốc thường dùng để chỉ cấp độ trường học (national); <span class='p-word'>ranked</span> và <span class='p-word'>subject</span> hoàn toàn sai về mặt từ loại và ngữ nghĩa khi đứng vị trí này.`
+            },
+            {
+                id: 2,
+                question: "The school is recognised for (2) _______ strong academic results, students' qualities and staffs' levels.",
+                correct: "its",
+                options: ["its", "graduates", "national", "geography"],
+                explanation: `<b>Câu 2</b><br>
+                <b>Đề bài:</b> The school is recognised for (2) _______ strong academic results, students' qualities and staffs' levels.<br>
+                <b>Dịch đề bài:</b> Trường được công nhận vì kết quả học tập xuất sắc của (2) _______, chất lượng học sinh và trình độ của cán bộ nhân viên.<br>
+                <b>Các đáp án:</b><br>
+                * its ➔ Dịch: <span class='p-mean'>(tính từ sở hữu) của nó (chỉ trường học)</span><br>
+                * graduates ➔ Dịch: <span class='p-mean'>(n) sinh viên/học sinh tốt nghiệp</span><br>
+                * national ➔ Dịch: <span class='p-mean'>(adj) cấp quốc gia</span><br>
+                * geography ➔ Dịch: <span class='p-mean'>(n) môn Địa lý</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>its</b>. Chỗ trống đứng trước cụm danh từ <span class='p-word'>strong academic results</span>, cần một <span class='p-grammar'>Tính từ sở hữu</span> để chỉ sự sở hữu của ngôi trường (The school).<br>
+                * <span class='hl-red'>Tại sao sai:</span> Các từ còn lại đều sai ngữ pháp trầm trọng vì không thể đặt danh từ (<span class='p-word'>graduates</span>, <span class='p-word'>geography</span>) hay tính từ không thể hiện sự sở hữu (<span class='p-word'>national</span>) ngay trước một cụm danh từ đang cần từ hạn định (determiner).`
+            },
+            {
+                id: 3,
+                question: "It has always been ranked in the top three high schools in the nation in (3) _______ of the quality of education.",
+                correct: "terms",
+                options: ["terms", "subject", "ranked", "famous"],
+                explanation: `<b>Câu 3</b><br>
+                <b>Đề bài:</b> It has always been ranked in the top three high schools in the nation in (3) _______ of the quality of education.<br>
+                <b>Dịch đề bài:</b> Trường luôn nằm trong top 3 toàn quốc xét về (3) _______ chất lượng giáo dục.<br>
+                <b>Các đáp án:</b><br>
+                * terms ➔ Dịch: <span class='p-mean'>(n) điều khoản, mặt, phương diện</span><br>
+                * subject ➔ Dịch: <span class='p-mean'>(n) môn học</span><br>
+                * ranked ➔ Dịch: <span class='p-mean'>(v-ed) được xếp hạng</span><br>
+                * famous ➔ Dịch: <span class='p-mean'>(adj) nổi tiếng</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>terms</b>. Ở đây ta có Collocation/Cấu trúc cố định: <span class='p-grammar'>in terms of + N/V-ing</span> mang nghĩa là <span class='p-mean'>xét về mặt, liên quan tới</span>.<br>
+                * <span class='hl-red'>Tại sao sai:</span> Các từ còn lại phá vỡ cấu trúc cố định (idiom) này. Không có cấu trúc "in subject of", "in ranked of", hay "in famous of".`
+            },
+            {
+                id: 4,
+                question: "The school is also (4) _______ for the notable political leaders who graduated from it, including: President Ho Chi Minh, General Vo Nguyen Giap, Prime Minister Pham Van Dong, etc.",
+                correct: "famous",
+                options: ["famous", "ranked", "national", "graduates"],
+                explanation: `<b>Câu 4</b><br>
+                <b>Đề bài:</b> The school is also (4) _______ for the notable political leaders who graduated from it, including: President Ho Chi Minh, General Vo Nguyen Giap, Prime Minister Pham Van Dong, etc.<br>
+                <b>Dịch đề bài:</b> Trường cũng (4) _______ vì những nhà lãnh đạo chính trị xuất chúng đã tốt nghiệp từ đây, bao gồm: Chủ tịch Hồ Chí Minh, Đại tướng Võ Nguyên Giáp, Thủ tướng Phạm Văn Đồng, v.v.<br>
+                <b>Các đáp án:</b><br>
+                * famous ➔ Dịch: <span class='p-mean'>(adj) nổi tiếng</span><br>
+                * ranked ➔ Dịch: <span class='p-mean'>(v-ed) được xếp hạng</span><br>
+                * national ➔ Dịch: <span class='p-mean'>(adj) cấp quốc gia</span><br>
+                * graduates ➔ Dịch: <span class='p-mean'>(n) học sinh tốt nghiệp</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>famous</b>. Ta áp dụng cấu trúc <span class='p-grammar'>be famous for + something/V-ing</span> nghĩa là <span class='p-mean'>nổi tiếng vì điều gì</span>.<br>
+                * <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>ranked</span> thường đi với giới từ "in/as/among" chứ hiếm khi đi với "for" trong ngữ cảnh này. <span class='p-word'>national</span> không đi với "for". <span class='p-word'>graduates</span> là danh từ không thể đứng sau to be để miêu tả tính chất trong cấu trúc bị động/tính từ ở đây.`
+            },
+            {
+                id: 5,
+                question: "Since 2012, with the target of becoming a featured specialised school, the school offers only specialised classes which focus on one particular (5) _______, including Mathematics, Physics, Chemistry, Biology, Computer Science, Vietnamese Literature, History, (6) _______, English, Japanese and French.",
+                correct: "subject",
+                options: ["subject", "geography", "terms", "national"],
+                explanation: `<b>Câu 5</b><br>
+                <b>Đề bài:</b> Since 2012, with the target of becoming a featured specialised school, the school offers only specialised classes which focus on one particular (5) _______, including Mathematics, Physics, Chemistry, Biology, Computer Science, Vietnamese Literature, History, (6) _______, English, Japanese and French.<br>
+                <b>Dịch đề bài:</b> Kể từ năm 2012, với mục tiêu trở thành một trường chuyên đặc trưng, trường chỉ cung cấp các lớp chuyên tập trung vào một (5) _______ cụ thể, bao gồm Toán học, Vật lý, Hóa học, Sinh học, Khoa học Máy tính, Ngữ văn, Lịch sử, (6) _______, Tiếng Anh, Tiếng Nhật và Tiếng Pháp.<br>
+                <b>Các đáp án:</b><br>
+                * subject ➔ Dịch: <span class='p-mean'>(n) môn học</span><br>
+                * geography ➔ Dịch: <span class='p-mean'>(n) môn Địa lý</span><br>
+                * terms ➔ Dịch: <span class='p-mean'>(n) phương diện</span><br>
+                * national ➔ Dịch: <span class='p-mean'>(adj) quốc gia</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>subject</b>. Chữ "particular" (cụ thể) cần một danh từ số ít theo sau. Sau dấu phẩy là sự liệt kê "Mathematics, Physics..." (Toán, Lý...) nên từ khái quát chung cho các từ này phải là <span class='p-word'>subject</span> <span class='p-mean'>(môn học)</span>.<br>
+                * <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>geography</span> chỉ là MỘT môn học cụ thể, không thể dùng làm từ khái quát chứa Toán, Lý được. <span class='p-word'>terms</span> và <span class='p-word'>national</span> sai nghĩa hoàn toàn.`
+            },
+            {
+                id: 6,
+                question: "Since 2012, with the target of becoming a featured specialised school, the school offers only specialised classes which focus on one particular (5) _______, including Mathematics, Physics, Chemistry, Biology, Computer Science, Vietnamese Literature, History, (6) _______, English, Japanese and French.",
+                correct: "geography",
+                options: ["geography", "subject", "graduates", "famous"],
+                explanation: `<b>Câu 6</b><br>
+                <b>Đề bài:</b> Since 2012, with the target of becoming a featured specialised school, the school offers only specialised classes which focus on one particular (5) _______, including Mathematics, Physics, Chemistry, Biology, Computer Science, Vietnamese Literature, History, (6) _______, English, Japanese and French.<br>
+                <b>Dịch đề bài:</b> Kể từ năm 2012, với mục tiêu trở thành một trường chuyên đặc trưng, trường chỉ cung cấp các lớp chuyên tập trung vào một (5) _______ cụ thể, bao gồm Toán học, Vật lý, Hóa học, Sinh học, Khoa học Máy tính, Ngữ văn, Lịch sử, (6) _______, Tiếng Anh, Tiếng Nhật và Tiếng Pháp.<br>
+                <b>Các đáp án:</b><br>
+                * geography ➔ Dịch: <span class='p-mean'>(n) môn Địa lý</span><br>
+                * subject ➔ Dịch: <span class='p-mean'>(n) môn học</span><br>
+                * graduates ➔ Dịch: <span class='p-mean'>(n) người tốt nghiệp</span><br>
+                * famous ➔ Dịch: <span class='p-mean'>(adj) nổi tiếng</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>geography</b>. Chỗ trống nằm trong chuỗi liệt kê các môn học cụ thể, do đó ta cần điền tên một môn học. Trong các từ được cho, chỉ có <span class='p-word'>geography</span> là tên môn học.<br>
+                * <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>subject</span> là từ chỉ khái quát, không phải tên một môn cụ thể. <span class='p-word'>graduates</span> và <span class='p-word'>famous</span> hoàn toàn không phải tên môn học.`
+            },
+            {
+                id: 7,
+                question: "Quoc Hoc - Hue (7) _______ first nationally in the 2012 Vietnam university admission ranking.",
+                correct: "ranked",
+                options: ["ranked", "graduates", "its", "national"],
+                explanation: `<b>Câu 7</b><br>
+                <b>Đề bài:</b> Quoc Hoc - Hue (7) _______ first nationally in the 2012 Vietnam university admission ranking.<br>
+                <b>Dịch đề bài:</b> Quốc Học - Huế (7) _______ thứ nhất toàn quốc trong bảng xếp hạng tuyển sinh đại học Việt Nam năm 2012.<br>
+                <b>Các đáp án:</b><br>
+                * ranked ➔ Dịch: <span class='p-mean'>(v-ed) được xếp hạng, đứng thứ</span><br>
+                * graduates ➔ Dịch: <span class='p-mean'>(n) người tốt nghiệp</span><br>
+                * its ➔ Dịch: <span class='p-mean'>(tính từ sở hữu) của nó</span><br>
+                * national ➔ Dịch: <span class='p-mean'>(adj) cấp quốc gia</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>ranked</b>. Chủ ngữ là "Quoc Hoc - Hue", ta cần một <span class='p-grammar'>Động từ chính</span> cho câu. <span class='p-word'>ranked first</span> mang nghĩa là <span class='p-mean'>xếp hạng nhất/đứng đầu</span>.<br>
+                * <span class='hl-red'>Tại sao sai:</span> Các từ còn lại không phải là động từ, nếu điền vào câu sẽ tạo thành câu không có động từ chính (lỗi ngữ pháp nghiêm trọng).`
+            },
+            {
+                id: 8,
+                question: "Many school (8) _______ have also got admitted to prestigious universities and colleges in the world, including: MIT, National University of Singapore, Nanyang Technological University, Osaka University, and KAIST, etc.",
+                correct: "graduates",
+                options: ["graduates", "terms", "subject", "ranked"],
+                explanation: `<b>Câu 8</b><br>
+                <b>Đề bài:</b> Many school (8) _______ have also got admitted to prestigious universities and colleges in the world, including: MIT, National University of Singapore, Nanyang Technological University, Osaka University, and KAIST, etc.<br>
+                <b>Dịch đề bài:</b> Rất nhiều (8) _______ của trường cũng đã được nhận vào các trường đại học và cao đẳng danh tiếng trên thế giới, bao gồm: MIT, Đại học Quốc gia Singapore, Đại học Công nghệ Nanyang, Đại học Osaka, và KAIST, v.v.<br>
+                <b>Các đáp án:</b><br>
+                * graduates ➔ Dịch: <span class='p-mean'>(n) học sinh/sinh viên tốt nghiệp</span><br>
+                * terms ➔ Dịch: <span class='p-mean'>(n) phương diện/điều khoản</span><br>
+                * subject ➔ Dịch: <span class='p-mean'>(n) môn học</span><br>
+                * ranked ➔ Dịch: <span class='p-mean'>(v-ed) được xếp hạng</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>graduates</b>. Chỗ trống cần một Danh từ chỉ người để thực hiện hành động "got admitted" (được nhận vào đại học). Cụm <span class='p-grammar'>school graduates</span> có nghĩa là <span class='p-mean'>những cựu học sinh đã tốt nghiệp của trường</span>.<br>
+                * <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>terms</span> và <span class='p-word'>subject</span> là vật, không thể tự apply và được nhận vào trường đại học. <span class='p-word'>ranked</span> là động từ, không đứng sau từ hạn định "Many".`
+            },
+            
+            // PART 2: TRUE / FALSE
+            {
+                id: 9,
+                question: "[TRUE / FALSE] The Temple of Literature was built to honour Confucius.",
+                correct: "True",
+                options: ["True", "False"],
+                explanation: `<b>Câu 9 (True/False)</b><br>
+                <b>Đề bài:</b> The Temple of Literature was built to honour Confucius.<br>
+                <b>Dịch đề bài:</b> Văn Miếu được xây dựng để tôn vinh Khổng Tử.<br>
+                <b>Các đáp án:</b><br>
+                * True ➔ Dịch: <span class='p-mean'>Đúng</span><br>
+                * False ➔ Dịch: <span class='p-mean'>Sai</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>True</b>. Dựa vào câu thứ 2 trong đoạn 1: <span class='p-word'>"The temple was originally dedicated to Confucius"</span>. Cụm <span class='p-grammar'>dedicated to</span> (dành riêng để thờ/tưởng nhớ) đồng nghĩa với cụm <span class='p-grammar'>built to honour</span> (xây dựng để tôn vinh).`
+            },
+            {
+                id: 10,
+                question: "[TRUE / FALSE] The construction of the Imperial Academy took place in 1070.",
+                correct: "False",
+                options: ["True", "False"],
+                explanation: `<b>Câu 10 (True/False)</b><br>
+                <b>Đề bài:</b> The construction of the Imperial Academy took place in 1070.<br>
+                <b>Dịch đề bài:</b> Việc xây dựng Quốc Tử Giám diễn ra vào năm 1070.<br>
+                <b>Các đáp án:</b><br>
+                * True ➔ Dịch: <span class='p-mean'>Đúng</span><br>
+                * False ➔ Dịch: <span class='p-mean'>Sai</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>False</b>. Đề bài gài bẫy mốc thời gian. Văn Miếu (Temple of Literature) mới được xây năm 1070. Còn Quốc Tử Giám (Imperial Academy) được xây dựng <span class='p-word'>"Six years later"</span> (6 năm sau, tức là năm 1076). Do đó thông tin này sai.`
+            },
+            {
+                id: 11,
+                question: "[TRUE / FALSE] The Imperial Academy is considered the first university in Vietnam.",
+                correct: "True",
+                options: ["True", "False"],
+                explanation: `<b>Câu 11 (True/False)</b><br>
+                <b>Đề bài:</b> The Imperial Academy is considered the first university in Vietnam.<br>
+                <b>Dịch đề bài:</b> Quốc Tử Giám được coi là trường đại học đầu tiên ở Việt Nam.<br>
+                <b>Các đáp án:</b><br>
+                * True ➔ Dịch: <span class='p-mean'>Đúng</span><br>
+                * False ➔ Dịch: <span class='p-mean'>Sai</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>True</b>. Trích nguyên văn trong bài đọc ở dòng số 3: <span class='p-word'>"the Imperial Academy (Quoc Tu Giam), Vietnam's first university, was founded"</span> (Quốc Tử Giám, trường đại học đầu tiên của Việt Nam, được thành lập). Thông tin khớp hoàn toàn.`
+            },
+            {
+                id: 12,
+                question: "[TRUE / FALSE] The Imperial Academy was originally established to educate brilliant students.",
+                correct: "False",
+                options: ["True", "False"],
+                explanation: `<b>Câu 12 (True/False)</b><br>
+                <b>Đề bài:</b> The Imperial Academy was originally established to educate brilliant students.<br>
+                <b>Dịch đề bài:</b> Quốc Tử Giám ban đầu được thành lập để giáo dục những học sinh xuất chúng.<br>
+                <b>Các đáp án:</b><br>
+                * True ➔ Dịch: <span class='p-mean'>Đúng</span><br>
+                * False ➔ Dịch: <span class='p-mean'>Sai</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>False</b>. Bài đọc nói rõ: <span class='p-word'>"Initially, the Imperial Academy was the school for princes and sons from royal families and then expanded to admit brilliant students"</span>. Nghĩa là ban đầu (originally/initially) nó CHỈ DÀNH cho hoàng tử và con dòng dõi hoàng tộc, SAU ĐÓ (then expanded) mới mở rộng cho học sinh xuất chúng. Đây là bẫy trình tự thời gian.`
+            },
+            {
+                id: 13,
+                question: "[TRUE / FALSE] The first Doctors' stone tablets were erected under the Le Dynasty.",
+                correct: "True",
+                options: ["True", "False"],
+                explanation: `<b>Câu 13 (True/False)</b><br>
+                <b>Đề bài:</b> The first Doctors' stone tablets were erected under the Le Dynasty.<br>
+                <b>Dịch đề bài:</b> Những bia đá Tiến sĩ đầu tiên được dựng lên dưới triều Lê.<br>
+                <b>Các đáp án:</b><br>
+                * True ➔ Dịch: <span class='p-mean'>Đúng</span><br>
+                * False ➔ Dịch: <span class='p-mean'>Sai</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>True</b>. Bài đọc ghi: <span class='p-word'>"In 1484 Emperor Le Thanh Tong ordered the erection of the first stone tablets"</span>. Lê Thánh Tông (Emperor Le Thanh Tong) chính là một vị vua của triều đại nhà Lê (the Le Dynasty).`
+            },
+            {
+                id: 14,
+                question: "[TRUE / FALSE] The Temple of Literature was recognised by UNESCO as World Heritage in 2010.",
+                correct: "False",
+                options: ["True", "False"],
+                explanation: `<b>Câu 14 (True/False)</b><br>
+                <b>Đề bài:</b> The Temple of Literature was recognised by UNESCO as World Heritage in 2010.<br>
+                <b>Dịch đề bài:</b> Văn Miếu được UNESCO công nhận là Di sản Thế giới vào năm 2010.<br>
+                <b>Các đáp án:</b><br>
+                * True ➔ Dịch: <span class='p-mean'>Đúng</span><br>
+                * False ➔ Dịch: <span class='p-mean'>Sai</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>False</b>. Đây là một bẫy đánh lừa đối tượng rất tinh vi. Bài đọc viết: <span class='p-word'>"And the 82 Doctors' stone tablets were recognised by UNESCO as World Documentary Heritage in 2010."</span>. Tức là thứ được công nhận năm 2010 là <span class='hl-green'>82 bia đá Tiến sĩ</span> (World Documentary Heritage - Di sản tư liệu), CHỨ KHÔNG PHẢI là toàn bộ công trình Văn Miếu (The Temple of Literature).`
+            },
+            
+            // PART 3: ANSWER QUESTIONS (Converted to multiple choice)
+            {
+                id: 15,
+                question: "When was the Imperial Academy founded?",
+                correct: "In 1076",
+                options: ["In 1076", "In 1070", "In 1484", "In 1779"],
+                explanation: `<b>Câu 15</b><br>
+                <b>Đề bài:</b> When was the Imperial Academy founded?<br>
+                <b>Dịch đề bài:</b> Quốc Tử Giám được thành lập khi nào?<br>
+                <b>Các đáp án:</b><br>
+                * In 1076 ➔ Dịch: <span class='p-mean'>Vào năm 1076</span><br>
+                * In 1070 ➔ Dịch: <span class='p-mean'>Vào năm 1070</span><br>
+                * In 1484 ➔ Dịch: <span class='p-mean'>Vào năm 1484</span><br>
+                * In 1779 ➔ Dịch: <span class='p-mean'>Vào năm 1779</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>In 1076</b>. Bài đọc nêu Văn Miếu xây năm 1070, sau đó <span class='p-word'>"Six years later, the Imperial Academy was founded"</span>. Lấy 1070 cộng thêm 6 năm ta ra được mốc thời gian thành lập Quốc Tử Giám là 1076.<br>
+                * <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>1070</span> là năm xây Văn Miếu. <span class='p-word'>1484</span> là năm dựng bia Tiến sĩ. <span class='p-word'>1779</span> là năm trường ngừng hoạt động như một trường đại học.`
+            },
+            {
+                id: 16,
+                question: "At the beginning, who were educated at the Imperial Academy?",
+                correct: "Princes and sons from royal families",
+                options: ["Princes and sons from royal families", "Brilliant students from all over the country", "Confucius and sages", "Doctors and scholars"],
+                explanation: `<b>Câu 16</b><br>
+                <b>Đề bài:</b> At the beginning, who were educated at the Imperial Academy?<br>
+                <b>Dịch đề bài:</b> Lúc ban đầu, ai là những người được giáo dục tại Quốc Tử Giám?<br>
+                <b>Các đáp án:</b><br>
+                * Princes and sons from royal families ➔ Dịch: <span class='p-mean'>Các hoàng tử và con trai dòng dõi hoàng gia</span><br>
+                * Brilliant students from all over the country ➔ Dịch: <span class='p-mean'>Học sinh xuất chúng từ khắp cả nước</span><br>
+                * Confucius and sages ➔ Dịch: <span class='p-mean'>Khổng Tử và các bậc hiền triết</span><br>
+                * Doctors and scholars ➔ Dịch: <span class='p-mean'>Tiến sĩ và học giả</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>Princes and sons from royal families</b>. Dựa vào cụm từ chỉ thời gian <span class='p-word'>Initially</span> (tương đương At the beginning), bài viết nói rõ: <span class='p-word'>"Initially, the Imperial Academy was the school for princes and sons from royal families"</span>.<br>
+                * <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>Brilliant students</span> là đối tượng được nhận vào SAU ĐÓ (then expanded to). <span class='p-word'>Confucius and sages</span> là những người được THỜ PHỤNG, không phải đi học. <span class='p-word'>Doctors</span> là danh hiệu được dựng bia đá.`
+            },
+            {
+                id: 17,
+                question: "How long did the Imperial Academy operate as a university?",
+                correct: "For more than 700 years",
+                options: ["For more than 700 years", "For exactly 700 years", "Since 1484", "Until 2010"],
+                explanation: `<b>Câu 17</b><br>
+                <b>Đề bài:</b> How long did the Imperial Academy operate as a university?<br>
+                <b>Dịch đề bài:</b> Quốc Tử Giám đã hoạt động như một trường đại học trong bao lâu?<br>
+                <b>Các đáp án:</b><br>
+                * For more than 700 years ➔ Dịch: <span class='p-mean'>Trong hơn 700 năm</span><br>
+                * For exactly 700 years ➔ Dịch: <span class='p-mean'>Trong chính xác 700 năm</span><br>
+                * Since 1484 ➔ Dịch: <span class='p-mean'>Kể từ năm 1484</span><br>
+                * Until 2010 ➔ Dịch: <span class='p-mean'>Cho đến năm 2010</span><br>
+                <b>Giải thích chi tiết:</b><br>
+                * <span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <b>For more than 700 years</b>. Trích nguyên văn câu cuối đoạn 1: <span class='p-word'>"The university operated for more than 700 years, from 1076 to 1779."</span> (Trường đại học hoạt động trong HƠN 700 năm).<br>
+                * <span class='hl-red'>Tại sao sai:</span> <span class='p-word'>For exactly 700 years</span> sai vì thiếu chữ "hơn" (more than), thực tế 1779 - 1076 = 703 năm. <span class='p-word'>1484</span> là năm dựng bia. <span class='p-word'>2010</span> là năm được UNESCO công nhận di sản.`
+            }
+        ];
+
+        // System Variables
+        let userScore = 0;
+        let answeredQuestions = 0;
+        let totalQuestions = quizData.length;
+
+        // Audio Context Setup
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+                osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); // A6
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // Shuffle Array logic
+        function shuffleArray(array) {
+            let curId = array.length;
+            while (0 !== curId) {
+                let randId = Math.floor(Math.random() * curId);
+                curId -= 1;
+                let tmp = array[curId];
+                array[curId] = array[randId];
+                array[randId] = tmp;
+            }
+            return array;
+        }
+
+        // Render Quiz
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            const submitBtn = document.querySelector('.submit-btn');
+            
+            quizData.forEach((q, index) => {
+                let card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `q-card-${index}`;
+                
+                let title = document.createElement('div');
+                title.className = 'q-text';
+                title.innerHTML = `Câu ${index + 1}: ${q.question}`;
+                card.appendChild(title);
+
+                let shuffledOptions = shuffleArray([...q.options]);
+                let optionsGrid = document.createElement('div');
+                optionsGrid.className = 'options-grid';
+
+                shuffledOptions.forEach(opt => {
+                    let btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.innerHTML = opt;
+                    btn.onclick = () => handleAnswer(btn, opt, q.correct, index, card);
+                    optionsGrid.appendChild(btn);
+                });
+                
+                card.appendChild(optionsGrid);
+
+                let expBox = document.createElement('div');
+                expBox.className = 'explanation-box';
+                expBox.id = `exp-${index}`;
+                expBox.innerHTML = q.explanation;
+                card.appendChild(expBox);
+
+                container.insertBefore(card, submitBtn);
+            });
+        }
+
+        function handleAnswer(btn, selected, correct, index, card) {
+            let allBtns = card.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true); // lock options
+
+            if (selected === correct) {
+                btn.classList.add('correct');
+                playSound('correct');
+                fireConfetti();
+                userScore++;
+            } else {
+                btn.classList.add('wrong');
+                card.classList.add('shake');
+                playSound('wrong');
+                // highlight correct one
+                allBtns.forEach(b => {
+                    if (b.innerHTML === correct) b.classList.add('correct');
+                });
+            }
+            
+            // show explanation
+            document.getElementById(`exp-${index}`).style.display = 'block';
+            answeredQuestions++;
+        }
+
+        // Translations Toggle
+        function toggleTranslation(id) {
+            let el = document.getElementById(id);
+            if (el.style.display === "block") {
+                el.style.display = "none";
+            } else {
+                el.style.display = "block";
+            }
+        }
+
+        // Modals & Submission
+        function openSubmitModal() {
+            document.getElementById('nameModal').style.display = 'flex';
+        }
+
+        function submitTest() {
+            const name = document.getElementById('studentName').value.trim();
+            if (name === "") {
+                alert("Chiến binh chưa nhập tên kìa! Vui lòng nhập tên nhé!");
+                return;
+            }
+            document.getElementById('nameModal').style.display = 'none';
+            
+            // Calculate 10-point scale
+            let score10 = (userScore / totalQuestions) * 10;
+            score10 = score10.toFixed(2); // lam tron 2 chu so
+            let percent = userScore / totalQuestions;
+
+            document.getElementById('resultName').innerText = `Thành tích của: ${name}`;
+            document.getElementById('resultScore').innerText = `${userScore} / ${totalQuestions}`;
+            document.getElementById('result10').innerText = `Quy đổi: ${score10} / 10 điểm`;
+
+            let comment = "";
+            let gifUrl = "";
+
+            if (percent === 1) {
+                comment = "Tuyệt đỉnh! Em đích thực là một thiên tài ngoại ngữ! 🌟👑";
+                gifUrl = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; // genius
+            } else if (percent >= 0.6) {
+                comment = "Rất xuất sắc! Nỗ lực của em đã được đền đáp xứng đáng! High-five! ✋🔥";
+                gifUrl = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; // minion cheer
+            } else {
+                comment = "Chưa đạt kỳ vọng nhưng không sao! Đọc kỹ giải thích và làm lại nhé, cố lên! 💪❤️";
+                gifUrl = "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif"; // spongebob cry
+            }
+
+            document.getElementById('resultComment').innerText = comment;
+            document.getElementById('resultGif').src = gifUrl;
+
+            document.getElementById('scoreModal').style.display = 'flex';
+        }
+
+        // Confetti Logic (Vanilla JS)
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#00b894', '#0984e3', '#fdcb6e', '#d63031', '#6c5ce7', '#ff9ff3'];
+
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    w: Math.random() * 10 + 5,
+                    h: Math.random() * 10 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vy: Math.random() * 5 + 2,
+                    vx: Math.random() * 4 - 2,
+                    rot: Math.random() * 360,
+                    rotSpeed: Math.random() * 10 - 5
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                for (let p of particles) {
+                    p.y += p.vy;
+                    p.x += p.vx;
+                    p.rot += p.rotSpeed;
+                    
+                    if (p.y < canvas.height) active = true;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                }
+                if (active) requestAnimationFrame(animate);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            animate();
+        }
+
+        // Init
+        window.onload = () => {
+            renderQuiz();
+        };
+
+    </script>
+</body>
+</html>

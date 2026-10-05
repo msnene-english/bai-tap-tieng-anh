@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Quiz - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --pastel-pink: #ffd1ff;
+            --pastel-blue: #c4e0e5;
+            --pastel-purple: #e0c3fc;
+            --pastel-yellow: #fbf8cc;
+            --pastel-green: #bbf7d0;
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-main: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(-45deg, var(--pastel-pink), var(--pastel-blue), var(--pastel-purple), var(--pastel-yellow));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Floating Pattern */
+        .bg-pattern {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .floating-emoji {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.3;
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            20% { opacity: 0.4; }
+            80% { opacity: 0.4; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        /* Header */
+        header {
+            padding: 10px 20px;
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 1.2rem;
+            color: #6c5ce7;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        }
+        header .teacher-info {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #d63031;
+            background: rgba(255,255,255,0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        /* Split Screen Layout */
+        .container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 50px);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        /* Tùy chỉnh thanh cuộn */
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(108, 92, 231, 0.4); border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb:hover { background: rgba(108, 92, 231, 0.7); }
+
+        /* Reading Section */
+        .reading-title {
+            font-size: 1.5rem;
+            color: #2d3436;
+            margin-bottom: 15px;
+            border-bottom: 2px dashed #a29bfe;
+            padding-bottom: 10px;
+        }
+        .paragraph-block {
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            text-align: justify;
+        }
+        .translate-btn {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+        }
+        .translate-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108, 92, 231, 0.5); }
+        .translation-box {
+            display: none;
+            background: rgba(255,255,255,0.6);
+            border-left: 4px solid #00b894;
+            padding: 10px 15px;
+            margin-top: 10px;
+            border-radius: 0 10px 10px 0;
+            font-style: italic;
+            color: #2d3436;
+            font-size: 1.05rem;
+        }
+
+        /* Glossary */
+        .glossary {
+            margin-top: 30px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 15px;
+            padding: 20px;
+        }
+        .glossary h3 { color: #d63031; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .glossary table { width: 100%; border-collapse: collapse; }
+        .glossary th, .glossary td { padding: 10px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .glossary th { color: #6c5ce7; }
+        .glossary tr:hover { background: rgba(255,255,255,0.8); }
+
+        /* Questions Section */
+        .question-card {
+            background: rgba(255,255,255,0.7);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #0984e3;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid transparent;
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            color: #2d3436;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: #74b9ff;
+            box-shadow: 0 5px 15px rgba(116, 185, 255, 0.3);
+        }
+        .option-btn:disabled { cursor: not-allowed; }
+        .option-btn.correct {
+            background: #55efc4 !important;
+            color: #00b894 !important;
+            border-color: #00b894 !important;
+            transform: scale(1.02);
+        }
+        .option-btn.wrong {
+            background: #ff7675 !important;
+            color: white !important;
+            border-color: #d63031 !important;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* Explanation Styling */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            background: #fdfbf7;
+            border: 2px solid #ffeaa7;
+            border-radius: 12px;
+            padding: 20px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+        .explanation-box h4 { color: #e17055; margin-bottom: 10px; border-bottom: 1px solid #ffeaa7; padding-bottom: 5px; }
+        .explanation-box ul { padding-left: 20px; margin-bottom: 15px; }
+        .explanation-box li { margin-bottom: 8px; }
+        
+        /* SPAN FORMATTING RULES */
+        .p-word { color: #0984e3; font-weight: bold; background: #e0f2fe; padding: 2px 6px; border-radius: 4px; }
+        .p-phonetic { color: #636e72; font-style: italic; font-family: 'Times New Roman', serif; }
+        .p-mean { color: #d35400; font-weight: 600; }
+        .p-grammar { color: #6c5ce7; font-weight: bold; background: #f3e8ff; padding: 2px 6px; border-radius: 4px; border: 1px dashed #a29bfe; }
+        .hl-green { color: #00b894; font-weight: bold; display: block; margin-top: 5px; }
+        .hl-red { color: #d63031; display: block; margin-top: 5px; }
+
+        /* Submit Button */
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 30px;
+            box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+            transition: all 0.3s ease;
+        }
+        .submit-btn:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 12px 30px rgba(0, 184, 148, 0.6);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 100;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 24px; text-align: center;
+            max-width: 500px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .modal-content input {
+            width: 100%; padding: 12px; font-size: 1.2rem; border: 2px solid #a29bfe;
+            border-radius: 10px; margin: 20px 0; outline: none; text-align: center;
+        }
+        .modal-content input:focus { border-color: #6c5ce7; box-shadow: 0 0 10px rgba(108, 92, 231, 0.2); }
+        .modal-btn {
+            background: #6c5ce7; color: white; border: none; padding: 10px 25px;
+            font-size: 1.1rem; border-radius: 10px; cursor: pointer; font-weight: bold;
+        }
+        .score-display { font-size: 3rem; font-weight: bold; color: #00b894; margin: 10px 0; }
+        .score-10 { font-size: 1.5rem; color: #d63031; font-weight: bold; margin-bottom: 20px; }
+        .gif-container img { max-width: 100%; border-radius: 15px; margin-top: 15px; }
+        
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-pattern" id="bgPattern"></div>
+
+    <header>
+        <h1>Blooket Style Quiz - English Master</h1>
+        <div class="teacher-info">Giáo viên tạo: Ms MS Chí Nên</div>
+    </header>
+
+    <div class="container">
+        <div class="panel left-panel">
+            
+            <h2 class="reading-title">I. Choose the word or phrase that best fits each blank</h2>
+            
+            <div class="paragraph-block">
+                When I was 9 years old, I received my first handmade card. It was from a classmate who was (32) _____ Korea. He had a hard time at his new school, so I helped him. Later, he gave me a card to say thank you.
+                <br><button class="translate-btn" onclick="toggleTranslate('trans1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans1">
+                    Khi tôi 9 tuổi, tôi nhận được tấm thiệp làm thủ công đầu tiên của mình. Nó từ một người bạn cùng lớp đến từ Hàn Quốc. Cậu ấy đã có một khoảng thời gian khó khăn ở trường mới, vì vậy tôi đã giúp đỡ cậu ấy. Sau đó, cậu ấy đã tặng tôi một tấm thiệp để nói lời cảm ơn.
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                He drew a (33) _____ of us on the front. (34) _____ were only a few sentences inside because he wasn't very good at English, but those words meant a lot to me.
+                <br><button class="translate-btn" onclick="toggleTranslate('trans2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans2">
+                    Cậu ấy đã vẽ một bức tranh của chúng tôi ở mặt trước. Chỉ có một vài câu ở bên trong bởi vì cậu ấy không giỏi tiếng Anh lắm, nhưng những lời đó có ý nghĩa rất lớn đối với tôi.
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                From then on, I knew handwritten cards were special because they take time and effort to (35) _____. We can also keep cards in a box and read them again later. You can make (36) _____ own card or buy one from a store. What's most important is the message you write inside. A handwritten card or letter can make someone feel happy.
+                <br><button class="translate-btn" onclick="toggleTranslate('trans3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans3">
+                    Kể từ đó, tôi biết rằng những tấm thiệp viết tay rất đặc biệt vì chúng đòi hỏi thời gian và công sức để làm. Chúng ta cũng có thể cất thiệp trong một chiếc hộp và đọc lại chúng sau này. Bạn có thể tự làm tấm thiệp của riêng mình hoặc mua một chiếc từ cửa hàng. Điều quan trọng nhất là thông điệp bạn viết bên trong. Một tấm thiệp hoặc bức thư viết tay có thể làm ai đó cảm thấy hạnh phúc.
+                </div>
+            </div>
+
+            <h2 class="reading-title" style="margin-top: 40px;">II. Read the passage and decide True (T) or False (F)</h2>
+
+            <div class="paragraph-block">
+                Friendship is so important that, in 2011, the United Nations decided to make a special day for it! The International Day of Friendship takes place on 30 July every year. The idea is that friendship between different groups of people, countries and cultures can help us live more peacefully together.
+                <br><button class="translate-btn" onclick="toggleTranslate('trans4')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans4">
+                    Tình bạn quan trọng đến mức, vào năm 2011, Liên Hợp Quốc đã quyết định tạo ra một ngày đặc biệt dành cho nó! Ngày Quốc tế Tình bạn diễn ra vào ngày 30 tháng 7 hàng năm. Ý tưởng là tình bạn giữa các nhóm người, các quốc gia và các nền văn hóa khác nhau có thể giúp chúng ta chung sống hòa bình hơn.
+                </div>
+            </div>
+
+            <div class="paragraph-block">
+                The main aim of the International Day of Friendship is to show your friends that you care about them and that you value their friendship. You could make a card or write a note telling them why they're such a great friend. You could make them a small present, such as a friendship bracelet, or bake a cake for them. Whatever you do on this day, it's a time to have fun and celebrate with friends, and maybe make some new ones!
+                <br><button class="translate-btn" onclick="toggleTranslate('trans5')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans5">
+                    Mục đích chính của Ngày Quốc tế Tình bạn là cho bạn bè của bạn thấy rằng bạn quan tâm đến họ và bạn trân trọng tình bạn của họ. Bạn có thể làm một tấm thiệp hoặc viết một tờ ghi chú cho họ biết tại sao họ lại là một người bạn tuyệt vời. Bạn có thể làm tặng họ một món quà nhỏ, chẳng hạn như một chiếc vòng tay tình bạn, hoặc nướng một chiếc bánh cho họ. Bất kể bạn làm gì vào ngày này, đây là thời gian để vui chơi và kỷ niệm cùng bạn bè, và có thể kết bạn mới nữa!
+                </div>
+            </div>
+
+            <div class="glossary">
+                <h3>📖 Academic Glossary (Bảng từ vựng VIP)</h3>
+                <table>
+                    <tr><th>Word</th><th>Part of Speech</th><th>Meaning</th></tr>
+                    <tr><td><b>handmade</b></td><td>(adj) /ˌhændˈmeɪd/</td><td>làm bằng tay, thủ công</td></tr>
+                    <tr><td><b>effort</b></td><td>(n) /ˈef.ət/</td><td>sự nỗ lực, cố gắng</td></tr>
+                    <tr><td><b>message</b></td><td>(n) /ˈmes.ɪdʒ/</td><td>thông điệp, lời nhắn</td></tr>
+                    <tr><td><b>United Nations</b></td><td>(n) /jʊˌnaɪ.tɪd ˈneɪ.ʃənz/</td><td>Liên Hợp Quốc</td></tr>
+                    <tr><td><b>international</b></td><td>(adj) /ˌɪn.təˈnæʃ.ən.əl/</td><td>thuộc về quốc tế</td></tr>
+                    <tr><td><b>culture</b></td><td>(n) /ˈkʌl.tʃər/</td><td>nền văn hóa</td></tr>
+                    <tr><td><b>peacefully</b></td><td>(adv) /ˈpiːs.fəl.i/</td><td>một cách hòa bình, yên bình</td></tr>
+                    <tr><td><b>aim</b></td><td>(n) /eɪm/</td><td>mục đích, mục tiêu</td></tr>
+                    <tr><td><b>value</b></td><td>(v) /ˈvæl.juː/</td><td>trân trọng, đánh giá cao</td></tr>
+                    <tr><td><b>bracelet</b></td><td>(n) /ˈbreɪ.slət/</td><td>vòng đeo tay</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="panel right-panel" id="quizContainer">
+            <button class="submit-btn" onclick="showNamePrompt()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="nameModal">
+        <div class="modal-content">
+            <h2 style="color: #6c5ce7;">Nhập tên của con để nộp bài nhé! 📝</h2>
+            <input type="text" id="studentName" placeholder="Ví dụ: Minh Đức, Tuệ Minh..." autocomplete="off">
+            <button class="modal-btn" onclick="submitQuiz()">Hoàn thành & Chấm điểm</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 id="resultTitle" style="color: #0984e3;">Kết quả của con</h2>
+            <div class="score-display" id="rawScore">0/10</div>
+            <div class="score-10" id="scaleScore">Quy đổi: 0.00/10</div>
+            <p id="teacherComment" style="font-size: 1.2rem; font-weight: bold;"></p>
+            <div class="gif-container" id="resultGif"></div>
+            <button class="modal-btn" style="margin-top: 20px;" onclick="closeResult()">Xem lại bài giải</button>
+        </div>
+    </div>
+
+    <script>
+        // --- WEB AUDIO API FOR SOUNDS (NO EXTERNAL FILES) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playTingTing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            
+            function beep(freq, time) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + time);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime + time);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + time + 0.2);
+                osc.start(audioCtx.currentTime + time);
+                osc.stop(audioCtx.currentTime + time + 0.2);
+            }
+            beep(300, 0);
+            beep(250, 0.15);
+        }
+
+        // --- DATA STRUCTURE ---
+        const questionsData = [
+            {
+                id: 32,
+                question: "It was from a classmate who was _____ Korea.",
+                translateQ: "Nó từ một người bạn cùng lớp, người mà _____ Hàn Quốc.",
+                options: [
+                    { text: "from", isCorrect: true, mean: "(prep) từ, đến từ" },
+                    { text: "at", isCorrect: false, mean: "(prep) tại, ở (địa điểm nhỏ)" },
+                    { text: "on", isCorrect: false, mean: "(prep) trên" },
+                    { text: "to", isCorrect: false, mean: "(prep) đến (hướng tới)" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>from</b>. Ta áp dụng <span class="p-grammar">cấu trúc: be from + Tên quốc gia/địa điểm</span> nghĩa là "đến từ đâu". Bạn học sinh này đến từ Hàn Quốc nên dùng <span class="p-word">from Korea</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Các giới từ <span class="p-word">at</span>, <span class="p-word">on</span>, <span class="p-word">to</span> <span class="p-mean">không dùng để chỉ nguồn gốc xuất xứ quốc gia</span> trong ngữ cảnh này.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 33,
+                question: "He drew a _____ of us on the front.",
+                translateQ: "Cậu ấy đã vẽ một _____ của chúng tôi ở mặt trước.",
+                options: [
+                    { text: "photo", isCorrect: false, mean: "(n) bức ảnh chụp (bằng máy ảnh)" },
+                    { text: "picture", isCorrect: true, mean: "(n) bức tranh (được vẽ)" },
+                    { text: "notebook", isCorrect: false, mean: "(n) cuốn vở" },
+                    { text: "paper", isCorrect: false, mean: "(n) tờ giấy" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>picture</b>. Động từ trong câu là <span class="p-word">drew</span> (quá khứ của <span class="p-word">draw</span> <span class="p-mean">- vẽ</span>). Do đó tân ngữ hợp lý nhất đi kèm là vẽ một bức tranh <span class="p-word">picture</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> <span class="p-word">photo</span> sai vì đây là ảnh chụp bằng máy, không thể dùng động từ "vẽ". <span class="p-word">notebook</span> và <span class="p-word">paper</span> <span class="p-mean">không hợp nghĩa</span> (vẽ một cuốn vở của chúng tôi -> vô lý).</li>
+                    </ul>
+                `
+            },
+            {
+                id: 34,
+                question: "_____ were only a few sentences inside because he wasn't very good at English...",
+                translateQ: "_____ chỉ có một vài câu ở bên trong bởi vì cậu ấy không giỏi tiếng Anh lắm...",
+                options: [
+                    { text: "This", isCorrect: false, mean: "(pronoun) Cái này (dùng cho số ít, ở gần)" },
+                    { text: "Those", isCorrect: false, mean: "(pronoun) Những cái kia (dùng cho số nhiều, ở xa)" },
+                    { text: "There", isCorrect: true, mean: "(adv) Dùng trong cấu trúc There is/There are (Có...)" },
+                    { text: "These", isCorrect: false, mean: "(pronoun) Những cái này (dùng cho số nhiều, ở gần)" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>There</b>. Cần điền một từ để tạo thành <span class="p-grammar">cấu trúc chỉ sự tồn tại: There were + Noun số nhiều</span> <span class="p-mean">(Có những...)</span> trong quá khứ. Cụm <span class="p-word">There were only a few sentences</span> dịch là <span class="p-mean">"Chỉ có một vài câu"</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> <span class="p-word">This/These/Those were only a few sentences</span> sai hoàn toàn về mặt ngữ pháp và collocation khi muốn diễn tả ý "Có..." trong một không gian (bên trong tấm thiệp).</li>
+                    </ul>
+                `
+            },
+            {
+                id: 35,
+                question: "From then on, I knew handwritten cards were special because they take time and effort to _____.",
+                translateQ: "Kể từ đó, tôi biết rằng những tấm thiệp viết tay rất đặc biệt vì chúng đòi hỏi thời gian và công sức để _____.",
+                options: [
+                    { text: "make", isCorrect: true, mean: "(v) làm ra, chế tạo (tạo ra thứ mới)" },
+                    { text: "do", isCorrect: false, mean: "(v) làm (thực hiện hành động, bài tập)" },
+                    { text: "have", isCorrect: false, mean: "(v) có" },
+                    { text: "receive", isCorrect: false, mean: "(v) nhận" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>make</b>. Đây là dạng câu hỏi Collocation. Ta dùng <span class="p-grammar">make a card</span> mang nghĩa là <span class="p-mean">chế tạo, tự tay làm ra một tấm thiệp</span>. Câu này nói về việc bỏ công sức ra làm thiệp handmade.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Trong tiếng Anh, ta không nói <span class="p-word">do a card</span>. <span class="p-word">have</span> và <span class="p-word">receive</span> sai logic ngữ cảnh vì "bỏ thời gian công sức ra để... nhận/có" là ngược đời, người làm thiệp mới mất công sức.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 36,
+                question: "You can make _____ own card or buy one from a store.",
+                translateQ: "Bạn có thể tự làm tấm thiệp của riêng _____ hoặc mua một chiếc từ cửa hàng.",
+                options: [
+                    { text: "my", isCorrect: false, mean: "(adj) của tôi" },
+                    { text: "our", isCorrect: false, mean: "(adj) của chúng ta" },
+                    { text: "their", isCorrect: false, mean: "(adj) của họ" },
+                    { text: "your", isCorrect: true, mean: "(adj) của bạn" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>your</b>. Dựa vào chủ ngữ của câu là <span class="p-word">You</span> (bạn), đại từ sở hữu tương ứng phải là <span class="p-word">your</span>. Cấu trúc <span class="p-grammar">make one's own + Noun</span> nghĩa là <span class="p-mean">tự làm đồ của riêng ai đó</span>. -> <span class="p-word">make your own card</span> (tự làm thiệp của bạn).</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Các tính từ sở hữu <span class="p-word">my, our, their</span> <span class="p-mean">bất đồng ngôi</span> với chủ ngữ <span class="p-word">You</span>, dẫn đến sai logic câu.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 37,
+                question: "The United Nations chose the date for the International Day of Friendship.",
+                translateQ: "Liên Hợp Quốc đã chọn ngày cho Ngày Quốc tế Tình bạn.",
+                options: [
+                    { text: "True", isCorrect: true, mean: "Đúng với bài đọc" },
+                    { text: "False", isCorrect: false, mean: "Sai so với bài đọc" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>True</b>. Dẫn chứng trong bài (Đoạn 2, câu 1): <span class="p-word">"...in 2011, the United Nations decided to make a special day for it!"</span> <span class="p-mean">(vào năm 2011, Liên Hợp Quốc đã quyết định tạo ra một ngày đặc biệt dành cho nó)</span>. Việc "make a special day" chính là chọn ngày đó.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 38,
+                question: "We celebrate this special day on the 30th of every month.",
+                translateQ: "Chúng ta kỷ niệm ngày đặc biệt này vào ngày 30 của MỖI THÁNG.",
+                options: [
+                    { text: "True", isCorrect: false, mean: "Đúng với bài đọc" },
+                    { text: "False", isCorrect: true, mean: "Sai so với bài đọc" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>False</b>. Dẫn chứng trong bài (Đoạn 2, câu 2): <span class="p-word">"The International Day of Friendship takes place on 30 July every year."</span> <span class="p-mean">(Ngày này diễn ra vào 30 tháng 7 hàng năm)</span>.</li>
+                        <li><span class="hl-red">Tại sao sai:</span> Đề bài có bẫy chữ <span class="p-word">every month</span> <span class="p-mean">(mỗi tháng)</span>, trong khi thực tế chỉ tổ chức 1 lần vào tháng 7 hàng năm.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 39,
+                question: "Friendship can help everyone live peacefully together.",
+                translateQ: "Tình bạn có thể giúp mọi người chung sống hòa bình cùng nhau.",
+                options: [
+                    { text: "True", isCorrect: true, mean: "Đúng với bài đọc" },
+                    { text: "False", isCorrect: false, mean: "Sai so với bài đọc" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>True</b>. Dẫn chứng (Đoạn 2, câu 3): <span class="p-word">"...friendship between different groups of people, countries and cultures can help us live more peacefully together."</span> <span class="p-mean">(tình bạn... có thể giúp chúng ta chung sống hòa bình hơn)</span>. Hoàn toàn khớp với đề.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 40,
+                question: "On the International Day of Friendship, you can give a cake as a present.",
+                translateQ: "Vào Ngày Quốc tế Tình bạn, bạn có thể tặng một chiếc bánh như một món quà.",
+                options: [
+                    { text: "True", isCorrect: true, mean: "Đúng với bài đọc" },
+                    { text: "False", isCorrect: false, mean: "Sai so với bài đọc" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>True</b>. Dẫn chứng (Đoạn 3, câu 3): <span class="p-word">"You could make them a small present, such as a friendship bracelet, or bake a cake for them."</span> <span class="p-mean">(Bạn có thể làm một món quà nhỏ... hoặc nướng một chiếc bánh cho họ)</span>. Việc bake a cake cho bạn bè tương đương với give a cake as a present.</li>
+                    </ul>
+                `
+            },
+            {
+                id: 41,
+                question: "The International Day of Friendship is only for making new friends.",
+                translateQ: "Ngày Quốc tế Tình bạn CHỈ DÀNH CHO việc kết bạn mới.",
+                options: [
+                    { text: "True", isCorrect: false, mean: "Đúng với bài đọc" },
+                    { text: "False", isCorrect: true, mean: "Sai so với bài đọc" }
+                ],
+                explanation: `
+                    <ul>
+                        <li><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>False</b>. Dẫn chứng (Đoạn 3, câu 1 và câu cuối): <span class="p-word">"The main aim... is to show your friends that you care about them..."</span> và <span class="p-word">"...celebrate with friends, and maybe make some new ones!"</span></li>
+                        <li><span class="hl-red">Tại sao sai:</span> Từ bẫy chết người ở đây là từ <span class="p-word">only</span> <span class="p-mean">(chỉ)</span>. Ngày này chủ yếu dành cho bạn bè hiện tại (show you care), và "có thể" (maybe) kết bạn mới, chứ không phải CHỈ để kết bạn mới.</li>
+                    </ul>
+                `
+            }
+        ];
+
+        let currentScore = 0;
+        let answeredQuestions = 0;
+
+        // --- CORE FUNCTIONS ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function toggleTranslate(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('quizContainer');
+            const submitBtn = container.querySelector('.submit-btn');
+            
+            questionsData.forEach((q, index) => {
+                // Shuffle options
+                let shuffledOptions = [...q.options];
+                shuffleArray(shuffledOptions);
+
+                let cardHtml = `
+                    <div class="question-card" id="card-${q.id}">
+                        <div class="question-text">Câu ${index + 1} (${q.id}): ${q.question}</div>
+                        <div class="options-grid">
+                `;
+
+                shuffledOptions.forEach((opt, optIndex) => {
+                    const btnId = `btn-${q.id}-${optIndex}`;
+                    cardHtml += `
+                        <button class="option-btn" id="${btnId}" 
+                            onclick="checkAnswer(${q.id}, '${opt.text}', ${opt.isCorrect}, '${btnId}')">
+                            ${opt.text}
+                        </button>
+                    `;
+                });
+
+                cardHtml += `
+                        </div>
+                        <div class="explanation-box" id="exp-${q.id}">
+                            <h4>Phân tích chi tiết từ Ms MS Chí Nên:</h4>
+                            <div><b>Dịch câu hỏi:</b> <span class="p-mean">${q.translateQ}</span></div>
+                            <br>
+                            <div><b>Các đáp án:</b><br>
+                                ${shuffledOptions.map(o => `• <span class="p-word">${o.text}</span> ➔ Dịch: <span class="p-mean">${o.mean}</span>`).join('<br>')}
+                            </div>
+                            <hr style="margin: 10px 0; border: 0; border-top: 1px dashed #ffeaa7;">
+                            ${q.explanation}
+                        </div>
+                    </div>
+                `;
+                
+                submitBtn.insertAdjacentHTML('beforebegin', cardHtml);
+            });
+        }
+
+        function checkAnswer(questionId, selectedText, isCorrect, buttonId) {
+            const card = document.getElementById(`card-${questionId}`);
+            const buttons = card.querySelectorAll('.option-btn');
+            const expBox = document.getElementById(`exp-${questionId}`);
+            const clickedBtn = document.getElementById(buttonId);
+
+            // Disable all buttons in this card
+            buttons.forEach(btn => btn.disabled = true);
+            answeredQuestions++;
+
+            if (isCorrect) {
+                // Correct path
+                clickedBtn.classList.add('correct');
+                playDing();
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#a864fd', '#29cdff', '#78ff44', '#ff718d', '#fdff6a']
+                });
+                currentScore++;
+            } else {
+                // Wrong path
+                clickedBtn.classList.add('wrong');
+                card.classList.add('shake');
+                setTimeout(() => card.classList.remove('shake'), 400);
+                playTingTing();
+                
+                // Highlight correct option
+                buttons.forEach(btn => {
+                    const optData = questionsData.find(q => q.id === questionId).options.find(o => o.text === btn.innerText.trim());
+                    if (optData && optData.isCorrect) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            // Show explanation
+            setTimeout(() => {
+                expBox.style.display = 'block';
+            }, 500);
+        }
+
+        // --- SUBMIT & SCORE LOGIC ---
+        function showNamePrompt() {
+            if (answeredQuestions < questionsData.length) {
+                if(!confirm("Con chưa làm hết các câu hỏi, con có chắc chắn muốn nộp bài sớm không?")) {
+                    return;
+                }
+            }
+            document.getElementById('nameModal').style.display = 'flex';
+            document.getElementById('studentName').focus();
+        }
+
+        function submitQuiz() {
+            const name = document.getElementById('studentName').value.trim();
+            if (!name) {
+                alert("Con nhớ nhập tên trước khi nộp bài nhé!");
+                return;
+            }
+
+            document.getElementById('nameModal').style.display = 'none';
+            const total = questionsData.length;
+            const percent = currentScore / total;
+            const scale10 = (percent * 10).toFixed(2);
+
+            // Populate Score
+            document.getElementById('resultTitle').innerText = `Kết quả của ${name}`;
+            document.getElementById('rawScore').innerText = `${currentScore} / ${total}`;
+            document.getElementById('scaleScore').innerText = `Điểm hệ 10: ${scale10} / 10`;
+
+            // Dynamic logic for Comments & GIFs
+            const cmtEl = document.getElementById('teacherComment');
+            const gifEl = document.getElementById('resultGif');
+
+            if (percent === 1) {
+                cmtEl.innerText = "Wow! Xuất sắc tuyệt đối! Con là thiên tài ngoại ngữ! 🌟";
+                cmtEl.style.color = "#00b894";
+                gifEl.innerHTML = '<img src="https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif" alt="Genius">';
+                confetti({ particleCount: 300, spread: 120 });
+            } else if (percent >= 0.6) {
+                cmtEl.innerText = "Rất tốt! Con đã nắm khá chắc kiến thức rồi, cố lên tí nữa nhé! High-five! ✋";
+                cmtEl.style.color = "#0984e3";
+                gifEl.innerHTML = '<img src="https://media.giphy.com/media/3oz8xAFtjouKVsKe1y/giphy.gif" alt="Good job">';
+            } else {
+                cmtEl.innerText = "Hơi tiếc một chút! Nhớ đọc kỹ phần phân tích đáp án của cô để gỡ điểm lần sau nhé. Cố lên! 💪";
+                cmtEl.style.color = "#d63031";
+                gifEl.innerHTML = '<img src="https://media.giphy.com/media/d2lcHJTG5Tscg/giphy.gif" alt="Try again">';
+            }
+
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+
+        function closeResult() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        // --- BACKGROUND SVGS (EMOJIS) ---
+        function createFloatingEmojis() {
+            const emojis = ['💌', '🤝', '🎂', '🎉', '🌍', '❤️'];
+            const pattern = document.getElementById('bgPattern');
+            for (let i = 0; i < 20; i++) {
+                let el = document.createElement('div');
+                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                el.className = 'floating-emoji';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.animationDuration = (Math.random() * 10 + 10) + 's'; // 10s-20s
+                el.style.animationDelay = (Math.random() * 5) + 's';
+                el.style.fontSize = (Math.random() * 2 + 1.5) + 'rem';
+                pattern.appendChild(el);
+            }
+        }
+
+        // --- INIT ---
+        window.onload = () => {
+            renderQuestions();
+            createFloatingEmojis();
+        };
+    </script>
+</body>
+</html>

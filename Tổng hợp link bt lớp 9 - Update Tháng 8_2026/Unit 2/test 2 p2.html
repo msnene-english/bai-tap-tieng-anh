@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Test - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Thư viện tạo pháo hoa -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* === BASE SETTINGS & GAMIFICATION BACKGROUND === */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --correct-color: #27ae60;
+            --incorrect-color: #e74c3c;
+            --primary-font: 'Nunito', sans-serif;
+            --heading-font: 'Quicksand', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--primary-font);
+            height: 100vh;
+            overflow: hidden;
+            /* Nền Pastel Gradient Chủ đề Môi trường/Thiên nhiên */
+            background: linear-gradient(-45deg, #a8edea, #fed6e3, #e0c3fc, #8ec5fc);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #2c3e50;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Emojis SVG Background */
+        .floating-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .emoji {
+            position: absolute;
+            font-size: 3.5rem;
+            animation: floatEmoji 20s infinite linear;
+            opacity: 0.25;
+            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.1));
+        }
+        @keyframes floatEmoji {
+            0% { transform: translateY(110vh) rotate(0deg); }
+            100% { transform: translateY(-10vh) rotate(360deg); }
+        }
+
+        /* === STICKY NOTIFICATION === */
+        .sticky-note {
+            position: fixed;
+            top: 15px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(253, 203, 110, 0.95);
+            backdrop-filter: blur(10px);
+            border: 3px solid #e17055;
+            padding: 12px 25px;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(225, 112, 85, 0.3);
+            z-index: 100;
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: max-content;
+            max-width: 90%;
+            line-height: 1.5;
+            color: #2d3436;
+        }
+
+        /* === LAYOUT SPLIT SCREEN === */
+        .header-title {
+            position: fixed;
+            bottom: 15px; left: 25px;
+            font-family: var(--heading-font);
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #8e44ad;
+            z-index: 10;
+            background: rgba(255,255,255,0.7);
+            padding: 8px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 70px);
+            margin-top: 70px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .left-panel, .right-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            padding-bottom: 120px;
+            scrollbar-width: thin;
+            scrollbar-color: #a29bfe transparent;
+        }
+
+        .left-panel::-webkit-scrollbar, .right-panel::-webkit-scrollbar { width: 8px; }
+        .left-panel::-webkit-scrollbar-thumb, .right-panel::-webkit-scrollbar-thumb {
+            background-color: #a29bfe;
+            border-radius: 10px;
+        }
+
+        /* === GLASSMORPHISM CARDS === */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* === READING CONTENT STYLING === */
+        .passage-title {
+            font-family: var(--heading-font);
+            color: #34495e;
+            border-bottom: 3px dashed #74b9ff;
+            padding-bottom: 12px;
+            margin-top: 0;
+            font-weight: 800;
+        }
+        .paragraph {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            text-align: justify;
+            background: rgba(255,255,255,0.4);
+            padding: 15px;
+            border-radius: 15px;
+        }
+        .btn-translate {
+            background: linear-gradient(135deg, #0984e3, #74b9ff);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-family: var(--primary-font);
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-translate:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(9, 132, 227, 0.4); }
+        .translation-box {
+            display: none;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 18px;
+            border-left: 5px solid #0984e3;
+            border-radius: 0 15px 15px 0;
+            margin-bottom: 25px;
+            font-style: italic;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #2d3436;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        /* === GLOSSARY === */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 1.1rem;
+        }
+        .glossary-table th { background: rgba(162, 155, 254, 0.3); font-family: var(--heading-font); color: #2d3436;}
+        .g-word { font-weight: 800; color: #6c5ce7; font-family: 'Courier New', Courier, monospace;}
+        .g-type { font-style: italic; color: #d63031; font-weight: bold; font-size: 0.9em; margin-left: 5px; background: rgba(214, 48, 49, 0.1); padding: 2px 6px; border-radius: 5px;}
+
+        /* === QUIZ UI (RIGHT PANEL) === */
+        .question-num {
+            font-family: var(--heading-font);
+            font-size: 1.4rem;
+            color: #e84393;
+            font-weight: 800;
+            margin-bottom: 15px;
+            display: inline-block;
+            background: rgba(253, 121, 168, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2d3436;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .option-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #dfe6e9;
+            padding: 18px;
+            border-radius: 18px;
+            font-size: 1.15rem;
+            font-family: var(--primary-font);
+            font-weight: 700;
+            color: #2d3436;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #a29bfe;
+            background: #fff;
+        }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+        
+        .option-btn.correct {
+            background: var(--correct-color);
+            color: white;
+            border-color: #2ecc71;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(46, 204, 113, 0.6);
+        }
+        .option-btn.incorrect {
+            background: var(--incorrect-color);
+            color: white;
+            border-color: #c0392b;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-12px) rotate(-2deg); }
+            40%, 80% { transform: translateX(12px) rotate(2deg); }
+        }
+        .shake { animation: shake 0.5s ease-in-out; }
+
+        /* Input cho Tự luận */
+        .text-answer-box {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .text-input {
+            width: 100%; box-sizing: border-box;
+            padding: 15px; border-radius: 15px; border: 2px solid #b2bec3;
+            font-size: 1.1rem; font-family: var(--primary-font);
+            outline: none; transition: border-color 0.2s;
+        }
+        .text-input:focus { border-color: #6c5ce7; box-shadow: 0 0 10px rgba(108, 92, 231, 0.3);}
+        .btn-check-text {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white; font-weight: 800; padding: 12px; border: none; border-radius: 15px; cursor: pointer; font-size: 1.1rem; transition: transform 0.2s;
+        }
+        .btn-check-text:hover { transform: scale(1.02); }
+
+        /* === EXPLANATION FORMATTING (TUYỆT ĐỐI TUÂN THỦ) === */
+        .explanation-box {
+            display: none;
+            margin-top: 25px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px dashed #6c5ce7;
+            line-height: 1.7;
+            font-size: 1.1rem;
+            animation: fadeIn 0.5s;
+            box-shadow: inset 0 0 20px rgba(108, 92, 231, 0.05);
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .explanation-box ul { padding-left: 25px; margin: 10px 0; }
+        .explanation-box li { margin-bottom: 12px; }
+        
+        /* Tags bắt buộc */
+        .p-word { background: #dfe6e9; padding: 3px 8px; border-radius: 6px; font-weight: 800; color: #2c3e50; font-family: 'Courier New', Courier, monospace; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        .p-phonetic { color: #8e44ad; font-style: italic; font-weight: bold; margin: 0 5px; }
+        .p-mean { background: #ffeaa7; padding: 3px 8px; border-radius: 6px; font-weight: 700; color: #d35400; border-bottom: 2px solid #fdcb6e;}
+        .p-grammar { background: #81ecec; padding: 3px 8px; border-radius: 6px; font-weight: 800; color: #00b894; border: 1px dashed #00b894; }
+        .hl-green { color: #27ae60; font-weight: 900; text-transform: uppercase; background: rgba(39, 174, 96, 0.1); padding: 2px 6px; border-radius: 5px;}
+        .hl-red { color: #c0392b; font-weight: 900; text-transform: uppercase; background: rgba(192, 57, 43, 0.1); padding: 2px 6px; border-radius: 5px;}
+
+        /* === SUBMIT BUTTON & MODAL === */
+        .btn-submit {
+            display: block; width: 100%;
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white; text-align: center;
+            font-size: 1.6rem; font-family: var(--heading-font);
+            font-weight: 800; padding: 22px; border-radius: 25px;
+            border: none; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 184, 148, 0.4);
+            transition: all 0.3s; margin-top: 40px;
+        }
+        .btn-submit:hover { transform: scale(1.03); box-shadow: 0 15px 40px rgba(0, 184, 148, 0.6); }
+        
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 35px;
+            text-align: center; width: 450px; max-width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes bounceIn { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+        .modal-content input {
+            width: 85%; padding: 18px; border-radius: 15px;
+            border: 2px solid #dfe6e9; font-size: 1.3rem; font-weight: bold;
+            text-align: center; margin-bottom: 25px;
+            outline: none; font-family: var(--primary-font);
+        }
+        .modal-content input:focus { border-color: #0984e3; box-shadow: 0 0 15px rgba(9, 132, 227, 0.3);}
+        .gif-result { width: 100%; border-radius: 20px; margin: 20px 0; max-height: 250px; object-fit: cover; box-shadow: 0 5px 15px rgba(0,0,0,0.1);}
+        
+        #start-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(255,255,255,0.98); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .btn-start {
+            font-size: 2.5rem; padding: 25px 60px; border-radius: 50px;
+            background: linear-gradient(135deg, #ff7675, #d63031); color: white; border: none; font-family: var(--heading-font);
+            font-weight: 800; cursor: pointer; box-shadow: 0 15px 30px rgba(214, 48, 49, 0.4);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.08);} 100% {transform: scale(1);} }
+    </style>
+</head>
+<body>
+
+    <!-- OVERLAY ĐỂ MỞ KHÓA AUDIO -->
+    <div id="start-overlay">
+        <h1 style="font-family: 'Quicksand'; color: #2d3436; text-align: center; margin-bottom: 40px; font-size: 3rem;">Hành trình Chinh phục Tiếng Anh! 🌍</h1>
+        <button class="btn-start" onclick="startTest()">BẮT ĐẦU CHIẾN ĐẤU 🚀</button>
+    </div>
+
+    <!-- AUDIO ELEMENTS -->
+    <audio id="audio-welcome" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_7wcKV5pKUrQYWyi7XgktJM.mp3"></audio>
+    <audio id="audio-wrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Am_thanh_meme_Oi_doi_oi_huan_hoa_hong-www_tiengdong_com.mp3"></audio>
+
+    <!-- FLOATING SVG BACKGROUND -->
+    <div class="floating-bg" id="floating-bg"></div>
+
+    <div class="header-title">Giáo viên tạo: Ms MS Chí Nên</div>
+
+    <!-- STICKY NOTIFICATION -->
+    <div class="sticky-note">
+        <span>🚨 <strong>LỜI NHẮN TỪ CÔ MS Chí Nên:</strong> Tự giác tra cứu từ mới bằng từ điển! Đọc thật kỹ giải thích bên dưới sau khi chọn đáp án và nhớ ghi chép cấu trúc mới vào vở. Làm qua loa không đọc giải thích là lãng phí thời gian vô ích! 🧠✨</span>
+    </div>
+
+    <div class="container">
+        <!-- LEFT PANEL: READING SECTION -->
+        <div class="left-panel">
+            
+            <!-- PASSAGE 1: ANNOUNCEMENT -->
+            <div class="glass-card">
+                <h2 class="passage-title">Part I: Read the following announcement...</h2>
+                
+                <div class="paragraph">
+                    <strong>WEST RIVER BRIDGE CLOSURE</strong><br><br>
+                    Gendron Construction is advising the public (30) ______ they will be closing the West River Bridge at kilometre 5 on Fox Lake Road – the road used to access resource sites (31) ______ Mongowin Township.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t1-1')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t1-1">
+                    <strong>ĐÓNG CỬA CẦU WEST RIVER</strong><br>
+                    Công ty Xây dựng Gendron đang thông báo cho công chúng (30) ______ họ sẽ đóng cửa Cầu West River tại km số 5 trên Đường Fox Lake – con đường được sử dụng để đi đến các khu vực khai thác tài nguyên (31) ______ Thị trấn Mongowin.
+                </div>
+
+                <div class="paragraph">
+                    Work is scheduled to occur from September 29 to October 31. The bridge will be closed to all traffic to ensure worker and public (32) ______.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t1-2')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t1-2">
+                    Công việc dự kiến diễn ra từ ngày 29 tháng 9 đến ngày 31 tháng 10. Cây cầu sẽ đóng cửa đối với tất cả các phương tiện giao thông để đảm bảo (32) ______ của công nhân và công chúng.
+                </div>
+
+                <div class="paragraph">
+                    If you have any questions or concerns, please (33) ______ the Ministry of Natural Resources Sudbury District Office at 705-564-7866.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t1-3')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t1-3">
+                    Nếu bạn có bất kỳ câu hỏi hoặc mối quan tâm nào, vui lòng (33) ______ Văn phòng Quận Sudbury của Bộ Tài nguyên Thiên nhiên theo số 705-564-7866.
+                </div>
+            </div>
+
+            <!-- PASSAGE 2: CLEANER AIR -->
+            <div class="glass-card">
+                <h2 class="passage-title">Part II: Read the following passage...</h2>
+                
+                <div class="paragraph">
+                    Cleaner air from less traffic congestion and more use of renewable energy is the most obvious result of efficient urban transportation systems. Some cities have already successfully undertaken efforts to tackle traffic congestion: Milan has introduced electric delivery vans with enough battery for daily use, Vienna has successfully integrated electric microbuses into the bus network, New Delhi has a very strong network of more than 100,000 electric rickshaws that are providing a greener option to travel short distances.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t2-1')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t2-1">
+                    Không khí sạch hơn từ việc giảm tắc nghẽn giao thông và sử dụng nhiều năng lượng tái tạo hơn là kết quả rõ ràng nhất của các hệ thống giao thông đô thị hiệu quả. Một số thành phố đã thực hiện thành công các nỗ lực nhằm giải quyết tình trạng tắc nghẽn giao thông: Milan đã đưa vào sử dụng các xe tải giao hàng chạy bằng điện với đủ pin để sử dụng hàng ngày, Vienna đã tích hợp thành công các xe buýt điện cỡ nhỏ vào mạng lưới xe buýt, New Delhi có một mạng lưới rất mạnh gồm hơn 100.000 chiếc xe kéo điện đang cung cấp một lựa chọn xanh hơn để di chuyển trên những quãng đường ngắn.
+                </div>
+
+                <div class="paragraph">
+                    Adopting sustainable modes of transport like ride sharing, cycling and electric vehicles lead to lower levels of noise pollution and local air pollutants from emissions. This alone can significantly enhance the well-being of residents.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t2-2')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t2-2">
+                    Việc áp dụng các phương thức giao thông bền vững như đi chung xe, đi xe đạp và xe điện dẫn đến mức độ ô nhiễm tiếng ồn và các chất gây ô nhiễm không khí cục bộ từ khí thải thấp hơn. Chỉ riêng điều này đã có thể nâng cao đáng kể chất lượng cuộc sống (sự hạnh phúc/khỏe mạnh) của cư dân.
+                </div>
+
+                <div class="paragraph">
+                    Furthermore, investment in sustainable infrastructure such as cycling infrastructure and electric vehicle charging stations will reduce the reliance on private vehicles and decrease carbon emissions.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslation('t2-3')">🌟 Mở dịch đoạn này</button>
+                <div class="translation-box" id="t2-3">
+                    Hơn nữa, đầu tư vào cơ sở hạ tầng bền vững như cơ sở hạ tầng cho xe đạp và các trạm sạc xe điện sẽ làm giảm sự phụ thuộc vào các phương tiện cá nhân và làm giảm lượng khí thải carbon.
+                </div>
+            </div>
+
+            <!-- GLOSSARY TABLE -->
+            <div class="glass-card">
+                <h2 class="passage-title">📚 Glossary (Từ vựng học thuật B1-C2)</h2>
+                <table class="glossary-table">
+                    <tr><th>Word</th><th>Meaning (Nghĩa tiếng Việt)</th></tr>
+                    <tr><td><span class="g-word">closure</span> <span class="g-type">(n)</span></td><td>sự đóng cửa, sự phong tỏa</td></tr>
+                    <tr><td><span class="g-word">access</span> <span class="g-type">(v)</span></td><td>truy cập, đi vào, tiếp cận</td></tr>
+                    <tr><td><span class="g-word">congestion</span> <span class="g-type">(n)</span></td><td>sự tắc nghẽn (giao thông)</td></tr>
+                    <tr><td><span class="g-word">renewable energy</span> <span class="g-type">(n)</span></td><td>năng lượng tái tạo</td></tr>
+                    <tr><td><span class="g-word">undertake</span> <span class="g-type">(v)</span></td><td>thực hiện, đảm nhận (một dự án/nỗ lực)</td></tr>
+                    <tr><td><span class="g-word">tackle</span> <span class="g-type">(v)</span></td><td>giải quyết, xử lý (một vấn đề khó)</td></tr>
+                    <tr><td><span class="g-word">integrate</span> <span class="g-type">(v)</span></td><td>tích hợp, hòa nhập</td></tr>
+                    <tr><td><span class="g-word">sustainable</span> <span class="g-type">(adj)</span></td><td>bền vững (không gây hại môi trường)</td></tr>
+                    <tr><td><span class="g-word">emission</span> <span class="g-type">(n)</span></td><td>khí thải, sự phát tỏa</td></tr>
+                    <tr><td><span class="g-word">well-being</span> <span class="g-type">(n)</span></td><td>tình trạng hạnh phúc, khỏe mạnh, phúc lợi</td></tr>
+                    <tr><td><span class="g-word">infrastructure</span> <span class="g-type">(n)</span></td><td>cơ sở hạ tầng</td></tr>
+                    <tr><td><span class="g-word">reliance</span> <span class="g-type">(n)</span></td><td>sự phụ thuộc, sự tin cậy</td></tr>
+                </table>
+            </div>
+
+        </div> <!-- End Left Panel -->
+
+        <!-- RIGHT PANEL: EXERCISES -->
+        <div class="right-panel" id="quiz-container">
+            <!-- JavaScript will render the questions here to ensure clean code -->
+        </div>
+
+    </div>
+
+    <!-- SCORE MODAL -->
+    <div class="modal-overlay" id="score-modal">
+        <div class="modal-content" id="modal-content">
+            <h2 style="font-family: 'Quicksand'; color: #0984e3; font-size: 2.2rem; margin-bottom: 10px;">🎯 TỔNG KẾT BÀI LÀM</h2>
+            <img id="result-gif" class="gif-result" src="" alt="Result Meme">
+            <h3 id="student-name-display" style="color: #2d3436; font-size: 1.5rem;"></h3>
+            <div style="font-size: 3.5rem; font-weight: 900; color: #d63031; margin: 10px 0; text-shadow: 2px 2px 5px rgba(0,0,0,0.1);" id="raw-score"></div>
+            <div style="font-size: 1.5rem; font-weight: bold; background: #ffeaa7; padding: 12px 20px; border-radius: 15px; color: #d35400; display: inline-block; margin-bottom: 25px; border: 2px solid #fdcb6e;" id="scale-score"></div>
+            <p id="teacher-comment" style="font-size: 1.25rem; font-weight: 700; font-style: italic; color: #2c3e50; line-height: 1.5;"></p>
+            <button class="btn-submit" onclick="location.reload()" style="margin-top: 25px; font-size: 1.2rem; padding: 15px;">🔄 THỬ THÁCH LẠI TỪ ĐẦU</button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // === GENERATE FLOATING EMOJIS (Chủ đề Giao thông & Môi trường) ===
+        const emojis = ['🌉', '🚧', '🛑', '🚌', '🌳', '⚡', '🚲'];
+        const bg = document.getElementById('floating-bg');
+        for(let i = 0; i < 18; i++) {
+            let el = document.createElement('div');
+            el.className = 'emoji';
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (Math.random() * 15 + 18) + 's';
+            el.style.animationDelay = Math.random() * 10 + 's';
+            el.style.fontSize = (Math.random() * 2 + 2.5) + 'rem';
+            bg.appendChild(el);
+        }
+
+        // === START & AUDIO LOGIC ===
+        const audioWelcome = document.getElementById('audio-welcome');
+        const audioWrong = document.getElementById('audio-wrong');
+        
+        // Tạo Web Audio API cho tiếng Ding Xanh Lá
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Nốt A5
+            osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.5);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function startTest() {
+            document.getElementById('start-overlay').style.display = 'none';
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            audioWelcome.play().catch(e => console.log("Audio play prevented:", e));
+        }
+
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        // === DATA CÂU HỎI & GIẢI THÍCH (TUÂN THỦ 100% CẤU TRÚC THẺ) ===
+        const quizData = [
+            // PART I: CLOZE TEST (MCQ)
+            {
+                type: "mcq", num: 30, shuffleOptions: true,
+                question: "Gendron Construction is advising the public (30) ______ they will be closing the West River Bridge...",
+                options: ["what", "that", "whom", "which"],
+                correct: "that",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Công ty Xây dựng Gendron đang thông báo cho công chúng (30) ______ họ sẽ đóng cửa Cầu West River...</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>what ➔ Dịch: <span class='p-mean'>cái gì</span></li>
+                        <li>that ➔ Dịch: <span class='p-mean'>rằng (liên từ nối mệnh đề)</span></li>
+                        <li>whom ➔ Dịch: <span class='p-mean'>người mà (tân ngữ)</span></li>
+                        <li>which ➔ Dịch: <span class='p-mean'>cái mà (đại từ quan hệ)</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>that</strong>. Ta có cấu trúc <span class='p-grammar'>advise somebody that + Clause (Mệnh đề S+V)</span> có nghĩa là <span class='p-mean'>thông báo cho ai biết RẰNG điều gì sắp xảy ra</span>. Phía sau khoảng trống là một mệnh đề hoàn chỉnh "they will be closing...", nên dùng liên từ "that" là chính xác hoàn toàn.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Không dùng <span class='p-word'>what</span> vì đây không phải câu hỏi. Không dùng đại từ quan hệ <span class='p-word'>whom</span> hay <span class='p-word'>which</span> vì vế sau đã có đủ chủ ngữ (they) và tân ngữ (the bridge), không hề bị khuyết thành phần nào để cần đại từ quan hệ thay thế.</li>
+                    </ul>
+                `
+            },
+            {
+                type: "mcq", num: 31, shuffleOptions: true,
+                question: "...the road used to access resource sites (31) ______ Mongowin Township.",
+                options: ["within", "among", "between", "into"],
+                correct: "within",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> ...con đường được sử dụng để đi đến các khu vực khai thác tài nguyên (31) ______ Thị trấn Mongowin.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>within ➔ Dịch: <span class='p-mean'><span class='p-word'>prep</span>: bên trong, trong phạm vi</span></li>
+                        <li>among ➔ Dịch: <span class='p-mean'><span class='p-word'>prep</span>: ở giữa (nhiều người/vật)</span></li>
+                        <li>between ➔ Dịch: <span class='p-mean'><span class='p-word'>prep</span>: ở giữa (hai người/vật)</span></li>
+                        <li>into ➔ Dịch: <span class='p-mean'><span class='p-word'>prep</span>: vào trong (chỉ hướng chuyển động)</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>within</strong>. Giới từ <span class='p-word'>within</span> được dùng với địa điểm để chỉ vị trí nằm <span class='p-mean'>hoàn toàn bên trong ranh giới/phạm vi của một khu vực</span>. Ở đây là các khu vực tài nguyên nằm gọn bên trong ranh giới của Thị trấn Mongowin.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> <span class='p-word'>among</span> và <span class='p-word'>between</span> bắt buộc phải đi với danh từ số nhiều (giữa những cái gì), trong khi "Mongowin Township" là một địa danh duy nhất. <span class='p-word'>into</span> chỉ phương hướng chuyển động của một hành động, không dùng để chỉ vị trí tọa lạc cố định của các khu "resource sites".</li>
+                    </ul>
+                `
+            },
+            {
+                type: "mcq", num: 32, shuffleOptions: true,
+                question: "The bridge will be closed to all traffic to ensure worker and public (32) ______.",
+                options: ["safe", "unsafe", "safely", "safety"],
+                correct: "safety",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Cây cầu sẽ đóng cửa đối với tất cả các phương tiện giao thông để đảm bảo (32) ______ của công nhân và công chúng.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>safe ➔ Dịch: <span class='p-mean'><span class='p-word'>adj</span>: an toàn</span></li>
+                        <li>unsafe ➔ Dịch: <span class='p-mean'><span class='p-word'>adj</span>: không an toàn</span></li>
+                        <li>safely ➔ Dịch: <span class='p-mean'><span class='p-word'>adv</span>: một cách an toàn</span></li>
+                        <li>safety ➔ Dịch: <span class='p-mean'><span class='p-word'>n</span>: sự an toàn</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>safety</strong>. Động từ <span class='p-word'>ensure</span> (đảm bảo) cần một danh từ (hoặc cụm danh từ) theo sau đóng vai trò làm tân ngữ. Ở đây ta có cụm danh từ ghép <span class='p-grammar'>worker and public safety</span> mang nghĩa là <span class='p-mean'>sự an toàn của công nhân và công chúng</span>.</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Không thể dùng tính từ <span class='p-word'>safe</span> hay <span class='p-word'>unsafe</span> vì vị trí này đang đứng cuối cụm cần một danh từ gốc. Trạng từ <span class='p-word'>safely</span> cũng sai ngữ pháp vì trạng từ không thể đứng độc lập làm tân ngữ cho động từ "ensure" trong trường hợp này.</li>
+                    </ul>
+                `
+            },
+            {
+                type: "mcq", num: 33, shuffleOptions: true,
+                question: "If you have any questions or concerns, please (33) ______ the Ministry of Natural Resources...",
+                options: ["send", "communicate", "contact", "announce"],
+                correct: "contact",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Nếu bạn có bất kỳ câu hỏi hoặc mối quan tâm nào, vui lòng (33) ______ Văn phòng của Bộ Tài nguyên Thiên nhiên...</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>send ➔ Dịch: <span class='p-mean'><span class='p-word'>v</span>: gửi (cái gì cho ai)</span></li>
+                        <li>communicate ➔ Dịch: <span class='p-mean'><span class='p-word'>v</span>: giao tiếp, trao đổi</span></li>
+                        <li>contact ➔ Dịch: <span class='p-mean'><span class='p-word'>v</span>: liên lạc, liên hệ</span></li>
+                        <li>announce ➔ Dịch: <span class='p-mean'><span class='p-word'>v</span>: thông báo</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án đúng là <strong>contact</strong>. Ta có cấu trúc <span class='p-grammar'>contact somebody/an organization</span> có nghĩa là <span class='p-mean'>liên lạc trực tiếp với ai hoặc tổ chức nào đó</span>. Chi tiết số điện thoại "705-564-7866" ở cuối câu chính là keyword báo hiệu hành động "liên hệ".</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Từ <span class='p-word'>send</span> thiếu tân ngữ chỉ vật (phải là send something to...). Từ <span class='p-word'>communicate</span> luôn phải đi kèm với giới từ "with" (communicate with). Từ <span class='p-word'>announce</span> sai logic vì người dân có thắc mắc thì phải đi hỏi, chứ không phải là người đưa ra thông báo cho văn phòng bộ.</li>
+                    </ul>
+                `
+            },
+            // PART II: TRUE / FALSE
+            {
+                type: "mcq", num: 34, shuffleOptions: false,
+                question: "a. Decide whether the following statement is True (T) or False (F).<br>If a city has good transport systems, its air quality can improve.",
+                options: ["True", "False"],
+                correct: "True",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Nếu một thành phố có hệ thống giao thông tốt, chất lượng không khí của nó có thể được cải thiện.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>True ➔ Dịch: <span class='p-mean'>Đúng với nội dung bài</span></li>
+                        <li>False ➔ Dịch: <span class='p-mean'>Sai với nội dung bài</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án là **True**. Dẫn chứng ngay câu đầu tiên của đoạn 1: <span class='p-mean'>"Cleaner air... is the most obvious result of efficient urban transportation systems."</span> (Không khí sạch hơn... là kết quả rõ ràng nhất của các hệ thống giao thông đô thị hiệu quả). Từ <span class='p-grammar'>efficient urban transportation systems</span> hoàn toàn đồng nghĩa với <span class='p-word'>good transport systems</span>, và <span class='p-grammar'>cleaner air</span> đồng nghĩa với việc chất lượng không khí được cải thiện.</li>
+                    </ul>
+                `
+            },
+            {
+                type: "mcq", num: 35, shuffleOptions: false,
+                question: "The electric delivery vans in Milan need to charge every hour.",
+                options: ["True", "False"],
+                correct: "False",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Các xe tải giao hàng chạy bằng điện ở Milan cần phải sạc mỗi giờ.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>True ➔ Dịch: <span class='p-mean'>Đúng với nội dung bài</span></li>
+                        <li>False ➔ Dịch: <span class='p-mean'>Sai với nội dung bài</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án là **False**. Dẫn chứng trong bài ở đoạn 1: <span class='p-mean'>"Milan has introduced electric delivery vans with enough battery for daily use."</span> (Milan đã đưa vào sử dụng các xe tải giao hàng chạy bằng điện VỚI ĐỦ PIN ĐỂ SỬ DỤNG HÀNG NGÀY).</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Đề bài khẳng định xe phải sạc "mỗi giờ" (<span class='p-word'>every hour</span>). Điều này sai hoàn toàn so với thông tin "sử dụng được cả ngày" (<span class='p-word'>daily use</span>) mà bài đọc cung cấp.</li>
+                    </ul>
+                `
+            },
+            {
+                type: "mcq", num: 36, shuffleOptions: false,
+                question: "Vienna has included small electric buses as part of its public transport.",
+                options: ["True", "False"],
+                correct: "True",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Vienna đã đưa các xe buýt điện nhỏ vào như một phần của giao thông công cộng.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>True ➔ Dịch: <span class='p-mean'>Đúng với nội dung bài</span></li>
+                        <li>False ➔ Dịch: <span class='p-mean'>Sai với nội dung bài</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án là **True**. Dẫn chứng trong bài ở đoạn 1: <span class='p-mean'>"Vienna has successfully integrated electric microbuses into the bus network."</span> (Vienna đã TÍCH HỢP thành công CÁC XE BUÝT ĐIỆN CỠ NHỎ vào mạng lưới xe buýt). Ở đây, động từ <span class='p-word'>integrate</span> đồng nghĩa với việc đưa vào/bao gồm (<span class='p-word'>include</span>), và từ <span class='p-word'>microbuses</span> (xe buýt vi mô) đồng nghĩa với <span class='p-word'>small buses</span>.</li>
+                    </ul>
+                `
+            },
+            {
+                type: "mcq", num: 37, shuffleOptions: false,
+                question: "Unlike ride sharing, cycling and electric vehicles help reduce noise pollution.",
+                options: ["True", "False"],
+                correct: "False",
+                explanation: `
+                    <p><strong>Dịch đề bài:</strong> Khác với việc đi chung xe, việc đi xe đạp và đi xe điện giúp giảm ô nhiễm tiếng ồn.</p>
+                    <p><strong>Các đáp án:</strong></p>
+                    <ul>
+                        <li>True ➔ Dịch: <span class='p-mean'>Đúng với nội dung bài</span></li>
+                        <li>False ➔ Dịch: <span class='p-mean'>Sai với nội dung bài</span></li>
+                    </ul>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Tại sao đúng:</span> Đáp án là **False**. Dẫn chứng ở đoạn 2: <span class='p-mean'>"Adopting sustainable modes of transport like ride sharing, cycling and electric vehicles lead to lower levels of noise pollution..."</span> (Việc áp dụng CÁC phương thức giao thông bền vững NHƯ đi chung xe, đi xe đạp VÀ xe điện dẫn đến mức độ ô nhiễm tiếng ồn thấp hơn).</li>
+                        <li><span class='hl-red'>Tại sao sai:</span> Đề bài dùng từ gài bẫy <span class='p-word'>Unlike</span> (Khác với) để ám chỉ rằng việc đi chung xe (ride sharing) KHÔNG giúp giảm tiếng ồn. Điều này đi ngược hoàn toàn với thông tin trong bài (tác giả liệt kê CẢ 3 phương tiện đều giúp giảm tiếng ồn chung).</li>
+                    </ul>
+                `
+            },
+            // PART II: SHORT ANSWER (Rendered differently)
+            {
+                type: "text", num: 38,
+                question: "b. Answer the questions.<br>What is the usage of electric rickshaws in New Delhi?",
+                correct: "They provide a greener option to travel short distances.",
+                explanation: `
+                    <p><strong>Dịch câu hỏi:</strong> Công dụng của xe kéo điện ở New Delhi là gì?</p>
+                    <p><strong>Đáp án chuẩn tham khảo:</strong> They provide / are providing a greener option to travel short distances.</p>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Cách tìm đáp án:</span> Bạn scan (quét) nhanh văn bản để tìm từ khóa "electric rickshaws" và "New Delhi". Dẫn chứng xuất hiện ở cuối đoạn 1: <span class='p-mean'>"New Delhi has a very strong network of more than 100,000 electric rickshaws that are providing a greener option to travel short distances."</span> (New Delhi có một mạng lưới rất mạnh gồm hơn 100.000 chiếc xe kéo điện ĐANG CUNG CẤP MỘT LỰA CHỌN XANH HƠN ĐỂ DI CHUYỂN QUÃNG ĐƯỜNG NGẮN). Bạn chỉ cần trích nguyên văn cụm phía sau đại từ "that" để làm câu trả lời.</li>
+                    </ul>
+                `
+            },
+            {
+                type: "text", num: 39,
+                question: "Why should the governments invest in sustainable infrastructure?",
+                correct: "Because it will reduce the reliance on private vehicles and decrease carbon emissions.",
+                explanation: `
+                    <p><strong>Dịch câu hỏi:</strong> Tại sao các chính phủ nên đầu tư vào cơ sở hạ tầng bền vững?</p>
+                    <p><strong>Đáp án chuẩn tham khảo:</strong> Because it will reduce the reliance on private vehicles and decrease carbon emissions.</p>
+                    <p><strong>Giải thích chi tiết:</strong></p>
+                    <ul>
+                        <li><span class='hl-green'>Cách tìm đáp án:</span> Bạn tìm cụm từ khóa "invest in sustainable infrastructure". Dẫn chứng nằm ngay ở đoạn cuối cùng: <span class='p-mean'>"Furthermore, investment in sustainable infrastructure... will reduce the reliance on private vehicles and decrease carbon emissions."</span> (Hơn nữa, đầu tư vào cơ sở hạ tầng bền vững... SẼ LÀM GIẢM SỰ PHỤ THUỘC VÀO PHƯƠNG TIỆN CÁ NHÂN VÀ GIẢM LƯỢNG KHÍ THẢI CARBON). Chú ý thêm chữ "Because" (Bởi vì) vào đầu câu trả lời do câu hỏi bắt đầu bằng "Why".</li>
+                    </ul>
+                `
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = {};
+        const totalQuestions = quizData.length; // Tổng 10 câu
+
+        // Xáo trộn mảng (Fisher-Yates)
+        function shuffle(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Tạo UI Câu hỏi
+        const quizContainer = document.getElementById('quiz-container');
+        quizData.forEach((item, index) => {
+            const qCard = document.createElement('div');
+            qCard.className = 'glass-card';
+            
+            let contentHTML = `<div class="question-num">Question ${item.num}</div>
+                               <div class="question-text">${item.question}</div>`;
+
+            if (item.type === "mcq") {
+                let currentOptions = item.shuffleOptions ? shuffle(item.options) : item.options;
+                
+                let optionsHTML = currentOptions.map(opt => {
+                    const isCorrect = (opt === item.correct);
+                    return `<button class="option-btn" data-correct="${isCorrect}" onclick="handleAnswerMCQ(this, ${item.num})">${opt}</button>`;
+                }).join('');
+
+                contentHTML += `<div class="options-grid" id="grid-${item.num}">${optionsHTML}</div>`;
+            } else if (item.type === "text") {
+                // Tự luận
+                contentHTML += `
+                    <div class="text-answer-box" id="box-${item.num}">
+                        <input type="text" class="text-input" placeholder="Nhập câu trả lời của con bằng Tiếng Anh vào đây..." id="input-${item.num}">
+                        <button class="btn-check-text" onclick="handleAnswerText(${item.num})">✔️ Nộp câu này & Xem đáp án chuẩn</button>
+                    </div>
+                `;
+            }
+
+            contentHTML += `<div class="explanation-box" id="exp-${item.num}">${item.explanation}</div>`;
+            qCard.innerHTML = contentHTML;
+            quizContainer.appendChild(qCard);
+        });
+
+        // Nút Nộp Bài Cuối cùng
+        const submitBtn = document.createElement('button');
+        submitBtn.className = 'btn-submit';
+        submitBtn.innerText = '🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ';
+        submitBtn.onclick = showResultModal;
+        quizContainer.appendChild(submitBtn);
+
+        // Logic Xử lý Trắc nghiệm
+        function handleAnswerMCQ(btnElement, questionNum) {
+            if (answeredQuestions[questionNum]) return;
+            
+            const isCorrect = btnElement.getAttribute('data-correct') === 'true';
+            const grid = document.getElementById(`grid-${questionNum}`);
+            const buttons = grid.querySelectorAll('.option-btn');
+            
+            buttons.forEach(b => b.disabled = true);
+            answeredQuestions[questionNum] = true;
+
+            if (isCorrect) {
+                btnElement.classList.add('correct');
+                score++;
+                playDing();
+                confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+            } else {
+                btnElement.classList.add('incorrect');
+                btnElement.classList.add('shake');
+                audioWrong.currentTime = 0;
+                audioWrong.play().catch(e => {});
+                
+                // Highlight đáp án đúng
+                buttons.forEach(b => {
+                    if (b.getAttribute('data-correct') === 'true') {
+                        b.classList.add('correct');
+                        b.style.boxShadow = "0 0 25px #f39c12"; 
+                    }
+                });
+            }
+            document.getElementById(`exp-${questionNum}`).style.display = 'block';
+        }
+
+        // Logic Xử lý Tự luận (Điểm thưởng động viên)
+        function handleAnswerText(questionNum) {
+            if (answeredQuestions[questionNum]) return;
+            
+            const inputVal = document.getElementById(`input-${questionNum}`).value;
+            if(inputVal.trim() === "") {
+                alert("Con phải nhập câu trả lời vào ô trống trước khi kiểm tra nhé!");
+                return;
+            }
+
+            answeredQuestions[questionNum] = true;
+            document.getElementById(`input-${questionNum}`).disabled = true;
+            
+            // Tự luận học sinh tự đối chiếu, thưởng 1 điểm nỗ lực
+            score++; 
+            playDing();
+            confetti({ particleCount: 50, spread: 50, origin: { y: 0.8 } });
+            
+            document.getElementById(`exp-${questionNum}`).style.display = 'block';
+        }
+
+        // Logic Modal Điểm
+        function showResultModal() {
+            // Kiểm tra xem đã làm hết chưa
+            if(Object.keys(answeredQuestions).length < totalQuestions) {
+                const conf = confirm("Con chưa làm hết các câu hỏi. Con có chắc chắn muốn nộp bài không?");
+                if(!conf) return;
+            }
+
+            let studentName = prompt("Học trò cưng của cô MS Chí Nên tên là gì nhỉ? Nhập Họ Tên để ghi danh bảng vàng nhé:");
+            if (!studentName || studentName.trim() === "") {
+                alert("Con phải nhập tên thì hệ thống mới lưu điểm được nha!");
+                return;
+            }
+
+            const rawScoreText = `${score} / ${totalQuestions}`;
+            const scale10 = ((score / totalQuestions) * 10).toFixed(2);
+            
+            document.getElementById('student-name-display').innerText = `🏆 Học sinh: ${studentName}`;
+            document.getElementById('raw-score').innerText = rawScoreText;
+            document.getElementById('scale-score').innerText = `Điểm quy đổi: ${scale10} / 10`;
+
+            let gifUrl = "";
+            let comment = "";
+
+            if (score === totalQuestions) {
+                gifUrl = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; 
+                comment = "Tuyệt đỉnh!! Trình độ đọc hiểu của con đang ở mức Master. Cô MS Chí Nên vô cùng tự hào về thành tích này! Tiếp tục giữ vững phong độ nhé!";
+            } else if (score >= (totalQuestions * 0.7)) {
+                gifUrl = "https://media.giphy.com/media/3oz8xAFtcoSTARGVD2/giphy.gif"; 
+                comment = "Rất tuyệt vời! Kỹ năng của con cực kỳ xuất sắc. Chắc chắn con đã học được thêm rất nhiều từ vựng hay. Cố lên chút nữa là 10 điểm tuyệt đối!";
+            } else {
+                gifUrl = "https://media.giphy.com/media/L95W4wv8nnb9K/giphy.gif"; 
+                comment = "Đừng buồn nhé, sai sót mới làm mình nhớ lâu hơn! Bí kíp của học sinh giỏi là ghi chép lại toàn bộ lỗi sai vào vở. Lần sau con chắc chắn sẽ phục thù thành công!";
+            }
+
+            document.getElementById('result-gif').src = gifUrl;
+            document.getElementById('teacher-comment').innerText = comment;
+            document.getElementById('score-modal').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

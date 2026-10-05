@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive English Quiz - Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pastel-pink: #ffd1dc;
+            --pastel-blue: #aec6cf;
+            --pastel-green: #bdfcc9;
+            --pastel-yellow: #fdfd96;
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --text-main: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, var(--pastel-pink), var(--pastel-blue), var(--pastel-green));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden; 
+            position: relative;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating Background Emojis */
+        .floating-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .float-emoji {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.3;
+            animation: floatUp 20s linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) rotate(0deg); }
+            100% { transform: translateY(-10vh) rotate(360deg); }
+        }
+
+        /* Sticky Reminder Banner - Cực kỳ nổi bật nhưng nhỏ gọn */
+        .sticky-banner {
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 235, 153, 0.95);
+            backdrop-filter: blur(10px);
+            border: 3px dashed #e67e22;
+            padding: 12px 25px;
+            border-radius: 20px;
+            z-index: 1000;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: justify;
+            width: 85%;
+            max-width: 900px;
+            box-shadow: 0 10px 25px rgba(230, 126, 34, 0.3);
+            color: #d35400;
+            line-height: 1.5;
+            transition: all 0.3s;
+        }
+        .sticky-banner:hover {
+            background: rgba(255, 235, 153, 1);
+            transform: translateX(-50%) scale(1.02);
+            box-shadow: 0 12px 30px rgba(230, 126, 34, 0.5);
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 110px 20px 10px 20px; /* Nhường chỗ cho sticky banner */
+            z-index: 10;
+        }
+        h1 { font-size: 1.5rem; color: #34495e; text-shadow: 1px 1px 2px #fff; margin-bottom: 5px; }
+        .creator { font-size: 1rem; color: #c0392b; font-weight: bold; background: rgba(255,255,255,0.6); display: inline-block; padding: 5px 15px; border-radius: 15px;}
+
+        /* Split Screen Layout */
+        .container {
+            display: flex;
+            height: calc(100vh - 170px);
+            padding: 10px 20px;
+            gap: 20px;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+            padding: 20px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-track { background: transparent; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        /* Reading Section Styles */
+        .reading-title {
+            font-size: 1.4rem;
+            color: #2980b9;
+            margin-bottom: 15px;
+            border-bottom: 3px dashed #3498db;
+            padding-bottom: 8px;
+            font-weight: bold;
+        }
+        .paragraph-box {
+            background: rgba(255,255,255,0.6);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            line-height: 1.7;
+            font-size: 1.15rem;
+            color: #2c3e50;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .btn-translate {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            border: none;
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+        .btn-translate:hover { transform: scale(1.05); }
+        .translation-text {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(230, 247, 255, 0.8);
+            border-left: 4px solid #3498db;
+            border-radius: 5px;
+            font-style: italic;
+            color: #2c3e50;
+        }
+
+        /* Glossary Table */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        .glossary-table th { background: #55efc4; color: #2d3436; font-size: 1.1rem; }
+
+        /* Quiz Section Styles */
+        .question-card {
+            background: rgba(255,255,255,0.8);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: 0.3s;
+        }
+        .question-card:hover { transform: translateY(-3px); border-color: #74b9ff; }
+        
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2d3436;
+        }
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid #bdc3c7;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            text-align: left;
+            white-space: normal;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .option-btn:hover:not(:disabled) {
+            background: #f1f2f6;
+            transform: translateX(5px);
+            border-color: #3498db;
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+        .option-btn.correct {
+            background: #2ecc71 !important;
+            color: white;
+            border-color: #27ae60;
+            font-weight: bold;
+        }
+        .option-btn.wrong {
+            background: #e74c3c !important;
+            color: white;
+            border-color: #c0392b;
+            animation: shake 0.5s;
+        }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #fffdf0;
+            border-left: 5px solid #f1c40f;
+            border-radius: 10px;
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+        
+        /* Highlight Classes for Explanations */
+        .p-word { color: #2980b9; font-weight: bold; font-size: 1.1rem; }
+        .p-phonetic { color: #8e44ad; font-style: italic; }
+        .p-mean { color: #d35400; font-weight: 600; }
+        .p-grammar { font-family: 'Courier New', Courier, monospace; background: #dfe6e9; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #e84393; }
+        .hl-green { color: #27ae60; font-weight: bold; background: rgba(39, 174, 96, 0.1); padding: 2px 5px; border-radius: 3px; }
+        .hl-red { color: #c0392b; font-weight: bold; background: rgba(192, 57, 43, 0.1); padding: 2px 5px; border-radius: 3px;}
+        
+        .explain-step { margin-bottom: 8px; }
+        .explain-title { font-weight: bold; color: #2c3e50; text-decoration: underline; margin-top: 10px;}
+
+        /* Submit Area */
+        .submit-area { text-align: center; margin-top: 30px; margin-bottom: 50px; }
+        .btn-submit {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+            font-size: 1.5rem;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);
+            transition: 0.3s;
+        }
+        .btn-submit:hover { transform: translateY(-3px) scale(1.05); }
+
+        /* Start Overlay */
+        #start-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(5px);
+        }
+        .btn-start {
+            background: #2ecc71;
+            color: white;
+            font-size: 2rem;
+            padding: 20px 50px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 30px;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 25px rgba(46, 204, 113, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+
+        /* Result Modal */
+        #result-modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            z-index: 10000;
+            text-align: center;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.6);
+            width: 90%;
+            max-width: 550px;
+        }
+        .modal-bg {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+        }
+        .score-text { font-size: 3.5rem; color: #e74c3c; font-weight: bold; margin: 15px 0;}
+        .score-10 { font-size: 1.5rem; color: #2980b9; margin-bottom: 20px; font-weight: bold; background: #ecf0f1; padding: 10px; border-radius: 10px;}
+        .result-gif { width: 100%; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .teacher-comment { font-size: 1.3rem; font-style: italic; color: #27ae60; font-weight: 600; line-height: 1.5;}
+        
+        /* Confetti Canvas */
+        #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Audios (Đã cập nhật đúng yêu cầu) -->
+    <audio id="audio-start" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/ti%E1%BA%BFng%20%C4%91%E1%BB%8Dc%20kh%C3%ADch%20l%E1%BB%87%20p2.mp3"></audio>
+    <audio id="audio-wrong" src="https://hoctienganhcungcoMSChíNên.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3"></audio>
+    <audio id="audio-correct" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+
+    <!-- Start Overlay -->
+    <div id="start-overlay">
+        <h1 style="font-size: 2.5rem; margin-bottom: 15px;">Chào mừng các con đến với Bài kiểm tra!</h1>
+        <p style="font-size: 1.3rem; margin-bottom: 10px;">Lắng nghe lời cô dặn dò (chỉ phát 1 lần) trước khi bắt đầu nhé!</p>
+        <button class="btn-start" onclick="startQuiz()">BẮT ĐẦU LÀM BÀI 🚀</button>
+    </div>
+
+    <!-- Floating Background -->
+    <div class="floating-bg" id="float-bg"></div>
+    <canvas id="confetti"></canvas>
+
+    <!-- STICKY BANNER -->
+    <div class="sticky-banner">
+        🚨 <b>GÓC NHẮC NHỞ TỪ CÔ MS Chí Nên:</b> Tự giác tra cứu từ mới để hiểu rõ nội dung từng câu hỏi bằng Google Dịch/Chat GPT/Gemini chứ không được lười suy nghĩ mà chọn bừa! Tra cứu ngữ âm, trọng âm bằng từ điển Cambridge và nghe máy đọc, sau đó đọc theo. Chỉ có đọc kỹ giải thích sau đó ghi lại từ/cấu trúc mới vào vở để học mới thực sự giỏi lên. Làm cho xong mà không đọc giải thích hay đọc qua loa, không ghi chép thì chỉ tốn thời gian vô ích! 📖✍️
+    </div>
+
+    <header>
+        <h1>BÀI TẬP ĐỌC HIỂU TỔNG HỢP (MIDTERM TESTS)</h1>
+        <div class="creator">Giáo viên tạo: Ms MS Chí Nên</div>
+    </header>
+
+    <div class="container">
+        <!-- LEFT PANEL: READING PASSAGES -->
+        <div class="panel" id="left-panel">
+            
+            <!-- PASSAGE 1: Stilt Houses -->
+            <div class="reading-title">🏡 Passage 1: Stilt Houses in Viet Nam</div>
+            
+            <div class="paragraph-box">
+                <p>Stilt houses in mountainous areas in Viet Nam are made from wood, bamboo, cane, or rattan. A traditional stilt house typically has an area (21) _____ drying rice a little bit below the main level. The area under the house is sometimes used as a place to keep (22) _____ like cows or pigs.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans-p1-1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="trans-p1-1">Nhà sàn ở các khu vực miền núi tại Việt Nam được làm từ gỗ, tre, nứa, hoặc mây. Một ngôi nhà sàn truyền thống điển hình thường có một khu vực (21) dành cho việc phơi lúa ở thấp hơn một chút so với tầng chính. Khu vực gầm nhà đôi khi được sử dụng làm nơi nuôi nhốt (22) động vật như bò hoặc lợn.</div>
+            </div>
+
+            <div class="paragraph-box">
+                <p>Aside from being a place to eat, relax and sleep, a stilt house is where family members worship ancestors and (23) _____ crafts like weaving and embroidery. The most important room is the (24) _____, which is usually in the centre of the house. At the end of the day, this is where the whole family meet for dinner and other evening (25) _____.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans-p1-2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="trans-p1-2">Ngoài việc là nơi để ăn uống, nghỉ ngơi và ngủ, nhà sàn còn là nơi các thành viên trong gia đình thờ cúng tổ tiên và (23) làm các công việc thủ công như dệt vải và thêu thùa. Căn phòng quan trọng nhất là (24) nhà bếp, nơi thường nằm ở trung tâm của ngôi nhà. Vào cuối ngày, đây là nơi cả gia đình gặp gỡ để ăn tối và tham gia các (25) hoạt động buổi tối khác.</div>
+            </div>
+
+            <h3 style="margin-top: 20px; color: #8e44ad;">📚 Glossary (Bảng từ vựng Passage 1)</h3>
+            <table class="glossary-table">
+                <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                <tr><td>mountainous</td><td>adj</td><td>thuộc miền núi, có nhiều núi</td></tr>
+                <tr><td>traditional</td><td>adj</td><td>thuộc về truyền thống</td></tr>
+                <tr><td>typically</td><td>adv</td><td>một cách điển hình, thường thì</td></tr>
+                <tr><td>worship</td><td>v</td><td>thờ cúng, tôn kính</td></tr>
+                <tr><td>ancestor</td><td>n</td><td>tổ tiên</td></tr>
+                <tr><td>craft</td><td>n</td><td>nghề thủ công, đồ thủ công</td></tr>
+                <tr><td>weaving</td><td>n</td><td>việc dệt vải</td></tr>
+                <tr><td>embroidery</td><td>n</td><td>nghề thêu, việc thêu thùa</td></tr>
+                <tr><td>centre</td><td>n</td><td>trung tâm, chính giữa</td></tr>
+                <tr><td>activities</td><td>n</td><td>các hoạt động</td></tr>
+            </table>
+
+            <!-- PASSAGE 2: Sammie's Buddy Bench -->
+            <div class="reading-title" style="margin-top: 40px;">🪑 Passage 2: Sammie's Buddy Bench</div>
+            
+            <div class="paragraph-box">
+                <p>Sammie is 15. When she was in third grade, she started the Buddy Bench program at her school in the U.S. The idea was simple: Anyone who was feeling lonely could sit on the "buddy bench", and then other kids would know someone needed a friend. The idea quickly caught on. The bench brought kids together. However, it costs money to build more benches. Sammie decided to make them out of recycled materials to lower the cost and make the benches eco-friendly.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans-p2-1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="trans-p2-1">Sammie 15 tuổi. Khi cô bé học lớp ba, cô đã bắt đầu chương trình "Ghế bạn bè" (Buddy Bench) tại trường của mình ở Mỹ. Ý tưởng rất đơn giản: Bất cứ ai cảm thấy cô đơn có thể ngồi trên "ghế bạn bè", và sau đó những đứa trẻ khác sẽ biết rằng có ai đó đang cần một người bạn. Ý tưởng này nhanh chóng trở nên phổ biến. Chiếc ghế đã mang những đứa trẻ lại gần nhau. Tuy nhiên, việc đóng thêm ghế rất tốn kém. Sammie quyết định làm chúng từ các vật liệu tái chế để giảm chi phí và làm cho những chiếc ghế thân thiện với môi trường.</div>
+            </div>
+
+            <div class="paragraph-box">
+                <p>Now Sammie is helping other communities. She has donated more than 200 benches. They're at schools and parks all around the country. She also helped set up a bench in Ghana, Africa.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans-p2-2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="trans-p2-2">Bây giờ Sammie đang giúp đỡ các cộng đồng khác. Cô bé đã quyên góp hơn 200 chiếc ghế. Chúng được đặt ở các trường học và công viên trên khắp cả nước. Cô bé cũng đã giúp thiết lập một chiếc ghế ở Ghana, châu Phi.</div>
+            </div>
+
+            <div class="paragraph-box">
+                <p>Sammie's work shows that helping people in your community can start at any age. She believes that you don't have to be an adult to make a difference. Even small acts of kindness can be powerful.</p>
+                <button class="btn-translate" onclick="toggleTranslate('trans-p2-3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="trans-p2-3">Công việc của Sammie cho thấy rằng việc giúp đỡ những người trong cộng đồng của bạn có thể bắt đầu ở bất kỳ độ tuổi nào. Cô bé tin rằng bạn không cần phải là người lớn mới có thể tạo ra sự khác biệt. Thậm chí những hành động tử tế nhỏ bé cũng có thể mang lại sức mạnh to lớn.</div>
+            </div>
+
+            <h3 style="margin-top: 20px; color: #8e44ad;">📚 Glossary (Bảng từ vựng Passage 2)</h3>
+            <table class="glossary-table">
+                <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                <tr><td>lonely</td><td>adj</td><td>cô đơn, bơ vơ</td></tr>
+                <tr><td>catch on</td><td>phrasal verb</td><td>trở nên phổ biến, được ưa chuộng</td></tr>
+                <tr><td>recycle</td><td>v</td><td>tái chế</td></tr>
+                <tr><td style="color:#d35400; font-weight:bold;">eco-friendly <span class="p-phonetic">/ˌiː.kəʊˈfrend.li/</span></td><td>adj</td><td>thân thiện với môi trường (Chú ý: Trọng âm chính rơi vào âm tiết thứ 3)</td></tr>
+                <tr><td>community</td><td>n</td><td>cộng đồng</td></tr>
+                <tr><td>donate</td><td>v</td><td>quyên góp, hiến tặng</td></tr>
+                <tr><td>difference</td><td>n</td><td>sự khác biệt</td></tr>
+                <tr><td>act of kindness</td><td>n phrase</td><td>hành động tử tế, lòng tốt</td></tr>
+                <tr><td>powerful</td><td>adj</td><td>có sức mạnh, tác động lớn</td></tr>
+            </table>
+
+        </div>
+
+        <!-- RIGHT PANEL: QUIZ EXERCISES -->
+        <div class="panel" id="right-panel">
+            <div id="quiz-container">
+                <!-- Questions will be generated here by JS -->
+            </div>
+            
+            <div class="submit-area">
+                <button class="btn-submit" onclick="submitQuiz()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal-bg" id="modal-bg"></div>
+    <div id="result-modal">
+        <h2>🎉 KẾT QUẢ CỦA CON 🎉</h2>
+        <h3 id="student-name-display" style="margin-top:10px; color:#34495e;"></h3>
+        <div class="score-text" id="score-display">0/10</div>
+        <div class="score-10" id="score-10-display">Điểm hệ số 10: 0.00/10</div>
+        <img id="result-gif" class="result-gif" src="" alt="Meme">
+        <p class="teacher-comment" id="teacher-comment"></p>
+        <button class="btn-start" style="font-size: 1.2rem; padding: 10px 30px;" onclick="closeModal()">Xem Lại Bài Chữa</button>
+    </div>
+
+    <script>
+        // BACKGROUND EMOJI ANIMATION
+        const emojis = ['🏡', '🎋', '🪑', '♻️', '🌍', '💚', '🧒'];
+        const floatBg = document.getElementById('float-bg');
+        for(let i=0; i<15; i++) {
+            let el = document.createElement('div');
+            el.className = 'float-emoji';
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            el.style.left = Math.random() * 100 + 'vw';
+            el.style.animationDuration = (Math.random() * 15 + 10) + 's';
+            el.style.animationDelay = (Math.random() * 5) + 's';
+            floatBg.appendChild(el);
+        }
+
+        function toggleTranslate(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function startQuiz() {
+            document.getElementById('start-overlay').style.display = 'none';
+            const audio = document.getElementById('audio-start');
+            audio.play().catch(e => console.log("Audio play prevented by browser", e));
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // QUIZ DATA STRUCTURE
+        const quizData = [
+            // PASSAGE 1: CLOZE TEST (Áp dụng luật đục lỗ: Không hiện câu tiếng Anh ở đề)
+            {
+                id: 21,
+                question: "Select the best answer",
+                vi_question: "Chọn đáp án đúng nhất để điền vào chỗ trống số (21).",
+                options: [
+                    { text: "for", correct: true },
+                    { text: "animals", correct: false },
+                    { text: "kitchen", correct: false },
+                    { text: "activities", correct: false }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Chọn từ phù hợp nhất điền vào vị trí số (21).</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">for</span> ➔ Dịch: <span class="p-mean">dành cho, để (giới từ)</span></li>
+                        <li><span class="p-word">animals</span> ➔ Dịch: <span class="p-mean">động vật (danh từ số nhiều)</span></li>
+                        <li><span class="p-word">kitchen</span> ➔ Dịch: <span class="p-mean">nhà bếp (danh từ)</span></li>
+                        <li><span class="p-word">activities</span> ➔ Dịch: <span class="p-mean">các hoạt động (danh từ số nhiều)</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>for</b>. Ta có cấu trúc: <span class="p-grammar">an area for V-ing / Noun</span> nghĩa là <span class="p-mean">một khu vực dành cho việc gì/cái gì</span>. Trong câu gốc: "an area for drying rice" = một khu vực dành cho việc phơi lúa.</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> Các từ <span class="p-word">animals</span>, <span class="p-word">kitchen</span>, <span class="p-word">activities</span> đều là danh từ, nếu đặt vào đây sẽ sai hoàn toàn về ngữ pháp (không thể ghép 2 danh từ liên tiếp kiểu "an area animals drying rice" được).</div>
+                `
+            },
+            {
+                id: 22,
+                question: "Select the best answer",
+                vi_question: "Chọn đáp án đúng nhất để điền vào chỗ trống số (22).",
+                options: [
+                    { text: "animals", correct: true },
+                    { text: "do", correct: false },
+                    { text: "kitchen", correct: false },
+                    { text: "for", correct: false }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Chọn từ phù hợp nhất điền vào vị trí số (22).</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">animals</span> ➔ Dịch: <span class="p-mean">động vật (danh từ số nhiều)</span></li>
+                        <li><span class="p-word">do</span> ➔ Dịch: <span class="p-mean">làm (động từ)</span></li>
+                        <li><span class="p-word">kitchen</span> ➔ Dịch: <span class="p-mean">nhà bếp (danh từ)</span></li>
+                        <li><span class="p-word">for</span> ➔ Dịch: <span class="p-mean">dành cho (giới từ)</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>animals</b>. Hãy nhìn ngay vào cụm từ phía sau chỗ trống: <span class="p-word">like cows or pigs</span> (<span class="p-mean">như bò hoặc lợn</span>). Bò và lợn chính là ví dụ để liệt kê cho nhóm <span class="p-word">animals</span>.</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> Động từ <span class="p-word">keep</span> (giữ, nuôi nhốt) cần một danh từ theo sau làm tân ngữ. Không thể chọn <span class="p-word">do</span> (động từ), <span class="p-word">for</span> (giới từ). Từ <span class="p-word">kitchen</span> (nhà bếp) thì không hợp nghĩa (không ai nuôi nhốt nhà bếp).</div>
+                `
+            },
+            {
+                id: 23,
+                question: "Select the best answer",
+                vi_question: "Chọn đáp án đúng nhất để điền vào chỗ trống số (23).",
+                options: [
+                    { text: "do", correct: true },
+                    { text: "activities", correct: false },
+                    { text: "kitchen", correct: false },
+                    { text: "for", correct: false }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Chọn từ phù hợp nhất điền vào vị trí số (23).</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">do</span> ➔ Dịch: <span class="p-mean">làm (động từ)</span></li>
+                        <li><span class="p-word">activities</span> ➔ Dịch: <span class="p-mean">các hoạt động (danh từ)</span></li>
+                        <li><span class="p-word">kitchen</span> ➔ Dịch: <span class="p-mean">nhà bếp (danh từ)</span></li>
+                        <li><span class="p-word">for</span> ➔ Dịch: <span class="p-mean">dành cho (giới từ)</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>do</b>. Ở đây ta cần một động từ (vì nó đứng song song với động từ <span class="p-word">worship</span> nối bởi liên từ <span class="p-word">and</span>). Ta có collocation cố định: <span class="p-grammar">do crafts</span> mang nghĩa là <span class="p-mean">làm đồ thủ công</span>.</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> Vị trí này đang thiếu một động từ (V) nên các danh từ như <span class="p-word">activities</span>, <span class="p-word">kitchen</span> hay giới từ <span class="p-word">for</span> đều sai hoàn toàn về mặt ngữ pháp.</div>
+                `
+            },
+            {
+                id: 24,
+                question: "Select the best answer",
+                vi_question: "Chọn đáp án đúng nhất để điền vào chỗ trống số (24).",
+                options: [
+                    { text: "kitchen", correct: true },
+                    { text: "activities", correct: false },
+                    { text: "animals", correct: false },
+                    { text: "do", correct: false }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Chọn từ phù hợp nhất điền vào vị trí số (24).</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">kitchen</span> ➔ Dịch: <span class="p-mean">nhà bếp (danh từ)</span></li>
+                        <li><span class="p-word">activities</span> ➔ Dịch: <span class="p-mean">các hoạt động (danh từ)</span></li>
+                        <li><span class="p-word">animals</span> ➔ Dịch: <span class="p-mean">động vật (danh từ)</span></li>
+                        <li><span class="p-word">do</span> ➔ Dịch: <span class="p-mean">làm (động từ)</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>kitchen</b>. Chủ ngữ của câu là <span class="p-word">The most important room</span> (căn phòng quan trọng nhất). Do đó, danh từ theo sau phải chỉ một căn phòng. Trong các lựa chọn, chỉ có <span class="p-word">kitchen</span> là căn phòng. Câu tiếp theo còn bổ sung ý: "đây là nơi cả nhà gặp gỡ để ăn tối" càng củng cố việc đây là bếp.</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> Từ <span class="p-word">animals</span> và <span class="p-word">activities</span> không phải là tên một căn phòng. Từ <span class="p-word">do</span> là động từ nên sai ngữ pháp.</div>
+                `
+            },
+            {
+                id: 25,
+                question: "Select the best answer",
+                vi_question: "Chọn đáp án đúng nhất để điền vào chỗ trống số (25).",
+                options: [
+                    { text: "activities", correct: true },
+                    { text: "for", correct: false },
+                    { text: "animals", correct: false },
+                    { text: "do", correct: false }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Chọn từ phù hợp nhất điền vào vị trí số (25).</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">activities</span> ➔ Dịch: <span class="p-mean">các hoạt động (danh từ)</span></li>
+                        <li><span class="p-word">for</span> ➔ Dịch: <span class="p-mean">dành cho (giới từ)</span></li>
+                        <li><span class="p-word">animals</span> ➔ Dịch: <span class="p-mean">động vật (danh từ)</span></li>
+                        <li><span class="p-word">do</span> ➔ Dịch: <span class="p-mean">làm (động từ)</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>activities</b>. Chỗ trống nằm sau tính từ <span class="p-word">evening</span> nên cần một danh từ ghép. Ta có cụm <span class="p-grammar">evening activities</span> mang nghĩa là <span class="p-mean">các hoạt động buổi tối</span> (rất hợp lý với ngữ cảnh gia đình quây quần sau bữa tối).</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> <span class="p-word">animals</span> (động vật buổi tối) nghe vô lý và sai ngữ cảnh. <span class="p-word">for</span> và <span class="p-word">do</span> sai từ loại vì chỗ này cần một danh từ để hoàn thiện câu.</div>
+                `
+            },
+            // PASSAGE 2: MULTIPLE CHOICE
+            {
+                id: 26,
+                question: "What is the main topic of the passage?",
+                vi_question: "Chủ đề chính của đoạn văn là gì?",
+                options: [
+                    { text: "Lonely children at school", correct: false },
+                    { text: "Buddy benches", correct: true },
+                    { text: "Benches in Africa", correct: false },
+                    { text: "Eco-friendly things", correct: false }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Chủ đề chính của đoạn văn là gì?</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">Lonely children at school</span> ➔ Dịch: <span class="p-mean">Trẻ em cô đơn ở trường học</span></li>
+                        <li><span class="p-word">Buddy benches</span> ➔ Dịch: <span class="p-mean">Những chiếc "ghế bạn bè"</span></li>
+                        <li><span class="p-word">Benches in Africa</span> ➔ Dịch: <span class="p-mean">Những chiếc ghế ở Châu Phi</span></li>
+                        <li><span class="p-word">Eco-friendly things</span> ➔ Dịch: <span class="p-mean">Những thứ thân thiện với môi trường</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>Buddy benches</b>. Toàn bộ đoạn văn đều tập trung kể về nguồn gốc xuất xứ, cách làm và sự phát triển của dự án <span class="p-word">Buddy Bench</span> do cô bé Sammie khởi xướng.</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> <span class="p-word">Lonely children...</span> chỉ là một chi tiết nhỏ (lý do tạo ra ghế). <span class="p-word">Benches in Africa</span> và <span class="p-word">Eco-friendly things</span> cũng chỉ là các tiểu tiết (ghế làm bằng vật liệu tái chế, và một chiếc ghế được đem tới Ghana) chứ không đại diện cho toàn bộ nội dung bài văn.</div>
+                `
+            },
+            {
+                id: 27,
+                question: "Sammy started her program _____.",
+                vi_question: "Sammy đã bắt đầu chương trình của mình _____.",
+                options: [
+                    { text: "when she was fifteen", correct: false },
+                    { text: "three years ago", correct: false },
+                    { text: "to help kids with their schoolwork", correct: false },
+                    { text: "for kids who needed a friend", correct: true }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Sammy đã bắt đầu chương trình của mình _____.</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">when she was fifteen</span> ➔ Dịch: <span class="p-mean">khi cô bé 15 tuổi</span></li>
+                        <li><span class="p-word">three years ago</span> ➔ Dịch: <span class="p-mean">3 năm trước</span></li>
+                        <li><span class="p-word">to help kids with their schoolwork</span> ➔ Dịch: <span class="p-mean">để giúp trẻ em làm bài tập trên trường</span></li>
+                        <li><span class="p-word">for kids who needed a friend</span> ➔ Dịch: <span class="p-mean">dành cho những đứa trẻ cần một người bạn</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>for kids who needed a friend</b>. Trong bài (Đoạn 1) có viết rõ: <i>"Anyone who was feeling lonely could sit on the 'buddy bench', and then other kids would know <b>someone needed a friend.</b>"</i> (Bất cứ ai cảm thấy cô đơn có thể ngồi lên ghế, và những đứa trẻ khác sẽ biết có ai đó đang cần một người bạn). Vậy mục đích làm ghế là cho trẻ em cần tìm bạn.</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> Bài viết "Sammie is 15" (Hiện tại đang 15 tuổi), còn chương trình bắt đầu từ "When she was in third grade" (khi học lớp 3) ➔ Đáp án "when she was fifteen" là bẫy thời gian. "three years ago" không hề được nhắc tới. "help schoolwork" là bẫy thông tin, ghế này không giúp làm bài tập.</div>
+                `
+            },
+            {
+                id: 28,
+                question: "What does the word “them” in the first paragraph refer to?",
+                vi_question: "Từ “them” trong đoạn văn đầu tiên ám chỉ điều gì?",
+                options: [
+                    { text: "children", correct: false },
+                    { text: "materials", correct: false },
+                    { text: "costs", correct: false },
+                    { text: "benches", correct: true }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Từ “them” (chúng) ở đoạn đầu ám chỉ điều gì?</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">children</span> ➔ Dịch: <span class="p-mean">trẻ em</span></li>
+                        <li><span class="p-word">materials</span> ➔ Dịch: <span class="p-mean">vật liệu</span></li>
+                        <li><span class="p-word">costs</span> ➔ Dịch: <span class="p-mean">chi phí</span></li>
+                        <li><span class="p-word">benches</span> ➔ Dịch: <span class="p-mean">những chiếc ghế dài</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>benches</b>. Hãy đọc câu chứa từ "them": <i>"Sammie decided to make <b>them</b> out of recycled materials..."</i> ➔ Sammie quyết định chế tạo CHÚNG bằng vật liệu tái chế. Chế tạo cái gì? Hãy nhìn lên câu ngay trước nó: <i>"However, it costs money to build more <b>benches</b>."</i> (Việc đóng thêm <b>những chiếc ghế</b> rất tốn kém). Vậy "them" chính là thay thế cho "benches".</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> Không thể dùng vật liệu tái chế để chế tạo ra "children" (trẻ em), "materials" (vật liệu) hay "costs" (chi phí) được.</div>
+                `
+            },
+            {
+                id: 29,
+                question: "Now, Sammie's buddy benches _____.",
+                vi_question: "Bây giờ, những chiếc 'ghế bạn bè' của Sammie _____.",
+                options: [
+                    { text: "are also in other schools", correct: true },
+                    { text: "won't be put in parks", correct: false },
+                    { text: "are more expensive", correct: false },
+                    { text: "are in every country", correct: false }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Bây giờ, những chiếc 'ghế bạn bè' của Sammie _____.</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">are also in other schools</span> ➔ Dịch: <span class="p-mean">cũng có ở các trường học khác</span></li>
+                        <li><span class="p-word">won't be put in parks</span> ➔ Dịch: <span class="p-mean">sẽ không được đặt ở công viên</span></li>
+                        <li><span class="p-word">are more expensive</span> ➔ Dịch: <span class="p-mean">trở nên đắt đỏ hơn</span></li>
+                        <li><span class="p-word">are in every country</span> ➔ Dịch: <span class="p-mean">có ở mọi quốc gia</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>are also in other schools</b>. Trong đoạn 2 có câu: <i>"They're at <b>schools</b> and parks all around the country."</i> ➔ Chúng đang được đặt tại các trường học và công viên trên khắp đất nước. Điều này trùng khớp với đáp án.</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> "won't be put in parks" sai vì bài nói chúng CÓ ở công viên. "are more expensive" sai vì bài nói làm bằng đồ tái chế để GIẢM chi phí (lower the cost). "are in every country" (mọi quốc gia) nói quá mức, bài chỉ nói lan ra cả nước Mỹ và 1 chiếc ở Ghana (châu Phi) chứ không phải MỌI quốc gia trên thế giới.</div>
+                `
+            },
+            {
+                id: 30,
+                question: "According to the passage, which of the following statements is TRUE?",
+                vi_question: "Theo đoạn văn, nhận định nào sau đây là ĐÚNG?",
+                options: [
+                    { text: "Sammy can only help the students in her school.", correct: false },
+                    { text: "Children can also help their community.", correct: true },
+                    { text: "Only adults can help big communities.", correct: false },
+                    { text: "Small acts of kindness are not helpful.", correct: false }
+                ],
+                explanation: `
+                    <div class="explain-step"><span class="explain-title">1. Dịch câu hỏi/đề bài sang tiếng Việt:</span> Theo đoạn văn, nhận định nào sau đây là ĐÚNG?</div>
+                    <div class="explain-step"><span class="explain-title">2. Phân tích & Dịch đáp án:</span></div>
+                    <ul>
+                        <li><span class="p-word">Sammy can only help the students in her school.</span> ➔ Dịch: <span class="p-mean">Sammy CHỈ CÓ THỂ giúp học sinh trong trường cô ấy.</span></li>
+                        <li><span class="p-word">Children can also help their community.</span> ➔ Dịch: <span class="p-mean">Trẻ em cũng có thể giúp đỡ cộng đồng của mình.</span></li>
+                        <li><span class="p-word">Only adults can help big communities.</span> ➔ Dịch: <span class="p-mean">CHỈ CÓ người lớn mới giúp được các cộng đồng lớn.</span></li>
+                        <li><span class="p-word">Small acts of kindness are not helpful.</span> ➔ Dịch: <span class="p-mean">Những hành động tử tế nhỏ là không hữu ích.</span></li>
+                    </ul>
+                    <div class="explain-step explain-title">3. Giải thích chi tiết:</div>
+                    <div><span class="hl-green">Tại sao đúng:</span> Đáp án đúng là <b>Children can also help their community.</b>. Đoạn cuối cùng khẳng định rất rõ thông điệp này: <i>"Sammie's work shows that helping people in your community <b>can start at any age.</b>"</i> (Việc giúp đỡ người trong cộng đồng có thể bắt đầu ở BẤT KỲ ĐỘ TUỔI NÀO ➔ Trẻ em hoàn toàn làm được).</div>
+                    <div style="margin-top:5px;"><span class="hl-red">Tại sao sai:</span> Đáp án 1 có từ <span class="p-word">only</span> (chỉ) là bẫy, vì cô bé đã giúp lan rộng ra các trường khác và cả Ghana. Đáp án 3 lại dính từ <span class="p-word">Only adults</span> (chỉ người lớn) là đi ngược lại hoàn toàn thông điệp bài văn. Đáp án 4 thì trái ngược câu cuối của bài: "Even small acts of kindness <b>can be powerful</b>" (ngay cả hành động nhỏ cũng có sức mạnh to lớn).</div>
+                `
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = quizData.length;
+
+        // RENDER QUIZ
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+
+            quizData.forEach((q, index) => {
+                let shuffledOptions = [...q.options];
+                shuffleArray(shuffledOptions);
+
+                let card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `q-card-${q.id}`;
+                
+                let qText = document.createElement('div');
+                qText.className = 'question-text';
+                
+                // Hiển thị đề bài
+                qText.innerHTML = `Câu ${index + 1}: ${q.question}`;
+                
+                // Chỉ hiện phần dịch nếu không phải là câu đục lỗ "Select the best answer"
+                if(q.question !== "Select the best answer") {
+                    qText.innerHTML += ` <br><i style="font-weight:normal; font-size:1rem; color:#7f8c8d;">Dịch: ${q.vi_question}</i>`;
+                }
+
+                card.appendChild(qText);
+
+                let optionsGrid = document.createElement('div');
+                optionsGrid.className = 'options-grid';
+
+                shuffledOptions.forEach((opt, optIndex) => {
+                    let btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    
+                    // Nút CHỈ chứa tiếng Anh, tuyệt đối không dịch ở nút
+                    btn.innerHTML = `<b>${opt.text}</b>`;
+                    
+                    btn.onclick = () => handleAnswer(q.id, opt.correct, btn, card, q.explanation);
+                    optionsGrid.appendChild(btn);
+                });
+
+                card.appendChild(optionsGrid);
+
+                let explanationDiv = document.createElement('div');
+                explanationDiv.className = 'explanation-box';
+                explanationDiv.id = `explain-${q.id}`;
+                explanationDiv.innerHTML = q.explanation;
+                card.appendChild(explanationDiv);
+
+                container.appendChild(card);
+            });
+        }
+
+        // HANDLE ANSWER CLICK
+        function handleAnswer(qId, isCorrect, selectedBtn, cardDiv, explanationHtml) {
+            const buttons = cardDiv.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                selectedBtn.classList.add('correct');
+                document.getElementById('audio-correct').currentTime = 0;
+                document.getElementById('audio-correct').play();
+                fireConfetti();
+                score++;
+            } else {
+                selectedBtn.classList.add('wrong');
+                let duckSound = document.getElementById('audio-wrong');
+                duckSound.currentTime = 0;
+                duckSound.play();
+                
+                buttons.forEach(b => {
+                    quizData.forEach(data => {
+                        if(data.id === qId) {
+                            data.options.forEach(opt => {
+                                if(opt.correct && b.innerHTML.includes(`<b>${opt.text}</b>`)) {
+                                    b.style.border = "2px solid #2ecc71";
+                                    b.style.boxShadow = "0 0 10px rgba(46, 204, 113, 0.5)";
+                                    b.innerHTML += " <span style='color:#2ecc71; font-weight:bold;'>✔ Correct</span>";
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+
+            // Hiện giải thích chi tiết ngay bên dưới để học sinh đọc và ghi chép
+            const explainDiv = document.getElementById(`explain-${qId}`);
+            explainDiv.style.display = 'block';
+
+            // Tự động cuộn mượt xuống phần giải thích
+            explainDiv.scrollIntoView({ behavior: "smooth", block: "center" });
+
+            answeredQuestions++;
+        }
+
+        // SUBMIT AND SHOW SCORE
+        function submitQuiz() {
+            if (answeredQuestions < totalQuestions) {
+                alert(`⚠️ Các con ơi, con mới làm ${answeredQuestions}/${totalQuestions} câu thôi. Kéo lên kiểm tra và làm nốt nhé!`);
+                return;
+            }
+
+            let studentName = prompt("Nhập TÊN CỦA CON để cô MS Chí Nên ghi nhận điểm nhé! (Không bỏ trống nha):");
+            if (!studentName || studentName.trim() === "") {
+                alert("Con phải nhập tên thì cô mới tính điểm được chứ!");
+                return;
+            }
+
+            let scale10 = ((score / totalQuestions) * 10).toFixed(2);
+
+            document.getElementById('student-name-display').innerText = `Học sinh: ${studentName.toUpperCase()}`;
+            document.getElementById('score-display').innerText = `${score} / ${totalQuestions}`;
+            document.getElementById('score-10-display').innerText = `Quy đổi hệ 10: ${scale10}/10 Điểm`;
+
+            let gifUrl = "";
+            let comment = "";
+
+            if (score === totalQuestions) {
+                gifUrl = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; 
+                comment = "Xuất sắc tuyệt đối! Cô MS Chí Nên quá tự hào về con! 🌟 Nhớ ghi chép lại những từ mới nhé!";
+            } else if (score >= totalQuestions * 0.6) {
+                gifUrl = "https://media.giphy.com/media/3o7abGQa0aRJUurpII/giphy.gif"; 
+                comment = "Làm tốt lắm con yêu! Đọc lại giải thích những câu sai để lần sau đạt điểm tuyệt đối nhé! 💪";
+            } else {
+                gifUrl = "https://media.giphy.com/media/2rtQMJvhzOnRe/giphy.gif"; 
+                comment = "Chà, bài đọc hơi khó nhằn với con đúng không? Không sao cả, học tài thi phận! Hãy đọc cực kỳ chi tiết phần giải thích bên dưới của cô để lấy lại gốc ngay nhé! Đừng nản chí! ❤️";
+            }
+
+            document.getElementById('result-gif').src = gifUrl;
+            document.getElementById('teacher-comment').innerText = comment;
+
+            document.getElementById('modal-bg').style.display = 'block';
+            document.getElementById('result-modal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('modal-bg').style.display = 'none';
+            document.getElementById('result-modal').style.display = 'none';
+        }
+
+        // CONFETTI EFFECT
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let pieces = [];
+            let numberOfPieces = 50;
+            let colors = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'];
+
+            for (let i = 0; i < numberOfPieces; i++) {
+                pieces.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 100,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 1) * 20 - 5,
+                    size: Math.random() * 10 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                for (let i = 0; i < pieces.length; i++) {
+                    let p = pieces[i];
+                    if (p.y < canvas.height) {
+                        active = true;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.5;
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(p.x, p.y, p.size, p.size);
+                    }
+                }
+                if (active) requestAnimationFrame(render);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            render();
+        }
+
+        window.onload = renderQuiz;
+    </script>
+</body>
+</html>

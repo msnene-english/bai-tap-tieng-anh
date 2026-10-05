@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Kiểm Tra: Giáo viên Ms MS Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #8BC34A;
+            --bg-color: #f0f9f0;
+            --text-color: #2c3e50;
+            --correct-color: #00D26A;
+            --wrong-color: #FF4757;
+            --shadow-color: rgba(0,0,0,0.2);
+            --font-main: 'Nunito', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.5s;
+        }
+
+        /* --- Dynamic Background Wrapper --- */
+        #dynamic-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+            transition: background-image 0.5s ease;
+        }
+
+        /* --- Header --- */
+        header {
+            background: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            height: 60px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        #timer-display {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #333;
+            background: #eee;
+            padding: 5px 15px;
+            border-radius: 20px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .btn-control {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .btn-control:active { transform: translateY(4px); box-shadow: none; }
+
+        /* --- Split Layout --- */
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .pane {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar */
+        .pane::-webkit-scrollbar { width: 8px; }
+        .pane::-webkit-scrollbar-track { background: transparent; }
+        .pane::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .pane::-webkit-scrollbar-thumb:hover { background: #bbb; }
+
+        /* --- Left Pane: Reading --- */
+        .reading-card {
+            background: rgba(255,255,255,0.95);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .reading-title {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .gap-highlight {
+            font-weight: 700;
+            color: var(--primary-color);
+            background: #e8f5e9;
+            padding: 2px 8px;
+            border-radius: 5px;
+            border: 1px dashed var(--primary-color);
+        }
+
+        .btn-translate {
+            background: #fff;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-top: 5px;
+            font-weight: 700;
+        }
+        .btn-translate:hover { background: var(--primary-color); color: white; }
+
+        .translation-text {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+            color: #555;
+            font-size: 0.95rem;
+            font-style: italic;
+        }
+
+        /* Glossary Table */
+        .glossary-box {
+            margin-top: 30px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .glossary-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: 700;
+        }
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .glossary-table th { color: var(--primary-color); }
+        .tag-type { font-size: 0.8em; color: #888; font-style: italic; }
+
+        /* --- Right Pane: Exercises --- */
+        #quiz-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            opacity: 0.7;
+        }
+        .nav-btn.active {
+            background: var(--primary-color);
+            color: white;
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .q-number {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .q-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: var(--text-color);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #eee;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 0 #ddd;
+            position: relative;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: var(--primary-color);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #ddd;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct-color);
+            color: white;
+            border-color: var(--correct-color);
+            box-shadow: 0 5px 0 #00a352;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-color);
+            color: white;
+            border-color: var(--wrong-color);
+            box-shadow: 0 5px 0 #d63031;
+            animation: shake 0.5s;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            margin-top: 20px;
+            text-align: left;
+            background: #f0f7ff;
+            border: 2px solid #cce5ff;
+            border-radius: 15px;
+            padding: 15px;
+            display: none; /* Hidden by default */
+        }
+        .teacher-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #007bff;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .exp-section { margin-bottom: 8px; }
+        .exp-label { font-weight: 700; color: #0056b3; }
+
+        /* Next Button */
+        #btn-next-q {
+            margin-top: 20px;
+            background: var(--text-color);
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            display: none;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0 auto 20px;
+            border: 5px solid white;
+            box-shadow: 0 0 0 5px var(--primary-color);
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Submit Button */
+        #btn-submit-all {
+            background: #FF9800;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #F57C00;
+            margin-left: auto; /* Push to right in container if needed */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="dynamic-bg"></div>
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>
+        <div class="header-title">Ms MS Chí Nên - Reading Challenge</div>
+        <div class="header-controls">
+            <div id="timer-display">10:00</div>
+            <button class="btn-control" id="btn-timer" onclick="toggleTimer()">BẮT ĐẦU</button>
+            <button id="btn-submit-all" style="display:none;" onclick="finishExam()">NỘP BÀI</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="pane left-pane">
+            <div id="reading-content">
+                </div>
+            <div class="glossary-box">
+                <div class="glossary-header">📚 GLOSSARY (Từ vựng học thuật)</div>
+                <table class="glossary-table">
+                    <tbody id="glossary-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="pane right-pane">
+            <div id="quiz-container">
+                <div class="nav-tabs">
+                    <button class="nav-btn active" onclick="switchTopic(0)">Level 1: Birds 🐦</button>
+                    <button class="nav-btn" onclick="switchTopic(1)">Level 2: Music 🎵</button>
+                </div>
+
+                <div id="question-area">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="score-modal">
+        <div class="modal-content">
+            <h2>KẾT QUẢ</h2>
+            <div class="score-circle" id="final-score">0/0</div>
+            <p id="feedback-text" style="font-size: 1.2rem; margin-bottom: 20px;">Làm tốt lắm!</p>
+            <button class="btn-control" onclick="location.reload()">Làm lại bài</button>
+            <button class="btn-control" style="background: #ccc; color: #333; margin-left: 10px;" onclick="closeModal()">Xem lại bài</button>
+        </div>
+    </div>
+
+<script>
+    // --- DỮ LIỆU ĐỀ BÀI (DATASET) ---
+    const DATA = [
+        {
+            id: "birds",
+            topic: "Clever Birds",
+            themeColor: "#4CAF50", // Green
+            secondaryColor: "#795548", // Brown
+            emoji: ["🐦", "🥜", "🌲"],
+            passageHTML: `
+                <div class="reading-title">Clever Birds 🦅</div>
+                <p>The wild birds known as ravens are thought to be very clever. In fact, they can solve some quite <strong>(1) ...........</strong> problems, especially when they’re trying to get food. For example, one bird was filmed taking a box of nuts from a bird table and <strong>(2) ...........</strong> it onto the ground, so that it would break and the bird could eat the nuts inside!
+                <button class="btn-translate" onclick="toggleTrans('trans1')">Xem bản dịch</button>
+                <div id="trans1" class="translation-text">Những loài chim hoang dã được gọi là quạ được cho là rất thông minh. Thực tế, chúng có thể giải quyết một số vấn đề khá <strong>phức tạp</strong>, đặc biệt là khi chúng cố gắng kiếm thức ăn. Ví dụ, một con chim đã được quay phim khi lấy một hộp hạt từ bàn ăn cho chim và <strong>thả</strong> nó xuống đất, để nó vỡ ra và con chim có thể ăn hạt bên trong!</div>
+                </p>
+                <br>
+                <p>Scientists also <strong>(3) ...........</strong> that the birds could actually use stones as tools to <strong>(4) ...........</strong> out simple tasks. So in an experiment, they taught five birds to use a tool to open a box with food inside. The birds soon became very <strong>(5) ...........</strong> at doing this. So for the next experiment, the birds were given a small <strong>(6) ...........</strong> of tools to choose from. They always picked the tool that scientists had given them for the first task. And hours later, they could still remember which tool they’d used!
+                <button class="btn-translate" onclick="toggleTrans('trans2')">Xem bản dịch</button>
+                <div id="trans2" class="translation-text">Các nhà khoa học cũng <strong>nhận thấy</strong> rằng những con chim này thực sự có thể sử dụng đá làm công cụ để <strong>thực hiện</strong> các nhiệm vụ đơn giản. Vì vậy, trong một thí nghiệm, họ đã dạy năm con chim sử dụng một công cụ để mở một hộp có thức ăn bên trong. Những con chim này nhanh chóng trở nên rất <strong>thành thạo</strong> trong việc này. Vì vậy, đối với thí nghiệm tiếp theo, những con chim được đưa cho một <strong>số lượng</strong> nhỏ các công cụ để lựa chọn. Chúng luôn chọn công cụ mà các nhà khoa học đã đưa cho chúng trong nhiệm vụ đầu tiên. Và hàng giờ sau, chúng vẫn có thể nhớ công cụ nào chúng đã sử dụng!</div>
+                </p>
+            `,
+            glossary: [
+                { word: "Raven", type: "n", mean: "Con quạ" },
+                { word: "Complicated", type: "adj", mean: "Phức tạp, rắc rối" },
+                { word: "Experiment", type: "n", mean: "Cuộc thí nghiệm" },
+                { word: "Carry out", type: "phrasal verb", mean: "Thực hiện, tiến hành" },
+                { word: "Task", type: "n", mean: "Nhiệm vụ, bài tập" },
+                { word: "Experienced", type: "adj", mean: "Có kinh nghiệm, thành thạo" },
+                { word: "Intelligent", type: "adj", mean: "Thông minh" }
+            ],
+            questions: [
+                {
+                    id: 1, text: "Question 1: ... solve some quite (1)______ problems...",
+                    options: ["A. expert", "B. complicated", "C. heavy", "D. confused"],
+                    correct: 1, // B
+                    vocab: "A. chuyên gia | B. phức tạp | C. nặng | D. bối rối",
+                    trans: "chúng có thể giải quyết một số vấn đề khá phức tạp",
+                    logic: "Dựa vào ngữ cảnh 'clever' (thông minh) và việc giải quyết vấn đề, từ cần điền phải mô tả tính chất của vấn đề. 'Complicated' (phức tạp) là hợp lý nhất. 'Expert' dùng cho người, 'Confused' là cảm xúc."
+                },
+                {
+                    id: 2, text: "Question 2: ... and (2)______ it onto the ground...",
+                    options: ["A. letting", "B. falling", "C. dropping", "D. leaving"],
+                    correct: 2, // C
+                    vocab: "A. để cho | B. rơi (nội động từ) | C. thả rơi (ngoại động từ) | D. rời đi",
+                    trans: "thả nó xuống đất",
+                    logic: "Con chim chủ động cầm hộp và thả nó xuống. 'Drop' là hành động thả vật gì đó xuống. 'Fall' là tự rơi (không có tân ngữ đi kèm kiểu này)."
+                },
+                {
+                    id: 3, text: "Question 3: Scientists also (3)______ that...",
+                    options: ["A. noticed", "B. advised", "C. watched", "D. studied"],
+                    correct: 0, // A
+                    vocab: "A. nhận thấy | B. khuyên | C. xem | D. nghiên cứu",
+                    trans: "Các nhà khoa học cũng nhận thấy rằng...",
+                    logic: "'Notice that' + mệnh đề là cấu trúc phổ biến để chỉ việc quan sát thấy một sự thật nào đó."
+                },
+                {
+                    id: 4, text: "Question 4: ... use stones as tools to (4)______ out simple tasks.",
+                    options: ["A. take", "B. carry", "C. make", "D. check"],
+                    correct: 1, // B
+                    vocab: "Phrasal verb: Carry out = Thực hiện",
+                    trans: "để thực hiện các nhiệm vụ đơn giản",
+                    logic: "Đây là cụm động từ cố định (Collocation). 'Carry out a task' = Thực hiện một nhiệm vụ."
+                },
+                {
+                    id: 5, text: "Question 5: The birds soon became very (5)______ at doing this.",
+                    options: ["A. experienced", "B. intelligent", "C. correct", "D. keen"],
+                    correct: 0, // A
+                    vocab: "A. có kinh nghiệm/thành thạo | B. thông minh | C. chính xác | D. nhiệt tình",
+                    trans: "Những con chim sớm trở nên rất thành thạo việc này",
+                    logic: "Cấu trúc 'experienced at doing something' (có kinh nghiệm/thành thạo trong việc làm gì). 'Intelligent' thường không đi với 'at doing' trong ngữ cảnh học kỹ năng cụ thể như thế này."
+                },
+                {
+                    id: 6, text: "Question 6: ... the birds were given a small (6)______ of tools...",
+                    options: ["A. group", "B. total", "C. amount", "D. number"],
+                    correct: 3, // D
+                    vocab: "A. nhóm | B. tổng | C. lượng (không đếm được) | D. số lượng (đếm được)",
+                    trans: "một số lượng nhỏ các công cụ",
+                    logic: "'Tools' là danh từ đếm được số nhiều -> dùng 'a number of'. 'Amount' dùng cho không đếm được (ví dụ: amount of water)."
+                }
+            ]
+        },
+        {
+            id: "music",
+            topic: "Music & Veggies",
+            themeColor: "#FF9800", // Orange
+            secondaryColor: "#8BC34A", // Green
+            emoji: ["🥦", "🎵", "🥕"],
+            passageHTML: `
+                <div class="reading-title">Music & Vegetables 🎵🥦</div>
+                <p>Many children, and some adults too, dislike the taste of certain vegetables. The flavours of foods such as cabbage and broccoli are generally the ones people mention as their least <strong>(1) ...........</strong> vegetables, as these vegetables are believed to have an extremely <strong>(2) ...........</strong> taste.
+                <button class="btn-translate" onclick="toggleTrans('trans3')">Xem bản dịch</button>
+                <div id="trans3" class="translation-text">Nhiều trẻ em, và cả một số người lớn, không thích vị của một số loại rau. Hương vị của các loại thực phẩm như bắp cải và súp lơ xanh thường là những thứ mọi người nhắc đến như là loại rau họ <strong>ít yêu thích nhất</strong>, vì những loại rau này được cho là có vị cực kỳ <strong>đắng</strong>.</div>
+                </p>
+                <br>
+                <p>However, according to an Oxford psychologist, children might change their <strong>(3) ...........</strong> about these foods if they can hear simple music while they’re eating – such as the sounds that come from one musical instrument, called a wind chime. This instrument often <strong>(4) ...........</strong> in people’s gardens, and plays sweet notes when the wind blows through it... However, many adults <strong>(5) ...........</strong> that their tastes developed as they grew up... As a result, they’re much more <strong>(6) ...........</strong> to eat the kind of vegetables they always hated during their childhood.
+                <button class="btn-translate" onclick="toggleTrans('trans4')">Xem bản dịch</button>
+                <div id="trans4" class="translation-text">Tuy nhiên, theo một nhà tâm lý học Oxford, trẻ em có thể <strong>thay đổi suy nghĩ</strong> về những món ăn này nếu chúng được nghe nhạc đơn giản khi ăn... Nhạc cụ này thường <strong>treo</strong> trong vườn... Tuy nhiên, nhiều người lớn <strong>thừa nhận</strong> rằng khẩu vị của họ phát triển khi họ lớn lên... Kết quả là, họ có nhiều <strong>khả năng</strong> ăn những loại rau mà họ từng ghét khi còn nhỏ.</div>
+                </p>
+            `,
+            glossary: [
+                { word: "Flavour", type: "n", mean: "Hương vị" },
+                { word: "Broccoli", type: "n", mean: "Súp lơ xanh/Bông cải xanh" },
+                { word: "Psychologist", type: "n", mean: "Nhà tâm lý học" },
+                { word: "Wind chime", type: "n", mean: "Chuông gió" },
+                { word: "Childhood", type: "n", mean: "Thời thơ ấu" },
+                { word: "Admit", type: "v", mean: "Thừa nhận" }
+            ],
+            questions: [
+                {
+                    id: 1, text: "Question 1: ... mention as their least (1)______ vegetables...",
+                    options: ["A. pleasant", "B. delicious", "C. special", "D. favourite"],
+                    correct: 3, // D
+                    vocab: "A. dễ chịu | B. ngon | C. đặc biệt | D. yêu thích",
+                    trans: "loại rau họ ít yêu thích nhất",
+                    logic: "Cụm 'least favourite' (ít yêu thích nhất/ghét nhất) là cụm từ cố định rất phổ biến để nói về sở thích."
+                },
+                {
+                    id: 2, text: "Question 2: ... have an extremely (2)______ taste.",
+                    options: ["A. bitter", "B. hard", "C. heavy", "D. raw"],
+                    correct: 0, // A
+                    vocab: "A. đắng | B. cứng | C. nặng | D. sống",
+                    trans: "có vị cực kỳ đắng",
+                    logic: "Đặc trưng của súp lơ và bắp cải thường bị trẻ em ghét là vị 'bitter' (đắng/hăng)."
+                },
+                {
+                    id: 3, text: "Question 3: ... children might change their (3)______ about these foods...",
+                    options: ["A. senses", "B. minds", "C. moods", "D. reasons"],
+                    correct: 1, // B
+                    vocab: "Idiom: Change one's mind = Thay đổi suy nghĩ/ý định",
+                    trans: "thay đổi suy nghĩ của chúng",
+                    logic: "Đây là thành ngữ (Idiom). Không ai nói 'change senses' hay 'change moods' trong ngữ cảnh này."
+                },
+                {
+                    id: 4, text: "Question 4: This instrument often (4)______ in people’s gardens...",
+                    options: ["A. drops", "B. connects", "C. attaches", "D. hangs"],
+                    correct: 3, // D
+                    vocab: "A. rơi | B. kết nối | C. gắn | D. treo",
+                    trans: "Nhạc cụ này thường treo trong vườn",
+                    logic: "Chuông gió (wind chime) thì phải được 'treo' (hang) lên để gió thổi qua kêu leng keng."
+                },
+                {
+                    id: 5, text: "Question 5: However, many adults (5)______ that their tastes developed...",
+                    options: ["A. complain", "B. advise", "C. admit", "D. warn"],
+                    correct: 2, // C
+                    vocab: "A. phàn nàn | B. khuyên | C. thừa nhận | D. cảnh báo",
+                    trans: "nhiều người lớn thừa nhận rằng",
+                    logic: "Ngữ cảnh là họ nhận ra sự thay đổi của bản thân, nên 'admit' (thừa nhận) là từ phù hợp nhất."
+                },
+                {
+                    id: 6, text: "Question 6: ... they’re much more (6)______ to eat the kind of vegetables...",
+                    options: ["A. likely", "B. possible", "C. reasonable", "D. sure"],
+                    correct: 0, // A
+                    vocab: "Structure: Be likely to do something = Có khả năng sẽ làm gì",
+                    trans: "họ có nhiều khả năng sẽ ăn...",
+                    logic: "'Possible' và 'Reasonable' thường dùng cho sự vật/tình huống (It is possible to...). Với chủ ngữ là người 'They', dùng cấu trúc 'They are likely to...'."
+                }
+            ]
+        }
+    ];
+
+    // --- VARIABLES ---
+    let currentTopicIndex = 0;
+    let currentQuestionIndices = {0: 0, 1: 0}; // Track question progress per topic
+    let userAnswers = {}; // Store results { topicIdx_qIdx: boolean }
+    let timerInterval;
+    let timeRemaining = 600; // 10 minutes
+    let isTimerRunning = false;
+
+    // --- SOUND EFFECTS (Base64 for single file) ---
+    // Short Ding
+    const sndCorrect = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YXIGAACBhYqFbF1fdJivrJBhNjVgodDbqWE+PmCfutvPqmI9PWCfutvPqmI9PWCfutvPqmI9PWCfutvPqmI9PWCfutvPqmI9PWCfutvPqmI9PWCfutvPqmI9PYCA"); 
+    // Short Buzz (Simulated by empty/noise or reuse system sound logic - placeholder simplified)
+    // Using a simple beep context for "Teacher" feel:
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type, duration) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+        osc.stop(audioCtx.currentTime + duration);
+    }
+    function soundCorrect() { playTone(600, 'sine', 0.1); setTimeout(()=>playTone(800, 'sine', 0.2), 100); }
+    function soundWrong() { playTone(150, 'sawtooth', 0.3); }
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+        loadTopic(0);
+        renderGlossary(0);
+        updateTimerDisplay();
+    };
+
+    // --- CORE FUNCTIONS ---
+
+    function switchTopic(index) {
+        currentTopicIndex = index;
+        
+        // Update Tabs
+        const tabs = document.querySelectorAll('.nav-btn');
+        tabs.forEach((t, i) => {
+            if(i === index) t.classList.add('active');
+            else t.classList.remove('active');
+        });
+
+        loadTopic(index);
+        renderGlossary(index);
+    }
+
+    function loadTopic(index) {
+        const data = DATA[index];
+        
+        // 1. Theme Colors
+        document.documentElement.style.setProperty('--primary-color', data.themeColor);
+        document.documentElement.style.setProperty('--secondary-color', data.secondaryColor);
+
+        // 2. Dynamic SVG Background
+        const svg = `
+        <svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'>
+            <style>text { font-size: 30px; opacity: 0.2; }</style>
+            <defs>
+                <radialGradient id='grad' cx='50%' cy='50%' r='50%' fx='50%' fy='50%'>
+                    <stop offset='0%' style='stop-color:${data.themeColor}33;stop-opacity:1' />
+                    <stop offset='100%' style='stop-color:white;stop-opacity:0' />
+                </radialGradient>
+            </defs>
+            <circle cx='50' cy='50' r='50' fill='url(#grad)' />
+            <text x='10' y='40'>${data.emoji[0]}</text>
+            <text x='60' y='80'>${data.emoji[1]}</text>
+        </svg>`;
+        const encoded = encodeURIComponent(svg);
+        document.getElementById('dynamic-bg').style.backgroundImage = `url("data:image/svg+xml,${encoded}")`;
+
+        // 3. Render Reading Passage
+        document.getElementById('reading-content').innerHTML = data.passageHTML;
+
+        // 4. Render Current Question
+        renderQuestion(index, currentQuestionIndices[index]);
+    }
+
+    function renderGlossary(topicIdx) {
+        const tbody = document.getElementById('glossary-body');
+        tbody.innerHTML = "";
+        DATA[topicIdx].glossary.forEach(item => {
+            const row = `<tr>
+                <td style="font-weight:700;">${item.word}</td>
+                <td class="tag-type">${item.type}</td>
+                <td>${item.mean}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+    }
+
+    function renderQuestion(topicIdx, qIdx) {
+        const qData = DATA[topicIdx].questions[qIdx];
+        const container = document.getElementById('question-area');
+        
+        // Check if already answered
+        const answerKey = `${topicIdx}_${qIdx}`;
+        const isAnswered = userAnswers.hasOwnProperty(answerKey);
+        const userChoice = userAnswers[answerKey];
+
+        let optionsHTML = '';
+        qData.options.forEach((opt, idx) => {
+            let statusClass = '';
+            let disabled = '';
+            
+            if (isAnswered) {
+                disabled = 'disabled';
+                if (idx === qData.correct) statusClass = 'correct';
+                else if (idx === userChoice) statusClass = 'wrong';
+            }
+
+            optionsHTML += `<button class="option-btn ${statusClass}" ${disabled} onclick="checkAnswer(${topicIdx}, ${qIdx}, ${idx}, this)">${opt}</button>`;
+        });
+
+        // Explanation Block
+        let explanationHTML = '';
+        if (isAnswered) {
+            explanationHTML = `
+            <div class="explanation-box" style="display:block;">
+                <div class="teacher-badge">👩‍🏫 Ms MS Chí Nên giải thích:</div>
+                <div class="exp-section"><span class="exp-label">📖 Phân tích từ vựng:</span><br>${qData.vocab}</div>
+                <div class="exp-section"><span class="exp-label">🇻🇳 Dịch nghĩa:</span> "${qData.trans}"</div>
+                <div class="exp-section"><span class="exp-label">💡 Tại sao chọn đáp án này?</span><br>${qData.logic}</div>
+            </div>
+            `;
+        }
+
+        // Navigation Button
+        let nextBtnHTML = '';
+        if (isAnswered) {
+            if (qIdx < DATA[topicIdx].questions.length - 1) {
+                nextBtnHTML = `<button id="btn-next-q" style="display:block;" onclick="nextQuestion(${topicIdx})">Câu tiếp theo ➜</button>`;
+            } else {
+                nextBtnHTML = `<button id="btn-next-q" style="display:block; background:#FF9800;" onclick="finishSection(${topicIdx})">Hoàn thành phần này 🎉</button>`;
+            }
+        }
+
+        const html = `
+            <div class="question-card">
+                <div class="q-number">Câu ${qIdx + 1} / ${DATA[topicIdx].questions.length}</div>
+                <div class="q-text">${qData.text}</div>
+                <div class="options-grid">
+                    ${optionsHTML}
+                </div>
+                ${explanationHTML}
+                ${nextBtnHTML}
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    function checkAnswer(topicIdx, qIdx, choiceIdx, btnElement) {
+        if (!isTimerRunning) {
+            alert("Vui lòng bấm 'BẮT ĐẦU' để làm bài!");
+            return;
+        }
+
+        const qData = DATA[topicIdx].questions[qIdx];
+        const correctIdx = qData.correct;
+        
+        // Save Answer
+        userAnswers[`${topicIdx}_${qIdx}`] = choiceIdx;
+
+        // Visual Feedback
+        const allBtns = btnElement.parentElement.querySelectorAll('.option-btn');
+        allBtns.forEach(btn => btn.disabled = true);
+
+        if (choiceIdx === correctIdx) {
+            btnElement.classList.add('correct');
+            soundCorrect();
+            fireConfetti();
+        } else {
+            btnElement.classList.add('wrong');
+            // Show correct one
+            allBtns[correctIdx].classList.add('correct');
+            soundWrong();
+        }
+
+        // Re-render to show explanation
+        renderQuestion(topicIdx, qIdx);
+    }
+
+    function nextQuestion(topicIdx) {
+        currentQuestionIndices[topicIdx]++;
+        renderQuestion(topicIdx, currentQuestionIndices[topicIdx]);
+    }
+
+    function finishSection(topicIdx) {
+        if (topicIdx === 0) {
+            alert("Chúc mừng bạn đã xong Phần 1: Chim chóc. Hãy chuyển sang Tab 'Level 2: Music' để làm tiếp nhé!");
+            switchTopic(1);
+        } else {
+            document.getElementById('btn-submit-all').style.display = 'block';
+            alert("Bạn đã xong hết các câu hỏi! Hãy bấm 'NỘP BÀI' ở góc trên để xem điểm số.");
+        }
+    }
+
+    // --- UTILITIES ---
+
+    function toggleTrans(id) {
+        const el = document.getElementById(id);
+        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function toggleTimer() {
+        const btn = document.getElementById('btn-timer');
+        if (isTimerRunning) {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            btn.innerText = "TIẾP TỤC";
+            btn.style.background = "#FFC107";
+        } else {
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Đã hết giờ làm bài! (10 phút). Bạn vẫn có thể tiếp tục xem đáp án.");
+                    finishExam();
+                }
+            }, 1000);
+            isTimerRunning = true;
+            btn.innerText = "TẠM DỪNG";
+            btn.style.background = "#FF4757";
+        }
+    }
+
+    function updateTimerDisplay() {
+        const minutes = Math.floor(timeRemaining / 60);
+        const seconds = timeRemaining % 60;
+        document.getElementById('timer-display').innerText = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function finishExam() {
+        clearInterval(timerInterval);
+        isTimerRunning = false;
+
+        let totalScore = 0;
+        let totalQuestions = 0;
+
+        DATA.forEach((topic, tIdx) => {
+            topic.questions.forEach((q, qIdx) => {
+                totalQuestions++;
+                const key = `${tIdx}_${qIdx}`;
+                if (userAnswers[key] === q.correct) {
+                    totalScore++;
+                }
+            });
+        });
+
+        // Show Modal
+        document.getElementById('score-modal').style.display = 'flex';
+        document.getElementById('final-score').innerText = `${totalScore}/${totalQuestions}`;
+        
+        const feedback = document.getElementById('feedback-text');
+        const ratio = totalScore / totalQuestions;
+        if (ratio === 1) feedback.innerText = "Xuất sắc! Bạn là thiên tài tiếng Anh! 🌟";
+        else if (ratio >= 0.8) feedback.innerText = "Làm tốt lắm! Bạn rất có năng khiếu! 🔥";
+        else if (ratio >= 0.5) feedback.innerText = "Khá lắm, nhưng cần cẩn thận hơn xíu nha! 💪";
+        else feedback.innerText = "Đừng buồn, hãy xem kỹ lại phần giải thích của cô nhé! 📖";
+    }
+
+    function closeModal() {
+        document.getElementById('score-modal').style.display = 'none';
+    }
+
+    // --- CONFETTI EFFECT (Simple JS Implementation) ---
+    function fireConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const particles = [];
+        const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'];
+
+        for (let i = 0; i < 100; i++) {
+            particles.push({
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2,
+                w: Math.random() * 10 + 5,
+                h: Math.random() * 10 + 5,
+                vx: (Math.random() - 0.5) * 20,
+                vy: (Math.random() - 0.5) * 20,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                life: 100
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let active = false;
+            particles.forEach(p => {
+                if (p.life > 0) {
+                    active = true;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.5; // gravity
+                    p.life--;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                }
+            });
+            if (active) requestAnimationFrame(draw);
+        }
+        draw();
+    }
+
+</script>
+</body>
+</html>
