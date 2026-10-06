@@ -1,876 +1,1751 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading Quizzes - Ms MS Chí Nên</title>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --glass-bg: rgba(255, 255, 255, 0.4);
-            --glass-border: rgba(255, 255, 255, 0.6);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
-            --primary: #ff8fab;
-            --secondary: #4ea8de;
-            --text-main: #2b2d42;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Quicksand', sans-serif; }
-
-        body {
-            background: linear-gradient(135deg, #ffcbf2, #f3c4fb, #ecbcfd, #e5b3fe, #e2afff, #c8b6ff, #b8c0ff, #bbd0ff);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: var(--text-main);
-            overflow: hidden;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* SVG Emoji Background */
-        .svg-bg {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -1; pointer-events: none;
-            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 80%);
-        }
-        .emoji-float {
-            animation: floatEmoji 6s ease-in-out infinite alternate;
-            opacity: 0.4;
-        }
-        @keyframes floatEmoji {
-            0% { transform: translateY(0px) rotate(0deg); }
-            100% { transform: translateY(-30px) rotate(15deg); }
-        }
-
-        /* Header */
-        header {
-            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
-            background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);
-            display: flex; justify-content: center; align-items: center;
-            border-bottom: 1px solid var(--glass-border); z-index: 100;
-        }
-        header h2 { font-size: 16px; color: #5c4d7d; font-weight: 700; letter-spacing: 1px;}
-
-        /* Split Layout */
-        .container {
-            display: flex; height: 100vh; padding-top: 50px;
-        }
-        .left-panel, .right-panel {
-            flex: 1; padding: 20px; overflow-y: auto;
-            scrollbar-width: thin; scrollbar-color: #fff transparent;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
-
-        /* Glassmorphism Cards */
-        .glass-card {
-            background: var(--glass-bg); backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border); border-radius: 20px;
-            padding: 25px; margin-bottom: 25px; box-shadow: var(--glass-shadow);
-        }
-
-        /* Reading Passage styling */
-        .passage-title { font-size: 22px; color: #d90429; margin-bottom: 15px; text-transform: uppercase; text-align: center;}
-        .paragraph { font-size: 17px; line-height: 1.6; margin-bottom: 15px; text-align: justify;}
-        .btn-translate {
-            background: rgba(255,255,255,0.6); border: 1px solid #fff; padding: 8px 15px;
-            border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600;
-            color: #d81159; transition: 0.3s; margin-bottom: 15px; display: inline-flex; align-items: center;
-        }
-        .btn-translate:hover { background: #fff; transform: scale(1.05); }
-        .translation {
-            background: rgba(255,255,255,0.5); padding: 15px; border-left: 4px solid #ff006e;
-            border-radius: 10px; font-size: 15px; color: #333; margin-bottom: 20px;
-            display: none; font-style: italic;
-        }
-
-        /* Glossary Table */
-        .glossary-title { text-align: center; font-size: 18px; color: #023e8a; margin: 20px 0 10px;}
-        table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.5); border-radius: 10px; overflow: hidden; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.5); }
-        th { background: rgba(255,255,255,0.7); color: #03045e; }
-
-        /* Quiz Question Styling */
-        .question-text { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: #03045e; }
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        
-        .btn-option {
-            background: rgba(255,255,255,0.7); border: 2px solid transparent;
-            padding: 12px 15px; border-radius: 15px; cursor: pointer; font-size: 16px;
-            font-weight: 600; color: #333; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            text-align: center; word-wrap: break-word; white-space: normal;
-        }
-        .btn-option:hover { background: #fff; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        
-        /* Answer States */
-        .btn-option.correct { background: #52b788; color: white; border-color: #40916c; transform: scale(1.02); }
-        .btn-option.wrong { background: #e63946; color: white; border-color: #c1121f; }
-        
-        /* Shake Animation for Wrong Answer */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
-        .shake { animation: shake 0.4s ease-in-out; }
-
-        /* Master Explanation Section */
-        .explanation {
-            margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.85);
-            border-radius: 15px; border-left: 5px solid #ffb703;
-            display: none; font-size: 15.5px; line-height: 1.6;
-            animation: fadeIn 0.5s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px);} to {opacity: 1; transform: translateY(0);} }
-        
-        /* STRICT COLOR CODING CLASSES */
-        .p-word { color: #0077b6; font-weight: 800; } /* Xanh dương: Tiếng Anh */
-        .p-mean { color: #ca6702; font-weight: 800; } /* Đất nung: Tiếng Việt */
-        .p-grammar { color: #d00000; font-weight: 800; text-decoration: underline; text-decoration-color: #d00000; text-decoration-thickness: 2px;} /* Gạch đỏ: Ngữ pháp */
-        .hl-green { color: #2a9d8f; font-weight: 800; } /* Xanh lá: Keyword Đúng */
-        .hl-red { color: #9d0208; font-weight: 800; text-decoration: line-through; } /* Đỏ gạch ngang: Bẫy/Sai */
-        
-        .exp-title { font-size: 16px; font-weight: bold; color: #ff5400; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;}
-        .exp-quote { background: #fdf0d5; padding: 10px; border-radius: 8px; margin: 10px 0; font-style: italic; border-left: 3px solid #ffb703;}
-        
-        /* Submit Button */
-        .btn-submit {
-            width: 100%; background: linear-gradient(45deg, #fb5607, #ff006e);
-            color: white; border: none; padding: 18px; border-radius: 20px;
-            font-size: 20px; font-weight: bold; cursor: pointer; text-transform: uppercase;
-            box-shadow: 0 10px 20px rgba(255,0,110,0.3); transition: 0.3s; margin-top: 20px;
-        }
-        .btn-submit:hover { transform: translateY(-5px); box-shadow: 0 15px 25px rgba(255,0,110,0.4); }
-
-        /* Modals */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
-            display: none; justify-content: center; align-items: center; z-index: 1000;
-        }
-        .modal-box {
-            background: white; padding: 30px; border-radius: 20px; text-align: center;
-            width: 90%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            position: relative; overflow: hidden;
-        }
-        .modal-box h3 { font-size: 24px; color: #3a0ca3; margin-bottom: 20px; }
-        .name-input {
-            width: 100%; padding: 15px; border: 2px solid #e0e1dd; border-radius: 12px;
-            font-size: 18px; outline: none; margin-bottom: 20px; text-align: center;
-        }
-        .name-input:focus { border-color: #4361ee; }
-        .btn-primary {
-            background: #4361ee; color: white; border: none; padding: 12px 30px;
-            font-size: 18px; border-radius: 12px; cursor: pointer; font-weight: bold;
-        }
-        
-        .score-circle {
-            width: 120px; height: 120px; border-radius: 50%; background: #e0aaff;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            margin: 0 auto 20px; border: 6px solid #7209b7; color: #3a0ca3;
-        }
-        .score-circle span.big { font-size: 32px; font-weight: 900; }
-        .score-circle span.small { font-size: 16px; font-weight: bold; }
-        .score-10 { font-size: 22px; color: #d00000; font-weight: bold; margin-bottom: 15px;}
-        .teacher-cmt { font-size: 18px; font-style: italic; color: #555; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px;}
-        .meme-gif { width: 150px; height: 150px; border-radius: 15px; object-fit: cover; margin-bottom: 15px;}
-
-        /* Confetti Container */
-        #confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
-        .confetti-piece { position: absolute; width: 10px; height: 10px; opacity: 0; }
-
-        @media (max-width: 768px) {
-            .container { flex-direction: column; }
-            .options-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="svg-bg">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-            <text x="15%" y="20%" font-size="60" class="emoji-float" style="animation-delay: 0s;">🏺</text>
-            <text x="80%" y="15%" font-size="50" class="emoji-float" style="animation-delay: 1s;">🧵</text>
-            <text x="40%" y="85%" font-size="70" class="emoji-float" style="animation-delay: 2s;">🪵</text>
-            <text x="85%" y="75%" font-size="65" class="emoji-float" style="animation-delay: 0.5s;">🎨</text>
-            <text x="10%" y="60%" font-size="55" class="emoji-float" style="animation-delay: 1.5s;">✨</text>
-            <text x="60%" y="40%" font-size="45" class="emoji-float" style="animation-delay: 2.5s;">🚀</text>
-        </svg>
-    </div>
-
-    <header>
-        <h2>Giáo viên tạo: Ms MS Chí Nên 🎓</h2>
-    </header>
-
-    <div id="confetti-container"></div>
-
-    <div class="container">
-        <div class="left-panel">
-            
-            <div class="glass-card">
-                <h3 class="passage-title">Reading 1: Craft Villages in Vietnam</h3>
-                
-                <div class="paragraph">
-                    I've just been back from my vacation in Hanoi, Vietnam. In this trip, I had a chance to visit some (1) ________ villages that produce the finest craft works exported over the world.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p1-1')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p1-1">
-                    Tôi vừa trở về từ kỳ nghỉ ở Hà Nội, Việt Nam. Trong chuyến đi này, tôi đã có cơ hội đến thăm một số làng (1) thủ công sản xuất ra những tác phẩm thủ công tinh xảo nhất được xuất khẩu trên toàn thế giới.
-                </div>
-
-                <div class="paragraph">
-                    The very first place I (2) ________ foot on was Van Phuc silk village, the cradle of best silk in Vietnam once. I totally fall in love with many colourful clothes, hats, bags, tie... made of authentic silk.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p1-2')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p1-2">
-                    Nơi đầu tiên tôi (2) đặt chân đến là làng lụa Vạn Phúc, từng là cái nôi của lụa tốt nhất Việt Nam. Tôi hoàn toàn phải lòng những bộ quần áo, mũ, túi xách, cà vạt... đầy màu sắc làm bằng lụa chính cống.
-                </div>
-
-                <div class="paragraph">
-                    Then, I moved on to Bat Trang ceramic village, the most famous and (3) ________ pottery village in Vietnam with a nearly 1,000 years old historic development. Here, I visited a small family factory to see how the (4) ________ form, paint and glaze with unique products and have a chance to practice my talent with wet clay and a mould.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p1-3')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p1-3">
-                    Sau đó, tôi chuyển sang làng gốm Bát Tràng, làng gốm nổi tiếng và (3) lâu đời nhất ở Việt Nam với lịch sử phát triển gần 1.000 năm. Tại đây, tôi đã đến thăm một xưởng gia đình nhỏ để xem cách các (4) nghệ nhân định hình, vẽ và tráng men các sản phẩm độc đáo, đồng thời có cơ hội thực hành tài năng của mình với đất sét ướt và khuôn.
-                </div>
-
-                <div class="paragraph">
-                    Afternoon, I continued to visit Dong Ho folk painting village, (5) ________ the traditional woodblock paintings are preserved. I was completely impressed by the folk paintings made by the local (6) ________ artisans with natural materials and colors.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p1-4')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p1-4">
-                    Buổi chiều, tôi tiếp tục đến thăm làng tranh dân gian Đông Hồ, (5) nơi bảo tồn những bức tranh mộc bản truyền thống. Tôi hoàn toàn bị ấn tượng bởi những bức tranh dân gian do các nghệ nhân (6) khéo léo địa phương làm ra bằng các chất liệu và màu sắc tự nhiên.
-                </div>
-
-                <div class="paragraph">
-                    Each painting is (7) ________ handmade on paper of the Dzo tree and is coloured with other natural materials and its glittery surface is finished with oyster shell dust. I took home a lot of handmade (8) ________ which were later given to my family and friends.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p1-5')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p1-5">
-                    Mỗi bức tranh được làm (7) hoàn toàn thủ công trên giấy điệp, được tô màu bằng các vật liệu tự nhiên khác và bề mặt lấp lánh của nó được hoàn thiện bằng bột vỏ hàu. Tôi đã mang về nhà rất nhiều (8) đồ lưu niệm thủ công để sau đó tặng cho gia đình và bạn bè.
-                </div>
-
-                <h4 class="glossary-title">📚 Bảng từ vựng (Glossary)</h4>
-                <table>
-                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
-                    <tr><td><b>handicraft</b></td><td>(n)</td><td>đồ thủ công, nghề thủ công</td></tr>
-                    <tr><td><b>authentic</b></td><td>(adj)</td><td>thật, chính cống, nguyên bản</td></tr>
-                    <tr><td><b>long-standing</b></td><td>(adj)</td><td>lâu đời</td></tr>
-                    <tr><td><b>artisan</b></td><td>(n)</td><td>nghệ nhân, thợ thủ công</td></tr>
-                    <tr><td><b>glaze</b></td><td>(v)</td><td>tráng men (gốm sứ)</td></tr>
-                    <tr><td><b>preserve</b></td><td>(v)</td><td>bảo tồn, giữ gìn</td></tr>
-                    <tr><td><b>woodblock</b></td><td>(n)</td><td>mộc bản (khuôn in bằng gỗ)</td></tr>
-                    <tr><td><b>impress</b></td><td>(v)</td><td>gây ấn tượng mạnh</td></tr>
-                    <tr><td><b>skillful</b></td><td>(adj)</td><td>khéo léo, điêu luyện</td></tr>
-                    <tr><td><b>souvenir</b></td><td>(n)</td><td>món quà lưu niệm</td></tr>
-                </table>
-            </div>
-
-            <div class="glass-card">
-                <h3 class="passage-title">Reading 2: The Toy City of India</h3>
-                
-                <div class="paragraph">
-                    Channapatna is a city in Ramanagara District, Karnataka, India and is noted for its famous handmade lacquer wooden toys all over the world. It's popularly known as "Gombegala Ooru" or the "Toy City" of Karnataka.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p2-1')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p2-1">
-                    Channapatna là một thành phố thuộc Quận Ramanagara, bang Karnataka, Ấn Độ và nổi tiếng khắp thế giới với các món đồ chơi bằng gỗ sơn mài làm thủ công. Nó được biết đến phổ biến với cái tên "Gombegala Ooru" hay "Thành phố đồ chơi" của Karnataka.
-                </div>
-
-                <div class="paragraph">
-                    The origin of the wooden toys dates back to the period of Tipu Sultan, the ruler of Mysore who was a great admirer of wooden toys. He took the initiative to invite artisans from Persia and train the local artists to learn the process of making wooden toys.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p2-2')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p2-2">
-                    Nguồn gốc của đồ chơi bằng gỗ bắt nguồn từ thời kỳ của Tipu Sultan, người cai trị xứ Mysore, người rất đam mê đồ chơi bằng gỗ. Ông đã chủ động mời các nghệ nhân từ Ba Tư đến và đào tạo các nghệ sĩ địa phương học quy trình làm đồ chơi bằng gỗ.
-                </div>
-
-                <div class="paragraph">
-                    The artisans still follow the traditional method of making the toys for nearly two centuries. They are only using ivory wood for making the toys and very rarely rosewood and sandalwood are used. But slowly the artisans have also started to use other woods like teak, pine, rubber and cedar wood.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p2-3')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p2-3">
-                    Các nghệ nhân vẫn tuân theo phương pháp truyền thống làm đồ chơi trong gần hai thế kỷ qua. Ban đầu họ chỉ sử dụng gỗ ngà (ivory wood) để làm đồ chơi và rất hiếm khi sử dụng gỗ trắc (rosewood) và gỗ đàn hương (sandalwood). Nhưng dần dần các nghệ nhân cũng đã bắt đầu sử dụng các loại gỗ khác như gỗ tếch, gỗ thông, gỗ cao su và gỗ tuyết tùng.
-                </div>
-
-                <div class="paragraph">
-                    Manufacturing stages include procuring the wood, seasoning the wood, cutting the wood into the desired shapes, pruning and carving the toys, applying the colours and finally polishing the finished product.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p2-4')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p2-4">
-                    Các công đoạn sản xuất bao gồm: thu mua gỗ, phơi sấy gỗ, cắt gỗ thành các hình dạng mong muốn, cắt tỉa và chạm khắc đồ chơi, tô màu và cuối cùng là đánh bóng sản phẩm hoàn thiện.
-                </div>
-
-                <div class="paragraph">
-                    Vegetable dyes are used in the colouring process to ensure that the toys and dolls are safe for use by children. More than 6,000 people in Channapatna, working in 254 home manufacturing units and 50 small factories, were engaged in the making of these toys.
-                </div>
-                <button class="btn-translate" onclick="toggleDich('p2-5')">🌟 Mở dịch đoạn này</button>
-                <div class="translation" id="p2-5">
-                    Thuốc nhuộm từ thực vật được sử dụng trong quá trình tạo màu để đảm bảo đồ chơi và búp bê an toàn cho trẻ em sử dụng. Hơn 6.000 người ở Channapatna, làm việc trong 254 cơ sở sản xuất gia đình và 50 xưởng nhỏ, đã tham gia vào việc làm ra những món đồ chơi này.
-                </div>
-
-                <h4 class="glossary-title">📚 Bảng từ vựng (Glossary)</h4>
-                <table>
-                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
-                    <tr><td><b>lacquer</b></td><td>(n)</td><td>sơn mài</td></tr>
-                    <tr><td><b>admirer</b></td><td>(n)</td><td>người hâm mộ, người ngưỡng mộ</td></tr>
-                    <tr><td><b>initiative</b></td><td>(n)</td><td>sáng kiến, sự chủ động khởi xướng</td></tr>
-                    <tr><td><b>procuring</b></td><td>(v-ing)</td><td>việc thu mua, tìm kiếm nguyên liệu</td></tr>
-                    <tr><td><b>seasoning</b></td><td>(v-ing)</td><td>việc phơi sấy, tẩm ướp (gỗ) cho bền</td></tr>
-                    <tr><td><b>carving</b></td><td>(v-ing)</td><td>việc chạm khắc, đục đẽo</td></tr>
-                    <tr><td><b>vegetable dye</b></td><td>(n)</td><td>thuốc nhuộm chiết xuất từ thực vật</td></tr>
-                    <tr><td><b>engage in</b></td><td>(v)</td><td>tham gia vào (một hoạt động)</td></tr>
-                    <tr><td><b>manufacture</b></td><td>(n/v)</td><td>sự sản xuất / sản xuất (bằng máy móc/quy mô)</td></tr>
-                    <tr><td><b>decade</b></td><td>(n)</td><td>thập kỷ (10 năm) - (Lưu ý: century = 100 năm)</td></tr>
-                </table>
-            </div>
-            
-        </div>
-
-        <div class="right-panel" id="quiz-panel">
-            </div>
-    </div>
-
-    <div class="modal-overlay" id="nameModal">
-        <div class="modal-box">
-            <h3>Chào mừng bạn! 👋</h3>
-            <p style="margin-bottom: 15px; color: #555;">Hãy nhập tên để Ms MS Chí Nên lưu bảng điểm nhé:</p>
-            <input type="text" class="name-input" id="studentName" placeholder="Ví dụ: Nguyễn Văn A">
-            <button class="btn-primary" onclick="startQuiz()">Bắt đầu học thôi!</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="resultModal">
-        <div class="modal-box">
-            <h3>🏆 BẢNG ĐIỂM CỦA BẠN</h3>
-            <div id="resultName" style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #ff006e;"></div>
-            
-            <div class="score-circle">
-                <span class="big" id="resultScore"></span>
-                <span class="small">Câu đúng</span>
-            </div>
-            
-            <div class="score-10" id="resultScale10"></div>
-            
-            <div style="font-size: 50px; margin-bottom: 15px;" id="resultMeme"></div>
-            
-            <div class="teacher-cmt" id="teacherComment"></div>
-            
-            <button class="btn-primary" onclick="location.reload()">Làm Lại Bài</button>
-        </div>
-    </div>
-
-<script>
-    // --- DATA ---
-    const quizData = [
-        // PART I: Fill in the gaps (8 questions)
-        {
-            id: 1, type: "MC",
-            question: "Lựa chọn từ thích hợp điền vào chỗ trống (1): 'visit some (1) ______ villages'",
-            options: [
-                {text: "handicraft", correct: true},
-                {text: "skillful", correct: false},
-                {text: "souvenirs", correct: false},
-                {text: "completely", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (1).</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='p-word'>handicraft</span> (n): <span class='p-mean'>đồ thủ công</span> ✅ Đúng. Cụm <span class='hl-green'>handicraft villages</span> nghĩa là các làng nghề thủ công.</p>
-                <p>B. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo</span> ❌ Sai vì <span class='hl-red'>skillful villages</span> (làng khéo léo) không có nghĩa hợp logic.</p>
-                <p>C. <span class='p-word'>souvenirs</span> (n): <span class='p-mean'>quà lưu niệm</span> ❌ Sai vì <span class='hl-red'>souvenirs villages</span> sai ngữ pháp (danh từ ghép thường không chia số nhiều ở từ đứng trước).</p>
-                <p>D. <span class='p-word'>completely</span> (adv): <span class='p-mean'>hoàn toàn</span> ❌ Sai <span class='p-grammar'>từ loại</span> vì trạng từ không bổ nghĩa trực tiếp cho danh từ 'villages'.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng: "I had a chance to visit some (1) handicraft villages that produce the finest craft works..."</div>
-                <p>👉 Dịch: "tôi đã có cơ hội đến thăm một số <b><span style='color:red'>làng nghề thủ công</span></b> nơi sản xuất ra những tác phẩm thủ công tinh xảo nhất..."</p>
-            `
-        },
-        {
-            id: 2, type: "MC",
-            question: "Lựa chọn từ thích hợp điền vào chỗ trống (2): 'The very first place I (2) ______ foot on'",
-            options: [
-                {text: "set", correct: true},
-                {text: "put", correct: false},
-                {text: "where", correct: false},
-                {text: "artisans", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (2).</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='p-word'>set</span> (v): <span class='p-mean'>đặt, để</span> ✅ Đúng vì ta có <span class='p-grammar'>Cấu trúc (Collocation)</span> cố định: <span class='hl-green'>set foot on/in somewhere</span> nghĩa là đặt chân đến nơi nào đó.</p>
-                <p>B. <span class='p-word'>put</span> (v): <span class='p-mean'>đặt</span> ❌ Sai vì không đi với "foot on" trong thành ngữ này.</p>
-                <p>C. <span class='p-word'>where</span> (adv): <span class='p-mean'>nơi mà</span> ❌ Sai <span class='p-grammar'>từ loại</span>, vị trí này cần một Động từ chia theo thì quá khứ.</p>
-                <p>D. <span class='p-word'>artisans</span> (n): <span class='p-mean'>nghệ nhân</span> ❌ Sai hoàn toàn về nghĩa và từ loại.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng: "The very first place I (2) set foot on was Van Phuc silk village..."</div>
-                <p>👉 Dịch: "Nơi đầu tiên tôi <b><span style='color:red'>đặt chân</span></b> đến là làng lụa Vạn Phúc..."</p>
-            `
-        },
-        {
-            id: 3, type: "MC",
-            question: "Lựa chọn từ thích hợp điền vào chỗ trống (3): 'the most famous and (3) ______ pottery village'",
-            options: [
-                {text: "long-standing", correct: true},
-                {text: "completely", correct: false},
-                {text: "skillful", correct: false},
-                {text: "handicraft", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (3).</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='p-word'>long-standing</span> (adj): <span class='p-mean'>có từ lâu đời</span> ✅ Đúng. Phù hợp nhất với vế sau "with a nearly 1,000 years old historic development" (lịch sử 1000 năm).</p>
-                <p>B. <span class='p-word'>completely</span> (adv): <span class='p-mean'>hoàn toàn</span> ❌ Sai <span class='p-grammar'>từ loại</span> vì chữ "and" nối hai tính từ (famous and ...).</p>
-                <p>C. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo</span> ❌ Sai vì <span class='hl-red'>skillful</span> dùng để chỉ con người/kỹ năng, không dùng cho "làng" (pottery village).</p>
-                <p>D. <span class='p-word'>handicraft</span> (n): <span class='p-mean'>đồ thủ công</span> ❌ Sai <span class='p-grammar'>từ loại</span>, vị trí này cần Tính từ.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng: "...Bat Trang ceramic village, the most famous and (3) long-standing pottery village in Vietnam with a nearly 1,000 years old historic development."</div>
-                <p>👉 Dịch: "...làng gốm Bát Tràng, làng gốm nổi tiếng và <b><span style='color:red'>lâu đời</span></b> nhất ở Việt Nam..."</p>
-            `
-        },
-        {
-            id: 4, type: "MC",
-            question: "Lựa chọn từ thích hợp điền vào chỗ trống (4): 'to see how the (4) ______ form, paint and glaze'",
-            options: [
-                {text: "artisans", correct: true},
-                {text: "souvenirs", correct: false},
-                {text: "where", correct: false},
-                {text: "long-standing", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (4).</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='p-word'>artisans</span> (n): <span class='p-mean'>nghệ nhân</span> ✅ Đúng. Vị trí này cần Danh từ chỉ người để làm Chủ ngữ cho các hành động "form, paint and glaze" (định hình, vẽ, tráng men).</p>
-                <p>B. <span class='p-word'>souvenirs</span> (n): <span class='p-mean'>quà lưu niệm</span> ❌ Sai vì quà lưu niệm không thể tự biết vẽ hay tráng men gốm.</p>
-                <p>C. <span class='p-word'>where</span> (adv): <span class='p-mean'>nơi mà</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
-                <p>D. <span class='p-word'>long-standing</span> (adj): <span class='p-mean'>lâu đời</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng: "visited a small family factory to see how the (4) artisans form, paint and glaze..."</div>
-                <p>👉 Dịch: "đến thăm một xưởng gia đình nhỏ để xem cách các <b><span style='color:red'>nghệ nhân</span></b> định hình, vẽ và tráng men..."</p>
-            `
-        },
-        {
-            id: 5, type: "MC",
-            question: "Lựa chọn từ thích hợp điền vào chỗ trống (5): 'Dong Ho folk painting village, (5) ______ the traditional woodblock paintings are preserved'",
-            options: [
-                {text: "where", correct: true},
-                {text: "completely", correct: false},
-                {text: "skillful", correct: false},
-                {text: "set", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (5).</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='p-word'>where</span> (Trạng từ quan hệ): <span class='p-mean'>nơi mà</span> ✅ Đúng. Dùng để thay thế cho danh từ chỉ nơi chốn "Dong Ho folk painting village" trong <span class='p-grammar'>Mệnh đề quan hệ</span>.</p>
-                <p>B. <span class='p-word'>completely</span> (adv): <span class='p-mean'>hoàn toàn</span> ❌ Sai ngữ pháp mệnh đề quan hệ.</p>
-                <p>C. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo</span> ❌ Sai từ loại và nghĩa.</p>
-                <p>D. <span class='p-word'>set</span> (v): <span class='p-mean'>đặt để</span> ❌ Sai từ loại.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng: "...Dong Ho folk painting village, (5) where the traditional woodblock paintings are preserved."</div>
-                <p>👉 Dịch: "...làng tranh dân gian Đông Hồ, <b><span style='color:red'>nơi mà</span></b> những bức tranh mộc bản truyền thống được bảo tồn."</p>
-            `
-        },
-        {
-            id: 6, type: "MC",
-            question: "Lựa chọn từ thích hợp điền vào chỗ trống (6): 'made by the local (6) ______ artisans'",
-            options: [
-                {text: "skillful", correct: true},
-                {text: "handicraft", correct: false},
-                {text: "long-standing", correct: false},
-                {text: "souvenirs", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (6).</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo, tài hoa</span> ✅ Đúng vì cần một Tính từ bổ nghĩa cho danh từ "artisans" (nghệ nhân).</p>
-                <p>B. <span class='p-word'>handicraft</span> (n): <span class='p-mean'>thủ công</span> ❌ Sai vì <span class='hl-red'>handicraft artisans</span> không phải cụm từ phổ biến tự nhiên.</p>
-                <p>C. <span class='p-word'>long-standing</span> (adj): <span class='p-mean'>lâu đời</span> ❌ Sai vì từ này thường miêu tả sự vật (làng, công ty, lịch sử), ít dùng miêu tả con người trực tiếp.</p>
-                <p>D. <span class='p-word'>souvenirs</span> (n): <span class='p-mean'>quà lưu niệm</span> ❌ Sai <span class='p-grammar'>từ loại</span> và nghĩa.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng: "impressed by the folk paintings made by the local (6) skillful artisans"</div>
-                <p>👉 Dịch: "bị ấn tượng bởi những bức tranh dân gian do các nghệ nhân <b><span style='color:red'>khéo léo</span></b> địa phương làm ra."</p>
-            `
-        },
-        {
-            id: 7, type: "MC",
-            question: "Lựa chọn từ thích hợp điền vào chỗ trống (7): 'Each painting is (7) ______ handmade on paper'",
-            options: [
-                {text: "completely", correct: true},
-                {text: "where", correct: false},
-                {text: "artisans", correct: false},
-                {text: "set", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (7).</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='p-word'>completely</span> (adv): <span class='p-mean'>hoàn toàn</span> ✅ Đúng. Vị trí nằm giữa động từ "is" và tính từ "handmade", bắt buộc phải là một <span class='p-grammar'>Trạng từ (Adverb)</span> để bổ nghĩa cho tính từ đó: <span class='hl-green'>completely handmade (làm thủ công hoàn toàn)</span>.</p>
-                <p>B. <span class='p-word'>where</span> (adv): <span class='p-mean'>nơi mà</span> ❌ Sai ngữ nghĩa.</p>
-                <p>C. <span class='p-word'>artisans</span> (n): <span class='p-mean'>nghệ nhân</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
-                <p>D. <span class='p-word'>set</span> (v): <span class='p-mean'>đặt</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng: "Each painting is (7) completely handmade on paper of the Dzo tree..."</div>
-                <p>👉 Dịch: "Mỗi bức tranh được làm <b><span style='color:red'>hoàn toàn</span></b> thủ công trên giấy của cây điệp..."</p>
-            `
-        },
-        {
-            id: 8, type: "MC",
-            question: "Lựa chọn từ thích hợp điền vào chỗ trống (8): 'I took home a lot of handmade (8) ______'",
-            options: [
-                {text: "souvenirs", correct: true},
-                {text: "handicraft", correct: false},
-                {text: "skillful", correct: false},
-                {text: "long-standing", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (8).</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='p-word'>souvenirs</span> (n): <span class='p-mean'>quà lưu niệm</span> ✅ Đúng. Phía trước có "a lot of handmade" (nhiều đồ thủ công...), cần một <span class='p-grammar'>Danh từ đếm được số nhiều</span>. Mua quà mang về nhà tặng bạn bè là rất hợp lý.</p>
-                <p>B. <span class='p-word'>handicraft</span> (n): <span class='p-mean'>đồ thủ công</span> ❌ Sai vì thường handicraft ở đây thiếu s (số nhiều sau a lot of) và souvenir hợp ngữ cảnh tặng quà hơn.</p>
-                <p>C. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
-                <p>D. <span class='p-word'>long-standing</span> (adj): <span class='p-mean'>lâu đời</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng: "I took home a lot of handmade (8) souvenirs which were later given to my family and friends."</div>
-                <p>👉 Dịch: "Tôi đã mang về nhà rất nhiều <b><span style='color:red'>đồ lưu niệm</span></b> thủ công để sau đó tặng cho gia đình và bạn bè."</p>
-            `
-        },
-
-        // PART II: T/F & Multiple Choice (8 questions)
-        {
-            id: 9, type: "MC",
-            question: "1. Channapatna has its nick name 'Toy City' because of its well-known handmade toys. (Đúng hay Sai?)",
-            options: [
-                {text: "True (Đúng)", correct: true},
-                {text: "False (Sai)", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Channapatna có biệt danh là "Thành phố đồ chơi" vì những món đồ chơi làm bằng tay nổi tiếng của nó.</div>
-                <p><b>Phân tích:</b> Câu này cung cấp thông tin hoàn toàn ✅ Đúng khớp với bài đọc.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn 1): "Channapatna... is noted for its famous handmade lacquer wooden toys all over the world. It's popularly known as "Gombegala Ooru" or the "Toy City"..."</div>
-                <p>👉 Dịch: "Channapatna... <b><span style='color:red'>nổi tiếng khắp thế giới với các món đồ chơi bằng gỗ sơn mài làm thủ công</span></b>. Nó được biết đến phổ biến với cái tên 'Gombegala Ooru' hay <b><span style='color:red'>'Thành phố đồ chơi'</span></b>..."</p>
-            `
-        },
-        {
-            id: 10, type: "MC",
-            question: "2. The ruler of Mysore sent his local artists to Persia to learn the process of making wooden toys.",
-            options: [
-                {text: "True (Đúng)", correct: false},
-                {text: "False (Sai)", correct: true}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Vị vua của vùng Mysore đã gửi các nghệ sĩ địa phương của mình đến Ba Tư (Persia) để học quy trình làm đồ chơi bằng gỗ.</div>
-                <p><b>Phân tích:</b> Câu này ❌ Sai ở chi tiết "sent... to Persia" (gửi đến Ba Tư). Thực tế vị vua đã <span class='hl-green'>mời nghệ nhân từ Ba Tư đến Ấn Độ</span> để dạy.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn 2): "He took the initiative to invite artisans from Persia and train the local artists to learn the process..."</div>
-                <p>👉 Dịch: "Ông ấy đã chủ động <b><span style='color:red'>mời các nghệ nhân từ Ba Tư đến</span></b> và đào tạo các nghệ sĩ địa phương học quy trình..."</p>
-            `
-        },
-        {
-            id: 11, type: "MC",
-            question: "3. Many types of wood are used in the process of making wooden toys.",
-            options: [
-                {text: "True (Đúng)", correct: true},
-                {text: "False (Sai)", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Nhiều loại gỗ được sử dụng trong quá trình làm đồ chơi bằng gỗ.</div>
-                <p><b>Phân tích:</b> Câu này ✅ Đúng vì bài đọc đã liệt kê một loạt các loại gỗ khác nhau.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn 3): "They are only using ivory wood... rarely rosewood and sandalwood... also started to use other woods like teak, pine, rubber and cedar wood."</div>
-                <p>👉 Dịch: "Họ chỉ sử dụng gỗ ngà... hiếm khi dùng gỗ trắc và gỗ đàn hương... cũng bắt đầu sử dụng <b><span style='color:red'>các loại gỗ khác như gỗ tếch, gỗ thông, gỗ cao su và gỗ tuyết tùng</span></b>." Việc dùng nhiều loại gỗ là sự thật.</p>
-            `
-        },
-        {
-            id: 12, type: "MC",
-            question: "4. The manufacture of the wooden toys includes a number of steps.",
-            options: [
-                {text: "True (Đúng)", correct: true},
-                {text: "False (Sai)", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Việc sản xuất đồ chơi bằng gỗ bao gồm một số bước (nhiều bước).</div>
-                <p><b>Phân tích:</b> Câu này ✅ Đúng vì bài viết dùng từ "stages" (các giai đoạn) và liệt kê một chuỗi hành động.</p>
-                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn 4): "Manufacturing stages include procuring the wood, seasoning the wood, cutting... pruning and carving... applying the colours and finally polishing..."</div>
-                <p>👉 Dịch: "<b><span style='color:red'>Các công đoạn sản xuất bao gồm</span></b> thu mua gỗ, phơi sấy, cắt... cắt tỉa và chạm khắc... tô màu và cuối cùng là đánh bóng..." Rất nhiều bước cụ thể được nêu ra.</p>
-            `
-        },
-        {
-            id: 13, type: "MC",
-            question: "5. People engaging in the making of these toys mostly work in small factories.",
-            options: [
-                {text: "True (Đúng)", correct: false},
-                {text: "False (Sai)", correct: true}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Những người tham gia làm những đồ chơi này HẦU HẾT làm việc trong các xưởng nhỏ (small factories).</div>
-                <p><b>Phân tích:</b> Câu này ❌ Sai ở chữ <span class='hl-red'>mostly (hầu hết)</span>. Dữ liệu bài đọc cho thấy số lượng cơ sở sản xuất gia đình (home manufacturing units) nhiều gấp 5 lần xưởng nhỏ (50).</p>
-                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn cuối): "...working in 254 home manufacturing units and 50 small factories..."</div>
-                <p>👉 Dịch: "...làm việc trong <b><span style='color:red'>254 cơ sở sản xuất gia đình</span></b> và <b><span style='color:red'>50 xưởng nhỏ</span></b>..." Do đó, họ hầu hết làm việc ở nhà/cơ sở gia đình chứ không phải xưởng nhỏ.</p>
-            `
-        },
-        {
-            id: 14, type: "MC",
-            question: "6. According to the passage, the wooden toys in Channapatna...",
-            options: [
-                {text: "a. appeared before the period of Tipu Sultan", correct: false},
-                {text: "b. were greatly admired by the people of Mysore", correct: false},
-                {text: "c. are rarely made of rosewood and sandalwood", correct: true},
-                {text: "d. only lasted for nearly two centuries", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Theo đoạn văn, những đồ chơi bằng gỗ ở Channapatna...</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='hl-red'>xuất hiện TRƯỚC thời kỳ của Tipu Sultan.</span> ❌ Sai vì bài viết nói nó bắt nguồn TỪ (dates back to) thời kỳ này.</p>
-                <p>B. <span class='hl-red'>được người dân Mysore vô cùng ngưỡng mộ.</span> ❌ Sai vì người ngưỡng mộ là vị vua Tipu Sultan chứ không phải toàn bộ người dân.</p>
-                <p>C. <span class='hl-green'>hiếm khi được làm bằng gỗ trắc và gỗ đàn hương.</span> ✅ Đúng.</p>
-                <p>D. <span class='hl-red'>chỉ tồn tại trong gần hai thế kỷ (sau đó biến mất).</span> ❌ Sai vì hiện tại họ VẪN đang làm (still follow).</p>
-                <div class='exp-quote'>🔍 Dẫn chứng cho ý C (Đoạn 3): "...and very rarely rosewood and sandalwood are used."</div>
-                <p>👉 Dịch: "...và <b><span style='color:red'>rất hiếm khi gỗ trắc và gỗ đàn hương được sử dụng.</span></b>"</p>
-            `
-        },
-        {
-            id: 15, type: "MC",
-            question: "7. The idiom 'take the initiative' in paragraph 2 means...",
-            options: [
-                {text: "a. be the first one to do something", correct: true},
-                {text: "b. be able to control the situation", correct: false},
-                {text: "c. make good use of something", correct: false},
-                {text: "d. make the effort to do something", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Thành ngữ 'take the initiative' (chủ động khởi xướng) trong đoạn 2 có nghĩa là...</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. <span class='hl-green'>be the first one to do something (là người đầu tiên làm điều gì đó / tiên phong khởi xướng).</span> ✅ Đúng sát nghĩa nhất với <span class='p-word'>initiative</span> (sáng kiến, sự tiên phong).</p>
-                <p>B. <span class='hl-red'>be able to control the situation (có khả năng kiểm soát tình hình).</span> ❌ Sai.</p>
-                <p>C. <span class='hl-red'>make good use of something (tận dụng tốt điều gì đó).</span> ❌ Sai.</p>
-                <p>D. <span class='hl-red'>make the effort to do something (nỗ lực làm gì đó).</span> ❌ Sai. Nỗ lực (effort) khác với Chủ động khởi xướng (initiative).</p>
-                <div class='exp-quote'>🔍 <span class='p-grammar'>Ghi nhớ Thành ngữ:</span> Take the initiative to V = Chủ động/Tiên phong làm gì.</div>
-                <p>👉 Dịch trong bài: "Ông ấy đã <b><span style='color:red'>tiên phong (chủ động)</span></b> mời các nghệ nhân từ Ba Tư đến..."</p>
-            `
-        },
-        {
-            id: 16, type: "MC",
-            question: "8. Which of the following is NOT mentioned?",
-            options: [
-                {text: "a. Natural dyes are used in order to make the toys safe for kids.", correct: false},
-                {text: "b. Local artists now stop using the traditional method of making these toys.", correct: true},
-                {text: "c. Channapatna is a city located in Ramanagara District in India.", correct: false},
-                {text: "d. The handmade lacquer wooden toys in Channapatna are globally famous.", correct: false}
-            ],
-            explanation: `
-                <div class='exp-title'>🎯 Dịch câu hỏi: Điều nào sau đây KHÔNG ĐƯỢC NHẮC ĐẾN (tức là sai so với bài đọc)?</div>
-                <p><b>Phân tích 4 đáp án:</b></p>
-                <p>A. Có nhắc đến (Đoạn 5): "Vegetable dyes are used... safe for use by children".</p>
-                <p>B. <span class='hl-green'>Nghệ sĩ địa phương hiện nay ĐÃ NGỪNG sử dụng phương pháp làm đồ chơi truyền thống.</span> ✅ Đúng là ĐÁP ÁN CẦN CHỌN vì điều này ❌ Sai so với bài đọc. Bài đọc nói họ VẪN TIẾP TỤC (still follow).</p>
-                <p>C. Có nhắc đến (Đoạn 1): "Channapatna is a city in Ramanagara District... India".</p>
-                <p>D. Có nhắc đến (Đoạn 1): "famous handmade lacquer wooden toys all over the world".</p>
-                <div class='exp-quote'>🔍 Dẫn chứng cho sự sai của ý B (Đoạn 3): "The artisans still follow the traditional method of making the toys for nearly two centuries."</div>
-                <p>👉 Dịch: "Các nghệ nhân <b><span style='color:red'>vẫn tuân theo (still follow)</span></b> phương pháp truyền thống..." chứ không hề dừng lại (stop).</p>
-            `
-        },
-
-         ];
-
-    // --- LOGIC ---
-    let currentScore = 0;
-    let answeredQuestions = new Set();
-
-    // Audio Context Setup
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = new AudioContext();
-
-    function playTone(frequency, type, duration, vol=0.1) {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.type = type;
-        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + duration);
-    }
-
-    function playDing() {
-        playTone(600, 'sine', 0.1);
-        setTimeout(() => playTone(800, 'sine', 0.3), 100);
-    }
-
-    function playTingTing() {
-        playTone(300, 'square', 0.1, 0.05);
-        setTimeout(() => playTone(250, 'square', 0.2, 0.05), 150);
-    }
-
-    // Toggle Translation
-    window.toggleDich = function(id) {
-        const el = document.getElementById(id);
-        if(el.style.display === 'block') {
-            el.style.display = 'none';
-        } else {
-            el.style.display = 'block';
-            el.style.animation = 'fadeIn 0.5s ease';
-        }
-    }
-
-    // Shuffle Array
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-
-    // Render Quizzes
-    function renderQuizzes() {
-        const panel = document.getElementById('quiz-panel');
-        let html = '';
-        
-        quizData.forEach((q, index) => {
-            let shuffledOptions = shuffleArray([...q.options]);
-            
-            html += `
-                <div class="glass-card" id="q-card-${q.id}">
-                    <div class="question-text">Câu ${index + 1}: ${q.question}</div>
-                    <div class="options-grid" id="options-${q.id}">
-            `;
-            
-            shuffledOptions.forEach((opt, optIndex) => {
-                html += `<button class="btn-option" onclick="checkAnswer(${q.id}, ${opt.correct}, this, 'options-${q.id}')">${opt.text}</button>`;
-            });
-            
-            html += `
-                    </div>
-                    <div class="explanation" id="exp-${q.id}">
-                        ${q.explanation}
-                    </div>
-                </div>
-            `;
-        });
-
-        html += `<button class="btn-submit" onclick="submitQuiz()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>`;
-        panel.innerHTML = html;
-    }
-
-    // Check Answer
-    window.checkAnswer = function(questionId, isCorrect, btnElement, optionsContainerId) {
-        if(answeredQuestions.has(questionId)) return; // Already answered
-        
-        answeredQuestions.add(questionId);
-        const container = document.getElementById(optionsContainerId);
-        const buttons = container.getElementsByClassName('btn-option');
-        
-        // Disable all buttons in this question
-        for(let btn of buttons) {
-            btn.style.pointerEvents = 'none';
-        }
-
-        if(isCorrect) {
-            btnElement.classList.add('correct');
-            playDing();
-            fireConfetti(btnElement);
-            currentScore++;
-        } else {
-            btnElement.classList.add('wrong');
-            btnElement.classList.add('shake');
-            playTingTing();
-            
-            // Find and highlight the correct one
-            for(let btn of buttons) {
-                // We need to match by text logic, but we can't easily access the correct object here cleanly without refactoring.
-                // Simple workaround: We check if the button text is the correct one from the original data.
-                const qData = quizData.find(q => q.id === questionId);
-                const correctText = qData.options.find(o => o.correct).text;
-                if(btn.innerText === correctText) {
-                    btn.style.border = '3px solid #52b788';
-                    btn.style.background = '#e9f5ec';
-                }
-            }
-        }
-        
-        // Show explanation
-        const expDiv = document.getElementById(`exp-${questionId}`);
-        expDiv.style.display = 'block';
-    }
-
-    // Simple DOM Confetti
-    function fireConfetti(element) {
-        const container = document.getElementById('confetti-container');
-        const rect = element.getBoundingClientRect();
-        const colors = ['#ff0a54', '#ff477e', '#ff7096', '#ff85a1', '#fbb1bd', '#f9bec7'];
-        
-        for(let i=0; i<30; i++) {
-            const confetti = document.createElement('div');
-            confetti.classList.add('confetti-piece');
-            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-            confetti.style.left = rect.left + (rect.width/2) + 'px';
-            confetti.style.top = rect.top + 'px';
-            
-            const dx = (Math.random() - 0.5) * 300;
-            const dy = (Math.random() - 1) * 300;
-            const rot = Math.random() * 360;
-            
-            confetti.animate([
-                { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
-                { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)`, opacity: 0 }
-            ], {
-                duration: 1000 + Math.random()*1000,
-                easing: 'cubic-bezier(.37,0,.63,1)'
-            });
-            
-            container.appendChild(confetti);
-            setTimeout(() => confetti.remove(), 2000);
-        }
-    }
-
-    // Modal Logic
-    window.onload = function() {
-        document.getElementById('nameModal').style.display = 'flex';
-    }
-
-    window.startQuiz = function() {
-        const name = document.getElementById('studentName').value.trim();
-        if(name === "") {
-            alert("Em hãy nhập tên để bắt đầu nhé!");
-            return;
-        }
-        document.getElementById('nameModal').style.display = 'none';
-        renderQuizzes();
-    }
-
-    window.submitQuiz = function() {
-        const name = document.getElementById('studentName').value.trim();
-        const total = quizData.length;
-        
-        if(answeredQuestions.size < total) {
-            const cf = confirm(`Em mới làm được ${answeredQuestions.size}/${total} câu. Em có chắc chắn muốn nộp bài chưa?`);
-            if(!cf) return;
-        }
-
-        const score10 = ((currentScore / total) * 10).toFixed(1);
-        
-        document.getElementById('resultName').innerText = `Học sinh: ${name}`;
-        document.getElementById('resultScore').innerText = `${currentScore}/${total}`;
-        document.getElementById('resultScale10').innerText = `Điểm hệ 10: ${score10} / 10 Điểm`;
-        
-        const memeEl = document.getElementById('resultMeme');
-        const cmtEl = document.getElementById('teacherComment');
-        
-        if(score10 == 10) {
-            memeEl.innerText = "🤩";
-            cmtEl.innerHTML = "<b>Ms MS Chí Nên khen:</b> Xuất sắc tuyệt đối! Thiên tài ngôn ngữ là đây chứ đâu! Xin chúc mừng em!";
-        } else if (score10 >= 8) {
-            memeEl.innerText = "😎";
-            cmtEl.innerHTML = "<b>Ms MS Chí Nên khen:</b> Quá giỏi! Em đã nắm rất chắc từ vựng và ngữ pháp. Cố lên chút nữa là đạt điểm tối đa nha!";
-        } else if (score10 >= 6) {
-            memeEl.innerText = "🤗";
-            cmtEl.innerHTML = "<b>Ms MS Chí Nên dặn:</b> Tốt lắm! Tuy nhiên em nhớ đọc kỹ phần <i>Giải thích chi tiết</i> bên dưới để tránh mắc lại các bẫy nhỏ nhé.";
-        } else {
-            memeEl.innerText = "🥺";
-            cmtEl.innerHTML = "<b>Ms MS Chí Nên dặn:</b> Đừng buồn! Đọc hiểu luôn là phần khó nhằn. Em hãy đọc lại Bảng từ vựng và phần Giải thích chi tiết, đảm bảo lần sau em sẽ làm tốt hơn rất nhiều!";
-        }
-
-        document.getElementById('resultModal').style.display = 'flex';
-        playDing();
-        setTimeout(playDing, 200);
-        setTimeout(playDing, 400);
-    }
-</script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reading Quizzes - Ms. Chí Nên</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+
+        :root {
+
+            --glass-bg: rgba(255, 255, 255, 0.4);
+
+            --glass-border: rgba(255, 255, 255, 0.6);
+
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+
+            --primary: #ff8fab;
+
+            --secondary: #4ea8de;
+
+            --text-main: #2b2d42;
+
+        }
+
+
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Quicksand', sans-serif; }
+
+
+
+        body {
+
+            background: linear-gradient(135deg, #ffcbf2, #f3c4fb, #ecbcfd, #e5b3fe, #e2afff, #c8b6ff, #b8c0ff, #bbd0ff);
+
+            background-size: 400% 400%;
+
+            animation: gradientBG 15s ease infinite;
+
+            color: var(--text-main);
+
+            overflow: hidden;
+
+        }
+
+
+
+        @keyframes gradientBG {
+
+            0% { background-position: 0% 50%; }
+
+            50% { background-position: 100% 50%; }
+
+            100% { background-position: 0% 50%; }
+
+        }
+
+
+
+        /* SVG Emoji Background */
+
+        .svg-bg {
+
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+
+            z-index: -1; pointer-events: none;
+
+            background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 80%);
+
+        }
+
+        .emoji-float {
+
+            animation: floatEmoji 6s ease-in-out infinite alternate;
+
+            opacity: 0.4;
+
+        }
+
+        @keyframes floatEmoji {
+
+            0% { transform: translateY(0px) rotate(0deg); }
+
+            100% { transform: translateY(-30px) rotate(15deg); }
+
+        }
+
+
+
+        /* Header */
+
+        header {
+
+            position: fixed; top: 0; left: 0; width: 100%; height: 50px;
+
+            background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);
+
+            display: flex; justify-content: center; align-items: center;
+
+            border-bottom: 1px solid var(--glass-border); z-index: 100;
+
+        }
+
+        header h2 { font-size: 16px; color: #5c4d7d; font-weight: 700; letter-spacing: 1px;}
+
+
+
+        /* Split Layout */
+
+        .container {
+
+            display: flex; height: 100vh; padding-top: 50px;
+
+        }
+
+        .left-panel, .right-panel {
+
+            flex: 1; padding: 20px; overflow-y: auto;
+
+            scrollbar-width: thin; scrollbar-color: #fff transparent;
+
+        }
+
+        
+
+        /* Custom Scrollbar */
+
+        ::-webkit-scrollbar { width: 8px; }
+
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+
+
+
+        /* Glassmorphism Cards */
+
+        .glass-card {
+
+            background: var(--glass-bg); backdrop-filter: blur(12px);
+
+            border: 1px solid var(--glass-border); border-radius: 20px;
+
+            padding: 25px; margin-bottom: 25px; box-shadow: var(--glass-shadow);
+
+        }
+
+
+
+        /* Reading Passage styling */
+
+        .passage-title { font-size: 22px; color: #d90429; margin-bottom: 15px; text-transform: uppercase; text-align: center;}
+
+        .paragraph { font-size: 17px; line-height: 1.6; margin-bottom: 15px; text-align: justify;}
+
+        .btn-translate {
+
+            background: rgba(255,255,255,0.6); border: 1px solid #fff; padding: 8px 15px;
+
+            border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600;
+
+            color: #d81159; transition: 0.3s; margin-bottom: 15px; display: inline-flex; align-items: center;
+
+        }
+
+        .btn-translate:hover { background: #fff; transform: scale(1.05); }
+
+        .translation {
+
+            background: rgba(255,255,255,0.5); padding: 15px; border-left: 4px solid #ff006e;
+
+            border-radius: 10px; font-size: 15px; color: #333; margin-bottom: 20px;
+
+            display: none; font-style: italic;
+
+        }
+
+
+
+        /* Glossary Table */
+
+        .glossary-title { text-align: center; font-size: 18px; color: #023e8a; margin: 20px 0 10px;}
+
+        table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.5); border-radius: 10px; overflow: hidden; }
+
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.5); }
+
+        th { background: rgba(255,255,255,0.7); color: #03045e; }
+
+
+
+        /* Quiz Question Styling */
+
+        .question-text { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: #03045e; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        
+
+        .btn-option {
+
+            background: rgba(255,255,255,0.7); border: 2px solid transparent;
+
+            padding: 12px 15px; border-radius: 15px; cursor: pointer; font-size: 16px;
+
+            font-weight: 600; color: #333; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+            text-align: center; word-wrap: break-word; white-space: normal;
+
+        }
+
+        .btn-option:hover { background: #fff; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+        
+
+        /* Answer States */
+
+        .btn-option.correct { background: #52b788; color: white; border-color: #40916c; transform: scale(1.02); }
+
+        .btn-option.wrong { background: #e63946; color: white; border-color: #c1121f; }
+
+        
+
+        /* Shake Animation for Wrong Answer */
+
+        @keyframes shake {
+
+            0%, 100% { transform: translateX(0); }
+
+            20%, 60% { transform: translateX(-5px); }
+
+            40%, 80% { transform: translateX(5px); }
+
+        }
+
+        .shake { animation: shake 0.4s ease-in-out; }
+
+
+
+        /* Master Explanation Section */
+
+        .explanation {
+
+            margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.85);
+
+            border-radius: 15px; border-left: 5px solid #ffb703;
+
+            display: none; font-size: 15.5px; line-height: 1.6;
+
+            animation: fadeIn 0.5s ease;
+
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px);} to {opacity: 1; transform: translateY(0);} }
+
+        
+
+        /* STRICT COLOR CODING CLASSES */
+
+        .p-word { color: #0077b6; font-weight: 800; } /* Xanh dương: Tiếng Anh */
+
+        .p-mean { color: #ca6702; font-weight: 800; } /* Đất nung: Tiếng Việt */
+
+        .p-grammar { color: #d00000; font-weight: 800; text-decoration: underline; text-decoration-color: #d00000; text-decoration-thickness: 2px;} /* Gạch đỏ: Ngữ pháp */
+
+        .hl-green { color: #2a9d8f; font-weight: 800; } /* Xanh lá: Keyword Đúng */
+
+        .hl-red { color: #9d0208; font-weight: 800; text-decoration: line-through; } /* Đỏ gạch ngang: Bẫy/Sai */
+
+        
+
+        .exp-title { font-size: 16px; font-weight: bold; color: #ff5400; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;}
+
+        .exp-quote { background: #fdf0d5; padding: 10px; border-radius: 8px; margin: 10px 0; font-style: italic; border-left: 3px solid #ffb703;}
+
+        
+
+        /* Submit Button */
+
+        .btn-submit {
+
+            width: 100%; background: linear-gradient(45deg, #fb5607, #ff006e);
+
+            color: white; border: none; padding: 18px; border-radius: 20px;
+
+            font-size: 20px; font-weight: bold; cursor: pointer; text-transform: uppercase;
+
+            box-shadow: 0 10px 20px rgba(255,0,110,0.3); transition: 0.3s; margin-top: 20px;
+
+        }
+
+        .btn-submit:hover { transform: translateY(-5px); box-shadow: 0 15px 25px rgba(255,0,110,0.4); }
+
+
+
+        /* Modals */
+
+        .modal-overlay {
+
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+
+        }
+
+        .modal-box {
+
+            background: white; padding: 30px; border-radius: 20px; text-align: center;
+
+            width: 90%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+
+            position: relative; overflow: hidden;
+
+        }
+
+        .modal-box h3 { font-size: 24px; color: #3a0ca3; margin-bottom: 20px; }
+
+        .name-input {
+
+            width: 100%; padding: 15px; border: 2px solid #e0e1dd; border-radius: 12px;
+
+            font-size: 18px; outline: none; margin-bottom: 20px; text-align: center;
+
+        }
+
+        .name-input:focus { border-color: #4361ee; }
+
+        .btn-primary {
+
+            background: #4361ee; color: white; border: none; padding: 12px 30px;
+
+            font-size: 18px; border-radius: 12px; cursor: pointer; font-weight: bold;
+
+        }
+
+        
+
+        .score-circle {
+
+            width: 120px; height: 120px; border-radius: 50%; background: #e0aaff;
+
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+
+            margin: 0 auto 20px; border: 6px solid #7209b7; color: #3a0ca3;
+
+        }
+
+        .score-circle span.big { font-size: 32px; font-weight: 900; }
+
+        .score-circle span.small { font-size: 16px; font-weight: bold; }
+
+        .score-10 { font-size: 22px; color: #d00000; font-weight: bold; margin-bottom: 15px;}
+
+        .teacher-cmt { font-size: 18px; font-style: italic; color: #555; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px;}
+
+        .meme-gif { width: 150px; height: 150px; border-radius: 15px; object-fit: cover; margin-bottom: 15px;}
+
+
+
+        /* Confetti Container */
+
+        #confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+
+        .confetti-piece { position: absolute; width: 10px; height: 10px; opacity: 0; }
+
+
+
+        @media (max-width: 768px) {
+
+            .container { flex-direction: column; }
+
+            .options-grid { grid-template-columns: 1fr; }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <div class="svg-bg">
+
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+
+            <text x="15%" y="20%" font-size="60" class="emoji-float" style="animation-delay: 0s;">🏺</text>
+
+            <text x="80%" y="15%" font-size="50" class="emoji-float" style="animation-delay: 1s;">🧵</text>
+
+            <text x="40%" y="85%" font-size="70" class="emoji-float" style="animation-delay: 2s;">🪵</text>
+
+            <text x="85%" y="75%" font-size="65" class="emoji-float" style="animation-delay: 0.5s;">🎨</text>
+
+            <text x="10%" y="60%" font-size="55" class="emoji-float" style="animation-delay: 1.5s;">✨</text>
+
+            <text x="60%" y="40%" font-size="45" class="emoji-float" style="animation-delay: 2.5s;">🚀</text>
+
+        </svg>
+
+    </div>
+
+
+
+    <header>
+
+        <h2>Giáo viên tạo: Ms. Chí Nên 🎓</h2>
+
+    </header>
+
+
+
+    <div id="confetti-container"></div>
+
+
+
+    <div class="container">
+
+        <div class="left-panel">
+
+            
+
+            <div class="glass-card">
+
+                <h3 class="passage-title">Reading 1: Craft Villages in Vietnam</h3>
+
+                
+
+                <div class="paragraph">
+
+                    I've just been back from my vacation in Hanoi, Vietnam. In this trip, I had a chance to visit some (1) ________ villages that produce the finest craft works exported over the world.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p1-1')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p1-1">
+
+                    Tôi vừa trở về từ kỳ nghỉ ở Hà Nội, Việt Nam. Trong chuyến đi này, tôi đã có cơ hội đến thăm một số làng (1) thủ công sản xuất ra những tác phẩm thủ công tinh xảo nhất được xuất khẩu trên toàn thế giới.
+
+                </div>
+
+
+
+                <div class="paragraph">
+
+                    The very first place I (2) ________ foot on was Van Phuc silk village, the cradle of best silk in Vietnam once. I totally fall in love with many colourful clothes, hats, bags, tie... made of authentic silk.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p1-2')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p1-2">
+
+                    Nơi đầu tiên tôi (2) đặt chân đến là làng lụa Vạn Phúc, từng là cái nôi của lụa tốt nhất Việt Nam. Tôi hoàn toàn phải lòng những bộ quần áo, mũ, túi xách, cà vạt... đầy màu sắc làm bằng lụa chính cống.
+
+                </div>
+
+
+
+                <div class="paragraph">
+
+                    Then, I moved on to Bat Trang ceramic village, the most famous and (3) ________ pottery village in Vietnam with a nearly 1,000 years old historic development. Here, I visited a small family factory to see how the (4) ________ form, paint and glaze with unique products and have a chance to practice my talent with wet clay and a mould.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p1-3')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p1-3">
+
+                    Sau đó, tôi chuyển sang làng gốm Bát Tràng, làng gốm nổi tiếng và (3) lâu đời nhất ở Việt Nam với lịch sử phát triển gần 1.000 năm. Tại đây, tôi đã đến thăm một xưởng gia đình nhỏ để xem cách các (4) nghệ nhân định hình, vẽ và tráng men các sản phẩm độc đáo, đồng thời có cơ hội thực hành tài năng của mình với đất sét ướt và khuôn.
+
+                </div>
+
+
+
+                <div class="paragraph">
+
+                    Afternoon, I continued to visit Dong Ho folk painting village, (5) ________ the traditional woodblock paintings are preserved. I was completely impressed by the folk paintings made by the local (6) ________ artisans with natural materials and colors.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p1-4')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p1-4">
+
+                    Buổi chiều, tôi tiếp tục đến thăm làng tranh dân gian Đông Hồ, (5) nơi bảo tồn những bức tranh mộc bản truyền thống. Tôi hoàn toàn bị ấn tượng bởi những bức tranh dân gian do các nghệ nhân (6) khéo léo địa phương làm ra bằng các chất liệu và màu sắc tự nhiên.
+
+                </div>
+
+
+
+                <div class="paragraph">
+
+                    Each painting is (7) ________ handmade on paper of the Dzo tree and is coloured with other natural materials and its glittery surface is finished with oyster shell dust. I took home a lot of handmade (8) ________ which were later given to my family and friends.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p1-5')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p1-5">
+
+                    Mỗi bức tranh được làm (7) hoàn toàn thủ công trên giấy điệp, được tô màu bằng các vật liệu tự nhiên khác và bề mặt lấp lánh của nó được hoàn thiện bằng bột vỏ hàu. Tôi đã mang về nhà rất nhiều (8) đồ lưu niệm thủ công để sau đó tặng cho gia đình và bạn bè.
+
+                </div>
+
+
+
+                <h4 class="glossary-title">📚 Bảng từ vựng (Glossary)</h4>
+
+                <table>
+
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+
+                    <tr><td><b>handicraft</b></td><td>(n)</td><td>đồ thủ công, nghề thủ công</td></tr>
+
+                    <tr><td><b>authentic</b></td><td>(adj)</td><td>thật, chính cống, nguyên bản</td></tr>
+
+                    <tr><td><b>long-standing</b></td><td>(adj)</td><td>lâu đời</td></tr>
+
+                    <tr><td><b>artisan</b></td><td>(n)</td><td>nghệ nhân, thợ thủ công</td></tr>
+
+                    <tr><td><b>glaze</b></td><td>(v)</td><td>tráng men (gốm sứ)</td></tr>
+
+                    <tr><td><b>preserve</b></td><td>(v)</td><td>bảo tồn, giữ gìn</td></tr>
+
+                    <tr><td><b>woodblock</b></td><td>(n)</td><td>mộc bản (khuôn in bằng gỗ)</td></tr>
+
+                    <tr><td><b>impress</b></td><td>(v)</td><td>gây ấn tượng mạnh</td></tr>
+
+                    <tr><td><b>skillful</b></td><td>(adj)</td><td>khéo léo, điêu luyện</td></tr>
+
+                    <tr><td><b>souvenir</b></td><td>(n)</td><td>món quà lưu niệm</td></tr>
+
+                </table>
+
+            </div>
+
+
+
+            <div class="glass-card">
+
+                <h3 class="passage-title">Reading 2: The Toy City of India</h3>
+
+                
+
+                <div class="paragraph">
+
+                    Channapatna is a city in Ramanagara District, Karnataka, India and is noted for its famous handmade lacquer wooden toys all over the world. It's popularly known as "Gombegala Ooru" or the "Toy City" of Karnataka.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p2-1')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p2-1">
+
+                    Channapatna là một thành phố thuộc Quận Ramanagara, bang Karnataka, Ấn Độ và nổi tiếng khắp thế giới với các món đồ chơi bằng gỗ sơn mài làm thủ công. Nó được biết đến phổ biến với cái tên "Gombegala Ooru" hay "Thành phố đồ chơi" của Karnataka.
+
+                </div>
+
+
+
+                <div class="paragraph">
+
+                    The origin of the wooden toys dates back to the period of Tipu Sultan, the ruler of Mysore who was a great admirer of wooden toys. He took the initiative to invite artisans from Persia and train the local artists to learn the process of making wooden toys.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p2-2')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p2-2">
+
+                    Nguồn gốc của đồ chơi bằng gỗ bắt nguồn từ thời kỳ của Tipu Sultan, người cai trị xứ Mysore, người rất đam mê đồ chơi bằng gỗ. Ông đã chủ động mời các nghệ nhân từ Ba Tư đến và đào tạo các nghệ sĩ địa phương học quy trình làm đồ chơi bằng gỗ.
+
+                </div>
+
+
+
+                <div class="paragraph">
+
+                    The artisans still follow the traditional method of making the toys for nearly two centuries. They are only using ivory wood for making the toys and very rarely rosewood and sandalwood are used. But slowly the artisans have also started to use other woods like teak, pine, rubber and cedar wood.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p2-3')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p2-3">
+
+                    Các nghệ nhân vẫn tuân theo phương pháp truyền thống làm đồ chơi trong gần hai thế kỷ qua. Ban đầu họ chỉ sử dụng gỗ ngà (ivory wood) để làm đồ chơi và rất hiếm khi sử dụng gỗ trắc (rosewood) và gỗ đàn hương (sandalwood). Nhưng dần dần các nghệ nhân cũng đã bắt đầu sử dụng các loại gỗ khác như gỗ tếch, gỗ thông, gỗ cao su và gỗ tuyết tùng.
+
+                </div>
+
+
+
+                <div class="paragraph">
+
+                    Manufacturing stages include procuring the wood, seasoning the wood, cutting the wood into the desired shapes, pruning and carving the toys, applying the colours and finally polishing the finished product.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p2-4')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p2-4">
+
+                    Các công đoạn sản xuất bao gồm: thu mua gỗ, phơi sấy gỗ, cắt gỗ thành các hình dạng mong muốn, cắt tỉa và chạm khắc đồ chơi, tô màu và cuối cùng là đánh bóng sản phẩm hoàn thiện.
+
+                </div>
+
+
+
+                <div class="paragraph">
+
+                    Vegetable dyes are used in the colouring process to ensure that the toys and dolls are safe for use by children. More than 6,000 people in Channapatna, working in 254 home manufacturing units and 50 small factories, were engaged in the making of these toys.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleDich('p2-5')">🌟 Mở dịch đoạn này</button>
+
+                <div class="translation" id="p2-5">
+
+                    Thuốc nhuộm từ thực vật được sử dụng trong quá trình tạo màu để đảm bảo đồ chơi và búp bê an toàn cho trẻ em sử dụng. Hơn 6.000 người ở Channapatna, làm việc trong 254 cơ sở sản xuất gia đình và 50 xưởng nhỏ, đã tham gia vào việc làm ra những món đồ chơi này.
+
+                </div>
+
+
+
+                <h4 class="glossary-title">📚 Bảng từ vựng (Glossary)</h4>
+
+                <table>
+
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+
+                    <tr><td><b>lacquer</b></td><td>(n)</td><td>sơn mài</td></tr>
+
+                    <tr><td><b>admirer</b></td><td>(n)</td><td>người hâm mộ, người ngưỡng mộ</td></tr>
+
+                    <tr><td><b>initiative</b></td><td>(n)</td><td>sáng kiến, sự chủ động khởi xướng</td></tr>
+
+                    <tr><td><b>procuring</b></td><td>(v-ing)</td><td>việc thu mua, tìm kiếm nguyên liệu</td></tr>
+
+                    <tr><td><b>seasoning</b></td><td>(v-ing)</td><td>việc phơi sấy, tẩm ướp (gỗ) cho bền</td></tr>
+
+                    <tr><td><b>carving</b></td><td>(v-ing)</td><td>việc chạm khắc, đục đẽo</td></tr>
+
+                    <tr><td><b>vegetable dye</b></td><td>(n)</td><td>thuốc nhuộm chiết xuất từ thực vật</td></tr>
+
+                    <tr><td><b>engage in</b></td><td>(v)</td><td>tham gia vào (một hoạt động)</td></tr>
+
+                    <tr><td><b>manufacture</b></td><td>(n/v)</td><td>sự sản xuất / sản xuất (bằng máy móc/quy mô)</td></tr>
+
+                    <tr><td><b>decade</b></td><td>(n)</td><td>thập kỷ (10 năm) - (Lưu ý: century = 100 năm)</td></tr>
+
+                </table>
+
+            </div>
+
+            
+
+        </div>
+
+
+
+        <div class="right-panel" id="quiz-panel">
+
+            </div>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="nameModal">
+
+        <div class="modal-box">
+
+            <h3>Chào mừng bạn! 👋</h3>
+
+            <p style="margin-bottom: 15px; color: #555;">Hãy nhập tên để Ms. Chí Nên lưu bảng điểm nhé:</p>
+
+            <input type="text" class="name-input" id="studentName" placeholder="Ví dụ: Nguyễn Văn A">
+
+            <button class="btn-primary" onclick="startQuiz()">Bắt đầu học thôi!</button>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="resultModal">
+
+        <div class="modal-box">
+
+            <h3>🏆 BẢNG ĐIỂM CỦA BẠN</h3>
+
+            <div id="resultName" style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #ff006e;"></div>
+
+            
+
+            <div class="score-circle">
+
+                <span class="big" id="resultScore"></span>
+
+                <span class="small">Câu đúng</span>
+
+            </div>
+
+            
+
+            <div class="score-10" id="resultScale10"></div>
+
+            
+
+            <div style="font-size: 50px; margin-bottom: 15px;" id="resultMeme"></div>
+
+            
+
+            <div class="teacher-cmt" id="teacherComment"></div>
+
+            
+
+            <button class="btn-primary" onclick="location.reload()">Làm Lại Bài</button>
+
+        </div>
+
+    </div>
+
+
+
+<script>
+
+    // --- DATA ---
+
+    const quizData = [
+
+        // PART I: Fill in the gaps (8 questions)
+
+        {
+
+            id: 1, type: "MC",
+
+            question: "Lựa chọn từ thích hợp điền vào chỗ trống (1): 'visit some (1) ______ villages'",
+
+            options: [
+
+                {text: "handicraft", correct: true},
+
+                {text: "skillful", correct: false},
+
+                {text: "souvenirs", correct: false},
+
+                {text: "completely", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (1).</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='p-word'>handicraft</span> (n): <span class='p-mean'>đồ thủ công</span> ✅ Đúng. Cụm <span class='hl-green'>handicraft villages</span> nghĩa là các làng nghề thủ công.</p>
+
+                <p>B. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo</span> ❌ Sai vì <span class='hl-red'>skillful villages</span> (làng khéo léo) không có nghĩa hợp logic.</p>
+
+                <p>C. <span class='p-word'>souvenirs</span> (n): <span class='p-mean'>quà lưu niệm</span> ❌ Sai vì <span class='hl-red'>souvenirs villages</span> sai ngữ pháp (danh từ ghép thường không chia số nhiều ở từ đứng trước).</p>
+
+                <p>D. <span class='p-word'>completely</span> (adv): <span class='p-mean'>hoàn toàn</span> ❌ Sai <span class='p-grammar'>từ loại</span> vì trạng từ không bổ nghĩa trực tiếp cho danh từ 'villages'.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng: "I had a chance to visit some (1) handicraft villages that produce the finest craft works..."</div>
+
+                <p>👉 Dịch: "tôi đã có cơ hội đến thăm một số <b><span style='color:red'>làng nghề thủ công</span></b> nơi sản xuất ra những tác phẩm thủ công tinh xảo nhất..."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 2, type: "MC",
+
+            question: "Lựa chọn từ thích hợp điền vào chỗ trống (2): 'The very first place I (2) ______ foot on'",
+
+            options: [
+
+                {text: "set", correct: true},
+
+                {text: "put", correct: false},
+
+                {text: "where", correct: false},
+
+                {text: "artisans", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (2).</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='p-word'>set</span> (v): <span class='p-mean'>đặt, để</span> ✅ Đúng vì ta có <span class='p-grammar'>Cấu trúc (Collocation)</span> cố định: <span class='hl-green'>set foot on/in somewhere</span> nghĩa là đặt chân đến nơi nào đó.</p>
+
+                <p>B. <span class='p-word'>put</span> (v): <span class='p-mean'>đặt</span> ❌ Sai vì không đi với "foot on" trong thành ngữ này.</p>
+
+                <p>C. <span class='p-word'>where</span> (adv): <span class='p-mean'>nơi mà</span> ❌ Sai <span class='p-grammar'>từ loại</span>, vị trí này cần một Động từ chia theo thì quá khứ.</p>
+
+                <p>D. <span class='p-word'>artisans</span> (n): <span class='p-mean'>nghệ nhân</span> ❌ Sai hoàn toàn về nghĩa và từ loại.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng: "The very first place I (2) set foot on was Van Phuc silk village..."</div>
+
+                <p>👉 Dịch: "Nơi đầu tiên tôi <b><span style='color:red'>đặt chân</span></b> đến là làng lụa Vạn Phúc..."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 3, type: "MC",
+
+            question: "Lựa chọn từ thích hợp điền vào chỗ trống (3): 'the most famous and (3) ______ pottery village'",
+
+            options: [
+
+                {text: "long-standing", correct: true},
+
+                {text: "completely", correct: false},
+
+                {text: "skillful", correct: false},
+
+                {text: "handicraft", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (3).</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='p-word'>long-standing</span> (adj): <span class='p-mean'>có từ lâu đời</span> ✅ Đúng. Phù hợp nhất với vế sau "with a nearly 1,000 years old historic development" (lịch sử 1000 năm).</p>
+
+                <p>B. <span class='p-word'>completely</span> (adv): <span class='p-mean'>hoàn toàn</span> ❌ Sai <span class='p-grammar'>từ loại</span> vì chữ "and" nối hai tính từ (famous and ...).</p>
+
+                <p>C. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo</span> ❌ Sai vì <span class='hl-red'>skillful</span> dùng để chỉ con người/kỹ năng, không dùng cho "làng" (pottery village).</p>
+
+                <p>D. <span class='p-word'>handicraft</span> (n): <span class='p-mean'>đồ thủ công</span> ❌ Sai <span class='p-grammar'>từ loại</span>, vị trí này cần Tính từ.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng: "...Bat Trang ceramic village, the most famous and (3) long-standing pottery village in Vietnam with a nearly 1,000 years old historic development."</div>
+
+                <p>👉 Dịch: "...làng gốm Bát Tràng, làng gốm nổi tiếng và <b><span style='color:red'>lâu đời</span></b> nhất ở Việt Nam..."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 4, type: "MC",
+
+            question: "Lựa chọn từ thích hợp điền vào chỗ trống (4): 'to see how the (4) ______ form, paint and glaze'",
+
+            options: [
+
+                {text: "artisans", correct: true},
+
+                {text: "souvenirs", correct: false},
+
+                {text: "where", correct: false},
+
+                {text: "long-standing", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (4).</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='p-word'>artisans</span> (n): <span class='p-mean'>nghệ nhân</span> ✅ Đúng. Vị trí này cần Danh từ chỉ người để làm Chủ ngữ cho các hành động "form, paint and glaze" (định hình, vẽ, tráng men).</p>
+
+                <p>B. <span class='p-word'>souvenirs</span> (n): <span class='p-mean'>quà lưu niệm</span> ❌ Sai vì quà lưu niệm không thể tự biết vẽ hay tráng men gốm.</p>
+
+                <p>C. <span class='p-word'>where</span> (adv): <span class='p-mean'>nơi mà</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
+
+                <p>D. <span class='p-word'>long-standing</span> (adj): <span class='p-mean'>lâu đời</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng: "visited a small family factory to see how the (4) artisans form, paint and glaze..."</div>
+
+                <p>👉 Dịch: "đến thăm một xưởng gia đình nhỏ để xem cách các <b><span style='color:red'>nghệ nhân</span></b> định hình, vẽ và tráng men..."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 5, type: "MC",
+
+            question: "Lựa chọn từ thích hợp điền vào chỗ trống (5): 'Dong Ho folk painting village, (5) ______ the traditional woodblock paintings are preserved'",
+
+            options: [
+
+                {text: "where", correct: true},
+
+                {text: "completely", correct: false},
+
+                {text: "skillful", correct: false},
+
+                {text: "set", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (5).</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='p-word'>where</span> (Trạng từ quan hệ): <span class='p-mean'>nơi mà</span> ✅ Đúng. Dùng để thay thế cho danh từ chỉ nơi chốn "Dong Ho folk painting village" trong <span class='p-grammar'>Mệnh đề quan hệ</span>.</p>
+
+                <p>B. <span class='p-word'>completely</span> (adv): <span class='p-mean'>hoàn toàn</span> ❌ Sai ngữ pháp mệnh đề quan hệ.</p>
+
+                <p>C. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo</span> ❌ Sai từ loại và nghĩa.</p>
+
+                <p>D. <span class='p-word'>set</span> (v): <span class='p-mean'>đặt để</span> ❌ Sai từ loại.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng: "...Dong Ho folk painting village, (5) where the traditional woodblock paintings are preserved."</div>
+
+                <p>👉 Dịch: "...làng tranh dân gian Đông Hồ, <b><span style='color:red'>nơi mà</span></b> những bức tranh mộc bản truyền thống được bảo tồn."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 6, type: "MC",
+
+            question: "Lựa chọn từ thích hợp điền vào chỗ trống (6): 'made by the local (6) ______ artisans'",
+
+            options: [
+
+                {text: "skillful", correct: true},
+
+                {text: "handicraft", correct: false},
+
+                {text: "long-standing", correct: false},
+
+                {text: "souvenirs", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (6).</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo, tài hoa</span> ✅ Đúng vì cần một Tính từ bổ nghĩa cho danh từ "artisans" (nghệ nhân).</p>
+
+                <p>B. <span class='p-word'>handicraft</span> (n): <span class='p-mean'>thủ công</span> ❌ Sai vì <span class='hl-red'>handicraft artisans</span> không phải cụm từ phổ biến tự nhiên.</p>
+
+                <p>C. <span class='p-word'>long-standing</span> (adj): <span class='p-mean'>lâu đời</span> ❌ Sai vì từ này thường miêu tả sự vật (làng, công ty, lịch sử), ít dùng miêu tả con người trực tiếp.</p>
+
+                <p>D. <span class='p-word'>souvenirs</span> (n): <span class='p-mean'>quà lưu niệm</span> ❌ Sai <span class='p-grammar'>từ loại</span> và nghĩa.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng: "impressed by the folk paintings made by the local (6) skillful artisans"</div>
+
+                <p>👉 Dịch: "bị ấn tượng bởi những bức tranh dân gian do các nghệ nhân <b><span style='color:red'>khéo léo</span></b> địa phương làm ra."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 7, type: "MC",
+
+            question: "Lựa chọn từ thích hợp điền vào chỗ trống (7): 'Each painting is (7) ______ handmade on paper'",
+
+            options: [
+
+                {text: "completely", correct: true},
+
+                {text: "where", correct: false},
+
+                {text: "artisans", correct: false},
+
+                {text: "set", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (7).</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='p-word'>completely</span> (adv): <span class='p-mean'>hoàn toàn</span> ✅ Đúng. Vị trí nằm giữa động từ "is" và tính từ "handmade", bắt buộc phải là một <span class='p-grammar'>Trạng từ (Adverb)</span> để bổ nghĩa cho tính từ đó: <span class='hl-green'>completely handmade (làm thủ công hoàn toàn)</span>.</p>
+
+                <p>B. <span class='p-word'>where</span> (adv): <span class='p-mean'>nơi mà</span> ❌ Sai ngữ nghĩa.</p>
+
+                <p>C. <span class='p-word'>artisans</span> (n): <span class='p-mean'>nghệ nhân</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
+
+                <p>D. <span class='p-word'>set</span> (v): <span class='p-mean'>đặt</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng: "Each painting is (7) completely handmade on paper of the Dzo tree..."</div>
+
+                <p>👉 Dịch: "Mỗi bức tranh được làm <b><span style='color:red'>hoàn toàn</span></b> thủ công trên giấy của cây điệp..."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 8, type: "MC",
+
+            question: "Lựa chọn từ thích hợp điền vào chỗ trống (8): 'I took home a lot of handmade (8) ______'",
+
+            options: [
+
+                {text: "souvenirs", correct: true},
+
+                {text: "handicraft", correct: false},
+
+                {text: "skillful", correct: false},
+
+                {text: "long-standing", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Lựa chọn từ thích hợp điền vào chỗ trống (8).</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='p-word'>souvenirs</span> (n): <span class='p-mean'>quà lưu niệm</span> ✅ Đúng. Phía trước có "a lot of handmade" (nhiều đồ thủ công...), cần một <span class='p-grammar'>Danh từ đếm được số nhiều</span>. Mua quà mang về nhà tặng bạn bè là rất hợp lý.</p>
+
+                <p>B. <span class='p-word'>handicraft</span> (n): <span class='p-mean'>đồ thủ công</span> ❌ Sai vì thường handicraft ở đây thiếu s (số nhiều sau a lot of) và souvenir hợp ngữ cảnh tặng quà hơn.</p>
+
+                <p>C. <span class='p-word'>skillful</span> (adj): <span class='p-mean'>khéo léo</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
+
+                <p>D. <span class='p-word'>long-standing</span> (adj): <span class='p-mean'>lâu đời</span> ❌ Sai <span class='p-grammar'>từ loại</span>.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng: "I took home a lot of handmade (8) souvenirs which were later given to my family and friends."</div>
+
+                <p>👉 Dịch: "Tôi đã mang về nhà rất nhiều <b><span style='color:red'>đồ lưu niệm</span></b> thủ công để sau đó tặng cho gia đình và bạn bè."</p>
+
+            `
+
+        },
+
+
+
+        // PART II: T/F & Multiple Choice (8 questions)
+
+        {
+
+            id: 9, type: "MC",
+
+            question: "1. Channapatna has its nick name 'Toy City' because of its well-known handmade toys. (Đúng hay Sai?)",
+
+            options: [
+
+                {text: "True (Đúng)", correct: true},
+
+                {text: "False (Sai)", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Channapatna có biệt danh là "Thành phố đồ chơi" vì những món đồ chơi làm bằng tay nổi tiếng của nó.</div>
+
+                <p><b>Phân tích:</b> Câu này cung cấp thông tin hoàn toàn ✅ Đúng khớp với bài đọc.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn 1): "Channapatna... is noted for its famous handmade lacquer wooden toys all over the world. It's popularly known as "Gombegala Ooru" or the "Toy City"..."</div>
+
+                <p>👉 Dịch: "Channapatna... <b><span style='color:red'>nổi tiếng khắp thế giới với các món đồ chơi bằng gỗ sơn mài làm thủ công</span></b>. Nó được biết đến phổ biến với cái tên 'Gombegala Ooru' hay <b><span style='color:red'>'Thành phố đồ chơi'</span></b>..."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 10, type: "MC",
+
+            question: "2. The ruler of Mysore sent his local artists to Persia to learn the process of making wooden toys.",
+
+            options: [
+
+                {text: "True (Đúng)", correct: false},
+
+                {text: "False (Sai)", correct: true}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Vị vua của vùng Mysore đã gửi các nghệ sĩ địa phương của mình đến Ba Tư (Persia) để học quy trình làm đồ chơi bằng gỗ.</div>
+
+                <p><b>Phân tích:</b> Câu này ❌ Sai ở chi tiết "sent... to Persia" (gửi đến Ba Tư). Thực tế vị vua đã <span class='hl-green'>mời nghệ nhân từ Ba Tư đến Ấn Độ</span> để dạy.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn 2): "He took the initiative to invite artisans from Persia and train the local artists to learn the process..."</div>
+
+                <p>👉 Dịch: "Ông ấy đã chủ động <b><span style='color:red'>mời các nghệ nhân từ Ba Tư đến</span></b> và đào tạo các nghệ sĩ địa phương học quy trình..."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 11, type: "MC",
+
+            question: "3. Many types of wood are used in the process of making wooden toys.",
+
+            options: [
+
+                {text: "True (Đúng)", correct: true},
+
+                {text: "False (Sai)", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Nhiều loại gỗ được sử dụng trong quá trình làm đồ chơi bằng gỗ.</div>
+
+                <p><b>Phân tích:</b> Câu này ✅ Đúng vì bài đọc đã liệt kê một loạt các loại gỗ khác nhau.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn 3): "They are only using ivory wood... rarely rosewood and sandalwood... also started to use other woods like teak, pine, rubber and cedar wood."</div>
+
+                <p>👉 Dịch: "Họ chỉ sử dụng gỗ ngà... hiếm khi dùng gỗ trắc và gỗ đàn hương... cũng bắt đầu sử dụng <b><span style='color:red'>các loại gỗ khác như gỗ tếch, gỗ thông, gỗ cao su và gỗ tuyết tùng</span></b>." Việc dùng nhiều loại gỗ là sự thật.</p>
+
+            `
+
+        },
+
+        {
+
+            id: 12, type: "MC",
+
+            question: "4. The manufacture of the wooden toys includes a number of steps.",
+
+            options: [
+
+                {text: "True (Đúng)", correct: true},
+
+                {text: "False (Sai)", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Việc sản xuất đồ chơi bằng gỗ bao gồm một số bước (nhiều bước).</div>
+
+                <p><b>Phân tích:</b> Câu này ✅ Đúng vì bài viết dùng từ "stages" (các giai đoạn) và liệt kê một chuỗi hành động.</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn 4): "Manufacturing stages include procuring the wood, seasoning the wood, cutting... pruning and carving... applying the colours and finally polishing..."</div>
+
+                <p>👉 Dịch: "<b><span style='color:red'>Các công đoạn sản xuất bao gồm</span></b> thu mua gỗ, phơi sấy, cắt... cắt tỉa và chạm khắc... tô màu và cuối cùng là đánh bóng..." Rất nhiều bước cụ thể được nêu ra.</p>
+
+            `
+
+        },
+
+        {
+
+            id: 13, type: "MC",
+
+            question: "5. People engaging in the making of these toys mostly work in small factories.",
+
+            options: [
+
+                {text: "True (Đúng)", correct: false},
+
+                {text: "False (Sai)", correct: true}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Những người tham gia làm những đồ chơi này HẦU HẾT làm việc trong các xưởng nhỏ (small factories).</div>
+
+                <p><b>Phân tích:</b> Câu này ❌ Sai ở chữ <span class='hl-red'>mostly (hầu hết)</span>. Dữ liệu bài đọc cho thấy số lượng cơ sở sản xuất gia đình (home manufacturing units) nhiều gấp 5 lần xưởng nhỏ (50).</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng (Đoạn cuối): "...working in 254 home manufacturing units and 50 small factories..."</div>
+
+                <p>👉 Dịch: "...làm việc trong <b><span style='color:red'>254 cơ sở sản xuất gia đình</span></b> và <b><span style='color:red'>50 xưởng nhỏ</span></b>..." Do đó, họ hầu hết làm việc ở nhà/cơ sở gia đình chứ không phải xưởng nhỏ.</p>
+
+            `
+
+        },
+
+        {
+
+            id: 14, type: "MC",
+
+            question: "6. According to the passage, the wooden toys in Channapatna...",
+
+            options: [
+
+                {text: "a. appeared before the period of Tipu Sultan", correct: false},
+
+                {text: "b. were greatly admired by the people of Mysore", correct: false},
+
+                {text: "c. are rarely made of rosewood and sandalwood", correct: true},
+
+                {text: "d. only lasted for nearly two centuries", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Theo đoạn văn, những đồ chơi bằng gỗ ở Channapatna...</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='hl-red'>xuất hiện TRƯỚC thời kỳ của Tipu Sultan.</span> ❌ Sai vì bài viết nói nó bắt nguồn TỪ (dates back to) thời kỳ này.</p>
+
+                <p>B. <span class='hl-red'>được người dân Mysore vô cùng ngưỡng mộ.</span> ❌ Sai vì người ngưỡng mộ là vị vua Tipu Sultan chứ không phải toàn bộ người dân.</p>
+
+                <p>C. <span class='hl-green'>hiếm khi được làm bằng gỗ trắc và gỗ đàn hương.</span> ✅ Đúng.</p>
+
+                <p>D. <span class='hl-red'>chỉ tồn tại trong gần hai thế kỷ (sau đó biến mất).</span> ❌ Sai vì hiện tại họ VẪN đang làm (still follow).</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng cho ý C (Đoạn 3): "...and very rarely rosewood and sandalwood are used."</div>
+
+                <p>👉 Dịch: "...và <b><span style='color:red'>rất hiếm khi gỗ trắc và gỗ đàn hương được sử dụng.</span></b>"</p>
+
+            `
+
+        },
+
+        {
+
+            id: 15, type: "MC",
+
+            question: "7. The idiom 'take the initiative' in paragraph 2 means...",
+
+            options: [
+
+                {text: "a. be the first one to do something", correct: true},
+
+                {text: "b. be able to control the situation", correct: false},
+
+                {text: "c. make good use of something", correct: false},
+
+                {text: "d. make the effort to do something", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Thành ngữ 'take the initiative' (chủ động khởi xướng) trong đoạn 2 có nghĩa là...</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. <span class='hl-green'>be the first one to do something (là người đầu tiên làm điều gì đó / tiên phong khởi xướng).</span> ✅ Đúng sát nghĩa nhất với <span class='p-word'>initiative</span> (sáng kiến, sự tiên phong).</p>
+
+                <p>B. <span class='hl-red'>be able to control the situation (có khả năng kiểm soát tình hình).</span> ❌ Sai.</p>
+
+                <p>C. <span class='hl-red'>make good use of something (tận dụng tốt điều gì đó).</span> ❌ Sai.</p>
+
+                <p>D. <span class='hl-red'>make the effort to do something (nỗ lực làm gì đó).</span> ❌ Sai. Nỗ lực (effort) khác với Chủ động khởi xướng (initiative).</p>
+
+                <div class='exp-quote'>🔍 <span class='p-grammar'>Ghi nhớ Thành ngữ:</span> Take the initiative to V = Chủ động/Tiên phong làm gì.</div>
+
+                <p>👉 Dịch trong bài: "Ông ấy đã <b><span style='color:red'>tiên phong (chủ động)</span></b> mời các nghệ nhân từ Ba Tư đến..."</p>
+
+            `
+
+        },
+
+        {
+
+            id: 16, type: "MC",
+
+            question: "8. Which of the following is NOT mentioned?",
+
+            options: [
+
+                {text: "a. Natural dyes are used in order to make the toys safe for kids.", correct: false},
+
+                {text: "b. Local artists now stop using the traditional method of making these toys.", correct: true},
+
+                {text: "c. Channapatna is a city located in Ramanagara District in India.", correct: false},
+
+                {text: "d. The handmade lacquer wooden toys in Channapatna are globally famous.", correct: false}
+
+            ],
+
+            explanation: `
+
+                <div class='exp-title'>🎯 Dịch câu hỏi: Điều nào sau đây KHÔNG ĐƯỢC NHẮC ĐẾN (tức là sai so với bài đọc)?</div>
+
+                <p><b>Phân tích 4 đáp án:</b></p>
+
+                <p>A. Có nhắc đến (Đoạn 5): "Vegetable dyes are used... safe for use by children".</p>
+
+                <p>B. <span class='hl-green'>Nghệ sĩ địa phương hiện nay ĐÃ NGỪNG sử dụng phương pháp làm đồ chơi truyền thống.</span> ✅ Đúng là ĐÁP ÁN CẦN CHỌN vì điều này ❌ Sai so với bài đọc. Bài đọc nói họ VẪN TIẾP TỤC (still follow).</p>
+
+                <p>C. Có nhắc đến (Đoạn 1): "Channapatna is a city in Ramanagara District... India".</p>
+
+                <p>D. Có nhắc đến (Đoạn 1): "famous handmade lacquer wooden toys all over the world".</p>
+
+                <div class='exp-quote'>🔍 Dẫn chứng cho sự sai của ý B (Đoạn 3): "The artisans still follow the traditional method of making the toys for nearly two centuries."</div>
+
+                <p>👉 Dịch: "Các nghệ nhân <b><span style='color:red'>vẫn tuân theo (still follow)</span></b> phương pháp truyền thống..." chứ không hề dừng lại (stop).</p>
+
+            `
+
+        },
+
+
+
+         ];
+
+
+
+    // --- LOGIC ---
+
+    let currentScore = 0;
+
+    let answeredQuestions = new Set();
+
+
+
+    // Audio Context Setup
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    const audioCtx = new AudioContext();
+
+
+
+    function playTone(frequency, type, duration, vol=0.1) {
+
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+
+        const oscillator = audioCtx.createOscillator();
+
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = type;
+
+        oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+        gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+        oscillator.connect(gainNode);
+
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.start();
+
+        oscillator.stop(audioCtx.currentTime + duration);
+
+    }
+
+
+
+    function playDing() {
+
+        playTone(600, 'sine', 0.1);
+
+        setTimeout(() => playTone(800, 'sine', 0.3), 100);
+
+    }
+
+
+
+    function playTingTing() {
+
+        playTone(300, 'square', 0.1, 0.05);
+
+        setTimeout(() => playTone(250, 'square', 0.2, 0.05), 150);
+
+    }
+
+
+
+    // Toggle Translation
+
+    window.toggleDich = function(id) {
+
+        const el = document.getElementById(id);
+
+        if(el.style.display === 'block') {
+
+            el.style.display = 'none';
+
+        } else {
+
+            el.style.display = 'block';
+
+            el.style.animation = 'fadeIn 0.5s ease';
+
+        }
+
+    }
+
+
+
+    // Shuffle Array
+
+    function shuffleArray(array) {
+
+        for (let i = array.length - 1; i > 0; i--) {
+
+            const j = Math.floor(Math.random() * (i + 1));
+
+            [array[i], array[j]] = [array[j], array[i]];
+
+        }
+
+        return array;
+
+    }
+
+
+
+    // Render Quizzes
+
+    function renderQuizzes() {
+
+        const panel = document.getElementById('quiz-panel');
+
+        let html = '';
+
+        
+
+        quizData.forEach((q, index) => {
+
+            let shuffledOptions = shuffleArray([...q.options]);
+
+            
+
+            html += `
+
+                <div class="glass-card" id="q-card-${q.id}">
+
+                    <div class="question-text">Câu ${index + 1}: ${q.question}</div>
+
+                    <div class="options-grid" id="options-${q.id}">
+
+            `;
+
+            
+
+            shuffledOptions.forEach((opt, optIndex) => {
+
+                html += `<button class="btn-option" onclick="checkAnswer(${q.id}, ${opt.correct}, this, 'options-${q.id}')">${opt.text}</button>`;
+
+            });
+
+            
+
+            html += `
+
+                    </div>
+
+                    <div class="explanation" id="exp-${q.id}">
+
+                        ${q.explanation}
+
+                    </div>
+
+                </div>
+
+            `;
+
+        });
+
+
+
+        html += `<button class="btn-submit" onclick="submitQuiz()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>`;
+
+        panel.innerHTML = html;
+
+    }
+
+
+
+    // Check Answer
+
+    window.checkAnswer = function(questionId, isCorrect, btnElement, optionsContainerId) {
+
+        if(answeredQuestions.has(questionId)) return; // Already answered
+
+        
+
+        answeredQuestions.add(questionId);
+
+        const container = document.getElementById(optionsContainerId);
+
+        const buttons = container.getElementsByClassName('btn-option');
+
+        
+
+        // Disable all buttons in this question
+
+        for(let btn of buttons) {
+
+            btn.style.pointerEvents = 'none';
+
+        }
+
+
+
+        if(isCorrect) {
+
+            btnElement.classList.add('correct');
+
+            playDing();
+
+            fireConfetti(btnElement);
+
+            currentScore++;
+
+        } else {
+
+            btnElement.classList.add('wrong');
+
+            btnElement.classList.add('shake');
+
+            playTingTing();
+
+            
+
+            // Find and highlight the correct one
+
+            for(let btn of buttons) {
+
+                // We need to match by text logic, but we can't easily access the correct object here cleanly without refactoring.
+
+                // Simple workaround: We check if the button text is the correct one from the original data.
+
+                const qData = quizData.find(q => q.id === questionId);
+
+                const correctText = qData.options.find(o => o.correct).text;
+
+                if(btn.innerText === correctText) {
+
+                    btn.style.border = '3px solid #52b788';
+
+                    btn.style.background = '#e9f5ec';
+
+                }
+
+            }
+
+        }
+
+        
+
+        // Show explanation
+
+        const expDiv = document.getElementById(`exp-${questionId}`);
+
+        expDiv.style.display = 'block';
+
+    }
+
+
+
+    // Simple DOM Confetti
+
+    function fireConfetti(element) {
+
+        const container = document.getElementById('confetti-container');
+
+        const rect = element.getBoundingClientRect();
+
+        const colors = ['#ff0a54', '#ff477e', '#ff7096', '#ff85a1', '#fbb1bd', '#f9bec7'];
+
+        
+
+        for(let i=0; i<30; i++) {
+
+            const confetti = document.createElement('div');
+
+            confetti.classList.add('confetti-piece');
+
+            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+            confetti.style.left = rect.left + (rect.width/2) + 'px';
+
+            confetti.style.top = rect.top + 'px';
+
+            
+
+            const dx = (Math.random() - 0.5) * 300;
+
+            const dy = (Math.random() - 1) * 300;
+
+            const rot = Math.random() * 360;
+
+            
+
+            confetti.animate([
+
+                { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+
+                { transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)`, opacity: 0 }
+
+            ], {
+
+                duration: 1000 + Math.random()*1000,
+
+                easing: 'cubic-bezier(.37,0,.63,1)'
+
+            });
+
+            
+
+            container.appendChild(confetti);
+
+            setTimeout(() => confetti.remove(), 2000);
+
+        }
+
+    }
+
+
+
+    // Modal Logic
+
+    window.onload = function() {
+
+        document.getElementById('nameModal').style.display = 'flex';
+
+    }
+
+
+
+    window.startQuiz = function() {
+
+        const name = document.getElementById('studentName').value.trim();
+
+        if(name === "") {
+
+            alert("Em hãy nhập tên để bắt đầu nhé!");
+
+            return;
+
+        }
+
+        document.getElementById('nameModal').style.display = 'none';
+
+        renderQuizzes();
+
+    }
+
+
+
+    window.submitQuiz = function() {
+
+        const name = document.getElementById('studentName').value.trim();
+
+        const total = quizData.length;
+
+        
+
+        if(answeredQuestions.size < total) {
+
+            const cf = confirm(`Em mới làm được ${answeredQuestions.size}/${total} câu. Em có chắc chắn muốn nộp bài chưa?`);
+
+            if(!cf) return;
+
+        }
+
+
+
+        const score10 = ((currentScore / total) * 10).toFixed(1);
+
+        
+
+        document.getElementById('resultName').innerText = `Học sinh: ${name}`;
+
+        document.getElementById('resultScore').innerText = `${currentScore}/${total}`;
+
+        document.getElementById('resultScale10').innerText = `Điểm hệ 10: ${score10} / 10 Điểm`;
+
+        
+
+        const memeEl = document.getElementById('resultMeme');
+
+        const cmtEl = document.getElementById('teacherComment');
+
+        
+
+        if(score10 == 10) {
+
+            memeEl.innerText = "🤩";
+
+            cmtEl.innerHTML = "<b>Ms. Chí Nên khen:</b> Xuất sắc tuyệt đối! Thiên tài ngôn ngữ là đây chứ đâu! Xin chúc mừng em!";
+
+        } else if (score10 >= 8) {
+
+            memeEl.innerText = "😎";
+
+            cmtEl.innerHTML = "<b>Ms. Chí Nên khen:</b> Quá giỏi! Em đã nắm rất chắc từ vựng và ngữ pháp. Cố lên chút nữa là đạt điểm tối đa nha!";
+
+        } else if (score10 >= 6) {
+
+            memeEl.innerText = "🤗";
+
+            cmtEl.innerHTML = "<b>Ms. Chí Nên dặn:</b> Tốt lắm! Tuy nhiên em nhớ đọc kỹ phần <i>Giải thích chi tiết</i> bên dưới để tránh mắc lại các bẫy nhỏ nhé.";
+
+        } else {
+
+            memeEl.innerText = "🥺";
+
+            cmtEl.innerHTML = "<b>Ms. Chí Nên dặn:</b> Đừng buồn! Đọc hiểu luôn là phần khó nhằn. Em hãy đọc lại Bảng từ vựng và phần Giải thích chi tiết, đảm bảo lần sau em sẽ làm tốt hơn rất nhiều!";
+
+        }
+
+
+
+        document.getElementById('resultModal').style.display = 'flex';
+
+        playDing();
+
+        setTimeout(playDing, 200);
+
+        setTimeout(playDing, 400);
+
+    }
+
+</script>
+
+</body>
+
 </html>

@@ -1,796 +1,1591 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading Challenge - Ms MS Chí Nên</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
-    <style>
-        :root {
-            /* Palette chủ đề Art (Tự động hóa dựa trên topic) */
-            --primary-color: #6C5CE7; /* Creative Purple */
-            --secondary-color: #00CEC9; /* Teal Art */
-            --accent-color: #FD79A8; /* Pink Pastel */
-            --success-color: #00b894; /* Green */
-            --error-color: #ff7675; /* Red */
-            --bg-color: #dfe6e9;
-            --card-bg: #ffffff;
-            --text-color: #2d3436;
-        }
-
-        * {
-            box-sizing: border-box;
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary-color) #f1f1f1;
-        }
-
-        body {
-            font-family: 'Nunito', sans-serif;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            overflow: hidden;
-            color: var(--text-color);
-            /* Dynamic Background SVG with Emojis */
-            background-color: #e0e0e0;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ctext x='10' y='30' font-size='20'%3E🎨%3C/text%3E%3Ctext x='50' y='70' font-size='20'%3E🖌️%3C/text%3E%3Ctext x='80' y='20' font-size='20'%3E✏️%3C/text%3E%3C/svg%3E"), radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(223,230,233,0.9) 100%);
-        }
-
-        /* --- Header & Timer --- */
-        header {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            color: white;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            height: 60px;
-            z-index: 100;
-            position: relative;
-        }
-
-        .teacher-brand {
-            font-family: 'Quicksand', sans-serif;
-            font-weight: 800;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .timer-container {
-            background: rgba(255,255,255,0.2);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: 800;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .timer-container:hover {
-            transform: scale(1.05);
-            background: rgba(255,255,255,0.3);
-        }
-
-        /* --- Main Layout Split Screen --- */
-        .main-container {
-            display: flex;
-            height: calc(100vh - 60px);
-        }
-
-        /* LEFT PANEL: Reading */
-        .panel-left {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            border-right: 2px solid #ddd;
-            background: rgba(255,255,255,0.95);
-        }
-
-        .reading-title {
-            color: var(--primary-color);
-            border-bottom: 3px solid var(--accent-color);
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .course-block {
-            background: #f8f9fa;
-            border-left: 5px solid var(--secondary-color);
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 0 10px 10px 0;
-            position: relative;
-        }
-
-        .course-header {
-            font-weight: 800;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-            font-size: 1.1rem;
-        }
-
-        .trans-btn {
-            background: #dfe6e9;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            color: #636e72;
-            margin-top: 10px;
-            font-weight: 700;
-            transition: 0.2s;
-        }
-
-        .trans-btn:hover {
-            background: var(--secondary-color);
-            color: white;
-        }
-
-        .translation-text {
-            display: none;
-            margin-top: 10px;
-            padding: 10px;
-            background: #eefbfb;
-            border-radius: 5px;
-            color: #2d3436;
-            font-style: italic;
-            border: 1px dashed var(--secondary-color);
-        }
-
-        /* RIGHT PANEL: Exercises */
-        .panel-right {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: rgba(240, 240, 240, 0.6);
-        }
-
-        .question-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            position: relative;
-            transition: transform 0.3s;
-        }
-
-        .question-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .q-number {
-            background: var(--primary-color);
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            box-shadow: 0 3px 0 #4834d4;
-        }
-
-        .person-desc {
-            font-size: 1.05rem;
-            line-height: 1.6;
-            margin-bottom: 15px;
-        }
-
-        /* Options Grid (A-H) */
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        .option-btn {
-            background: white;
-            border: 2px solid #b2bec3;
-            border-radius: 12px;
-            padding: 10px;
-            font-size: 1rem;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.1s;
-            box-shadow: 0 4px 0 #b2bec3;
-            color: #636e72;
-        }
-
-        .option-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 0 0 #b2bec3;
-        }
-
-        .option-btn:hover:not(:disabled) {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        /* States */
-        .option-btn.correct {
-            background: var(--success-color);
-            color: white;
-            border-color: #008f6e;
-            box-shadow: 0 4px 0 #008f6e;
-        }
-        
-        .option-btn.wrong {
-            background: var(--error-color);
-            color: white;
-            border-color: #d63031;
-            box-shadow: 0 4px 0 #d63031;
-            animation: shake 0.5s;
-        }
-
-        /* Feedback Section */
-        .feedback-container {
-            display: none;
-            margin-top: 20px;
-            border-top: 2px dashed #dfe6e9;
-            padding-top: 15px;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            background: #eee;
-            color: #636e72;
-            transition: 0.3s;
-        }
-
-        .tab-btn.active {
-            background: var(--primary-color);
-            color: white;
-            box-shadow: 0 3px 10px rgba(108, 92, 231, 0.3);
-        }
-
-        .tab-content {
-            display: none;
-            background: #f1f2f6;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s;
-        }
-
-        .ms-mai-an {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .ms-mai-an img {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-        }
-
-        /* Glossary Table */
-        .glossary-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-        
-        .glossary-table th {
-            background: var(--secondary-color);
-            color: white;
-            padding: 10px;
-            text-align: left;
-        }
-        
-        .glossary-table td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        /* Submit Button */
-        .submit-area {
-            text-align: center;
-            margin: 30px 0;
-            padding-bottom: 50px;
-        }
-
-        .btn-submit {
-            background: linear-gradient(45deg, #FF9F43, #EE5A24);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.5rem;
-            font-weight: 800;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 8px 0 #b33939, 0 15px 20px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
-            font-family: 'Quicksand', sans-serif;
-            text-transform: uppercase;
-        }
-
-        .btn-submit:active {
-            transform: translateY(8px);
-            box-shadow: 0 0 0 #b33939;
-        }
-
-        /* Animations */
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px) rotate(-5deg); }
-            50% { transform: translateX(5px) rotate(5deg); }
-            75% { transform: translateX(-5px) rotate(-5deg); }
-            100% { transform: translateX(0); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 500px;
-            width: 90%;
-            position: relative;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='2' fill='%23dfe6e9'/%3E%3C/svg%3E");
-        }
-
-        .score-circle {
-            width: 120px;
-            height: 120px;
-            background: var(--primary-color);
-            color: white;
-            font-size: 2.5rem;
-            font-weight: 800;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto 20px;
-            border: 5px solid white;
-            box-shadow: 0 0 0 5px var(--primary-color);
-        }
-
-        .modal-msg {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            color: #2d3436;
-        }
-
-    </style>
-</head>
-<body>
-
-<header>
-    <div class="teacher-brand">
-        👩‍🏫 Giáo viên: Ms MS Chí Nên (ULIS)
-    </div>
-    <div class="timer-container" onclick="toggleTimer()">
-        <span>⏱️</span>
-        <span id="timer">10:00</span>
-    </div>
-</header>
-
-<div class="main-container">
-    <div class="panel-left">
-        <h2 class="reading-title">📖 Reading: Art Courses</h2>
-        
-        <div id="reading-content">
-            </div>
-
-        <h3 style="color: var(--primary-color); margin-top: 30px;">📚 Glossary (Từ vựng học thuật)</h3>
-        <table class="glossary-table">
-            <thead>
-                <tr>
-                    <th>Từ vựng (Word)</th>
-                    <th>Loại từ</th>
-                    <th>Nghĩa tiếng Việt</th>
-                </tr>
-            </thead>
-            <tbody id="glossary-body"></tbody>
-        </table>
-    </div>
-
-    <div class="panel-right">
-        <div style="background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-style: italic; border-left: 4px solid var(--accent-color);">
-            <strong>Nhiệm vụ:</strong> Đọc mô tả về 5 người bên dưới và chọn khóa học (A-H) phù hợp nhất với nhu cầu của họ.
-        </div>
-        <div id="exercise-list">
-            </div>
-
-        <div class="submit-area">
-            <button class="btn-submit" onclick="submitExam()">Nộp Bài ✨</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="resultModal">
-    <div class="modal-content">
-        <div class="score-circle" id="finalScore">0/5</div>
-        <h2 id="resultTitle">Tuyệt vời!</h2>
-        <p class="modal-msg" id="resultMsg">Bạn đã làm rất tốt.</p>
-        <button class="btn-submit" style="font-size: 1rem; padding: 10px 30px;" onclick="closeModal()">Xem lại bài</button>
-    </div>
-</div>
-
-<script>
-    // Âm thanh 'Ding' (Đúng)
-    const soundCorrect = new Audio("data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="); // Placeholder safe
-    // Note: Creating real base64 sounds is heavy, using visual cues primarily.
-    // I will simulate sound with visual cues (Shake/Confetti) as requested.
-</script>
-
-<script>
-    // --- DỮ LIỆU BÀI ĐỌC & CÂU HỎI ---
-    
-    const courses = {
-        A: {
-            title: "A. Get Artistic",
-            text: "Teachers here always have ideas to get you drawing, painting and printing – but you can use your own material, too. The studio-based course focuses on portraits – you’ll learn how to develop whatever you’ve brought, or use famous portraits, to create pictures of people. One-to-one sessions also available.",
-            trans: "Các giáo viên ở đây luôn có ý tưởng để giúp bạn vẽ, tô màu và in ấn – nhưng bạn cũng có thể sử dụng tài liệu của riêng mình. Khóa học tại phòng thu này tập trung vào chân dung – bạn sẽ học cách phát triển bất cứ thứ gì bạn mang theo, hoặc sử dụng các bức chân dung nổi tiếng, để tạo ra tranh vẽ người. Cũng có sẵn các buổi học kèm 1-1."
-        },
-        B: {
-            title: "B. Art Attack!",
-            text: "Learn how to create pictures, perhaps based on your own writing, to put into a short book or poster, using simple techniques that don’t require technology. Discover, too, how to put a book together, with a professional-looking cover designed and hand-printed by you. Perfect for anyone considering further studies in art.",
-            trans: "Học cách tạo ra những bức tranh, có thể dựa trên chính bài viết của bạn, để đưa vào một cuốn sách ngắn hoặc áp phích, sử dụng các kỹ thuật đơn giản không cần công nghệ. Khám phá cách đóng sách, với bìa nhìn chuyên nghiệp được thiết kế và in thủ công bởi chính bạn. Hoàn hảo cho bất kỳ ai đang cân nhắc học nâng cao về nghệ thuật."
-        },
-        C: {
-            title: "C. Art and imagination",
-            text: "If you like designing clothes, you’ll enjoy learning to use special computer software here to create and print out designs for tops, shoes and hats that people would love to wear! You’ll go home with a folder of work, perfect to present when applying for a higher-level art course. Individual classes also available.",
-            trans: "Nếu bạn thích thiết kế quần áo, bạn sẽ thích học cách sử dụng phần mềm máy tính đặc biệt ở đây để tạo và in các thiết kế cho áo, giày và mũ mà mọi người thích mặc! Bạn sẽ về nhà với một tập hồ sơ các tác phẩm, hoàn hảo để trình bày khi nộp đơn vào khóa học nghệ thuật cấp cao hơn. Cũng có các lớp học cá nhân."
-        },
-        D: {
-            title: "D. Create!",
-            text: "Draw and paint in different situations – in the studio or even in the park! Gallery visits are also included, and you’re taught how to base your work on studies of landscapes and portraits by well-known artists. Teachers also encourage you to experiment with various styles and methods.",
-            trans: "Vẽ và tô màu trong các tình huống khác nhau – trong phòng thu hoặc thậm chí trong công viên! Các chuyến thăm phòng trưng bày cũng được bao gồm, và bạn được dạy cách dựa trên các nghiên cứu về phong cảnh và chân dung của các nghệ sĩ nổi tiếng. Giáo viên cũng khuyến khích bạn thử nghiệm với nhiều phong cách và phương pháp khác nhau."
-        },
-        E: {
-            title: "E. More Art Now!",
-            text: "Improve how you paint people and places on this studio-based course. The teachers bring in work, ranging from photos to posters, to give you ideas. And use the studio website to show your work and exchange ideas with other students – useful for anyone wishing to study art at a higher level.",
-            trans: "Cải thiện cách bạn vẽ người và cảnh vật trong khóa học tại phòng thu này. Các giáo viên mang đến các tác phẩm, từ ảnh chụp đến áp phích, để cung cấp ý tưởng cho bạn. Và sử dụng trang web của phòng thu để hiển thị tác phẩm của bạn và trao đổi ý tưởng với các sinh viên khác – hữu ích cho bất kỳ ai muốn học nghệ thuật ở cấp độ cao hơn."
-        },
-        F: {
-            title: "F. Art Workshop",
-            text: "Do some drawings, in the studio or outside, or bring along your own. The teachers will then help you to turn them into wonderful printed designs, using simple methods you can try yourself after the course. You’ll then transfer your designs onto cotton and silk, using special paints – perfect to use in sewing projects afterwards.",
-            trans: "Thực hiện một số bản vẽ, trong phòng thu hoặc bên ngoài, hoặc mang theo của riêng bạn. Sau đó, giáo viên sẽ giúp bạn biến chúng thành những thiết kế in tuyệt vời, sử dụng các phương pháp đơn giản mà bạn có thể tự thử sau khóa học. Sau đó, bạn sẽ chuyển các thiết kế của mình lên vải cotton và lụa, sử dụng các loại sơn đặc biệt – hoàn hảo để sử dụng trong các dự án may vá sau này."
-        },
-        G: {
-            title: "G. Do it yourself",
-            text: "Try making art to go with your stories here – working inside or outside! You’ll get ideas from books showing famous paintings and cartoons, and then create and print pictures of people to accompany your stories, using digital design techniques. There’s even one-to-one teaching if you’d prefer.",
-            trans: "Hãy thử làm nghệ thuật đi kèm với những câu chuyện của bạn tại đây – làm việc trong nhà hoặc ngoài trời! Bạn sẽ lấy ý tưởng từ những cuốn sách hiển thị các bức tranh và phim hoạt hình nổi tiếng, sau đó tạo và in hình ảnh con người để minh họa cho câu chuyện của mình, sử dụng các kỹ thuật thiết kế kỹ thuật số. Thậm chí có cả dạy kèm 1-1 nếu bạn thích."
-        },
-        H: {
-            title: "H. The Studio",
-            text: "Come and experiment with digital design. You’ll get great ideas through research, then using special software, create your pictures and add details on screen, whether it’s clothes, people, books or something to put on the wall. Upload your work on the studio website and get opinions from your classmates there – and comment on theirs!",
-            trans: "Hãy đến và thử nghiệm với thiết kế kỹ thuật số. Bạn sẽ có những ý tưởng tuyệt vời thông qua nghiên cứu, sau đó sử dụng phần mềm đặc biệt, tạo hình ảnh của bạn và thêm chi tiết trên màn hình, cho dù đó là quần áo, con người, sách hay thứ gì đó để treo trên tường. Tải tác phẩm của bạn lên trang web của phòng thu và nhận ý kiến từ các bạn cùng lớp ở đó – và bình luận về bài của họ!"
-        }
-    };
-
-    const questions = [
-        {
-            id: 1,
-            name: "Rafa",
-            text: "Rafa wants to produce artwork to support his art college application. He’s written stories, which he’d like to publish, and wants to learn how to include drawings in them, without using a computer.",
-            trans: "Rafa muốn sản xuất các tác phẩm nghệ thuật để hỗ trợ đơn đăng ký vào trường cao đẳng nghệ thuật của mình. Cậu ấy đã viết những câu chuyện mà cậu ấy muốn xuất bản, và muốn học cách đưa các bản vẽ vào đó mà không cần sử dụng máy tính.",
-            correct: "B",
-            keywords: [
-                {q: "written stories... publish", t: "own writing... short book"},
-                {q: "without using a computer", t: "don't require technology"},
-                {q: "art college application", t: "considering further studies"}
-            ],
-            explanation: "Rafa cần một khóa học giúp cậu ấy xuất bản truyện (written stories) và không dùng máy tính (without using a computer). Khóa học B đề cập đến việc 'put into a short book' (làm sách) và 'don't require technology' (không cần công nghệ). Chính xác luôn nhé!"
-        },
-        {
-            id: 2,
-            name: "Simona",
-            text: "Simona enjoys creating art on her computer, and wants to find ways to improve the posters she makes on it. She also wants to share what she’s done with other students on the course.",
-            trans: "Simona thích sáng tạo nghệ thuật trên máy tính của mình và muốn tìm cách cải thiện các áp phích mà cô ấy làm trên đó. Cô ấy cũng muốn chia sẻ những gì mình đã làm với các sinh viên khác trong khóa học.",
-            correct: "H",
-            keywords: [
-                {q: "creating art on her computer", t: "experiment with digital design"},
-                {q: "share... with other students", t: "get opinions from your classmates"},
-                {q: "improve the posters", t: "create pictures... add details on screen"}
-            ],
-            explanation: "Simona thích dùng máy tính (on her computer) và muốn chia sẻ với bạn bè (share with other students). Khóa học H mời gọi 'digital design' (thiết kế số), sử dụng 'special software' và đặc biệt là 'Upload... get opinions from classmates' (Tải lên và nhận ý kiến từ bạn học). Chuẩn bài rồi!"
-        },
-        {
-            id: 3,
-            name: "Andrei",
-            text: "Andrei wants to try different painting techniques, and have trips to see the work of famous painters, to get ideas for his own pictures. He’d also like to try painting outdoors.",
-            trans: "Andrei muốn thử các kỹ thuật vẽ tranh khác nhau và có các chuyến đi xem tác phẩm của các họa sĩ nổi tiếng để lấy ý tưởng cho những bức tranh của riêng mình. Cậu ấy cũng muốn thử vẽ tranh ngoài trời.",
-            correct: "D",
-            keywords: [
-                {q: "try different painting techniques", t: "experiment with various styles"},
-                {q: "trips to see... famous painters", t: "Gallery visits... well-known artists"},
-                {q: "painting outdoors", t: "in the park"}
-            ],
-            explanation: "Andrei thích 'different techniques' (kỹ thuật khác lạ), đi thăm quan (trips) và vẽ ngoài trời (outdoors). Khóa học D đáp ứng tất cả: 'experiment with various styles', có 'Gallery visits' (thăm phòng tranh) và vẽ 'in the park' (trong công viên)."
-        },
-        {
-            id: 4,
-            name: "Nicola",
-            text: "Nicola enjoys printing by hand. She wants to print the patterns she’s created onto different materials, for her mother to make into clothes, and also learn basic printing techniques to use at home.",
-            trans: "Nicola thích in ấn bằng tay. Cô ấy muốn in các mẫu cô ấy đã tạo lên các chất liệu khác nhau, để mẹ cô ấy may thành quần áo, và cũng muốn học các kỹ thuật in cơ bản để sử dụng tại nhà.",
-            correct: "F",
-            keywords: [
-                {q: "printing by hand", t: "turn them into wonderful printed designs"},
-                {q: "different materials... clothes", t: "cotton and silk... sewing projects"},
-                {q: "use at home", t: "try yourself after the course"}
-            ],
-            explanation: "Nicola thích in thủ công (printing by hand) lên vải để làm quần áo (clothes). Khóa F dạy 'printed designs' lên 'cotton and silk' (vải bông và lụa) để dùng cho 'sewing projects' (dự án may vá). Quá hợp lý!"
-        },
-        {
-            id: 5,
-            name: "Karl",
-            text: "Karl enjoys taking photos of his family, and wants to use them as a basis for the art he produces. He’s like to go somewhere that also offers private lessons.",
-            trans: "Karl thích chụp ảnh gia đình mình và muốn sử dụng chúng làm cơ sở cho các tác phẩm nghệ thuật cậu ấy tạo ra. Cậu ấy muốn đến một nơi cũng cung cấp các bài học riêng.",
-            correct: "A",
-            keywords: [
-                {q: "photos of his family", t: "portraits... pictures of people"},
-                {q: "private lessons", t: "One-to-one sessions"}
-            ],
-            explanation: "Karl thích chụp ảnh gia đình (photos of family) và cần học riêng (private lessons). Khóa A tập trung vào 'portraits' (chân dung - liên quan đến ảnh gia đình) và cung cấp 'One-to-one sessions' (học 1 kèm 1). Đây chính là đáp án."
-        }
-    ];
-
-    const glossaryData = [
-        {w: "Portrait", type: "Noun (n)", m: "Chân dung (tranh/ảnh vẽ người)"},
-        {w: "Technique", type: "Noun (n)", m: "Kỹ thuật, phương pháp"},
-        {w: "Landscape", type: "Noun (n)", m: "Phong cảnh"},
-        {w: "Digital", type: "Adjective (adj)", m: "Kỹ thuật số (liên quan đến máy tính)"},
-        {w: "Experiment", type: "Verb (v)", m: "Thí nghiệm, thử nghiệm cái mới"},
-        {w: "Professional", type: "Adjective (adj)", m: "Chuyên nghiệp"},
-        {w: "Material", type: "Noun (n)", m: "Chất liệu, vật liệu"},
-        {w: "Exhibition/Gallery", type: "Noun (n)", m: "Triển lãm / Phòng trưng bày"},
-        {w: "Accompany", type: "Verb (v)", m: "Đi kèm, đồng hành"},
-        {w: "Transfer", type: "Verb (v)", m: "Chuyển đổi, di dời"}
-    ];
-
-    // --- LOGIC GAME ---
-
-    let score = 0;
-    let answeredCount = 0;
-    let timerInterval;
-    let timeRemaining = 600; // 10 minutes
-    let isPaused = true;
-
-    function init() {
-        renderReading();
-        renderExercises();
-        renderGlossary();
-    }
-
-    function renderReading() {
-        const container = document.getElementById('reading-content');
-        for (const [key, val] of Object.entries(courses)) {
-            container.innerHTML += `
-                <div class="course-block">
-                    <div class="course-header">${val.title}</div>
-                    <div>${val.text}</div>
-                    <button class="trans-btn" onclick="toggleTrans('trans-${key}')">🇻🇳 Bản dịch đầy đủ</button>
-                    <div id="trans-${key}" class="translation-text">${val.trans}</div>
-                </div>
-            `;
-        }
-    }
-
-    function renderExercises() {
-        const container = document.getElementById('exercise-list');
-        questions.forEach((q, index) => {
-            let optionsHtml = '<div class="options-grid">';
-            ['A','B','C','D','E','F','G','H'].forEach(opt => {
-                optionsHtml += `<button class="option-btn" id="btn-${q.id}-${opt}" onclick="checkAnswer(${q.id}, '${opt}', '${q.correct}')">${opt}</button>`;
-            });
-            optionsHtml += '</div>';
-
-            // Tạo bảng Keyword Paraphrase
-            let paraphraseHtml = '<table class="glossary-table" style="margin-top:0"><tr><th>Trong câu hỏi (Question)</th><th>Trong bài đọc (Text)</th></tr>';
-            q.keywords.forEach(k => {
-                paraphraseHtml += `<tr><td>${k.q}</td><td>${k.t}</td></tr>`;
-            });
-            paraphraseHtml += '</table>';
-
-            container.innerHTML += `
-                <div class="question-card" id="card-${q.id}">
-                    <div class="q-number">${index + 1}</div>
-                    <div class="person-desc">
-                        <strong>${q.name}:</strong> ${q.text}
-                    </div>
-                    ${optionsHtml}
-                    
-                    <div class="feedback-container" id="feedback-${q.id}">
-                        <div class="tabs">
-                            <button class="tab-btn active" onclick="switchTab(${q.id}, 'expl')">👩‍🏫 Giải thích</button>
-                            <button class="tab-btn" onclick="switchTab(${q.id}, 'trans')">🇻🇳 Dịch</button>
-                            <button class="tab-btn" onclick="switchTab(${q.id}, 'para')">🔄 Paraphrase</button>
-                        </div>
-                        <div id="tab-expl-${q.id}" class="tab-content active">
-                            <div class="ms-mai-an">
-                                <span>👩‍🏫 Ms MS Chí Nên:</span>
-                            </div>
-                            ${q.explanation}
-                        </div>
-                        <div id="tab-trans-${q.id}" class="tab-content">
-                            <p><strong>Câu hỏi:</strong> ${q.trans}</p>
-                        </div>
-                        <div id="tab-para-${q.id}" class="tab-content">
-                            ${paraphraseHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    function renderGlossary() {
-        const body = document.getElementById('glossary-body');
-        glossaryData.forEach(item => {
-            body.innerHTML += `<tr><td><strong>${item.w}</strong></td><td>${item.type}</td><td>${item.m}</td></tr>`;
-        });
-    }
-
-    // --- INTERACTION ---
-
-    function toggleTrans(id) {
-        const el = document.getElementById(id);
-        el.style.display = el.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function checkAnswer(qId, selectedOpt, correctOpt) {
-        // Disable all buttons in this question group
-        const btns = document.querySelectorAll(`#card-${qId} .option-btn`);
-        btns.forEach(btn => btn.disabled = true);
-
-        const selectedBtn = document.getElementById(`btn-${qId}-${selectedOpt}`);
-        const correctBtn = document.getElementById(`btn-${qId}-${correctOpt}`);
-
-        if (selectedOpt === correctOpt) {
-            selectedBtn.classList.add('correct');
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-            score++;
-        } else {
-            selectedBtn.classList.add('wrong');
-            correctBtn.classList.add('correct'); // Show correct answer
-            // Shake effect on card
-            const card = document.getElementById(`card-${qId}`);
-            card.style.animation = 'shake 0.5s';
-            setTimeout(() => card.style.animation = '', 500);
-        }
-
-        // Show feedback
-        document.getElementById(`feedback-${qId}`).style.display = 'block';
-        answeredCount++;
-    }
-
-    function switchTab(qId, type) {
-        // Hide all contents for this Q
-        document.querySelectorAll(`#feedback-${qId} .tab-content`).forEach(el => el.classList.remove('active'));
-        document.querySelectorAll(`#feedback-${qId} .tab-btn`).forEach(el => el.classList.remove('active'));
-
-        // Show selected
-        document.getElementById(`tab-${type}-${qId}`).classList.add('active');
-        // Update button style (simple logic searching by text content or index would be better, but keeping simple)
-        const btns = document.querySelectorAll(`#feedback-${qId} .tab-btn`);
-        if(type === 'expl') btns[0].classList.add('active');
-        if(type === 'trans') btns[1].classList.add('active');
-        if(type === 'para') btns[2].classList.add('active');
-    }
-
-    // --- TIMER ---
-    function toggleTimer() {
-        if (isPaused) {
-            isPaused = false;
-            timerInterval = setInterval(updateTimer, 1000);
-            document.querySelector('.timer-container').style.background = '#00b894';
-            document.querySelector('.timer-container').style.color = 'white';
-        } else {
-            clearInterval(timerInterval);
-            isPaused = true;
-            document.querySelector('.timer-container').style.background = 'rgba(255,255,255,0.2)';
-        }
-    }
-
-    function updateTimer() {
-        if (timeRemaining > 0) {
-            timeRemaining--;
-            const m = Math.floor(timeRemaining / 60);
-            const s = timeRemaining % 60;
-            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
-        } else {
-            clearInterval(timerInterval);
-            alert("Đã hết giờ làm bài! Hãy nộp bài để xem điểm nhé.");
-        }
-    }
-
-    // --- SUBMIT ---
-    function submitExam() {
-        clearInterval(timerInterval);
-        const modal = document.getElementById('resultModal');
-        const scoreEl = document.getElementById('finalScore');
-        const titleEl = document.getElementById('resultTitle');
-        const msgEl = document.getElementById('resultMsg');
-
-        scoreEl.innerText = `${score}/5`;
-        modal.style.display = 'flex';
-
-        if(score === 5) {
-            titleEl.innerText = "Xuất sắc! Thiên tài!";
-            msgEl.innerText = "Cô MS Chí Nên rất tự hào về em. Điểm tuyệt đối!";
-            confetti({ particleCount: 200, spread: 100 });
-        } else if (score >= 3) {
-            titleEl.innerText = "Làm tốt lắm!";
-            msgEl.innerText = "Kiến thức của em khá vững, nhưng hãy xem lại phần giải thích để hiểu sâu hơn nhé.";
-        } else {
-            titleEl.innerText = "Cố lên nhé!";
-            msgEl.innerText = "Đừng buồn, hãy đọc kỹ phần giải thích và bảng từ vựng. Lần sau chắc chắn sẽ tốt hơn!";
-        }
-    }
-
-    function closeModal() {
-        document.getElementById('resultModal').style.display = 'none';
-    }
-
-    // Run Init
-    init();
-
-</script>
-
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reading Challenge - Ms. Chí Nên</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    
+
+    <style>
+
+        :root {
+
+            /* Palette chủ đề Art (Tự động hóa dựa trên topic) */
+
+            --primary-color: #6C5CE7; /* Creative Purple */
+
+            --secondary-color: #00CEC9; /* Teal Art */
+
+            --accent-color: #FD79A8; /* Pink Pastel */
+
+            --success-color: #00b894; /* Green */
+
+            --error-color: #ff7675; /* Red */
+
+            --bg-color: #dfe6e9;
+
+            --card-bg: #ffffff;
+
+            --text-color: #2d3436;
+
+        }
+
+
+
+        * {
+
+            box-sizing: border-box;
+
+            scrollbar-width: thin;
+
+            scrollbar-color: var(--primary-color) #f1f1f1;
+
+        }
+
+
+
+        body {
+
+            font-family: 'Nunito', sans-serif;
+
+            margin: 0;
+
+            padding: 0;
+
+            height: 100vh;
+
+            overflow: hidden;
+
+            color: var(--text-color);
+
+            /* Dynamic Background SVG with Emojis */
+
+            background-color: #e0e0e0;
+
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ctext x='10' y='30' font-size='20'%3E🎨%3C/text%3E%3Ctext x='50' y='70' font-size='20'%3E🖌️%3C/text%3E%3Ctext x='80' y='20' font-size='20'%3E✏️%3C/text%3E%3C/svg%3E"), radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(223,230,233,0.9) 100%);
+
+        }
+
+
+
+        /* --- Header & Timer --- */
+
+        header {
+
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+
+            color: white;
+
+            padding: 10px 20px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+
+            height: 60px;
+
+            z-index: 100;
+
+            position: relative;
+
+        }
+
+
+
+        .teacher-brand {
+
+            font-family: 'Quicksand', sans-serif;
+
+            font-weight: 800;
+
+            font-size: 1.2rem;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+
+        .timer-container {
+
+            background: rgba(255,255,255,0.2);
+
+            padding: 5px 15px;
+
+            border-radius: 20px;
+
+            font-weight: 800;
+
+            font-size: 1.2rem;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            cursor: pointer;
+
+            transition: all 0.2s;
+
+        }
+
+
+
+        .timer-container:hover {
+
+            transform: scale(1.05);
+
+            background: rgba(255,255,255,0.3);
+
+        }
+
+
+
+        /* --- Main Layout Split Screen --- */
+
+        .main-container {
+
+            display: flex;
+
+            height: calc(100vh - 60px);
+
+        }
+
+
+
+        /* LEFT PANEL: Reading */
+
+        .panel-left {
+
+            flex: 1;
+
+            padding: 20px;
+
+            overflow-y: auto;
+
+            border-right: 2px solid #ddd;
+
+            background: rgba(255,255,255,0.95);
+
+        }
+
+
+
+        .reading-title {
+
+            color: var(--primary-color);
+
+            border-bottom: 3px solid var(--accent-color);
+
+            padding-bottom: 10px;
+
+            margin-bottom: 20px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 1px;
+
+        }
+
+
+
+        .course-block {
+
+            background: #f8f9fa;
+
+            border-left: 5px solid var(--secondary-color);
+
+            padding: 15px;
+
+            margin-bottom: 20px;
+
+            border-radius: 0 10px 10px 0;
+
+            position: relative;
+
+        }
+
+
+
+        .course-header {
+
+            font-weight: 800;
+
+            color: var(--primary-color);
+
+            margin-bottom: 5px;
+
+            font-size: 1.1rem;
+
+        }
+
+
+
+        .trans-btn {
+
+            background: #dfe6e9;
+
+            border: none;
+
+            padding: 5px 10px;
+
+            border-radius: 5px;
+
+            cursor: pointer;
+
+            font-size: 0.8rem;
+
+            color: #636e72;
+
+            margin-top: 10px;
+
+            font-weight: 700;
+
+            transition: 0.2s;
+
+        }
+
+
+
+        .trans-btn:hover {
+
+            background: var(--secondary-color);
+
+            color: white;
+
+        }
+
+
+
+        .translation-text {
+
+            display: none;
+
+            margin-top: 10px;
+
+            padding: 10px;
+
+            background: #eefbfb;
+
+            border-radius: 5px;
+
+            color: #2d3436;
+
+            font-style: italic;
+
+            border: 1px dashed var(--secondary-color);
+
+        }
+
+
+
+        /* RIGHT PANEL: Exercises */
+
+        .panel-right {
+
+            flex: 1;
+
+            padding: 20px;
+
+            overflow-y: auto;
+
+            background: rgba(240, 240, 240, 0.6);
+
+        }
+
+
+
+        .question-card {
+
+            background: white;
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            margin-bottom: 30px;
+
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+
+            position: relative;
+
+            transition: transform 0.3s;
+
+        }
+
+
+
+        .question-card:hover {
+
+            transform: translateY(-5px);
+
+        }
+
+
+
+        .q-number {
+
+            background: var(--primary-color);
+
+            color: white;
+
+            width: 30px;
+
+            height: 30px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            font-weight: bold;
+
+            position: absolute;
+
+            top: -10px;
+
+            left: -10px;
+
+            box-shadow: 0 3px 0 #4834d4;
+
+        }
+
+
+
+        .person-desc {
+
+            font-size: 1.05rem;
+
+            line-height: 1.6;
+
+            margin-bottom: 15px;
+
+        }
+
+
+
+        /* Options Grid (A-H) */
+
+        .options-grid {
+
+            display: grid;
+
+            grid-template-columns: repeat(4, 1fr);
+
+            gap: 10px;
+
+        }
+
+
+
+        .option-btn {
+
+            background: white;
+
+            border: 2px solid #b2bec3;
+
+            border-radius: 12px;
+
+            padding: 10px;
+
+            font-size: 1rem;
+
+            font-weight: 800;
+
+            cursor: pointer;
+
+            transition: all 0.1s;
+
+            box-shadow: 0 4px 0 #b2bec3;
+
+            color: #636e72;
+
+        }
+
+
+
+        .option-btn:active {
+
+            transform: translateY(4px);
+
+            box-shadow: 0 0 0 #b2bec3;
+
+        }
+
+
+
+        .option-btn:hover:not(:disabled) {
+
+            border-color: var(--primary-color);
+
+            color: var(--primary-color);
+
+        }
+
+
+
+        /* States */
+
+        .option-btn.correct {
+
+            background: var(--success-color);
+
+            color: white;
+
+            border-color: #008f6e;
+
+            box-shadow: 0 4px 0 #008f6e;
+
+        }
+
+        
+
+        .option-btn.wrong {
+
+            background: var(--error-color);
+
+            color: white;
+
+            border-color: #d63031;
+
+            box-shadow: 0 4px 0 #d63031;
+
+            animation: shake 0.5s;
+
+        }
+
+
+
+        /* Feedback Section */
+
+        .feedback-container {
+
+            display: none;
+
+            margin-top: 20px;
+
+            border-top: 2px dashed #dfe6e9;
+
+            padding-top: 15px;
+
+        }
+
+
+
+        .tabs {
+
+            display: flex;
+
+            gap: 10px;
+
+            margin-bottom: 10px;
+
+        }
+
+
+
+        .tab-btn {
+
+            flex: 1;
+
+            padding: 8px;
+
+            border: none;
+
+            border-radius: 20px;
+
+            font-weight: 700;
+
+            font-size: 0.85rem;
+
+            cursor: pointer;
+
+            background: #eee;
+
+            color: #636e72;
+
+            transition: 0.3s;
+
+        }
+
+
+
+        .tab-btn.active {
+
+            background: var(--primary-color);
+
+            color: white;
+
+            box-shadow: 0 3px 10px rgba(108, 92, 231, 0.3);
+
+        }
+
+
+
+        .tab-content {
+
+            display: none;
+
+            background: #f1f2f6;
+
+            padding: 15px;
+
+            border-radius: 10px;
+
+            font-size: 0.95rem;
+
+            line-height: 1.5;
+
+        }
+
+
+
+        .tab-content.active {
+
+            display: block;
+
+            animation: fadeIn 0.3s;
+
+        }
+
+
+
+        .ms-mai-an {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            margin-bottom: 5px;
+
+            font-weight: bold;
+
+            color: var(--primary-color);
+
+        }
+
+
+
+        .ms-mai-an img {
+
+            width: 30px;
+
+            height: 30px;
+
+            border-radius: 50%;
+
+        }
+
+
+
+        /* Glossary Table */
+
+        .glossary-table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            margin-top: 20px;
+
+            font-size: 0.9rem;
+
+            background: white;
+
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+
+        }
+
+        
+
+        .glossary-table th {
+
+            background: var(--secondary-color);
+
+            color: white;
+
+            padding: 10px;
+
+            text-align: left;
+
+        }
+
+        
+
+        .glossary-table td {
+
+            padding: 10px;
+
+            border-bottom: 1px solid #eee;
+
+        }
+
+
+
+        /* Submit Button */
+
+        .submit-area {
+
+            text-align: center;
+
+            margin: 30px 0;
+
+            padding-bottom: 50px;
+
+        }
+
+
+
+        .btn-submit {
+
+            background: linear-gradient(45deg, #FF9F43, #EE5A24);
+
+            color: white;
+
+            border: none;
+
+            padding: 15px 40px;
+
+            font-size: 1.5rem;
+
+            font-weight: 800;
+
+            border-radius: 50px;
+
+            cursor: pointer;
+
+            box-shadow: 0 8px 0 #b33939, 0 15px 20px rgba(0,0,0,0.2);
+
+            transition: transform 0.2s;
+
+            font-family: 'Quicksand', sans-serif;
+
+            text-transform: uppercase;
+
+        }
+
+
+
+        .btn-submit:active {
+
+            transform: translateY(8px);
+
+            box-shadow: 0 0 0 #b33939;
+
+        }
+
+
+
+        /* Animations */
+
+        @keyframes shake {
+
+            0% { transform: translateX(0); }
+
+            25% { transform: translateX(-5px) rotate(-5deg); }
+
+            50% { transform: translateX(5px) rotate(5deg); }
+
+            75% { transform: translateX(-5px) rotate(-5deg); }
+
+            100% { transform: translateX(0); }
+
+        }
+
+
+
+        @keyframes fadeIn {
+
+            from { opacity: 0; transform: translateY(5px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+        }
+
+
+
+        /* Modal */
+
+        .modal-overlay {
+
+            position: fixed;
+
+            top: 0; left: 0;
+
+            width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.7);
+
+            display: none;
+
+            justify-content: center;
+
+            align-items: center;
+
+            z-index: 1000;
+
+        }
+
+
+
+        .modal-content {
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 20px;
+
+            text-align: center;
+
+            max-width: 500px;
+
+            width: 90%;
+
+            position: relative;
+
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='2' fill='%23dfe6e9'/%3E%3C/svg%3E");
+
+        }
+
+
+
+        .score-circle {
+
+            width: 120px;
+
+            height: 120px;
+
+            background: var(--primary-color);
+
+            color: white;
+
+            font-size: 2.5rem;
+
+            font-weight: 800;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            margin: 0 auto 20px;
+
+            border: 5px solid white;
+
+            box-shadow: 0 0 0 5px var(--primary-color);
+
+        }
+
+
+
+        .modal-msg {
+
+            font-size: 1.2rem;
+
+            margin-bottom: 20px;
+
+            color: #2d3436;
+
+        }
+
+
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+<header>
+
+    <div class="teacher-brand">
+
+        👩‍🏫 Giáo viên: Ms. Chí Nên (ULIS)
+
+    </div>
+
+    <div class="timer-container" onclick="toggleTimer()">
+
+        <span>⏱️</span>
+
+        <span id="timer">10:00</span>
+
+    </div>
+
+</header>
+
+
+
+<div class="main-container">
+
+    <div class="panel-left">
+
+        <h2 class="reading-title">📖 Reading: Art Courses</h2>
+
+        
+
+        <div id="reading-content">
+
+            </div>
+
+
+
+        <h3 style="color: var(--primary-color); margin-top: 30px;">📚 Glossary (Từ vựng học thuật)</h3>
+
+        <table class="glossary-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Từ vựng (Word)</th>
+
+                    <th>Loại từ</th>
+
+                    <th>Nghĩa tiếng Việt</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="glossary-body"></tbody>
+
+        </table>
+
+    </div>
+
+
+
+    <div class="panel-right">
+
+        <div style="background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; font-style: italic; border-left: 4px solid var(--accent-color);">
+
+            <strong>Nhiệm vụ:</strong> Đọc mô tả về 5 người bên dưới và chọn khóa học (A-H) phù hợp nhất với nhu cầu của họ.
+
+        </div>
+
+        <div id="exercise-list">
+
+            </div>
+
+
+
+        <div class="submit-area">
+
+            <button class="btn-submit" onclick="submitExam()">Nộp Bài ✨</button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="modal-overlay" id="resultModal">
+
+    <div class="modal-content">
+
+        <div class="score-circle" id="finalScore">0/5</div>
+
+        <h2 id="resultTitle">Tuyệt vời!</h2>
+
+        <p class="modal-msg" id="resultMsg">Bạn đã làm rất tốt.</p>
+
+        <button class="btn-submit" style="font-size: 1rem; padding: 10px 30px;" onclick="closeModal()">Xem lại bài</button>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+    // Âm thanh 'Ding' (Đúng)
+
+    const soundCorrect = new Audio("data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="); // Placeholder safe
+
+    // Note: Creating real base64 sounds is heavy, using visual cues primarily.
+
+    // I will simulate sound with visual cues (Shake/Confetti) as requested.
+
+</script>
+
+
+
+<script>
+
+    // --- DỮ LIỆU BÀI ĐỌC & CÂU HỎI ---
+
+    
+
+    const courses = {
+
+        A: {
+
+            title: "A. Get Artistic",
+
+            text: "Teachers here always have ideas to get you drawing, painting and printing – but you can use your own material, too. The studio-based course focuses on portraits – you’ll learn how to develop whatever you’ve brought, or use famous portraits, to create pictures of people. One-to-one sessions also available.",
+
+            trans: "Các giáo viên ở đây luôn có ý tưởng để giúp bạn vẽ, tô màu và in ấn – nhưng bạn cũng có thể sử dụng tài liệu của riêng mình. Khóa học tại phòng thu này tập trung vào chân dung – bạn sẽ học cách phát triển bất cứ thứ gì bạn mang theo, hoặc sử dụng các bức chân dung nổi tiếng, để tạo ra tranh vẽ người. Cũng có sẵn các buổi học kèm 1-1."
+
+        },
+
+        B: {
+
+            title: "B. Art Attack!",
+
+            text: "Learn how to create pictures, perhaps based on your own writing, to put into a short book or poster, using simple techniques that don’t require technology. Discover, too, how to put a book together, with a professional-looking cover designed and hand-printed by you. Perfect for anyone considering further studies in art.",
+
+            trans: "Học cách tạo ra những bức tranh, có thể dựa trên chính bài viết của bạn, để đưa vào một cuốn sách ngắn hoặc áp phích, sử dụng các kỹ thuật đơn giản không cần công nghệ. Khám phá cách đóng sách, với bìa nhìn chuyên nghiệp được thiết kế và in thủ công bởi chính bạn. Hoàn hảo cho bất kỳ ai đang cân nhắc học nâng cao về nghệ thuật."
+
+        },
+
+        C: {
+
+            title: "C. Art and imagination",
+
+            text: "If you like designing clothes, you’ll enjoy learning to use special computer software here to create and print out designs for tops, shoes and hats that people would love to wear! You’ll go home with a folder of work, perfect to present when applying for a higher-level art course. Individual classes also available.",
+
+            trans: "Nếu bạn thích thiết kế quần áo, bạn sẽ thích học cách sử dụng phần mềm máy tính đặc biệt ở đây để tạo và in các thiết kế cho áo, giày và mũ mà mọi người thích mặc! Bạn sẽ về nhà với một tập hồ sơ các tác phẩm, hoàn hảo để trình bày khi nộp đơn vào khóa học nghệ thuật cấp cao hơn. Cũng có các lớp học cá nhân."
+
+        },
+
+        D: {
+
+            title: "D. Create!",
+
+            text: "Draw and paint in different situations – in the studio or even in the park! Gallery visits are also included, and you’re taught how to base your work on studies of landscapes and portraits by well-known artists. Teachers also encourage you to experiment with various styles and methods.",
+
+            trans: "Vẽ và tô màu trong các tình huống khác nhau – trong phòng thu hoặc thậm chí trong công viên! Các chuyến thăm phòng trưng bày cũng được bao gồm, và bạn được dạy cách dựa trên các nghiên cứu về phong cảnh và chân dung của các nghệ sĩ nổi tiếng. Giáo viên cũng khuyến khích bạn thử nghiệm với nhiều phong cách và phương pháp khác nhau."
+
+        },
+
+        E: {
+
+            title: "E. More Art Now!",
+
+            text: "Improve how you paint people and places on this studio-based course. The teachers bring in work, ranging from photos to posters, to give you ideas. And use the studio website to show your work and exchange ideas with other students – useful for anyone wishing to study art at a higher level.",
+
+            trans: "Cải thiện cách bạn vẽ người và cảnh vật trong khóa học tại phòng thu này. Các giáo viên mang đến các tác phẩm, từ ảnh chụp đến áp phích, để cung cấp ý tưởng cho bạn. Và sử dụng trang web của phòng thu để hiển thị tác phẩm của bạn và trao đổi ý tưởng với các sinh viên khác – hữu ích cho bất kỳ ai muốn học nghệ thuật ở cấp độ cao hơn."
+
+        },
+
+        F: {
+
+            title: "F. Art Workshop",
+
+            text: "Do some drawings, in the studio or outside, or bring along your own. The teachers will then help you to turn them into wonderful printed designs, using simple methods you can try yourself after the course. You’ll then transfer your designs onto cotton and silk, using special paints – perfect to use in sewing projects afterwards.",
+
+            trans: "Thực hiện một số bản vẽ, trong phòng thu hoặc bên ngoài, hoặc mang theo của riêng bạn. Sau đó, giáo viên sẽ giúp bạn biến chúng thành những thiết kế in tuyệt vời, sử dụng các phương pháp đơn giản mà bạn có thể tự thử sau khóa học. Sau đó, bạn sẽ chuyển các thiết kế của mình lên vải cotton và lụa, sử dụng các loại sơn đặc biệt – hoàn hảo để sử dụng trong các dự án may vá sau này."
+
+        },
+
+        G: {
+
+            title: "G. Do it yourself",
+
+            text: "Try making art to go with your stories here – working inside or outside! You’ll get ideas from books showing famous paintings and cartoons, and then create and print pictures of people to accompany your stories, using digital design techniques. There’s even one-to-one teaching if you’d prefer.",
+
+            trans: "Hãy thử làm nghệ thuật đi kèm với những câu chuyện của bạn tại đây – làm việc trong nhà hoặc ngoài trời! Bạn sẽ lấy ý tưởng từ những cuốn sách hiển thị các bức tranh và phim hoạt hình nổi tiếng, sau đó tạo và in hình ảnh con người để minh họa cho câu chuyện của mình, sử dụng các kỹ thuật thiết kế kỹ thuật số. Thậm chí có cả dạy kèm 1-1 nếu bạn thích."
+
+        },
+
+        H: {
+
+            title: "H. The Studio",
+
+            text: "Come and experiment with digital design. You’ll get great ideas through research, then using special software, create your pictures and add details on screen, whether it’s clothes, people, books or something to put on the wall. Upload your work on the studio website and get opinions from your classmates there – and comment on theirs!",
+
+            trans: "Hãy đến và thử nghiệm với thiết kế kỹ thuật số. Bạn sẽ có những ý tưởng tuyệt vời thông qua nghiên cứu, sau đó sử dụng phần mềm đặc biệt, tạo hình ảnh của bạn và thêm chi tiết trên màn hình, cho dù đó là quần áo, con người, sách hay thứ gì đó để treo trên tường. Tải tác phẩm của bạn lên trang web của phòng thu và nhận ý kiến từ các bạn cùng lớp ở đó – và bình luận về bài của họ!"
+
+        }
+
+    };
+
+
+
+    const questions = [
+
+        {
+
+            id: 1,
+
+            name: "Rafa",
+
+            text: "Rafa wants to produce artwork to support his art college application. He’s written stories, which he’d like to publish, and wants to learn how to include drawings in them, without using a computer.",
+
+            trans: "Rafa muốn sản xuất các tác phẩm nghệ thuật để hỗ trợ đơn đăng ký vào trường cao đẳng nghệ thuật của mình. Cậu ấy đã viết những câu chuyện mà cậu ấy muốn xuất bản, và muốn học cách đưa các bản vẽ vào đó mà không cần sử dụng máy tính.",
+
+            correct: "B",
+
+            keywords: [
+
+                {q: "written stories... publish", t: "own writing... short book"},
+
+                {q: "without using a computer", t: "don't require technology"},
+
+                {q: "art college application", t: "considering further studies"}
+
+            ],
+
+            explanation: "Rafa cần một khóa học giúp cậu ấy xuất bản truyện (written stories) và không dùng máy tính (without using a computer). Khóa học B đề cập đến việc 'put into a short book' (làm sách) và 'don't require technology' (không cần công nghệ). Chính xác luôn nhé!"
+
+        },
+
+        {
+
+            id: 2,
+
+            name: "Simona",
+
+            text: "Simona enjoys creating art on her computer, and wants to find ways to improve the posters she makes on it. She also wants to share what she’s done with other students on the course.",
+
+            trans: "Simona thích sáng tạo nghệ thuật trên máy tính của mình và muốn tìm cách cải thiện các áp phích mà cô ấy làm trên đó. Cô ấy cũng muốn chia sẻ những gì mình đã làm với các sinh viên khác trong khóa học.",
+
+            correct: "H",
+
+            keywords: [
+
+                {q: "creating art on her computer", t: "experiment with digital design"},
+
+                {q: "share... with other students", t: "get opinions from your classmates"},
+
+                {q: "improve the posters", t: "create pictures... add details on screen"}
+
+            ],
+
+            explanation: "Simona thích dùng máy tính (on her computer) và muốn chia sẻ với bạn bè (share with other students). Khóa học H mời gọi 'digital design' (thiết kế số), sử dụng 'special software' và đặc biệt là 'Upload... get opinions from classmates' (Tải lên và nhận ý kiến từ bạn học). Chuẩn bài rồi!"
+
+        },
+
+        {
+
+            id: 3,
+
+            name: "Andrei",
+
+            text: "Andrei wants to try different painting techniques, and have trips to see the work of famous painters, to get ideas for his own pictures. He’d also like to try painting outdoors.",
+
+            trans: "Andrei muốn thử các kỹ thuật vẽ tranh khác nhau và có các chuyến đi xem tác phẩm của các họa sĩ nổi tiếng để lấy ý tưởng cho những bức tranh của riêng mình. Cậu ấy cũng muốn thử vẽ tranh ngoài trời.",
+
+            correct: "D",
+
+            keywords: [
+
+                {q: "try different painting techniques", t: "experiment with various styles"},
+
+                {q: "trips to see... famous painters", t: "Gallery visits... well-known artists"},
+
+                {q: "painting outdoors", t: "in the park"}
+
+            ],
+
+            explanation: "Andrei thích 'different techniques' (kỹ thuật khác lạ), đi thăm quan (trips) và vẽ ngoài trời (outdoors). Khóa học D đáp ứng tất cả: 'experiment with various styles', có 'Gallery visits' (thăm phòng tranh) và vẽ 'in the park' (trong công viên)."
+
+        },
+
+        {
+
+            id: 4,
+
+            name: "Nicola",
+
+            text: "Nicola enjoys printing by hand. She wants to print the patterns she’s created onto different materials, for her mother to make into clothes, and also learn basic printing techniques to use at home.",
+
+            trans: "Nicola thích in ấn bằng tay. Cô ấy muốn in các mẫu cô ấy đã tạo lên các chất liệu khác nhau, để mẹ cô ấy may thành quần áo, và cũng muốn học các kỹ thuật in cơ bản để sử dụng tại nhà.",
+
+            correct: "F",
+
+            keywords: [
+
+                {q: "printing by hand", t: "turn them into wonderful printed designs"},
+
+                {q: "different materials... clothes", t: "cotton and silk... sewing projects"},
+
+                {q: "use at home", t: "try yourself after the course"}
+
+            ],
+
+            explanation: "Nicola thích in thủ công (printing by hand) lên vải để làm quần áo (clothes). Khóa F dạy 'printed designs' lên 'cotton and silk' (vải bông và lụa) để dùng cho 'sewing projects' (dự án may vá). Quá hợp lý!"
+
+        },
+
+        {
+
+            id: 5,
+
+            name: "Karl",
+
+            text: "Karl enjoys taking photos of his family, and wants to use them as a basis for the art he produces. He’s like to go somewhere that also offers private lessons.",
+
+            trans: "Karl thích chụp ảnh gia đình mình và muốn sử dụng chúng làm cơ sở cho các tác phẩm nghệ thuật cậu ấy tạo ra. Cậu ấy muốn đến một nơi cũng cung cấp các bài học riêng.",
+
+            correct: "A",
+
+            keywords: [
+
+                {q: "photos of his family", t: "portraits... pictures of people"},
+
+                {q: "private lessons", t: "One-to-one sessions"}
+
+            ],
+
+            explanation: "Karl thích chụp ảnh gia đình (photos of family) và cần học riêng (private lessons). Khóa A tập trung vào 'portraits' (chân dung - liên quan đến ảnh gia đình) và cung cấp 'One-to-one sessions' (học 1 kèm 1). Đây chính là đáp án."
+
+        }
+
+    ];
+
+
+
+    const glossaryData = [
+
+        {w: "Portrait", type: "Noun (n)", m: "Chân dung (tranh/ảnh vẽ người)"},
+
+        {w: "Technique", type: "Noun (n)", m: "Kỹ thuật, phương pháp"},
+
+        {w: "Landscape", type: "Noun (n)", m: "Phong cảnh"},
+
+        {w: "Digital", type: "Adjective (adj)", m: "Kỹ thuật số (liên quan đến máy tính)"},
+
+        {w: "Experiment", type: "Verb (v)", m: "Thí nghiệm, thử nghiệm cái mới"},
+
+        {w: "Professional", type: "Adjective (adj)", m: "Chuyên nghiệp"},
+
+        {w: "Material", type: "Noun (n)", m: "Chất liệu, vật liệu"},
+
+        {w: "Exhibition/Gallery", type: "Noun (n)", m: "Triển lãm / Phòng trưng bày"},
+
+        {w: "Accompany", type: "Verb (v)", m: "Đi kèm, đồng hành"},
+
+        {w: "Transfer", type: "Verb (v)", m: "Chuyển đổi, di dời"}
+
+    ];
+
+
+
+    // --- LOGIC GAME ---
+
+
+
+    let score = 0;
+
+    let answeredCount = 0;
+
+    let timerInterval;
+
+    let timeRemaining = 600; // 10 minutes
+
+    let isPaused = true;
+
+
+
+    function init() {
+
+        renderReading();
+
+        renderExercises();
+
+        renderGlossary();
+
+    }
+
+
+
+    function renderReading() {
+
+        const container = document.getElementById('reading-content');
+
+        for (const [key, val] of Object.entries(courses)) {
+
+            container.innerHTML += `
+
+                <div class="course-block">
+
+                    <div class="course-header">${val.title}</div>
+
+                    <div>${val.text}</div>
+
+                    <button class="trans-btn" onclick="toggleTrans('trans-${key}')">🇻🇳 Bản dịch đầy đủ</button>
+
+                    <div id="trans-${key}" class="translation-text">${val.trans}</div>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+
+
+    function renderExercises() {
+
+        const container = document.getElementById('exercise-list');
+
+        questions.forEach((q, index) => {
+
+            let optionsHtml = '<div class="options-grid">';
+
+            ['A','B','C','D','E','F','G','H'].forEach(opt => {
+
+                optionsHtml += `<button class="option-btn" id="btn-${q.id}-${opt}" onclick="checkAnswer(${q.id}, '${opt}', '${q.correct}')">${opt}</button>`;
+
+            });
+
+            optionsHtml += '</div>';
+
+
+
+            // Tạo bảng Keyword Paraphrase
+
+            let paraphraseHtml = '<table class="glossary-table" style="margin-top:0"><tr><th>Trong câu hỏi (Question)</th><th>Trong bài đọc (Text)</th></tr>';
+
+            q.keywords.forEach(k => {
+
+                paraphraseHtml += `<tr><td>${k.q}</td><td>${k.t}</td></tr>`;
+
+            });
+
+            paraphraseHtml += '</table>';
+
+
+
+            container.innerHTML += `
+
+                <div class="question-card" id="card-${q.id}">
+
+                    <div class="q-number">${index + 1}</div>
+
+                    <div class="person-desc">
+
+                        <strong>${q.name}:</strong> ${q.text}
+
+                    </div>
+
+                    ${optionsHtml}
+
+                    
+
+                    <div class="feedback-container" id="feedback-${q.id}">
+
+                        <div class="tabs">
+
+                            <button class="tab-btn active" onclick="switchTab(${q.id}, 'expl')">👩‍🏫 Giải thích</button>
+
+                            <button class="tab-btn" onclick="switchTab(${q.id}, 'trans')">🇻🇳 Dịch</button>
+
+                            <button class="tab-btn" onclick="switchTab(${q.id}, 'para')">🔄 Paraphrase</button>
+
+                        </div>
+
+                        <div id="tab-expl-${q.id}" class="tab-content active">
+
+                            <div class="ms-mai-an">
+
+                                <span>👩‍🏫 Ms. Chí Nên:</span>
+
+                            </div>
+
+                            ${q.explanation}
+
+                        </div>
+
+                        <div id="tab-trans-${q.id}" class="tab-content">
+
+                            <p><strong>Câu hỏi:</strong> ${q.trans}</p>
+
+                        </div>
+
+                        <div id="tab-para-${q.id}" class="tab-content">
+
+                            ${paraphraseHtml}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            `;
+
+        });
+
+    }
+
+
+
+    function renderGlossary() {
+
+        const body = document.getElementById('glossary-body');
+
+        glossaryData.forEach(item => {
+
+            body.innerHTML += `<tr><td><strong>${item.w}</strong></td><td>${item.type}</td><td>${item.m}</td></tr>`;
+
+        });
+
+    }
+
+
+
+    // --- INTERACTION ---
+
+
+
+    function toggleTrans(id) {
+
+        const el = document.getElementById(id);
+
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+
+    }
+
+
+
+    function checkAnswer(qId, selectedOpt, correctOpt) {
+
+        // Disable all buttons in this question group
+
+        const btns = document.querySelectorAll(`#card-${qId} .option-btn`);
+
+        btns.forEach(btn => btn.disabled = true);
+
+
+
+        const selectedBtn = document.getElementById(`btn-${qId}-${selectedOpt}`);
+
+        const correctBtn = document.getElementById(`btn-${qId}-${correctOpt}`);
+
+
+
+        if (selectedOpt === correctOpt) {
+
+            selectedBtn.classList.add('correct');
+
+            confetti({
+
+                particleCount: 100,
+
+                spread: 70,
+
+                origin: { y: 0.6 }
+
+            });
+
+            score++;
+
+        } else {
+
+            selectedBtn.classList.add('wrong');
+
+            correctBtn.classList.add('correct'); // Show correct answer
+
+            // Shake effect on card
+
+            const card = document.getElementById(`card-${qId}`);
+
+            card.style.animation = 'shake 0.5s';
+
+            setTimeout(() => card.style.animation = '', 500);
+
+        }
+
+
+
+        // Show feedback
+
+        document.getElementById(`feedback-${qId}`).style.display = 'block';
+
+        answeredCount++;
+
+    }
+
+
+
+    function switchTab(qId, type) {
+
+        // Hide all contents for this Q
+
+        document.querySelectorAll(`#feedback-${qId} .tab-content`).forEach(el => el.classList.remove('active'));
+
+        document.querySelectorAll(`#feedback-${qId} .tab-btn`).forEach(el => el.classList.remove('active'));
+
+
+
+        // Show selected
+
+        document.getElementById(`tab-${type}-${qId}`).classList.add('active');
+
+        // Update button style (simple logic searching by text content or index would be better, but keeping simple)
+
+        const btns = document.querySelectorAll(`#feedback-${qId} .tab-btn`);
+
+        if(type === 'expl') btns[0].classList.add('active');
+
+        if(type === 'trans') btns[1].classList.add('active');
+
+        if(type === 'para') btns[2].classList.add('active');
+
+    }
+
+
+
+    // --- TIMER ---
+
+    function toggleTimer() {
+
+        if (isPaused) {
+
+            isPaused = false;
+
+            timerInterval = setInterval(updateTimer, 1000);
+
+            document.querySelector('.timer-container').style.background = '#00b894';
+
+            document.querySelector('.timer-container').style.color = 'white';
+
+        } else {
+
+            clearInterval(timerInterval);
+
+            isPaused = true;
+
+            document.querySelector('.timer-container').style.background = 'rgba(255,255,255,0.2)';
+
+        }
+
+    }
+
+
+
+    function updateTimer() {
+
+        if (timeRemaining > 0) {
+
+            timeRemaining--;
+
+            const m = Math.floor(timeRemaining / 60);
+
+            const s = timeRemaining % 60;
+
+            document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+
+        } else {
+
+            clearInterval(timerInterval);
+
+            alert("Đã hết giờ làm bài! Hãy nộp bài để xem điểm nhé.");
+
+        }
+
+    }
+
+
+
+    // --- SUBMIT ---
+
+    function submitExam() {
+
+        clearInterval(timerInterval);
+
+        const modal = document.getElementById('resultModal');
+
+        const scoreEl = document.getElementById('finalScore');
+
+        const titleEl = document.getElementById('resultTitle');
+
+        const msgEl = document.getElementById('resultMsg');
+
+
+
+        scoreEl.innerText = `${score}/5`;
+
+        modal.style.display = 'flex';
+
+
+
+        if(score === 5) {
+
+            titleEl.innerText = "Xuất sắc! Thiên tài!";
+
+            msgEl.innerText = "Ms. Chí Nên rất tự hào về em. Điểm tuyệt đối!";
+
+            confetti({ particleCount: 200, spread: 100 });
+
+        } else if (score >= 3) {
+
+            titleEl.innerText = "Làm tốt lắm!";
+
+            msgEl.innerText = "Kiến thức của em khá vững, nhưng hãy xem lại phần giải thích để hiểu sâu hơn nhé.";
+
+        } else {
+
+            titleEl.innerText = "Cố lên nhé!";
+
+            msgEl.innerText = "Đừng buồn, hãy đọc kỹ phần giải thích và bảng từ vựng. Lần sau chắc chắn sẽ tốt hơn!";
+
+        }
+
+    }
+
+
+
+    function closeModal() {
+
+        document.getElementById('resultModal').style.display = 'none';
+
+    }
+
+
+
+    // Run Init
+
+    init();
+
+
+
+</script>
+
+
+
+</body>
+
 </html>

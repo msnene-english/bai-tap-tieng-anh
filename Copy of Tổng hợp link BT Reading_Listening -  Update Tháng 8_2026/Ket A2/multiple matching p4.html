@@ -1,850 +1,1699 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading Quiz - School Cooking Competition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        /* --- DYNAMIC THEME & COLOR PALETTE: COOKING / FOOD --- */
-        :root {
-            --primary: #FF6B81; /* Watermelon Pink - Kích thích vị giác, vui nhộn */
-            --accent: #FECA57; /* Sunny Orange/Yellow - Ấm áp */
-            --secondary: #1DD1A1; /* Mint Green - Tươi mát (Salad/Vegetables) */
-            --correct: #10ac84; /* Xanh lá đậm */
-            --incorrect: #ee5253; /* Đỏ cam */
-            --text-dark: #2f3542;
-        }
-
-        /* HIỆU ỨNG CHUYỂN MÀU NỀN LOANG MƯỢT MÀ (ANIMATED GRADIENT) */
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Quicksand', sans-serif;
-            color: var(--text-dark);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            
-            background: linear-gradient(-45deg, #FF6B81, #FECA57, #1DD1A1, #ff9ff3);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            position: relative;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* SVG Pattern lơ lửng nằm đè lên nền chuyển màu */
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='150' height='150' viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='20' y='30' font-size='26' opacity='0.35'%3E🍕%3C/text%3E%3Ctext x='100' y='70' font-size='26' opacity='0.35'%3E👨‍🍳%3C/text%3E%3Ctext x='40' y='120' font-size='24' opacity='0.35'%3E🍰%3C/text%3E%3Ctext x='110' y='140' font-size='20' opacity='0.35'%3E✨%3C/text%3E%3Ctext x='70' y='40' font-size='24' opacity='0.35'%3E🥗%3C/text%3E%3C/svg%3E");
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* --- HEADER & TIMER --- */
-        .top-bar {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px 20px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            border-bottom: 4px solid var(--primary);
-        }
-
-        .teacher-title {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--incorrect);
-            background: #fff0f5;
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 2px dashed var(--primary);
-        }
-
-        .timer-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        #timerDisplay {
-            font-size: 26px;
-            font-weight: 800;
-            color: var(--incorrect);
-            background: white;
-            padding: 5px 20px;
-            border-radius: 15px;
-            border: 3px solid var(--accent);
-            box-shadow: 0 4px 0 var(--accent);
-        }
-
-        .btn-timer {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 16px;
-            font-weight: 800;
-            border-radius: 15px;
-            cursor: pointer;
-            box-shadow: 0 6px 0 #ff4757;
-            transition: all 0.1s;
-            text-transform: uppercase;
-        }
-        .btn-timer:active {
-            transform: translateY(6px);
-            box-shadow: 0 0px 0 #ff4757;
-        }
-
-        /* --- SPLIT SCREEN LAYOUT --- */
-        .main-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            padding: 15px;
-            gap: 15px;
-        }
-
-        .left-panel, .right-panel {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.92);
-            border-radius: 25px;
-            padding: 25px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border: 3px solid white;
-        }
-
-        /* --- READING CONTENT STYLES --- */
-        .passage-title {
-            font-size: 32px;
-            color: var(--incorrect);
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 25px;
-            text-transform: uppercase;
-            font-weight: 900;
-            text-shadow: 2px 2px 0px var(--accent);
-            letter-spacing: 1px;
-        }
-
-        .paragraph-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 0 #e1e5ee;
-            border: 2px solid #f1f2f6;
-            position: relative;
-        }
-
-        .paragraph-card h3 {
-            margin-top: 0;
-            color: var(--correct);
-            font-size: 24px;
-            border-bottom: 3px dashed var(--accent);
-            padding-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .text-content {
-            font-size: 19px;
-            line-height: 1.7;
-            color: #4a4a4a;
-            font-weight: 600;
-        }
-
-        .btn-translate {
-            background: var(--accent);
-            color: #d35400;
-            border: none;
-            padding: 10px 20px;
-            font-size: 15px;
-            font-weight: 900;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 15px;
-            box-shadow: 0 5px 0 #e58e26;
-            transition: all 0.1s;
-        }
-        .btn-translate:active {
-            transform: translateY(5px);
-            box-shadow: 0 0px 0 #e58e26;
-        }
-
-        .translation-text {
-            display: none;
-            margin-top: 15px;
-            padding: 20px;
-            background: #fff9e6;
-            border-radius: 15px;
-            font-size: 17px;
-            color: #2f3640;
-            border-left: 6px solid var(--primary);
-            font-weight: 600;
-            line-height: 1.6;
-        }
-
-        /* --- GLOSSARY TABLE --- */
-        .glossary-container {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-top: 30px;
-            box-shadow: 0 8px 0 #e1e5ee;
-        }
-        .glossary-container h3 {
-            color: var(--primary);
-            text-align: center;
-            font-size: 22px;
-            margin-top: 0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            padding: 15px;
-            border-bottom: 2px solid #f1f2f6;
-            text-align: left;
-            font-size: 17px;
-            font-weight: 600;
-        }
-        th {
-            background: var(--primary);
-            color: white;
-            border-radius: 10px 10px 0 0;
-        }
-        tr:hover { background: #fff0f5; }
-
-        /* --- QUIZ SECTION STYLES --- */
-        .question-card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 0 #dfe4ea;
-            border: 3px solid #f1f2f6;
-            transition: all 0.3s;
-        }
-
-        .question-text {
-            font-size: 22px;
-            font-weight: 800;
-            margin-bottom: 25px;
-            color: #2d3436;
-            line-height: 1.4;
-        }
-
-        .options-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .option-btn {
-            background: #f8f9fa;
-            border: 3px solid #e9ecef;
-            padding: 18px 25px;
-            font-size: 20px;
-            font-weight: 700;
-            border-radius: 18px;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 6px 0 #ced4da;
-            color: #495057;
-            display: flex;
-            align-items: center;
-        }
-
-        .option-btn .opt-label {
-            display: inline-block;
-            width: 35px;
-            height: 35px;
-            line-height: 35px;
-            background: #e9ecef;
-            border-radius: 50%;
-            text-align: center;
-            margin-right: 15px;
-            color: var(--primary);
-            font-weight: 900;
-        }
-
-        .option-btn:hover:not(:disabled) {
-            transform: scale(1.03) translateY(-4px);
-            background: #fff0f5;
-            border-color: var(--primary);
-            box-shadow: 0 10px 0 var(--primary);
-            color: #d63031;
-        }
-        .option-btn:hover:not(:disabled) .opt-label {
-            background: var(--primary);
-            color: white;
-        }
-
-        .option-btn.correct {
-            background: var(--correct) !important;
-            color: white !important;
-            border-color: #05c46b !important;
-            box-shadow: 0 6px 0 #05c46b !important;
-        }
-        .option-btn.correct .opt-label { background: white; color: var(--correct); }
-
-        .option-btn.wrong {
-            background: var(--incorrect) !important;
-            color: white !important;
-            border-color: #ff3f34 !important;
-            box-shadow: 0 6px 0 #ff3f34 !important;
-        }
-        .option-btn.wrong .opt-label { background: white; color: var(--incorrect); }
-
-        .option-btn:disabled {
-            cursor: not-allowed;
-        }
-
-        /* Detailed Explanation Box */
-        .explanation-box {
-            display: none;
-            margin-top: 25px;
-            padding: 20px;
-            background: #f0fdf4;
-            border-radius: 15px;
-            border: 3px solid var(--correct);
-            font-size: 17px;
-            line-height: 1.6;
-            color: #166534;
-            animation: slideDown 0.4s ease;
-        }
-        
-        .exp-title {
-            font-weight: 800;
-            color: var(--correct);
-            margin-bottom: 15px;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 2px dashed #bbf7d0;
-            padding-bottom: 10px;
-        }
-
-        .exp-quote {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            font-style: italic;
-            margin: 15px 0;
-            border-left: 5px solid var(--accent);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            color: #4b5563;
-        }
-
-        /* --- ANIMATIONS --- */
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-3px, 0, 0); }
-            20%, 80% { transform: translate3d(5px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
-            40%, 60% { transform: translate3d(8px, 0, 0); }
-        }
-
-        /* --- CONFETTI CANVAS --- */
-        #confettiCanvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 9999;
-        }
-
-        /* --- SUBMIT & MODAL --- */
-        .submit-btn-container { text-align: center; margin: 40px 0; }
-        .btn-submit {
-            background: var(--primary);
-            color: white;
-            font-size: 26px;
-            font-weight: 900;
-            padding: 18px 50px;
-            border: 4px solid white;
-            border-radius: 30px;
-            cursor: pointer;
-            box-shadow: 0 10px 0 #ff4757, 0 15px 20px rgba(0,0,0,0.2);
-            transition: all 0.2s;
-            text-transform: uppercase;
-            font-family: 'Quicksand', sans-serif;
-        }
-        .btn-submit:hover { transform: scale(1.08) rotate(-2deg); }
-        .btn-submit:active { transform: translateY(10px); box-shadow: 0 0px 0 #ff4757; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none; justify-content: center; align-items: center;
-            z-index: 10000; backdrop-filter: blur(8px);
-        }
-        .modal-content {
-            background: white; padding: 50px; border-radius: 30px;
-            text-align: center; max-width: 450px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 5px solid var(--primary);
-        }
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); opacity: 1; }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); }
-        }
-        .score-text { font-size: 60px; font-weight: 900; color: var(--primary); margin: 20px 0; text-shadow: 2px 2px 0 var(--accent); }
-        .feedback-text { font-size: 22px; font-weight: 800; color: #636e72; line-height: 1.5; }
-        .btn-close-modal {
-            margin-top: 30px; background: var(--secondary); color: #2d3436;
-            border: none; padding: 15px 35px; font-size: 20px; border-radius: 20px;
-            font-weight: 900; cursor: pointer; box-shadow: 0 8px 0 #05c46b;
-            font-family: 'Quicksand', sans-serif; transition: 0.2s;
-        }
-        .btn-close-modal:hover { transform: scale(1.05); }
-
-        /* --- SCROLLBAR --- */
-        ::-webkit-scrollbar { width: 12px; }
-        ::-webkit-scrollbar-track { background: #f1f2f6; border-radius: 10px; margin: 10px; }
-        ::-webkit-scrollbar-thumb { background: #b2bec3; border-radius: 10px; border: 3px solid #f1f2f6; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-    </style>
-</head>
-<body>
-
-    <canvas id="confettiCanvas"></canvas>
-
-    <div class="top-bar">
-        <div class="teacher-title">👩‍🏫 Giáo viên tạo: Ms MS Chí Nên</div>
-        <div class="timer-container">
-            <div id="timerDisplay">10:00</div>
-            <button class="btn-timer" id="btnTimerToggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
-        </div>
-    </div>
-
-    <div class="main-container">
-        <div class="left-panel">
-            <h1 class="passage-title">School Cooking Competition</h1>
-            
-            <div class="paragraph-card">
-                <h3>🍕 Alice</h3>
-                <div class="text-content">
-                    Our class has just won a prize in a cooking competition – and we’re going to be on the local TV news tonight. The judges liked our pizzas because they were delicious and we also made pasta with sauce and dessert for the children in our school for lunch yesterday. Our teacher is married to a chef who helped us with our main course. We’re planning to bake some cakes tomorrow and sell them. We want to get enough money to pay for a school trip.
-                </div>
-                <button class="btn-translate" onclick="toggleTranslate('trans1')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
-                <div class="translation-text" id="trans1">
-                    Lớp chúng tôi vừa giành giải thưởng trong một cuộc thi nấu ăn – và chúng tôi sẽ xuất hiện trên bản tin truyền hình địa phương vào tối nay. Các giám khảo thích những chiếc bánh pizza của chúng tôi vì chúng rất ngon và hôm qua chúng tôi cũng làm mì ống với nước sốt và món tráng miệng cho học sinh trong trường ăn trưa. Giáo viên của chúng tôi đã kết hôn với một đầu bếp, người đã giúp chúng tôi làm món chính. Chúng tôi dự định ngày mai sẽ nướng vài chiếc bánh ngọt và đem bán. Chúng tôi muốn kiếm đủ tiền để chi trả cho một chuyến dã ngoại của trường.
-                </div>
-            </div>
-
-            <div class="paragraph-card">
-                <h3>🍲 Eva</h3>
-                <div class="text-content">
-                    Our class teacher heard about the cooking competition on the local TV news and told us about it. We decided to enter and won second prize! We made rice and vegetables, lemonade and dessert for our parents. We turned the school hall into a restaurant for one evening. Our prize is a visit to the kitchens of a famous restaurant in our city – Gigi’s. My cousin works there and she says the food is amazing.
-                </div>
-                <button class="btn-translate" onclick="toggleTranslate('trans2')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
-                <div class="translation-text" id="trans2">
-                    Giáo viên chủ nhiệm của chúng tôi đã nghe về cuộc thi nấu ăn trên bản tin truyền hình địa phương và kể cho chúng tôi nghe về nó. Chúng tôi quyết định tham gia và giành giải nhì! Chúng tôi đã làm cơm và rau, nước chanh và món tráng miệng cho bố mẹ. Chúng tôi đã biến hội trường của trường thành một nhà hàng trong một buổi tối. Giải thưởng của chúng tôi là một chuyến tham quan nhà bếp của một nhà hàng nổi tiếng trong thành phố - nhà hàng Gigi's. Chị họ của tôi làm việc ở đó và chị ấy nói đồ ăn ở đó rất tuyệt.
-                </div>
-            </div>
-
-            <div class="paragraph-card">
-                <h3>🍰 Jenny</h3>
-                <div class="text-content">
-                    The food our class made for the cooking competition was amazing. We baked a lot of cakes – chocolate, orange, lemon and honey. We also used vegetables from the school garden to make steak with vegetable salad for the class below us and everyone said it was fantastic. It was an interesting project and we learned a lot about food. We won third prize for our cakes and took them to a home for old people near our school.
-                </div>
-                <button class="btn-translate" onclick="toggleTranslate('trans3')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
-                <div class="translation-text" id="trans3">
-                    Đồ ăn lớp chúng tôi làm cho cuộc thi nấu ăn thật tuyệt vời. Chúng tôi đã nướng rất nhiều bánh ngọt - sô cô la, cam, chanh và mật ong. Chúng tôi cũng sử dụng rau từ khu vườn của trường để làm bít tết với salad rau cho lớp dưới và mọi người đều nói nó rất ngon (tuyệt vời). Đó là một dự án thú vị và chúng tôi đã học được rất nhiều điều về thực phẩm. Chúng tôi đã giành giải ba cho những chiếc bánh ngọt và mang chúng đến một viện dưỡng lão gần trường.
-                </div>
-            </div>
-
-            <div class="glossary-container">
-                <h3>📚 Bảng Từ Vựng Học Thuật (Glossary)</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Từ vựng (Word)</th>
-                            <th>Loại từ (POS)</th>
-                            <th>Nghĩa Tiếng Việt (Meaning)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>1. Competition</td><td>Noun (n)</td><td>Cuộc thi, sự cạnh tranh</td></tr>
-                        <tr><td>2. Local</td><td>Adjective (adj)</td><td>Địa phương, trong vùng</td></tr>
-                        <tr><td>3. Delicious</td><td>Adjective (adj)</td><td>Rất ngon miệng</td></tr>
-                        <tr><td>4. Dessert</td><td>Noun (n)</td><td>Món tráng miệng</td></tr>
-                        <tr><td>5. Main course</td><td>Noun phrase (n)</td><td>Món chính (trong bữa ăn)</td></tr>
-                        <tr><td>6. Bake</td><td>Verb (v)</td><td>Nướng (bánh)</td></tr>
-                        <tr><td>7. Restaurant</td><td>Noun (n)</td><td>Nhà hàng</td></tr>
-                        <tr><td>8. Famous</td><td>Adjective (adj)</td><td>Nổi tiếng</td></tr>
-                        <tr><td>9. Amazing</td><td>Adjective (adj)</td><td>Đáng kinh ngạc, tuyệt vời</td></tr>
-                        <tr><td>10. Project</td><td>Noun (n)</td><td>Dự án, đề án</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="right-panel" id="quizContainer">
-            <div class="submit-btn-container">
-                <button class="btn-submit" onclick="submitQuiz()">🚀 NỘP BÀI THÔI 🚀</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="resultModal">
-        <div class="modal-content">
-            <h2>Kết Quả Của Bạn</h2>
-            <div class="score-text" id="finalScoreText">0/7</div>
-            <div class="feedback-text" id="feedbackText">Tuyệt vời!</div>
-            <button class="btn-close-modal" onclick="closeModal()">Xem Lại Bài Chữa</button>
-        </div>
-    </div>
-
-    <script>
-        /* ================= AUDIO GENERATOR ================= */
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playCorrectSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
-            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
-            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
-        }
-
-        function playWrongSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.4);
-            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.4);
-        }
-
-        /* ================= CONFETTI GENERATOR ================= */
-        const canvas = document.getElementById('confettiCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        let particles = [];
-
-        function fireConfetti() {
-            particles = [];
-            const colors = ['#10ac84', '#FECA57', '#FF6B81', '#1DD1A1', '#ff9ff3'];
-            for(let i=0; i<120; i++) {
-                particles.push({
-                    x: canvas.width/2,
-                    y: canvas.height/2 + 200,
-                    r: Math.random() * 8 + 3,
-                    dx: Math.random() * 14 - 7,
-                    dy: Math.random() * -18 - 5,
-                    color: colors[Math.floor(Math.random() * colors.length)]
-                });
-            }
-            animateConfetti();
-        }
-
-        function animateConfetti() {
-            requestAnimationFrame(animateConfetti);
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            particles.forEach((p, index) => {
-                p.x += p.dx;
-                p.y += p.dy;
-                p.dy += 0.4; 
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-                if(p.y > canvas.height) particles.splice(index, 1);
-            });
-        }
-
-        /* ================= TIMER LOGIC ================= */
-        let timeRemaining = 600; 
-        let timerInterval;
-        let isTimerRunning = false;
-
-        function updateTimerDisplay() {
-            let m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
-            let s = (timeRemaining % 60).toString().padStart(2, '0');
-            document.getElementById('timerDisplay').innerText = `${m}:${s}`;
-        }
-
-        function toggleTimer() {
-            const btn = document.getElementById('btnTimerToggle');
-            if (isTimerRunning) {
-                clearInterval(timerInterval);
-                btn.innerText = "TIẾP TỤC LÀM BÀI";
-                btn.style.background = "#FECA57";
-                btn.style.color = "#d63031";
-                isTimerRunning = false;
-            } else {
-                btn.innerText = "TẠM DỪNG";
-                btn.style.background = "#FF6B81";
-                btn.style.color = "white";
-                isTimerRunning = true;
-                timerInterval = setInterval(() => {
-                    timeRemaining--;
-                    updateTimerDisplay();
-                    if (timeRemaining <= 0) {
-                        clearInterval(timerInterval);
-                        alert("⏰ Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
-                        btn.innerText = "HẾT GIỜ";
-                        btn.disabled = true;
-                        btn.style.background = "#ccc";
-                    }
-                }, 1000);
-            }
-        }
-
-        /* ================= TRANSLATION TOGGLE ================= */
-        function toggleTranslate(id) {
-            const el = document.getElementById(id);
-            el.style.display = (el.style.display === "block") ? "none" : "block";
-        }
-
-        /* ================= QUIZ DATA & LOGIC ================= */
-        const quizData = [
-            {
-                q: "1. Whose food was popular with other students?",
-                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
-                correct: 'C',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 1)</div>
-                    <b>1. Phân tích câu hỏi:</b> Thức ăn của ai rất được các học sinh khác yêu thích? (popular with other students).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Jenny):</b> 
-                    <div class="exp-quote">"...make steak with vegetable salad for the <b>class below us</b> and <b>everyone said it was fantastic</b>."</div>
-                    <b>3. Tại sao chọn Jenny?</b> "Class below us" chính là các học sinh lớp dưới (other students), và mọi người đều nói thức ăn "thật tuyệt vời" (fantastic) -> Tức là nó rất được yêu thích (popular).
-                `
-            },
-            {
-                q: "2. Whose class learned about the cooking competition from a TV programme?",
-                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
-                correct: 'B',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 2)</div>
-                    <b>1. Phân tích câu hỏi:</b> Lớp của ai biết đến cuộc thi nấu ăn từ một chương trình TV? (learned from a TV programme).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Eva):</b> 
-                    <div class="exp-quote">"Our class teacher heard about the cooking competition <b>on the local TV news</b> and told us about it."</div>
-                    <b>3. Tại sao chọn Eva?</b> Giáo viên của lớp Eva đã nghe về cuộc thi trên "bản tin truyền hình địa phương" (TV news) và báo lại cho cả lớp.
-                `
-            },
-            {
-                q: "3. Whose class baked cakes and gave them away?",
-                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
-                correct: 'C',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 3)</div>
-                    <b>1. Phân tích câu hỏi:</b> Lớp của ai đã nướng bánh và đem đi tặng? (gave them away = took them to a home for old people).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Jenny):</b> 
-                    <div class="exp-quote">"We won third prize for our cakes and <b>took them to a home for old people</b> near our school."</div>
-                    <b>3. Tại sao chọn Jenny?</b> Lớp của Jenny đã nướng bánh và "mang chúng đến một viện dưỡng lão", đây chính là hành động đem đi tặng.
-                `
-            },
-            {
-                q: "4. Whose class won a trip in the cooking competition?",
-                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
-                correct: 'B',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 4)</div>
-                    <b>1. Phân tích câu hỏi:</b> Lớp của ai giành được một chuyến đi trong cuộc thi nấu ăn? (won a trip = prize is a visit).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Eva):</b> 
-                    <div class="exp-quote">"Our prize is <b>a visit to the kitchens of a famous restaurant</b> in our city..."</div>
-                    <b>3. Tại sao chọn Eva?</b> Giải thưởng (prize) lớp Eva nhận được là "một chuyến tham quan" (a visit), tương đương với một chuyến đi (a trip).
-                `
-            },
-            {
-                q: "5. Whose class got some help from someone who works in a restaurant?",
-                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
-                correct: 'A',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 5)</div>
-                    <b>1. Phân tích câu hỏi:</b> Lớp của ai nhận được sự giúp đỡ từ một người làm việc ở nhà hàng? (someone who works in a restaurant = a chef).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Alice):</b> 
-                    <div class="exp-quote">"Our teacher is married to <b>a chef who helped us</b> with our main course."</div>
-                    <b>3. Tại sao chọn Alice?</b> Lớp Alice được một "đầu bếp" (chef) giúp đỡ. Đầu bếp chính là người làm việc tại các nhà hàng.
-                `
-            },
-            {
-                q: "6. Whose class used food grown in the school to make lunch for another class?",
-                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
-                correct: 'C',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 6)</div>
-                    <b>1. Phân tích câu hỏi:</b> Lớp của ai đã sử dụng thực phẩm trồng ở trường để làm bữa trưa cho một lớp khác?<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Jenny):</b> 
-                    <div class="exp-quote">"We also used <b>vegetables from the school garden</b> to make steak... <b>for the class below us</b>..."</div>
-                    <b>3. Tại sao chọn Jenny?</b> "Vegetables from the school garden" chính là rau (thực phẩm) trồng tại vườn trường, và họ nấu cho "lớp dưới" (another class).
-                `
-            },
-            {
-                q: "7. Whose class plans to use their cakes to make money?",
-                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
-                correct: 'A',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 7)</div>
-                    <b>1. Phân tích câu hỏi:</b> Lớp của ai dự định dùng bánh của họ để kiếm tiền? (make money = sell them / get enough money).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Alice):</b> 
-                    <div class="exp-quote">"We’re planning to bake some cakes tomorrow and <b>sell them</b>. We want to <b>get enough money</b>..."</div>
-                    <b>3. Tại sao chọn Alice?</b> Lớp Alice dự định nướng bánh rồi "đem bán" (sell them) để "kiếm đủ tiền" (get enough money) cho chuyến dã ngoại.
-                `
-            }
-        ];
-
-        let score = 0;
-        let answeredQuestions = new Set();
-
-        function shuffleArray(array) {
-            let newArr = [...array];
-            for (let i = newArr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
-            }
-            return newArr;
-        }
-
-        function renderQuiz() {
-            const container = document.getElementById('quizContainer');
-            const submitBtn = document.querySelector('.submit-btn-container');
-            container.innerHTML = '';
-
-            quizData.forEach((qObj, qIndex) => {
-                const card = document.createElement('div');
-                card.className = 'question-card';
-                card.id = `q-card-${qIndex}`;
-
-                const qText = document.createElement('div');
-                qText.className = 'question-text';
-                qText.innerHTML = qObj.q;
-                card.appendChild(qText);
-
-                const optionsGrid = document.createElement('div');
-                optionsGrid.className = 'options-grid';
-
-                let shuffledOptions = shuffleArray(qObj.options);
-
-                shuffledOptions.forEach((opt, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'option-btn';
-                    
-                    const label = index === 0 ? 'A' : (index === 1 ? 'B' : 'C');
-                    btn.innerHTML = `<span class="opt-label">${label}</span> <span>${opt.text}</span>`;
-                    
-                    btn.dataset.optId = opt.id;
-                    btn.onclick = () => handleAnswer(btn, opt.id, qObj.correct, qIndex, card);
-                    optionsGrid.appendChild(btn);
-                });
-
-                card.appendChild(optionsGrid);
-
-                const expBox = document.createElement('div');
-                expBox.className = 'explanation-box';
-                expBox.id = `exp-${qIndex}`;
-                expBox.innerHTML = qObj.explanation;
-                card.appendChild(expBox);
-
-                container.appendChild(card);
-            });
-            
-            container.appendChild(submitBtn);
-        }
-
-        function handleAnswer(btn, selectedId, correctId, qIndex, card) {
-            const buttons = card.querySelectorAll('.option-btn');
-            const expBox = document.getElementById(`exp-${qIndex}`);
-
-            if (selectedId === correctId) {
-                btn.classList.add('correct');
-                playCorrectSound();
-                fireConfetti();
-                if (!answeredQuestions.has(qIndex)) {
-                    score++;
-                    answeredQuestions.add(qIndex);
-                }
-            } else {
-                btn.classList.add('wrong');
-                btn.classList.add('shake');
-                playWrongSound();
-                setTimeout(() => btn.classList.remove('shake'), 500);
-                answeredQuestions.add(qIndex); 
-                
-                buttons.forEach(b => {
-                    if (b.dataset.optId === correctId) {
-                        b.classList.add('correct');
-                    }
-                });
-            }
-
-            buttons.forEach(b => b.disabled = true);
-            expBox.style.display = 'block';
-        }
-
-        function submitQuiz() {
-            const modal = document.getElementById('resultModal');
-            const scoreText = document.getElementById('finalScoreText');
-            const feedbackText = document.getElementById('feedbackText');
-            
-            scoreText.innerText = `${score} / 7`;
-            
-            let percentage = score / 7;
-            if (percentage === 1) {
-                feedbackText.innerHTML = "🏆 ĐỈNH CỦA CHÓP!<br>Em đúng chuẩn MasterChef ngôn ngữ!";
-                feedbackText.style.color = "#10ac84";
-                fireConfetti();
-                playCorrectSound();
-            } else if (percentage >= 0.7) {
-                feedbackText.innerHTML = "🌟 RẤT TỐT!<br>Kỹ năng đọc hiểu của em ngon như Pizza vậy!";
-                feedbackText.style.color = "#1DD1A1";
-            } else if (percentage >= 0.4) {
-                feedbackText.innerHTML = "👍 KHÁ LẮM!<br>Đọc kỹ phần Giải thích chi tiết để nhặt thêm từ vựng nhé!";
-                feedbackText.style.color = "#FECA57";
-            } else {
-                feedbackText.innerHTML = "💪 KHÔNG SAO ĐÂU!<br>Lần tới mình sẽ làm tốt hơn nhiều!";
-                feedbackText.style.color = "#ee5253";
-            }
-
-            modal.style.display = "flex";
-            clearInterval(timerInterval);
-        }
-
-        function closeModal() {
-            document.getElementById('resultModal').style.display = "none";
-        }
-
-        window.onload = () => {
-            updateTimerDisplay();
-            renderQuiz();
-        };
-    </script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reading Quiz - School Cooking Competition</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+
+        /* --- DYNAMIC THEME & COLOR PALETTE: COOKING / FOOD --- */
+
+        :root {
+
+            --primary: #FF6B81; /* Watermelon Pink - Kích thích vị giác, vui nhộn */
+
+            --accent: #FECA57; /* Sunny Orange/Yellow - Ấm áp */
+
+            --secondary: #1DD1A1; /* Mint Green - Tươi mát (Salad/Vegetables) */
+
+            --correct: #10ac84; /* Xanh lá đậm */
+
+            --incorrect: #ee5253; /* Đỏ cam */
+
+            --text-dark: #2f3542;
+
+        }
+
+
+
+        /* HIỆU ỨNG CHUYỂN MÀU NỀN LOANG MƯỢT MÀ (ANIMATED GRADIENT) */
+
+        body {
+
+            margin: 0;
+
+            padding: 0;
+
+            font-family: 'Quicksand', sans-serif;
+
+            color: var(--text-dark);
+
+            height: 100vh;
+
+            display: flex;
+
+            flex-direction: column;
+
+            overflow: hidden;
+
+            
+
+            background: linear-gradient(-45deg, #FF6B81, #FECA57, #1DD1A1, #ff9ff3);
+
+            background-size: 400% 400%;
+
+            animation: gradientBG 15s ease infinite;
+
+            position: relative;
+
+        }
+
+
+
+        @keyframes gradientBG {
+
+            0% { background-position: 0% 50%; }
+
+            50% { background-position: 100% 50%; }
+
+            100% { background-position: 0% 50%; }
+
+        }
+
+
+
+        /* SVG Pattern lơ lửng nằm đè lên nền chuyển màu */
+
+        body::before {
+
+            content: "";
+
+            position: absolute;
+
+            top: 0; left: 0; right: 0; bottom: 0;
+
+            background-image: url("data:image/svg+xml,%3Csvg width='150' height='150' viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='20' y='30' font-size='26' opacity='0.35'%3E🍕%3C/text%3E%3Ctext x='100' y='70' font-size='26' opacity='0.35'%3E👨‍🍳%3C/text%3E%3Ctext x='40' y='120' font-size='24' opacity='0.35'%3E🍰%3C/text%3E%3Ctext x='110' y='140' font-size='20' opacity='0.35'%3E✨%3C/text%3E%3Ctext x='70' y='40' font-size='24' opacity='0.35'%3E🥗%3C/text%3E%3C/svg%3E");
+
+            z-index: -1;
+
+            pointer-events: none;
+
+        }
+
+
+
+        /* --- HEADER & TIMER --- */
+
+        .top-bar {
+
+            background: rgba(255, 255, 255, 0.95);
+
+            padding: 10px 20px;
+
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            z-index: 100;
+
+            border-bottom: 4px solid var(--primary);
+
+        }
+
+
+
+        .teacher-title {
+
+            font-size: 16px;
+
+            font-weight: 800;
+
+            color: var(--incorrect);
+
+            background: #fff0f5;
+
+            padding: 8px 15px;
+
+            border-radius: 20px;
+
+            border: 2px dashed var(--primary);
+
+        }
+
+
+
+        .timer-container {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+        }
+
+
+
+        #timerDisplay {
+
+            font-size: 26px;
+
+            font-weight: 800;
+
+            color: var(--incorrect);
+
+            background: white;
+
+            padding: 5px 20px;
+
+            border-radius: 15px;
+
+            border: 3px solid var(--accent);
+
+            box-shadow: 0 4px 0 var(--accent);
+
+        }
+
+
+
+        .btn-timer {
+
+            background: var(--primary);
+
+            color: white;
+
+            border: none;
+
+            padding: 12px 25px;
+
+            font-size: 16px;
+
+            font-weight: 800;
+
+            border-radius: 15px;
+
+            cursor: pointer;
+
+            box-shadow: 0 6px 0 #ff4757;
+
+            transition: all 0.1s;
+
+            text-transform: uppercase;
+
+        }
+
+        .btn-timer:active {
+
+            transform: translateY(6px);
+
+            box-shadow: 0 0px 0 #ff4757;
+
+        }
+
+
+
+        /* --- SPLIT SCREEN LAYOUT --- */
+
+        .main-container {
+
+            display: flex;
+
+            flex: 1;
+
+            overflow: hidden;
+
+            padding: 15px;
+
+            gap: 15px;
+
+        }
+
+
+
+        .left-panel, .right-panel {
+
+            flex: 1;
+
+            background: rgba(255, 255, 255, 0.92);
+
+            border-radius: 25px;
+
+            padding: 25px;
+
+            overflow-y: auto;
+
+            scroll-behavior: smooth;
+
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+            border: 3px solid white;
+
+        }
+
+
+
+        /* --- READING CONTENT STYLES --- */
+
+        .passage-title {
+
+            font-size: 32px;
+
+            color: var(--incorrect);
+
+            text-align: center;
+
+            margin-top: 0;
+
+            margin-bottom: 25px;
+
+            text-transform: uppercase;
+
+            font-weight: 900;
+
+            text-shadow: 2px 2px 0px var(--accent);
+
+            letter-spacing: 1px;
+
+        }
+
+
+
+        .paragraph-card {
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 25px;
+
+            margin-bottom: 25px;
+
+            box-shadow: 0 8px 0 #e1e5ee;
+
+            border: 2px solid #f1f2f6;
+
+            position: relative;
+
+        }
+
+
+
+        .paragraph-card h3 {
+
+            margin-top: 0;
+
+            color: var(--correct);
+
+            font-size: 24px;
+
+            border-bottom: 3px dashed var(--accent);
+
+            padding-bottom: 10px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+
+        .text-content {
+
+            font-size: 19px;
+
+            line-height: 1.7;
+
+            color: #4a4a4a;
+
+            font-weight: 600;
+
+        }
+
+
+
+        .btn-translate {
+
+            background: var(--accent);
+
+            color: #d35400;
+
+            border: none;
+
+            padding: 10px 20px;
+
+            font-size: 15px;
+
+            font-weight: 900;
+
+            border-radius: 12px;
+
+            cursor: pointer;
+
+            margin-top: 15px;
+
+            box-shadow: 0 5px 0 #e58e26;
+
+            transition: all 0.1s;
+
+        }
+
+        .btn-translate:active {
+
+            transform: translateY(5px);
+
+            box-shadow: 0 0px 0 #e58e26;
+
+        }
+
+
+
+        .translation-text {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 20px;
+
+            background: #fff9e6;
+
+            border-radius: 15px;
+
+            font-size: 17px;
+
+            color: #2f3640;
+
+            border-left: 6px solid var(--primary);
+
+            font-weight: 600;
+
+            line-height: 1.6;
+
+        }
+
+
+
+        /* --- GLOSSARY TABLE --- */
+
+        .glossary-container {
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 25px;
+
+            margin-top: 30px;
+
+            box-shadow: 0 8px 0 #e1e5ee;
+
+        }
+
+        .glossary-container h3 {
+
+            color: var(--primary);
+
+            text-align: center;
+
+            font-size: 22px;
+
+            margin-top: 0;
+
+        }
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            margin-top: 15px;
+
+        }
+
+        th, td {
+
+            padding: 15px;
+
+            border-bottom: 2px solid #f1f2f6;
+
+            text-align: left;
+
+            font-size: 17px;
+
+            font-weight: 600;
+
+        }
+
+        th {
+
+            background: var(--primary);
+
+            color: white;
+
+            border-radius: 10px 10px 0 0;
+
+        }
+
+        tr:hover { background: #fff0f5; }
+
+
+
+        /* --- QUIZ SECTION STYLES --- */
+
+        .question-card {
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 30px;
+
+            margin-bottom: 30px;
+
+            box-shadow: 0 10px 0 #dfe4ea;
+
+            border: 3px solid #f1f2f6;
+
+            transition: all 0.3s;
+
+        }
+
+
+
+        .question-text {
+
+            font-size: 22px;
+
+            font-weight: 800;
+
+            margin-bottom: 25px;
+
+            color: #2d3436;
+
+            line-height: 1.4;
+
+        }
+
+
+
+        .options-grid {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 15px;
+
+        }
+
+
+
+        .option-btn {
+
+            background: #f8f9fa;
+
+            border: 3px solid #e9ecef;
+
+            padding: 18px 25px;
+
+            font-size: 20px;
+
+            font-weight: 700;
+
+            border-radius: 18px;
+
+            cursor: pointer;
+
+            text-align: left;
+
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            box-shadow: 0 6px 0 #ced4da;
+
+            color: #495057;
+
+            display: flex;
+
+            align-items: center;
+
+        }
+
+
+
+        .option-btn .opt-label {
+
+            display: inline-block;
+
+            width: 35px;
+
+            height: 35px;
+
+            line-height: 35px;
+
+            background: #e9ecef;
+
+            border-radius: 50%;
+
+            text-align: center;
+
+            margin-right: 15px;
+
+            color: var(--primary);
+
+            font-weight: 900;
+
+        }
+
+
+
+        .option-btn:hover:not(:disabled) {
+
+            transform: scale(1.03) translateY(-4px);
+
+            background: #fff0f5;
+
+            border-color: var(--primary);
+
+            box-shadow: 0 10px 0 var(--primary);
+
+            color: #d63031;
+
+        }
+
+        .option-btn:hover:not(:disabled) .opt-label {
+
+            background: var(--primary);
+
+            color: white;
+
+        }
+
+
+
+        .option-btn.correct {
+
+            background: var(--correct) !important;
+
+            color: white !important;
+
+            border-color: #05c46b !important;
+
+            box-shadow: 0 6px 0 #05c46b !important;
+
+        }
+
+        .option-btn.correct .opt-label { background: white; color: var(--correct); }
+
+
+
+        .option-btn.wrong {
+
+            background: var(--incorrect) !important;
+
+            color: white !important;
+
+            border-color: #ff3f34 !important;
+
+            box-shadow: 0 6px 0 #ff3f34 !important;
+
+        }
+
+        .option-btn.wrong .opt-label { background: white; color: var(--incorrect); }
+
+
+
+        .option-btn:disabled {
+
+            cursor: not-allowed;
+
+        }
+
+
+
+        /* Detailed Explanation Box */
+
+        .explanation-box {
+
+            display: none;
+
+            margin-top: 25px;
+
+            padding: 20px;
+
+            background: #f0fdf4;
+
+            border-radius: 15px;
+
+            border: 3px solid var(--correct);
+
+            font-size: 17px;
+
+            line-height: 1.6;
+
+            color: #166534;
+
+            animation: slideDown 0.4s ease;
+
+        }
+
+        
+
+        .exp-title {
+
+            font-weight: 800;
+
+            color: var(--correct);
+
+            margin-bottom: 15px;
+
+            font-size: 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            border-bottom: 2px dashed #bbf7d0;
+
+            padding-bottom: 10px;
+
+        }
+
+
+
+        .exp-quote {
+
+            background: white;
+
+            padding: 15px;
+
+            border-radius: 12px;
+
+            font-style: italic;
+
+            margin: 15px 0;
+
+            border-left: 5px solid var(--accent);
+
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+
+            color: #4b5563;
+
+        }
+
+
+
+        /* --- ANIMATIONS --- */
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+
+        
+
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+
+        @keyframes shake {
+
+            10%, 90% { transform: translate3d(-3px, 0, 0); }
+
+            20%, 80% { transform: translate3d(5px, 0, 0); }
+
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+
+        }
+
+
+
+        /* --- CONFETTI CANVAS --- */
+
+        #confettiCanvas {
+
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+            pointer-events: none; z-index: 9999;
+
+        }
+
+
+
+        /* --- SUBMIT & MODAL --- */
+
+        .submit-btn-container { text-align: center; margin: 40px 0; }
+
+        .btn-submit {
+
+            background: var(--primary);
+
+            color: white;
+
+            font-size: 26px;
+
+            font-weight: 900;
+
+            padding: 18px 50px;
+
+            border: 4px solid white;
+
+            border-radius: 30px;
+
+            cursor: pointer;
+
+            box-shadow: 0 10px 0 #ff4757, 0 15px 20px rgba(0,0,0,0.2);
+
+            transition: all 0.2s;
+
+            text-transform: uppercase;
+
+            font-family: 'Quicksand', sans-serif;
+
+        }
+
+        .btn-submit:hover { transform: scale(1.08) rotate(-2deg); }
+
+        .btn-submit:active { transform: translateY(10px); box-shadow: 0 0px 0 #ff4757; }
+
+
+
+        .modal-overlay {
+
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.7);
+
+            display: none; justify-content: center; align-items: center;
+
+            z-index: 10000; backdrop-filter: blur(8px);
+
+        }
+
+        .modal-content {
+
+            background: white; padding: 50px; border-radius: 30px;
+
+            text-align: center; max-width: 450px;
+
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            border: 5px solid var(--primary);
+
+        }
+
+        @keyframes bounceIn {
+
+            0% { transform: scale(0.3); opacity: 0; }
+
+            50% { transform: scale(1.05); opacity: 1; }
+
+            70% { transform: scale(0.9); }
+
+            100% { transform: scale(1); }
+
+        }
+
+        .score-text { font-size: 60px; font-weight: 900; color: var(--primary); margin: 20px 0; text-shadow: 2px 2px 0 var(--accent); }
+
+        .feedback-text { font-size: 22px; font-weight: 800; color: #636e72; line-height: 1.5; }
+
+        .btn-close-modal {
+
+            margin-top: 30px; background: var(--secondary); color: #2d3436;
+
+            border: none; padding: 15px 35px; font-size: 20px; border-radius: 20px;
+
+            font-weight: 900; cursor: pointer; box-shadow: 0 8px 0 #05c46b;
+
+            font-family: 'Quicksand', sans-serif; transition: 0.2s;
+
+        }
+
+        .btn-close-modal:hover { transform: scale(1.05); }
+
+
+
+        /* --- SCROLLBAR --- */
+
+        ::-webkit-scrollbar { width: 12px; }
+
+        ::-webkit-scrollbar-track { background: #f1f2f6; border-radius: 10px; margin: 10px; }
+
+        ::-webkit-scrollbar-thumb { background: #b2bec3; border-radius: 10px; border: 3px solid #f1f2f6; }
+
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <canvas id="confettiCanvas"></canvas>
+
+
+
+    <div class="top-bar">
+
+        <div class="teacher-title">👩‍🏫 Giáo viên tạo: Ms. Chí Nên</div>
+
+        <div class="timer-container">
+
+            <div id="timerDisplay">10:00</div>
+
+            <button class="btn-timer" id="btnTimerToggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="main-container">
+
+        <div class="left-panel">
+
+            <h1 class="passage-title">School Cooking Competition</h1>
+
+            
+
+            <div class="paragraph-card">
+
+                <h3>🍕 Alice</h3>
+
+                <div class="text-content">
+
+                    Our class has just won a prize in a cooking competition – and we’re going to be on the local TV news tonight. The judges liked our pizzas because they were delicious and we also made pasta with sauce and dessert for the children in our school for lunch yesterday. Our teacher is married to a chef who helped us with our main course. We’re planning to bake some cakes tomorrow and sell them. We want to get enough money to pay for a school trip.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans1')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
+
+                <div class="translation-text" id="trans1">
+
+                    Lớp chúng tôi vừa giành giải thưởng trong một cuộc thi nấu ăn – và chúng tôi sẽ xuất hiện trên bản tin truyền hình địa phương vào tối nay. Các giám khảo thích những chiếc bánh pizza của chúng tôi vì chúng rất ngon và hôm qua chúng tôi cũng làm mì ống với nước sốt và món tráng miệng cho học sinh trong trường ăn trưa. Giáo viên của chúng tôi đã kết hôn với một đầu bếp, người đã giúp chúng tôi làm món chính. Chúng tôi dự định ngày mai sẽ nướng vài chiếc bánh ngọt và đem bán. Chúng tôi muốn kiếm đủ tiền để chi trả cho một chuyến dã ngoại của trường.
+
+                </div>
+
+            </div>
+
+
+
+            <div class="paragraph-card">
+
+                <h3>🍲 Eva</h3>
+
+                <div class="text-content">
+
+                    Our class teacher heard about the cooking competition on the local TV news and told us about it. We decided to enter and won second prize! We made rice and vegetables, lemonade and dessert for our parents. We turned the school hall into a restaurant for one evening. Our prize is a visit to the kitchens of a famous restaurant in our city – Gigi’s. My cousin works there and she says the food is amazing.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans2')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
+
+                <div class="translation-text" id="trans2">
+
+                    Giáo viên chủ nhiệm của chúng tôi đã nghe về cuộc thi nấu ăn trên bản tin truyền hình địa phương và kể cho chúng tôi nghe về nó. Chúng tôi quyết định tham gia và giành giải nhì! Chúng tôi đã làm cơm và rau, nước chanh và món tráng miệng cho bố mẹ. Chúng tôi đã biến hội trường của trường thành một nhà hàng trong một buổi tối. Giải thưởng của chúng tôi là một chuyến tham quan nhà bếp của một nhà hàng nổi tiếng trong thành phố - nhà hàng Gigi's. Chị họ của tôi làm việc ở đó và chị ấy nói đồ ăn ở đó rất tuyệt.
+
+                </div>
+
+            </div>
+
+
+
+            <div class="paragraph-card">
+
+                <h3>🍰 Jenny</h3>
+
+                <div class="text-content">
+
+                    The food our class made for the cooking competition was amazing. We baked a lot of cakes – chocolate, orange, lemon and honey. We also used vegetables from the school garden to make steak with vegetable salad for the class below us and everyone said it was fantastic. It was an interesting project and we learned a lot about food. We won third prize for our cakes and took them to a home for old people near our school.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans3')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
+
+                <div class="translation-text" id="trans3">
+
+                    Đồ ăn lớp chúng tôi làm cho cuộc thi nấu ăn thật tuyệt vời. Chúng tôi đã nướng rất nhiều bánh ngọt - sô cô la, cam, chanh và mật ong. Chúng tôi cũng sử dụng rau từ khu vườn của trường để làm bít tết với salad rau cho lớp dưới và mọi người đều nói nó rất ngon (tuyệt vời). Đó là một dự án thú vị và chúng tôi đã học được rất nhiều điều về thực phẩm. Chúng tôi đã giành giải ba cho những chiếc bánh ngọt và mang chúng đến một viện dưỡng lão gần trường.
+
+                </div>
+
+            </div>
+
+
+
+            <div class="glossary-container">
+
+                <h3>📚 Bảng Từ Vựng Học Thuật (Glossary)</h3>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Từ vựng (Word)</th>
+
+                            <th>Loại từ (POS)</th>
+
+                            <th>Nghĩa Tiếng Việt (Meaning)</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr><td>1. Competition</td><td>Noun (n)</td><td>Cuộc thi, sự cạnh tranh</td></tr>
+
+                        <tr><td>2. Local</td><td>Adjective (adj)</td><td>Địa phương, trong vùng</td></tr>
+
+                        <tr><td>3. Delicious</td><td>Adjective (adj)</td><td>Rất ngon miệng</td></tr>
+
+                        <tr><td>4. Dessert</td><td>Noun (n)</td><td>Món tráng miệng</td></tr>
+
+                        <tr><td>5. Main course</td><td>Noun phrase (n)</td><td>Món chính (trong bữa ăn)</td></tr>
+
+                        <tr><td>6. Bake</td><td>Verb (v)</td><td>Nướng (bánh)</td></tr>
+
+                        <tr><td>7. Restaurant</td><td>Noun (n)</td><td>Nhà hàng</td></tr>
+
+                        <tr><td>8. Famous</td><td>Adjective (adj)</td><td>Nổi tiếng</td></tr>
+
+                        <tr><td>9. Amazing</td><td>Adjective (adj)</td><td>Đáng kinh ngạc, tuyệt vời</td></tr>
+
+                        <tr><td>10. Project</td><td>Noun (n)</td><td>Dự án, đề án</td></tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="right-panel" id="quizContainer">
+
+            <div class="submit-btn-container">
+
+                <button class="btn-submit" onclick="submitQuiz()">🚀 NỘP BÀI THÔI 🚀</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="resultModal">
+
+        <div class="modal-content">
+
+            <h2>Kết Quả Của Bạn</h2>
+
+            <div class="score-text" id="finalScoreText">0/7</div>
+
+            <div class="feedback-text" id="feedbackText">Tuyệt vời!</div>
+
+            <button class="btn-close-modal" onclick="closeModal()">Xem Lại Bài Chữa</button>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        /* ================= AUDIO GENERATOR ================= */
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        
+
+        function playCorrectSound() {
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'sine';
+
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
+
+            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            osc.connect(gainNode);
+
+            gainNode.connect(audioCtx.destination);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.5);
+
+        }
+
+
+
+        function playWrongSound() {
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'triangle';
+
+            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+
+            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+            osc.connect(gainNode);
+
+            gainNode.connect(audioCtx.destination);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.4);
+
+        }
+
+
+
+        /* ================= CONFETTI GENERATOR ================= */
+
+        const canvas = document.getElementById('confettiCanvas');
+
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+
+
+
+        function fireConfetti() {
+
+            particles = [];
+
+            const colors = ['#10ac84', '#FECA57', '#FF6B81', '#1DD1A1', '#ff9ff3'];
+
+            for(let i=0; i<120; i++) {
+
+                particles.push({
+
+                    x: canvas.width/2,
+
+                    y: canvas.height/2 + 200,
+
+                    r: Math.random() * 8 + 3,
+
+                    dx: Math.random() * 14 - 7,
+
+                    dy: Math.random() * -18 - 5,
+
+                    color: colors[Math.floor(Math.random() * colors.length)]
+
+                });
+
+            }
+
+            animateConfetti();
+
+        }
+
+
+
+        function animateConfetti() {
+
+            requestAnimationFrame(animateConfetti);
+
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+
+            particles.forEach((p, index) => {
+
+                p.x += p.dx;
+
+                p.y += p.dy;
+
+                p.dy += 0.4; 
+
+                ctx.beginPath();
+
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+
+                ctx.fillStyle = p.color;
+
+                ctx.fill();
+
+                if(p.y > canvas.height) particles.splice(index, 1);
+
+            });
+
+        }
+
+
+
+        /* ================= TIMER LOGIC ================= */
+
+        let timeRemaining = 600; 
+
+        let timerInterval;
+
+        let isTimerRunning = false;
+
+
+
+        function updateTimerDisplay() {
+
+            let m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+
+            let s = (timeRemaining % 60).toString().padStart(2, '0');
+
+            document.getElementById('timerDisplay').innerText = `${m}:${s}`;
+
+        }
+
+
+
+        function toggleTimer() {
+
+            const btn = document.getElementById('btnTimerToggle');
+
+            if (isTimerRunning) {
+
+                clearInterval(timerInterval);
+
+                btn.innerText = "TIẾP TỤC LÀM BÀI";
+
+                btn.style.background = "#FECA57";
+
+                btn.style.color = "#d63031";
+
+                isTimerRunning = false;
+
+            } else {
+
+                btn.innerText = "TẠM DỪNG";
+
+                btn.style.background = "#FF6B81";
+
+                btn.style.color = "white";
+
+                isTimerRunning = true;
+
+                timerInterval = setInterval(() => {
+
+                    timeRemaining--;
+
+                    updateTimerDisplay();
+
+                    if (timeRemaining <= 0) {
+
+                        clearInterval(timerInterval);
+
+                        alert("⏰ Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+
+                        btn.innerText = "HẾT GIỜ";
+
+                        btn.disabled = true;
+
+                        btn.style.background = "#ccc";
+
+                    }
+
+                }, 1000);
+
+            }
+
+        }
+
+
+
+        /* ================= TRANSLATION TOGGLE ================= */
+
+        function toggleTranslate(id) {
+
+            const el = document.getElementById(id);
+
+            el.style.display = (el.style.display === "block") ? "none" : "block";
+
+        }
+
+
+
+        /* ================= QUIZ DATA & LOGIC ================= */
+
+        const quizData = [
+
+            {
+
+                q: "1. Whose food was popular with other students?",
+
+                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
+
+                correct: 'C',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 1)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Thức ăn của ai rất được các học sinh khác yêu thích? (popular with other students).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Jenny):</b> 
+
+                    <div class="exp-quote">"...make steak with vegetable salad for the <b>class below us</b> and <b>everyone said it was fantastic</b>."</div>
+
+                    <b>3. Tại sao chọn Jenny?</b> "Class below us" chính là các học sinh lớp dưới (other students), và mọi người đều nói thức ăn "thật tuyệt vời" (fantastic) -> Tức là nó rất được yêu thích (popular).
+
+                `
+
+            },
+
+            {
+
+                q: "2. Whose class learned about the cooking competition from a TV programme?",
+
+                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
+
+                correct: 'B',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 2)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Lớp của ai biết đến cuộc thi nấu ăn từ một chương trình TV? (learned from a TV programme).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Eva):</b> 
+
+                    <div class="exp-quote">"Our class teacher heard about the cooking competition <b>on the local TV news</b> and told us about it."</div>
+
+                    <b>3. Tại sao chọn Eva?</b> Giáo viên của lớp Eva đã nghe về cuộc thi trên "bản tin truyền hình địa phương" (TV news) và báo lại cho cả lớp.
+
+                `
+
+            },
+
+            {
+
+                q: "3. Whose class baked cakes and gave them away?",
+
+                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
+
+                correct: 'C',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 3)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Lớp của ai đã nướng bánh và đem đi tặng? (gave them away = took them to a home for old people).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Jenny):</b> 
+
+                    <div class="exp-quote">"We won third prize for our cakes and <b>took them to a home for old people</b> near our school."</div>
+
+                    <b>3. Tại sao chọn Jenny?</b> Lớp của Jenny đã nướng bánh và "mang chúng đến một viện dưỡng lão", đây chính là hành động đem đi tặng.
+
+                `
+
+            },
+
+            {
+
+                q: "4. Whose class won a trip in the cooking competition?",
+
+                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
+
+                correct: 'B',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 4)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Lớp của ai giành được một chuyến đi trong cuộc thi nấu ăn? (won a trip = prize is a visit).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Eva):</b> 
+
+                    <div class="exp-quote">"Our prize is <b>a visit to the kitchens of a famous restaurant</b> in our city..."</div>
+
+                    <b>3. Tại sao chọn Eva?</b> Giải thưởng (prize) lớp Eva nhận được là "một chuyến tham quan" (a visit), tương đương với một chuyến đi (a trip).
+
+                `
+
+            },
+
+            {
+
+                q: "5. Whose class got some help from someone who works in a restaurant?",
+
+                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
+
+                correct: 'A',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 5)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Lớp của ai nhận được sự giúp đỡ từ một người làm việc ở nhà hàng? (someone who works in a restaurant = a chef).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Alice):</b> 
+
+                    <div class="exp-quote">"Our teacher is married to <b>a chef who helped us</b> with our main course."</div>
+
+                    <b>3. Tại sao chọn Alice?</b> Lớp Alice được một "đầu bếp" (chef) giúp đỡ. Đầu bếp chính là người làm việc tại các nhà hàng.
+
+                `
+
+            },
+
+            {
+
+                q: "6. Whose class used food grown in the school to make lunch for another class?",
+
+                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
+
+                correct: 'C',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 6)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Lớp của ai đã sử dụng thực phẩm trồng ở trường để làm bữa trưa cho một lớp khác?<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Jenny):</b> 
+
+                    <div class="exp-quote">"We also used <b>vegetables from the school garden</b> to make steak... <b>for the class below us</b>..."</div>
+
+                    <b>3. Tại sao chọn Jenny?</b> "Vegetables from the school garden" chính là rau (thực phẩm) trồng tại vườn trường, và họ nấu cho "lớp dưới" (another class).
+
+                `
+
+            },
+
+            {
+
+                q: "7. Whose class plans to use their cakes to make money?",
+
+                options: [{id:'A', text:'Alice'}, {id:'B', text:'Eva'}, {id:'C', text:'Jenny'}],
+
+                correct: 'A',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 7)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Lớp của ai dự định dùng bánh của họ để kiếm tiền? (make money = sell them / get enough money).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Alice):</b> 
+
+                    <div class="exp-quote">"We’re planning to bake some cakes tomorrow and <b>sell them</b>. We want to <b>get enough money</b>..."</div>
+
+                    <b>3. Tại sao chọn Alice?</b> Lớp Alice dự định nướng bánh rồi "đem bán" (sell them) để "kiếm đủ tiền" (get enough money) cho chuyến dã ngoại.
+
+                `
+
+            }
+
+        ];
+
+
+
+        let score = 0;
+
+        let answeredQuestions = new Set();
+
+
+
+        function shuffleArray(array) {
+
+            let newArr = [...array];
+
+            for (let i = newArr.length - 1; i > 0; i--) {
+
+                const j = Math.floor(Math.random() * (i + 1));
+
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+
+            }
+
+            return newArr;
+
+        }
+
+
+
+        function renderQuiz() {
+
+            const container = document.getElementById('quizContainer');
+
+            const submitBtn = document.querySelector('.submit-btn-container');
+
+            container.innerHTML = '';
+
+
+
+            quizData.forEach((qObj, qIndex) => {
+
+                const card = document.createElement('div');
+
+                card.className = 'question-card';
+
+                card.id = `q-card-${qIndex}`;
+
+
+
+                const qText = document.createElement('div');
+
+                qText.className = 'question-text';
+
+                qText.innerHTML = qObj.q;
+
+                card.appendChild(qText);
+
+
+
+                const optionsGrid = document.createElement('div');
+
+                optionsGrid.className = 'options-grid';
+
+
+
+                let shuffledOptions = shuffleArray(qObj.options);
+
+
+
+                shuffledOptions.forEach((opt, index) => {
+
+                    const btn = document.createElement('button');
+
+                    btn.className = 'option-btn';
+
+                    
+
+                    const label = index === 0 ? 'A' : (index === 1 ? 'B' : 'C');
+
+                    btn.innerHTML = `<span class="opt-label">${label}</span> <span>${opt.text}</span>`;
+
+                    
+
+                    btn.dataset.optId = opt.id;
+
+                    btn.onclick = () => handleAnswer(btn, opt.id, qObj.correct, qIndex, card);
+
+                    optionsGrid.appendChild(btn);
+
+                });
+
+
+
+                card.appendChild(optionsGrid);
+
+
+
+                const expBox = document.createElement('div');
+
+                expBox.className = 'explanation-box';
+
+                expBox.id = `exp-${qIndex}`;
+
+                expBox.innerHTML = qObj.explanation;
+
+                card.appendChild(expBox);
+
+
+
+                container.appendChild(card);
+
+            });
+
+            
+
+            container.appendChild(submitBtn);
+
+        }
+
+
+
+        function handleAnswer(btn, selectedId, correctId, qIndex, card) {
+
+            const buttons = card.querySelectorAll('.option-btn');
+
+            const expBox = document.getElementById(`exp-${qIndex}`);
+
+
+
+            if (selectedId === correctId) {
+
+                btn.classList.add('correct');
+
+                playCorrectSound();
+
+                fireConfetti();
+
+                if (!answeredQuestions.has(qIndex)) {
+
+                    score++;
+
+                    answeredQuestions.add(qIndex);
+
+                }
+
+            } else {
+
+                btn.classList.add('wrong');
+
+                btn.classList.add('shake');
+
+                playWrongSound();
+
+                setTimeout(() => btn.classList.remove('shake'), 500);
+
+                answeredQuestions.add(qIndex); 
+
+                
+
+                buttons.forEach(b => {
+
+                    if (b.dataset.optId === correctId) {
+
+                        b.classList.add('correct');
+
+                    }
+
+                });
+
+            }
+
+
+
+            buttons.forEach(b => b.disabled = true);
+
+            expBox.style.display = 'block';
+
+        }
+
+
+
+        function submitQuiz() {
+
+            const modal = document.getElementById('resultModal');
+
+            const scoreText = document.getElementById('finalScoreText');
+
+            const feedbackText = document.getElementById('feedbackText');
+
+            
+
+            scoreText.innerText = `${score} / 7`;
+
+            
+
+            let percentage = score / 7;
+
+            if (percentage === 1) {
+
+                feedbackText.innerHTML = "🏆 ĐỈNH CỦA CHÓP!<br>Em đúng chuẩn MasterChef ngôn ngữ!";
+
+                feedbackText.style.color = "#10ac84";
+
+                fireConfetti();
+
+                playCorrectSound();
+
+            } else if (percentage >= 0.7) {
+
+                feedbackText.innerHTML = "🌟 RẤT TỐT!<br>Kỹ năng đọc hiểu của em ngon như Pizza vậy!";
+
+                feedbackText.style.color = "#1DD1A1";
+
+            } else if (percentage >= 0.4) {
+
+                feedbackText.innerHTML = "👍 KHÁ LẮM!<br>Đọc kỹ phần Giải thích chi tiết để nhặt thêm từ vựng nhé!";
+
+                feedbackText.style.color = "#FECA57";
+
+            } else {
+
+                feedbackText.innerHTML = "💪 KHÔNG SAO ĐÂU!<br>Lần tới mình sẽ làm tốt hơn nhiều!";
+
+                feedbackText.style.color = "#ee5253";
+
+            }
+
+
+
+            modal.style.display = "flex";
+
+            clearInterval(timerInterval);
+
+        }
+
+
+
+        function closeModal() {
+
+            document.getElementById('resultModal').style.display = "none";
+
+        }
+
+
+
+        window.onload = () => {
+
+            updateTimerDisplay();
+
+            renderQuiz();
+
+        };
+
+    </script>
+
+</body>
+
 </html>

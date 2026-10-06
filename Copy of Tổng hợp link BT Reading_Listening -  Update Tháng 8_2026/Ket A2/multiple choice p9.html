@@ -1,851 +1,1701 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading Test Gamification</title>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #8854C0;
-            --secondary-color: #00C9A7;
-            --accent-color: #FDCB6E;
-            --correct-color: #00D26A;
-            --wrong-color: #FF4757;
-            --bg-pane: rgba(255, 255, 255, 0.65);
-            --text-color: #2D3436;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Quicksand', sans-serif;
-        }
-
-        body {
-            height: 100vh;
-            overflow: hidden;
-            color: var(--text-color);
-            /* Gradient loang mượt mà Pastel kết hợp Neon */
-            background: linear-gradient(-45deg, #a8e6cf, #dcedc1, #ffd3b6, #ffaaa5);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* SVG Background Pattern Tự Động Sinh (Chủ đề Outdoors & Running) */
-        .svg-pattern {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            opacity: 0.5;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><text x="20" y="40" font-size="20">🏃</text><text x="120" y="80" font-size="25">⛰️</text><text x="60" y="150" font-size="20">🌲</text><text x="160" y="170" font-size="15">☁️</text><text x="180" y="30" font-size="20">☀️</text></svg>');
-            background-size: 150px 150px;
-            animation: movePattern 30s linear infinite;
-        }
-
-        @keyframes movePattern {
-            from { background-position: 0 0; }
-            to { background-position: 300px 300px; }
-        }
-
-        /* Top Control Bar */
-        .top-bar {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 30px;
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-            border-bottom: 3px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
-        .teacher-heading {
-            font-size: 1rem;
-            font-weight: 800;
-            color: var(--primary-color);
-            background: rgba(255, 255, 255, 0.8);
-            padding: 5px 15px;
-            border-radius: 20px;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
-        }
-
-        .timer-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .timer-display {
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--primary-color);
-            background: #fff;
-            padding: 5px 20px;
-            border-radius: 25px;
-            box-shadow: inset 0 3px 6px rgba(0,0,0,0.1);
-        }
-
-        .btn-timer {
-            padding: 8px 20px;
-            font-size: 1rem;
-            font-weight: 700;
-            color: white;
-            background-color: var(--secondary-color);
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            box-shadow: 0 5px 0 #00A388;
-            transition: all 0.2s;
-        }
-
-        .btn-timer:active {
-            transform: translateY(5px);
-            box-shadow: 0 0 0 #00A388;
-        }
-
-        /* Main Layout - Split Screen */
-        .main-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-            z-index: 10;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        .pane {
-            flex: 1;
-            background: var(--bg-pane);
-            backdrop-filter: blur(15px);
-            border-radius: 25px;
-            padding: 30px;
-            overflow-y: auto;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 2px solid rgba(255,255,255,0.6);
-        }
-
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
-
-        /* Reading Side Styles */
-        h1, h2 {
-            color: var(--primary-color);
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 1.8rem;
-        }
-        
-        .instruction {
-            text-align: center;
-            font-style: italic;
-            margin-bottom: 20px;
-            color: #555;
-            font-size: 1.1rem;
-        }
-
-        .paragraph-box {
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            font-size: 1.15rem;
-            line-height: 1.6;
-        }
-
-        .btn-translate {
-            background: var(--accent-color);
-            color: #fff;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 15px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 5px 0 #E1B154;
-            margin-top: 10px;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .btn-translate:active {
-            transform: translateY(5px);
-            box-shadow: 0 0 0 #E1B154;
-        }
-
-        .translation-text {
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
-            background: #E8F8F5;
-            border-left: 5px solid var(--secondary-color);
-            border-radius: 10px;
-            font-size: 1rem;
-            color: #2C3E50;
-        }
-
-        /* Glossary Table */
-        .glossary {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 30px;
-            background: #fff;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-        .glossary th {
-            background: var(--primary-color);
-            color: white;
-            padding: 15px;
-            font-size: 1.1rem;
-        }
-        .glossary td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
-            font-size: 1rem;
-        }
-        .glossary tr:last-child td { border-bottom: none; }
-        .glossary tr:hover { background: #fdf5e6; }
-
-        /* Exercises Side Styles */
-        .question-card {
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-
-        .question-text {
-            font-size: 1.15rem;
-            font-weight: 800;
-            margin-bottom: 15px;
-            color: var(--primary-color);
-        }
-
-        .options-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .option-btn {
-            font-size: 1.08rem;
-            font-weight: 700;
-            padding: 12px 20px;
-            border: 2px solid rgba(0,0,0,0.05);
-            border-radius: 15px;
-            background: #fff;
-            color: var(--text-color);
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s;
-            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
-        }
-
-        .option-btn:hover:not(:disabled) {
-            transform: scale(1.02);
-            border-color: var(--accent-color);
-        }
-
-        .option-btn:active:not(:disabled) {
-            transform: scale(1.02) translateY(5px);
-            box-shadow: 0 0 0 rgba(0,0,0,0.1);
-        }
-
-        .option-btn.correct {
-            background: var(--correct-color);
-            color: white;
-            border-color: var(--correct-color);
-            box-shadow: 0 5px 0 #00A855;
-        }
-
-        .option-btn.wrong {
-            background: var(--wrong-color);
-            color: white;
-            border-color: var(--wrong-color);
-            box-shadow: 0 5px 0 #D63031;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
-        .shake { animation: shake 0.4s; }
-
-        .explanation {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            background: #FFF3E0;
-            border-radius: 15px;
-            border-left: 5px solid var(--accent-color);
-            font-size: 1rem;
-            line-height: 1.6;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .explanation h4 {
-            color: #D35400;
-            margin-bottom: 10px;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: white;
-            background: var(--primary-color);
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            box-shadow: 0 8px 0 #6C5CE7;
-            margin-top: 20px;
-            transition: all 0.2s;
-        }
-
-        .submit-btn:hover { background: #9b59b6; }
-        .submit-btn:active {
-            transform: translateY(8px);
-            box-shadow: 0 0 0 #6C5CE7;
-        }
-
-        /* Modal Kết Quả */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            backdrop-filter: blur(5px);
-        }
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            text-align: center;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes bounceIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .modal-score {
-            font-size: 4rem;
-            font-weight: 800;
-            color: var(--primary-color);
-            margin: 20px 0;
-        }
-        .modal-message {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            font-weight: 700;
-            color: #2D3436;
-        }
-        .btn-close-modal {
-            background: var(--secondary-color);
-            color: white;
-            border: none;
-            padding: 10px 30px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-radius: 15px;
-            cursor: pointer;
-            box-shadow: 0 5px 0 #00A388;
-        }
-        .btn-close-modal:active {
-            transform: translateY(5px);
-            box-shadow: 0 0 0 #00A388;
-        }
-
-        /* Confetti Canvas */
-        #confetti {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 99;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="svg-pattern"></div>
-    <canvas id="confetti"></canvas>
-
-    <div class="top-bar">
-        <div class="teacher-heading">👩‍🏫 Ms MS Chí Nên</div>
-        <div class="timer-container">
-            <div class="timer-display" id="timer">10:00</div>
-            <button class="btn-timer" id="btn-timer-toggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
-        </div>
-    </div>
-
-    <div class="main-container">
-        
-        <div class="pane">
-            <h1>How I spend my free time</h1>
-            <h2>A2 English Reading Test</h2>
-            <div class="instruction">Jay Portman describes his unusual hobby, hill running, and tells us why he enjoys it.</div>
-
-            <div class="paragraph-box">
-                <p>Hill running is the sport of running up and down hills and mountains, through open countryside. It’s not popular among my friends, but I love it. My dad took me and my brothers out running when we were little, and then when I was about fifteen, I joined a hill running club, called the York Merlins.</p>
-                <button class="btn-translate" onclick="toggleTranslate('trans1')">Mở dịch đoạn này 🌟</button>
-                <div class="translation-text" id="trans1">Chạy bộ trên đồi là môn thể thao chạy lên và chạy xuống các ngọn đồi và vùng núi, băng qua những vùng nông thôn rộng mở. Môn này không phổ biến trong đám bạn của tôi, nhưng tôi lại rất yêu thích nó. Bố tôi đã đưa tôi và các anh em trai đi chạy khi chúng tôi còn nhỏ, và sau đó khi tôi khoảng mười lăm tuổi, tôi đã tham gia một câu lạc bộ chạy trên đồi, có tên là York Merlins.</div>
-            </div>
-
-            <div class="paragraph-box">
-                <p>There are some excellent runners in the club. When we do our practice runs, I’m always a long way behind them. But that doesn’t bother me. They’re all really nice and often give me advice. What I love is being outdoors and finding all these beautiful places I never knew were there.</p>
-                <button class="btn-translate" onclick="toggleTranslate('trans2')">Mở dịch đoạn này 🌟</button>
-                <div class="translation-text" id="trans2">Có một số người chạy rất xuất sắc trong câu lạc bộ. Khi chúng tôi thực hiện các buổi chạy tập, tôi luôn bị họ bỏ lại một khoảng cách rất xa ở phía sau. Nhưng điều đó không làm tôi bận tâm. Tất cả họ đều rất tử tế và thường cho tôi những lời khuyên. Điều tôi yêu thích là được ở ngoài trời và tìm thấy tất cả những địa điểm tuyệt đẹp mà tôi chưa từng biết là chúng có tồn tại ở đó.</div>
-            </div>
-
-            <div class="paragraph-box">
-                <p>We race against other clubs at the weekends. In these races, runners are told where to finish, but not how to get there. You need a good map and compass so you don’t get lost. Everyone starts together at the beginning, but later in the race you often find yourself running alone.</p>
-                <button class="btn-translate" onclick="toggleTranslate('trans3')">Mở dịch đoạn này 🌟</button>
-                <div class="translation-text" id="trans3">Chúng tôi thi đấu với các câu lạc bộ khác vào dịp cuối tuần. Trong các cuộc đua này, người chạy được thông báo điểm kết thúc, nhưng không được hướng dẫn cách để đến đó. Bạn cần một tấm bản đồ tốt và một chiếc la bàn để không bị lạc. Mọi người xuất phát cùng nhau lúc bắt đầu, nhưng về sau trong cuộc đua, bạn thường nhận ra mình đang phải chạy một mình.</div>
-            </div>
-
-            <div class="paragraph-box">
-                <p>Anyone can enter these races – you just get there in the morning, pay your £5, and run. There are no T-shirts or medals for the winners. The most you get is a piece of cake! Often there are international hill running champions taking part, but they are just as friendly as everyone else.</p>
-                <button class="btn-translate" onclick="toggleTranslate('trans4')">Mở dịch đoạn này 🌟</button>
-                <div class="translation-text" id="trans4">Bất cứ ai cũng có thể tham gia những cuộc đua này – bạn chỉ cần đến đó vào buổi sáng, trả 5 bảng Anh và chạy. Không có áo phông hay huy chương nào dành cho người chiến thắng. Thứ nhiều nhất bạn nhận được chỉ là một miếng bánh ngọt! Thường sẽ có cả những nhà vô địch chạy trên đồi quốc tế tham gia, nhưng họ cũng thân thiện như bao người khác vậy.</div>
-            </div>
-
-            <div class="paragraph-box">
-                <p>That doesn’t mean it’s an easy sport. Last weekend I did a race in heavy rain and high winds, and I was asking myself what I was doing out there. But I got to the end, and that was an amazing feeling.</p>
-                <button class="btn-translate" onclick="toggleTranslate('trans5')">Mở dịch đoạn này 🌟</button>
-                <div class="translation-text" id="trans5">Tuy vậy, điều đó không có nghĩa đây là một môn thể thao dễ dàng. Cuối tuần trước, tôi đã tham gia một cuộc đua dưới trời mưa to và gió lớn, và tôi đã tự hỏi bản thân mình đang làm cái quái gì ngoài này vậy. Nhưng tôi đã về đến đích, và đó quả là một cảm giác thật tuyệt vời.</div>
-            </div>
-
-            <table class="glossary">
-                <thead>
-                    <tr>
-                        <th>Vocabulary</th>
-                        <th>Type</th>
-                        <th>Meaning (Vietnamese)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>unusual</td><td>adj</td><td>khác thường, hiếm có</td></tr>
-                    <tr><td>countryside</td><td>n</td><td>vùng nông thôn</td></tr>
-                    <tr><td>excellent</td><td>adj</td><td>xuất sắc, tuyệt vời</td></tr>
-                    <tr><td>practice run</td><td>n phrase</td><td>buổi chạy tập</td></tr>
-                    <tr><td>bother</td><td>v</td><td>làm phiền, làm bận tâm</td></tr>
-                    <tr><td>advice</td><td>n</td><td>lời khuyên</td></tr>
-                    <tr><td>compass</td><td>n</td><td>cái la bàn</td></tr>
-                    <tr><td>champion</td><td>n</td><td>nhà vô địch</td></tr>
-                    <tr><td>heavy rain</td><td>n phrase</td><td>mưa to, mưa nặng hạt</td></tr>
-                    <tr><td>amazing</td><td>adj</td><td>tuyệt vời, đáng kinh ngạc</td></tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="pane" id="exercise-pane">
-            <h2 style="color: var(--text-color); margin-bottom: 20px;">For each question, choose the correct answer.</h2>
-            <div id="questions-container"></div>
-            <button class="submit-btn" onclick="submitTest()">NỘP BÀI 🎉</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="result-modal">
-        <div class="modal-content">
-            <h2 style="color: var(--primary-color);">Kết Quả Bài Làm</h2>
-            <div class="modal-score" id="final-score">0/5</div>
-            <div class="modal-message" id="final-message">Tuyệt vời!</div>
-            <button class="btn-close-modal" onclick="closeModal()">Đóng</button>
-        </div>
-    </div>
-
-<script>
-    // --- DỮ LIỆU CÂU HỎI VÀ GIẢI THÍCH CHI TIẾT ---
-    const questionsData = [
-        {
-            id: 1,
-            question: "1. Jay’s first experience of hill running was with",
-            options: [
-                { text: "A. a club.", isCorrect: false, letter: 'A' },
-                { text: "B. some friends.", isCorrect: false, letter: 'B' },
-                { text: "C. his family.", isCorrect: true, letter: 'C' }
-            ],
-            explanation: `
-                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
-                <b>1. Phân tích từ vựng 3 đáp án:</b><br>
-                A. a club (danh từ): một câu lạc bộ.<br>
-                B. some friends (cụm danh từ): một vài người bạn.<br>
-                C. his family (cụm danh từ): gia đình của anh ấy.<br><br>
-                <b>2. Dịch nghĩa câu hỏi:</b> "Trải nghiệm chạy trên đồi đầu tiên của Jay là cùng với..."<br><br>
-                <b>3. Tại sao chọn C?</b><br>
-                Dẫn chứng trong đoạn 1: <i>"My dad took me and my brothers out running when we were little..."</i> (Bố tôi đưa tôi và các anh em trai đi chạy khi chúng tôi còn nhỏ). Bố và anh em trai chính là thành viên trong "family" (gia đình).<br>
-                Loại A vì anh ấy gia nhập câu lạc bộ (York Merlins) khi 15 tuổi, không phải trải nghiệm đầu tiên (when we were little).<br>
-                Loại B vì bài đọc nói môn này "not popular among my friends" (không phổ biến với bạn bè).
-            `
-        },
-        {
-            id: 2,
-            question: "2. How does Jay feel about the good runners in his club?",
-            options: [
-                { text: "A. He’d like to be as fast as them one day.", isCorrect: false, letter: 'A' },
-                { text: "B. He doesn’t mind that they are better than him.", isCorrect: true, letter: 'B' },
-                { text: "C. He thinks they should help slower runners improve.", isCorrect: false, letter: 'C' }
-            ],
-            explanation: `
-                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
-                <b>1. Dịch nghĩa các đáp án:</b><br>
-                A. Anh ấy muốn một ngày nào đó sẽ chạy nhanh như họ.<br>
-                B. Anh ấy không bận tâm việc họ giỏi hơn mình.<br>
-                C. Anh ấy nghĩ họ nên giúp những người chạy chậm hơn tiến bộ.<br><br>
-                <b>2. Dịch nghĩa câu hỏi:</b> "Jay cảm thấy thế nào về những người chạy giỏi trong câu lạc bộ của anh ấy?"<br><br>
-                <b>3. Tại sao chọn B?</b><br>
-                Dẫn chứng trong đoạn 2: <i>"When we do our practice runs, I’m always a long way behind them. But that doesn’t bother me."</i> (Khi chúng tôi chạy tập, tôi luôn bị bỏ lại rất xa. Nhưng điều đó không làm tôi bận tâm). "Doesn't bother me" mang nghĩa đồng đẳng với "doesn't mind" (không bận tâm/không để ý).<br>
-                Loại A vì không có thông tin nói anh ấy muốn chạy nhanh bằng họ.<br>
-                Loại C vì thực tế họ đã chủ động giúp đỡ rồi (<i>"often give me advice"</i>) chứ không phải là Jay "nghĩ họ nên làm vậy".
-            `
-        },
-        {
-            id: 3,
-            question: "3. What does Jay say is important in the races he enters?",
-            options: [
-                { text: "A. listening to the instructions", isCorrect: false, letter: 'A' },
-                { text: "B. staying close to other runners", isCorrect: false, letter: 'B' },
-                { text: "C. being able to find your way", isCorrect: true, letter: 'C' }
-            ],
-            explanation: `
-                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
-                <b>1. Dịch nghĩa các đáp án:</b><br>
-                A. lắng nghe các hướng dẫn.<br>
-                B. ở gần những người chạy khác.<br>
-                C. có khả năng tìm đường đi.<br><br>
-                <b>2. Dịch nghĩa câu hỏi:</b> "Jay nói điều gì là quan trọng trong những cuộc đua mà anh ấy tham gia?"<br><br>
-                <b>3. Tại sao chọn C?</b><br>
-                Dẫn chứng trong đoạn 3: <i>"You need a good map and compass so you don’t get lost."</i> (Bạn cần một bản đồ tốt và la bàn để không bị lạc). Việc không bị lạc chính là "being able to find your way" (có thể tìm được đường).<br>
-                Loại A vì ban tổ chức chỉ báo điểm đến, không hướng dẫn cách đi (<i>"not how to get there"</i>).<br>
-                Loại B sai hoàn toàn vì trong cuộc đua bạn thường chạy một mình (<i>"later in the race you often find yourself running alone"</i>).
-            `
-        },
-        {
-            id: 4,
-            question: "4. What do we learn about the races from the fourth paragraph?",
-            options: [
-                { text: "A. They don’t have big prizes.", isCorrect: true, letter: 'A' },
-                { text: "B. They are only for local runners.", isCorrect: false, letter: 'B' },
-                { text: "C. They are free for some people to enter.", isCorrect: false, letter: 'C' }
-            ],
-            explanation: `
-                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
-                <b>1. Dịch nghĩa các đáp án:</b><br>
-                A. Chúng không có những giải thưởng lớn.<br>
-                B. Chúng chỉ dành cho những người chạy địa phương.<br>
-                C. Chúng miễn phí tham gia đối với một số người.<br><br>
-                <b>2. Dịch nghĩa câu hỏi:</b> "Chúng ta biết được điều gì về các cuộc đua từ đoạn văn thứ tư?"<br><br>
-                <b>3. Tại sao chọn A?</b><br>
-                Dẫn chứng trong đoạn 4: <i>"There are no T-shirts or medals for the winners. The most you get is a piece of cake!"</i> (Không có áo phông hay huy chương... Thứ nhiều nhất bạn nhận được là một miếng bánh ngọt). Điều này chứng tỏ cuộc đua không có giải thưởng lớn (big prizes).<br>
-                Loại B vì có cả những nhà vô địch quốc tế tham gia (<i>"international hill running champions taking part"</i>).<br>
-                Loại C sai vì bất kỳ ai tham gia cũng phải đóng 5 bảng Anh (<i>"pay your £5"</i>), không miễn phí cho ai.
-            `
-        },
-        {
-            id: 5,
-            question: "5. What does Jay say about the last race he did?",
-            options: [
-                { text: "A. The bad weather made it dangerous.", isCorrect: false, letter: 'A' },
-                { text: "B. He was very happy when he finished it.", isCorrect: true, letter: 'B' },
-                { text: "C. It wasn’t as difficult as some races he has done.", isCorrect: false, letter: 'C' }
-            ],
-            explanation: `
-                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
-                <b>1. Dịch nghĩa các đáp án:</b><br>
-                A. Thời tiết xấu đã làm cho cuộc đua trở nên nguy hiểm.<br>
-                B. Anh ấy đã rất hạnh phúc khi hoàn thành nó.<br>
-                C. Nó không khó bằng một số cuộc đua anh ấy từng tham gia.<br><br>
-                <b>2. Dịch nghĩa câu hỏi:</b> "Jay nói gì về cuộc đua gần nhất mà anh ấy đã tham gia?"<br><br>
-                <b>3. Tại sao chọn B?</b><br>
-                Dẫn chứng trong đoạn cuối: <i>"But I got to the end, and that was an amazing feeling."</i> (Nhưng tôi đã về đến đích, và đó là một cảm giác tuyệt vời). "Amazing feeling" (cảm giác tuyệt vời) đồng nghĩa với "very happy" (rất hạnh phúc/vui sướng).<br>
-                Loại A vì anh ấy có nhắc đến thời tiết xấu (heavy rain, high winds) nhưng không hề nói nó nguy hiểm (dangerous).<br>
-                Loại C sai vì anh ấy khẳng định nó không dễ (<i>"That doesn’t mean it’s an easy sport"</i>) và anh ấy thậm chí còn nghi ngờ quyết định của mình lúc đó.
-            `
-        }
-    ];
-
-    let score = 0;
-    let answeredQuestions = 0;
-
-    // Web Audio API Context
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    let audioCtx;
-
-    function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new AudioContext();
-        }
-    }
-
-    // Sinh âm thanh "Ding" (Correct)
-    function playDing() {
-        initAudio();
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime); // High pitch
-        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
-    }
-
-    // Sinh âm thanh "Téo tèo tèo" (Wrong)
-    function playWrong() {
-        initAudio();
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(300, audioCtx.currentTime); // Low pitch
-        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
-        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
-    }
-
-    // Hiệu ứng pháo giấy (Confetti)
-    function fireConfetti() {
-        const canvas = document.getElementById('confetti');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const particles = [];
-        const colors = ['#00D26A', '#FDCB6E', '#8854C0', '#00C9A7', '#FF4757'];
-
-        for(let i=0; i<100; i++) {
-            particles.push({
-                x: canvas.width / 2,
-                y: canvas.height / 2,
-                r: Math.random() * 6 + 2,
-                dx: Math.random() * 10 - 5,
-                dy: Math.random() * -10 - 2,
-                color: colors[Math.floor(Math.random() * colors.length)]
-            });
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            let active = false;
-            particles.forEach(p => {
-                p.x += p.dx;
-                p.y += p.dy;
-                p.dy += 0.3; // gravity
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-                if(p.y < canvas.height) active = true;
-            });
-            if(active) requestAnimationFrame(animate);
-            else ctx.clearRect(0,0, canvas.width, canvas.height);
-        }
-        animate();
-    }
-
-    // Thuật toán xáo trộn mảng
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
-    // Render câu hỏi
-    function renderQuestions() {
-        const container = document.getElementById('questions-container');
-        container.innerHTML = '';
-
-        questionsData.forEach((q, qIndex) => {
-            const card = document.createElement('div');
-            card.className = 'question-card';
-            card.id = `q-card-${qIndex}`;
-
-            const qText = document.createElement('div');
-            qText.className = 'question-text';
-            qText.innerText = q.question;
-            card.appendChild(qText);
-
-            const optionsGrid = document.createElement('div');
-            optionsGrid.className = 'options-grid';
-
-            // Clone và xáo trộn options
-            let optionsCopy = [...q.options];
-            shuffleArray(optionsCopy);
-
-            optionsCopy.forEach((opt, optIndex) => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                // Thay thế chữ cái A,B,C cũ bằng A,B,C mới sau khi xáo trộn để nhìn cho thuận mắt
-                const label = ['A', 'B', 'C', 'D'][optIndex];
-                const textWithoutOldLabel = opt.text.substring(2).trim(); // Bỏ "A. "
-                btn.innerText = `${label}. ${textWithoutOldLabel}`;
-                
-                btn.onclick = () => handleAnswer(qIndex, opt.isCorrect, btn, optionsGrid, q.explanation);
-                optionsGrid.appendChild(btn);
-
-                // Gắn data để sau này tìm nút đúng
-                if(opt.isCorrect) btn.dataset.correct = "true";
-            });
-
-            card.appendChild(optionsGrid);
-
-            const expDiv = document.createElement('div');
-            expDiv.className = 'explanation';
-            expDiv.id = `exp-${qIndex}`;
-            expDiv.innerHTML = q.explanation;
-            card.appendChild(expDiv);
-
-            container.appendChild(card);
-        });
-    }
-
-    // Xử lý chọn đáp án
-    function handleAnswer(qIndex, isCorrect, btnElement, optionsGrid, explanationHtml) {
-        // Vô hiệu hóa các nút khác
-        const buttons = optionsGrid.querySelectorAll('.option-btn');
-        buttons.forEach(b => b.disabled = true);
-
-        if (isCorrect) {
-            btnElement.classList.add('correct');
-            playDing();
-            fireConfetti();
-            score++;
-        } else {
-            btnElement.classList.add('wrong');
-            btnElement.classList.add('shake');
-            playWrong();
-            // Tự động tìm và bôi xanh đáp án đúng
-            const correctBtn = optionsGrid.querySelector('[data-correct="true"]');
-            if (correctBtn) correctBtn.classList.add('correct');
-        }
-
-        // Hiện giải thích
-        const expDiv = document.getElementById(`exp-${qIndex}`);
-        expDiv.style.display = 'block';
-
-        answeredQuestions++;
-    }
-
-    // Tính năng Mở dịch
-    function toggleTranslate(id) {
-        const el = document.getElementById(id);
-        if (el.style.display === 'block') {
-            el.style.display = 'none';
-        } else {
-            el.style.display = 'block';
-        }
-    }
-
-    // Tính năng Đồng hồ
-    let timeRemaining = 600; // 10 minutes
-    let timerInterval;
-    let isRunning = false;
-
-    function formatTime(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m < 10 ? '0':''}${m}:${s < 10 ? '0':''}${s}`;
-    }
-
-    function toggleTimer() {
-        const btn = document.getElementById('btn-timer-toggle');
-        const display = document.getElementById('timer');
-
-        if (isRunning) {
-            clearInterval(timerInterval);
-            isRunning = false;
-            btn.innerText = 'TIẾP TỤC';
-            btn.style.backgroundColor = '#FDCB6E';
-        } else {
-            initAudio(); // Initialize audio context on first click interaction
-            isRunning = true;
-            btn.innerText = 'TẠM DỪNG';
-            btn.style.backgroundColor = '#FF4757';
-            
-            timerInterval = setInterval(() => {
-                timeRemaining--;
-                display.innerText = formatTime(timeRemaining);
-                if (timeRemaining <= 0) {
-                    clearInterval(timerInterval);
-                    isRunning = false;
-                    alert("Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
-                }
-            }, 1000);
-        }
-    }
-
-    // Tính năng Nộp bài
-    function submitTest() {
-        const modal = document.getElementById('result-modal');
-        const scoreDisplay = document.getElementById('final-score');
-        const messageDisplay = document.getElementById('final-message');
-
-        scoreDisplay.innerText = `${score}/${questionsData.length}`;
-
-        if (score === questionsData.length) {
-            messageDisplay.innerText = "Thiên tài ngoại ngữ! Bạn đã làm đúng tuyệt đối! 🏆";
-        } else if (score >= questionsData.length / 2) {
-            messageDisplay.innerText = "Làm tốt lắm! Bạn đã rất cố gắng! ⭐";
-        } else {
-            messageDisplay.innerText = "Cố lên nhé! Đọc kỹ phần giải thích để rút kinh nghiệm nha! 💪";
-        }
-
-        modal.style.display = 'flex';
-        if (score > 3) fireConfetti();
-    }
-
-    function closeModal() {
-        document.getElementById('result-modal').style.display = 'none';
-    }
-
-    // Initialize
-    window.onload = () => {
-        renderQuestions();
-    };
-
-</script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reading Test Gamification</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+
+        :root {
+
+            --primary-color: #8854C0;
+
+            --secondary-color: #00C9A7;
+
+            --accent-color: #FDCB6E;
+
+            --correct-color: #00D26A;
+
+            --wrong-color: #FF4757;
+
+            --bg-pane: rgba(255, 255, 255, 0.65);
+
+            --text-color: #2D3436;
+
+        }
+
+
+
+        * {
+
+            box-sizing: border-box;
+
+            margin: 0;
+
+            padding: 0;
+
+            font-family: 'Quicksand', sans-serif;
+
+        }
+
+
+
+        body {
+
+            height: 100vh;
+
+            overflow: hidden;
+
+            color: var(--text-color);
+
+            /* Gradient loang mượt mà Pastel kết hợp Neon */
+
+            background: linear-gradient(-45deg, #a8e6cf, #dcedc1, #ffd3b6, #ffaaa5);
+
+            background-size: 400% 400%;
+
+            animation: gradientBG 15s ease infinite;
+
+            display: flex;
+
+            flex-direction: column;
+
+            position: relative;
+
+        }
+
+
+
+        @keyframes gradientBG {
+
+            0% { background-position: 0% 50%; }
+
+            50% { background-position: 100% 50%; }
+
+            100% { background-position: 0% 50%; }
+
+        }
+
+
+
+        /* SVG Background Pattern Tự Động Sinh (Chủ đề Outdoors & Running) */
+
+        .svg-pattern {
+
+            position: absolute;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            pointer-events: none;
+
+            z-index: 0;
+
+            opacity: 0.5;
+
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><text x="20" y="40" font-size="20">🏃</text><text x="120" y="80" font-size="25">⛰️</text><text x="60" y="150" font-size="20">🌲</text><text x="160" y="170" font-size="15">☁️</text><text x="180" y="30" font-size="20">☀️</text></svg>');
+
+            background-size: 150px 150px;
+
+            animation: movePattern 30s linear infinite;
+
+        }
+
+
+
+        @keyframes movePattern {
+
+            from { background-position: 0 0; }
+
+            to { background-position: 300px 300px; }
+
+        }
+
+
+
+        /* Top Control Bar */
+
+        .top-bar {
+
+            position: relative;
+
+            z-index: 10;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            padding: 10px 30px;
+
+            background: rgba(255, 255, 255, 0.4);
+
+            backdrop-filter: blur(10px);
+
+            border-bottom: 3px solid rgba(255, 255, 255, 0.5);
+
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+
+        }
+
+
+
+        .teacher-heading {
+
+            font-size: 1rem;
+
+            font-weight: 800;
+
+            color: var(--primary-color);
+
+            background: rgba(255, 255, 255, 0.8);
+
+            padding: 5px 15px;
+
+            border-radius: 20px;
+
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+
+        }
+
+
+
+        .timer-container {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+        }
+
+
+
+        .timer-display {
+
+            font-size: 1.5rem;
+
+            font-weight: 800;
+
+            color: var(--primary-color);
+
+            background: #fff;
+
+            padding: 5px 20px;
+
+            border-radius: 25px;
+
+            box-shadow: inset 0 3px 6px rgba(0,0,0,0.1);
+
+        }
+
+
+
+        .btn-timer {
+
+            padding: 8px 20px;
+
+            font-size: 1rem;
+
+            font-weight: 700;
+
+            color: white;
+
+            background-color: var(--secondary-color);
+
+            border: none;
+
+            border-radius: 20px;
+
+            cursor: pointer;
+
+            box-shadow: 0 5px 0 #00A388;
+
+            transition: all 0.2s;
+
+        }
+
+
+
+        .btn-timer:active {
+
+            transform: translateY(5px);
+
+            box-shadow: 0 0 0 #00A388;
+
+        }
+
+
+
+        /* Main Layout - Split Screen */
+
+        .main-container {
+
+            display: flex;
+
+            flex: 1;
+
+            overflow: hidden;
+
+            position: relative;
+
+            z-index: 10;
+
+            padding: 20px;
+
+            gap: 20px;
+
+        }
+
+
+
+        .pane {
+
+            flex: 1;
+
+            background: var(--bg-pane);
+
+            backdrop-filter: blur(15px);
+
+            border-radius: 25px;
+
+            padding: 30px;
+
+            overflow-y: auto;
+
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+            border: 2px solid rgba(255,255,255,0.6);
+
+        }
+
+
+
+        /* Scrollbar Styling */
+
+        ::-webkit-scrollbar { width: 10px; }
+
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+
+
+        /* Reading Side Styles */
+
+        h1, h2 {
+
+            color: var(--primary-color);
+
+            text-align: center;
+
+            margin-bottom: 10px;
+
+            font-size: 1.8rem;
+
+        }
+
+        
+
+        .instruction {
+
+            text-align: center;
+
+            font-style: italic;
+
+            margin-bottom: 20px;
+
+            color: #555;
+
+            font-size: 1.1rem;
+
+        }
+
+
+
+        .paragraph-box {
+
+            background: rgba(255, 255, 255, 0.7);
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            margin-bottom: 20px;
+
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+
+            font-size: 1.15rem;
+
+            line-height: 1.6;
+
+        }
+
+
+
+        .btn-translate {
+
+            background: var(--accent-color);
+
+            color: #fff;
+
+            border: none;
+
+            padding: 8px 15px;
+
+            border-radius: 15px;
+
+            font-size: 1rem;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            box-shadow: 0 5px 0 #E1B154;
+
+            margin-top: 10px;
+
+            transition: 0.2s;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+        }
+
+
+
+        .btn-translate:active {
+
+            transform: translateY(5px);
+
+            box-shadow: 0 0 0 #E1B154;
+
+        }
+
+
+
+        .translation-text {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 15px;
+
+            background: #E8F8F5;
+
+            border-left: 5px solid var(--secondary-color);
+
+            border-radius: 10px;
+
+            font-size: 1rem;
+
+            color: #2C3E50;
+
+        }
+
+
+
+        /* Glossary Table */
+
+        .glossary {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            margin-top: 30px;
+
+            background: #fff;
+
+            border-radius: 15px;
+
+            overflow: hidden;
+
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+
+        }
+
+        .glossary th {
+
+            background: var(--primary-color);
+
+            color: white;
+
+            padding: 15px;
+
+            font-size: 1.1rem;
+
+        }
+
+        .glossary td {
+
+            padding: 12px 15px;
+
+            border-bottom: 1px solid #eee;
+
+            font-size: 1rem;
+
+        }
+
+        .glossary tr:last-child td { border-bottom: none; }
+
+        .glossary tr:hover { background: #fdf5e6; }
+
+
+
+        /* Exercises Side Styles */
+
+        .question-card {
+
+            background: rgba(255, 255, 255, 0.85);
+
+            border-radius: 20px;
+
+            padding: 25px;
+
+            margin-bottom: 25px;
+
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+
+            border: 2px solid transparent;
+
+            transition: all 0.3s ease;
+
+        }
+
+
+
+        .question-text {
+
+            font-size: 1.15rem;
+
+            font-weight: 800;
+
+            margin-bottom: 15px;
+
+            color: var(--primary-color);
+
+        }
+
+
+
+        .options-grid {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 12px;
+
+        }
+
+
+
+        .option-btn {
+
+            font-size: 1.08rem;
+
+            font-weight: 700;
+
+            padding: 12px 20px;
+
+            border: 2px solid rgba(0,0,0,0.05);
+
+            border-radius: 15px;
+
+            background: #fff;
+
+            color: var(--text-color);
+
+            cursor: pointer;
+
+            text-align: left;
+
+            transition: all 0.2s;
+
+            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+
+        }
+
+
+
+        .option-btn:hover:not(:disabled) {
+
+            transform: scale(1.02);
+
+            border-color: var(--accent-color);
+
+        }
+
+
+
+        .option-btn:active:not(:disabled) {
+
+            transform: scale(1.02) translateY(5px);
+
+            box-shadow: 0 0 0 rgba(0,0,0,0.1);
+
+        }
+
+
+
+        .option-btn.correct {
+
+            background: var(--correct-color);
+
+            color: white;
+
+            border-color: var(--correct-color);
+
+            box-shadow: 0 5px 0 #00A855;
+
+        }
+
+
+
+        .option-btn.wrong {
+
+            background: var(--wrong-color);
+
+            color: white;
+
+            border-color: var(--wrong-color);
+
+            box-shadow: 0 5px 0 #D63031;
+
+        }
+
+
+
+        @keyframes shake {
+
+            0%, 100% { transform: translateX(0); }
+
+            20%, 60% { transform: translateX(-5px); }
+
+            40%, 80% { transform: translateX(5px); }
+
+        }
+
+        .shake { animation: shake 0.4s; }
+
+
+
+        .explanation {
+
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 15px;
+
+            background: #FFF3E0;
+
+            border-radius: 15px;
+
+            border-left: 5px solid var(--accent-color);
+
+            font-size: 1rem;
+
+            line-height: 1.6;
+
+            animation: fadeIn 0.5s ease;
+
+        }
+
+
+
+        @keyframes fadeIn {
+
+            from { opacity: 0; transform: translateY(-10px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+        }
+
+
+
+        .explanation h4 {
+
+            color: #D35400;
+
+            margin-bottom: 10px;
+
+        }
+
+
+
+        .submit-btn {
+
+            width: 100%;
+
+            padding: 15px;
+
+            font-size: 1.5rem;
+
+            font-weight: 800;
+
+            color: white;
+
+            background: var(--primary-color);
+
+            border: none;
+
+            border-radius: 20px;
+
+            cursor: pointer;
+
+            box-shadow: 0 8px 0 #6C5CE7;
+
+            margin-top: 20px;
+
+            transition: all 0.2s;
+
+        }
+
+
+
+        .submit-btn:hover { background: #9b59b6; }
+
+        .submit-btn:active {
+
+            transform: translateY(8px);
+
+            box-shadow: 0 0 0 #6C5CE7;
+
+        }
+
+
+
+        /* Modal Kết Quả */
+
+        .modal-overlay {
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.7);
+
+            display: none;
+
+            justify-content: center;
+
+            align-items: center;
+
+            z-index: 100;
+
+            backdrop-filter: blur(5px);
+
+        }
+
+        .modal-content {
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 30px;
+
+            text-align: center;
+
+            max-width: 500px;
+
+            width: 90%;
+
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+        @keyframes bounceIn {
+
+            0% { transform: scale(0.5); opacity: 0; }
+
+            100% { transform: scale(1); opacity: 1; }
+
+        }
+
+        .modal-score {
+
+            font-size: 4rem;
+
+            font-weight: 800;
+
+            color: var(--primary-color);
+
+            margin: 20px 0;
+
+        }
+
+        .modal-message {
+
+            font-size: 1.5rem;
+
+            margin-bottom: 20px;
+
+            font-weight: 700;
+
+            color: #2D3436;
+
+        }
+
+        .btn-close-modal {
+
+            background: var(--secondary-color);
+
+            color: white;
+
+            border: none;
+
+            padding: 10px 30px;
+
+            font-size: 1.2rem;
+
+            font-weight: bold;
+
+            border-radius: 15px;
+
+            cursor: pointer;
+
+            box-shadow: 0 5px 0 #00A388;
+
+        }
+
+        .btn-close-modal:active {
+
+            transform: translateY(5px);
+
+            box-shadow: 0 0 0 #00A388;
+
+        }
+
+
+
+        /* Confetti Canvas */
+
+        #confetti {
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            pointer-events: none;
+
+            z-index: 99;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <div class="svg-pattern"></div>
+
+    <canvas id="confetti"></canvas>
+
+
+
+    <div class="top-bar">
+
+        <div class="teacher-heading">👩‍🏫 Ms. Chí Nên</div>
+
+        <div class="timer-container">
+
+            <div class="timer-display" id="timer">10:00</div>
+
+            <button class="btn-timer" id="btn-timer-toggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="main-container">
+
+        
+
+        <div class="pane">
+
+            <h1>How I spend my free time</h1>
+
+            <h2>A2 English Reading Test</h2>
+
+            <div class="instruction">Jay Portman describes his unusual hobby, hill running, and tells us why he enjoys it.</div>
+
+
+
+            <div class="paragraph-box">
+
+                <p>Hill running is the sport of running up and down hills and mountains, through open countryside. It’s not popular among my friends, but I love it. My dad took me and my brothers out running when we were little, and then when I was about fifteen, I joined a hill running club, called the York Merlins.</p>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans1')">Mở dịch đoạn này 🌟</button>
+
+                <div class="translation-text" id="trans1">Chạy bộ trên đồi là môn thể thao chạy lên và chạy xuống các ngọn đồi và vùng núi, băng qua những vùng nông thôn rộng mở. Môn này không phổ biến trong đám bạn của tôi, nhưng tôi lại rất yêu thích nó. Bố tôi đã đưa tôi và các anh em trai đi chạy khi chúng tôi còn nhỏ, và sau đó khi tôi khoảng mười lăm tuổi, tôi đã tham gia một câu lạc bộ chạy trên đồi, có tên là York Merlins.</div>
+
+            </div>
+
+
+
+            <div class="paragraph-box">
+
+                <p>There are some excellent runners in the club. When we do our practice runs, I’m always a long way behind them. But that doesn’t bother me. They’re all really nice and often give me advice. What I love is being outdoors and finding all these beautiful places I never knew were there.</p>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans2')">Mở dịch đoạn này 🌟</button>
+
+                <div class="translation-text" id="trans2">Có một số người chạy rất xuất sắc trong câu lạc bộ. Khi chúng tôi thực hiện các buổi chạy tập, tôi luôn bị họ bỏ lại một khoảng cách rất xa ở phía sau. Nhưng điều đó không làm tôi bận tâm. Tất cả họ đều rất tử tế và thường cho tôi những lời khuyên. Điều tôi yêu thích là được ở ngoài trời và tìm thấy tất cả những địa điểm tuyệt đẹp mà tôi chưa từng biết là chúng có tồn tại ở đó.</div>
+
+            </div>
+
+
+
+            <div class="paragraph-box">
+
+                <p>We race against other clubs at the weekends. In these races, runners are told where to finish, but not how to get there. You need a good map and compass so you don’t get lost. Everyone starts together at the beginning, but later in the race you often find yourself running alone.</p>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans3')">Mở dịch đoạn này 🌟</button>
+
+                <div class="translation-text" id="trans3">Chúng tôi thi đấu với các câu lạc bộ khác vào dịp cuối tuần. Trong các cuộc đua này, người chạy được thông báo điểm kết thúc, nhưng không được hướng dẫn cách để đến đó. Bạn cần một tấm bản đồ tốt và một chiếc la bàn để không bị lạc. Mọi người xuất phát cùng nhau lúc bắt đầu, nhưng về sau trong cuộc đua, bạn thường nhận ra mình đang phải chạy một mình.</div>
+
+            </div>
+
+
+
+            <div class="paragraph-box">
+
+                <p>Anyone can enter these races – you just get there in the morning, pay your £5, and run. There are no T-shirts or medals for the winners. The most you get is a piece of cake! Often there are international hill running champions taking part, but they are just as friendly as everyone else.</p>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans4')">Mở dịch đoạn này 🌟</button>
+
+                <div class="translation-text" id="trans4">Bất cứ ai cũng có thể tham gia những cuộc đua này – bạn chỉ cần đến đó vào buổi sáng, trả 5 bảng Anh và chạy. Không có áo phông hay huy chương nào dành cho người chiến thắng. Thứ nhiều nhất bạn nhận được chỉ là một miếng bánh ngọt! Thường sẽ có cả những nhà vô địch chạy trên đồi quốc tế tham gia, nhưng họ cũng thân thiện như bao người khác vậy.</div>
+
+            </div>
+
+
+
+            <div class="paragraph-box">
+
+                <p>That doesn’t mean it’s an easy sport. Last weekend I did a race in heavy rain and high winds, and I was asking myself what I was doing out there. But I got to the end, and that was an amazing feeling.</p>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans5')">Mở dịch đoạn này 🌟</button>
+
+                <div class="translation-text" id="trans5">Tuy vậy, điều đó không có nghĩa đây là một môn thể thao dễ dàng. Cuối tuần trước, tôi đã tham gia một cuộc đua dưới trời mưa to và gió lớn, và tôi đã tự hỏi bản thân mình đang làm cái quái gì ngoài này vậy. Nhưng tôi đã về đến đích, và đó quả là một cảm giác thật tuyệt vời.</div>
+
+            </div>
+
+
+
+            <table class="glossary">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Vocabulary</th>
+
+                        <th>Type</th>
+
+                        <th>Meaning (Vietnamese)</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr><td>unusual</td><td>adj</td><td>khác thường, hiếm có</td></tr>
+
+                    <tr><td>countryside</td><td>n</td><td>vùng nông thôn</td></tr>
+
+                    <tr><td>excellent</td><td>adj</td><td>xuất sắc, tuyệt vời</td></tr>
+
+                    <tr><td>practice run</td><td>n phrase</td><td>buổi chạy tập</td></tr>
+
+                    <tr><td>bother</td><td>v</td><td>làm phiền, làm bận tâm</td></tr>
+
+                    <tr><td>advice</td><td>n</td><td>lời khuyên</td></tr>
+
+                    <tr><td>compass</td><td>n</td><td>cái la bàn</td></tr>
+
+                    <tr><td>champion</td><td>n</td><td>nhà vô địch</td></tr>
+
+                    <tr><td>heavy rain</td><td>n phrase</td><td>mưa to, mưa nặng hạt</td></tr>
+
+                    <tr><td>amazing</td><td>adj</td><td>tuyệt vời, đáng kinh ngạc</td></tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+
+        <div class="pane" id="exercise-pane">
+
+            <h2 style="color: var(--text-color); margin-bottom: 20px;">For each question, choose the correct answer.</h2>
+
+            <div id="questions-container"></div>
+
+            <button class="submit-btn" onclick="submitTest()">NỘP BÀI 🎉</button>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="result-modal">
+
+        <div class="modal-content">
+
+            <h2 style="color: var(--primary-color);">Kết Quả Bài Làm</h2>
+
+            <div class="modal-score" id="final-score">0/5</div>
+
+            <div class="modal-message" id="final-message">Tuyệt vời!</div>
+
+            <button class="btn-close-modal" onclick="closeModal()">Đóng</button>
+
+        </div>
+
+    </div>
+
+
+
+<script>
+
+    // --- DỮ LIỆU CÂU HỎI VÀ GIẢI THÍCH CHI TIẾT ---
+
+    const questionsData = [
+
+        {
+
+            id: 1,
+
+            question: "1. Jay’s first experience of hill running was with",
+
+            options: [
+
+                { text: "A. a club.", isCorrect: false, letter: 'A' },
+
+                { text: "B. some friends.", isCorrect: false, letter: 'B' },
+
+                { text: "C. his family.", isCorrect: true, letter: 'C' }
+
+            ],
+
+            explanation: `
+
+                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
+
+                <b>1. Phân tích từ vựng 3 đáp án:</b><br>
+
+                A. a club (danh từ): một câu lạc bộ.<br>
+
+                B. some friends (cụm danh từ): một vài người bạn.<br>
+
+                C. his family (cụm danh từ): gia đình của anh ấy.<br><br>
+
+                <b>2. Dịch nghĩa câu hỏi:</b> "Trải nghiệm chạy trên đồi đầu tiên của Jay là cùng với..."<br><br>
+
+                <b>3. Tại sao chọn C?</b><br>
+
+                Dẫn chứng trong đoạn 1: <i>"My dad took me and my brothers out running when we were little..."</i> (Bố tôi đưa tôi và các anh em trai đi chạy khi chúng tôi còn nhỏ). Bố và anh em trai chính là thành viên trong "family" (gia đình).<br>
+
+                Loại A vì anh ấy gia nhập câu lạc bộ (York Merlins) khi 15 tuổi, không phải trải nghiệm đầu tiên (when we were little).<br>
+
+                Loại B vì bài đọc nói môn này "not popular among my friends" (không phổ biến với bạn bè).
+
+            `
+
+        },
+
+        {
+
+            id: 2,
+
+            question: "2. How does Jay feel about the good runners in his club?",
+
+            options: [
+
+                { text: "A. He’d like to be as fast as them one day.", isCorrect: false, letter: 'A' },
+
+                { text: "B. He doesn’t mind that they are better than him.", isCorrect: true, letter: 'B' },
+
+                { text: "C. He thinks they should help slower runners improve.", isCorrect: false, letter: 'C' }
+
+            ],
+
+            explanation: `
+
+                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
+
+                <b>1. Dịch nghĩa các đáp án:</b><br>
+
+                A. Anh ấy muốn một ngày nào đó sẽ chạy nhanh như họ.<br>
+
+                B. Anh ấy không bận tâm việc họ giỏi hơn mình.<br>
+
+                C. Anh ấy nghĩ họ nên giúp những người chạy chậm hơn tiến bộ.<br><br>
+
+                <b>2. Dịch nghĩa câu hỏi:</b> "Jay cảm thấy thế nào về những người chạy giỏi trong câu lạc bộ của anh ấy?"<br><br>
+
+                <b>3. Tại sao chọn B?</b><br>
+
+                Dẫn chứng trong đoạn 2: <i>"When we do our practice runs, I’m always a long way behind them. But that doesn’t bother me."</i> (Khi chúng tôi chạy tập, tôi luôn bị bỏ lại rất xa. Nhưng điều đó không làm tôi bận tâm). "Doesn't bother me" mang nghĩa đồng đẳng với "doesn't mind" (không bận tâm/không để ý).<br>
+
+                Loại A vì không có thông tin nói anh ấy muốn chạy nhanh bằng họ.<br>
+
+                Loại C vì thực tế họ đã chủ động giúp đỡ rồi (<i>"often give me advice"</i>) chứ không phải là Jay "nghĩ họ nên làm vậy".
+
+            `
+
+        },
+
+        {
+
+            id: 3,
+
+            question: "3. What does Jay say is important in the races he enters?",
+
+            options: [
+
+                { text: "A. listening to the instructions", isCorrect: false, letter: 'A' },
+
+                { text: "B. staying close to other runners", isCorrect: false, letter: 'B' },
+
+                { text: "C. being able to find your way", isCorrect: true, letter: 'C' }
+
+            ],
+
+            explanation: `
+
+                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
+
+                <b>1. Dịch nghĩa các đáp án:</b><br>
+
+                A. lắng nghe các hướng dẫn.<br>
+
+                B. ở gần những người chạy khác.<br>
+
+                C. có khả năng tìm đường đi.<br><br>
+
+                <b>2. Dịch nghĩa câu hỏi:</b> "Jay nói điều gì là quan trọng trong những cuộc đua mà anh ấy tham gia?"<br><br>
+
+                <b>3. Tại sao chọn C?</b><br>
+
+                Dẫn chứng trong đoạn 3: <i>"You need a good map and compass so you don’t get lost."</i> (Bạn cần một bản đồ tốt và la bàn để không bị lạc). Việc không bị lạc chính là "being able to find your way" (có thể tìm được đường).<br>
+
+                Loại A vì ban tổ chức chỉ báo điểm đến, không hướng dẫn cách đi (<i>"not how to get there"</i>).<br>
+
+                Loại B sai hoàn toàn vì trong cuộc đua bạn thường chạy một mình (<i>"later in the race you often find yourself running alone"</i>).
+
+            `
+
+        },
+
+        {
+
+            id: 4,
+
+            question: "4. What do we learn about the races from the fourth paragraph?",
+
+            options: [
+
+                { text: "A. They don’t have big prizes.", isCorrect: true, letter: 'A' },
+
+                { text: "B. They are only for local runners.", isCorrect: false, letter: 'B' },
+
+                { text: "C. They are free for some people to enter.", isCorrect: false, letter: 'C' }
+
+            ],
+
+            explanation: `
+
+                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
+
+                <b>1. Dịch nghĩa các đáp án:</b><br>
+
+                A. Chúng không có những giải thưởng lớn.<br>
+
+                B. Chúng chỉ dành cho những người chạy địa phương.<br>
+
+                C. Chúng miễn phí tham gia đối với một số người.<br><br>
+
+                <b>2. Dịch nghĩa câu hỏi:</b> "Chúng ta biết được điều gì về các cuộc đua từ đoạn văn thứ tư?"<br><br>
+
+                <b>3. Tại sao chọn A?</b><br>
+
+                Dẫn chứng trong đoạn 4: <i>"There are no T-shirts or medals for the winners. The most you get is a piece of cake!"</i> (Không có áo phông hay huy chương... Thứ nhiều nhất bạn nhận được là một miếng bánh ngọt). Điều này chứng tỏ cuộc đua không có giải thưởng lớn (big prizes).<br>
+
+                Loại B vì có cả những nhà vô địch quốc tế tham gia (<i>"international hill running champions taking part"</i>).<br>
+
+                Loại C sai vì bất kỳ ai tham gia cũng phải đóng 5 bảng Anh (<i>"pay your £5"</i>), không miễn phí cho ai.
+
+            `
+
+        },
+
+        {
+
+            id: 5,
+
+            question: "5. What does Jay say about the last race he did?",
+
+            options: [
+
+                { text: "A. The bad weather made it dangerous.", isCorrect: false, letter: 'A' },
+
+                { text: "B. He was very happy when he finished it.", isCorrect: true, letter: 'B' },
+
+                { text: "C. It wasn’t as difficult as some races he has done.", isCorrect: false, letter: 'C' }
+
+            ],
+
+            explanation: `
+
+                <h4>PHẦN GIẢI THÍCH CHI TIẾT:</h4>
+
+                <b>1. Dịch nghĩa các đáp án:</b><br>
+
+                A. Thời tiết xấu đã làm cho cuộc đua trở nên nguy hiểm.<br>
+
+                B. Anh ấy đã rất hạnh phúc khi hoàn thành nó.<br>
+
+                C. Nó không khó bằng một số cuộc đua anh ấy từng tham gia.<br><br>
+
+                <b>2. Dịch nghĩa câu hỏi:</b> "Jay nói gì về cuộc đua gần nhất mà anh ấy đã tham gia?"<br><br>
+
+                <b>3. Tại sao chọn B?</b><br>
+
+                Dẫn chứng trong đoạn cuối: <i>"But I got to the end, and that was an amazing feeling."</i> (Nhưng tôi đã về đến đích, và đó là một cảm giác tuyệt vời). "Amazing feeling" (cảm giác tuyệt vời) đồng nghĩa với "very happy" (rất hạnh phúc/vui sướng).<br>
+
+                Loại A vì anh ấy có nhắc đến thời tiết xấu (heavy rain, high winds) nhưng không hề nói nó nguy hiểm (dangerous).<br>
+
+                Loại C sai vì anh ấy khẳng định nó không dễ (<i>"That doesn’t mean it’s an easy sport"</i>) và anh ấy thậm chí còn nghi ngờ quyết định của mình lúc đó.
+
+            `
+
+        }
+
+    ];
+
+
+
+    let score = 0;
+
+    let answeredQuestions = 0;
+
+
+
+    // Web Audio API Context
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    let audioCtx;
+
+
+
+    function initAudio() {
+
+        if (!audioCtx) {
+
+            audioCtx = new AudioContext();
+
+        }
+
+    }
+
+
+
+    // Sinh âm thanh "Ding" (Correct)
+
+    function playDing() {
+
+        initAudio();
+
+        const osc = audioCtx.createOscillator();
+
+        const gainNode = audioCtx.createGain();
+
+        osc.type = 'sine';
+
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime); // High pitch
+
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+        osc.connect(gainNode);
+
+        gainNode.connect(audioCtx.destination);
+
+        osc.start();
+
+        osc.stop(audioCtx.currentTime + 0.5);
+
+    }
+
+
+
+    // Sinh âm thanh "Téo tèo tèo" (Wrong)
+
+    function playWrong() {
+
+        initAudio();
+
+        const osc = audioCtx.createOscillator();
+
+        const gainNode = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime); // Low pitch
+
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+        osc.connect(gainNode);
+
+        gainNode.connect(audioCtx.destination);
+
+        osc.start();
+
+        osc.stop(audioCtx.currentTime + 0.4);
+
+    }
+
+
+
+    // Hiệu ứng pháo giấy (Confetti)
+
+    function fireConfetti() {
+
+        const canvas = document.getElementById('confetti');
+
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+
+        canvas.height = window.innerHeight;
+
+
+
+        const particles = [];
+
+        const colors = ['#00D26A', '#FDCB6E', '#8854C0', '#00C9A7', '#FF4757'];
+
+
+
+        for(let i=0; i<100; i++) {
+
+            particles.push({
+
+                x: canvas.width / 2,
+
+                y: canvas.height / 2,
+
+                r: Math.random() * 6 + 2,
+
+                dx: Math.random() * 10 - 5,
+
+                dy: Math.random() * -10 - 2,
+
+                color: colors[Math.floor(Math.random() * colors.length)]
+
+            });
+
+        }
+
+
+
+        function animate() {
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            let active = false;
+
+            particles.forEach(p => {
+
+                p.x += p.dx;
+
+                p.y += p.dy;
+
+                p.dy += 0.3; // gravity
+
+                ctx.beginPath();
+
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+
+                ctx.fillStyle = p.color;
+
+                ctx.fill();
+
+                if(p.y < canvas.height) active = true;
+
+            });
+
+            if(active) requestAnimationFrame(animate);
+
+            else ctx.clearRect(0,0, canvas.width, canvas.height);
+
+        }
+
+        animate();
+
+    }
+
+
+
+    // Thuật toán xáo trộn mảng
+
+    function shuffleArray(array) {
+
+        for (let i = array.length - 1; i > 0; i--) {
+
+            const j = Math.floor(Math.random() * (i + 1));
+
+            [array[i], array[j]] = [array[j], array[i]];
+
+        }
+
+    }
+
+
+
+    // Render câu hỏi
+
+    function renderQuestions() {
+
+        const container = document.getElementById('questions-container');
+
+        container.innerHTML = '';
+
+
+
+        questionsData.forEach((q, qIndex) => {
+
+            const card = document.createElement('div');
+
+            card.className = 'question-card';
+
+            card.id = `q-card-${qIndex}`;
+
+
+
+            const qText = document.createElement('div');
+
+            qText.className = 'question-text';
+
+            qText.innerText = q.question;
+
+            card.appendChild(qText);
+
+
+
+            const optionsGrid = document.createElement('div');
+
+            optionsGrid.className = 'options-grid';
+
+
+
+            // Clone và xáo trộn options
+
+            let optionsCopy = [...q.options];
+
+            shuffleArray(optionsCopy);
+
+
+
+            optionsCopy.forEach((opt, optIndex) => {
+
+                const btn = document.createElement('button');
+
+                btn.className = 'option-btn';
+
+                // Thay thế chữ cái A,B,C cũ bằng A,B,C mới sau khi xáo trộn để nhìn cho thuận mắt
+
+                const label = ['A', 'B', 'C', 'D'][optIndex];
+
+                const textWithoutOldLabel = opt.text.substring(2).trim(); // Bỏ "A. "
+
+                btn.innerText = `${label}. ${textWithoutOldLabel}`;
+
+                
+
+                btn.onclick = () => handleAnswer(qIndex, opt.isCorrect, btn, optionsGrid, q.explanation);
+
+                optionsGrid.appendChild(btn);
+
+
+
+                // Gắn data để sau này tìm nút đúng
+
+                if(opt.isCorrect) btn.dataset.correct = "true";
+
+            });
+
+
+
+            card.appendChild(optionsGrid);
+
+
+
+            const expDiv = document.createElement('div');
+
+            expDiv.className = 'explanation';
+
+            expDiv.id = `exp-${qIndex}`;
+
+            expDiv.innerHTML = q.explanation;
+
+            card.appendChild(expDiv);
+
+
+
+            container.appendChild(card);
+
+        });
+
+    }
+
+
+
+    // Xử lý chọn đáp án
+
+    function handleAnswer(qIndex, isCorrect, btnElement, optionsGrid, explanationHtml) {
+
+        // Vô hiệu hóa các nút khác
+
+        const buttons = optionsGrid.querySelectorAll('.option-btn');
+
+        buttons.forEach(b => b.disabled = true);
+
+
+
+        if (isCorrect) {
+
+            btnElement.classList.add('correct');
+
+            playDing();
+
+            fireConfetti();
+
+            score++;
+
+        } else {
+
+            btnElement.classList.add('wrong');
+
+            btnElement.classList.add('shake');
+
+            playWrong();
+
+            // Tự động tìm và bôi xanh đáp án đúng
+
+            const correctBtn = optionsGrid.querySelector('[data-correct="true"]');
+
+            if (correctBtn) correctBtn.classList.add('correct');
+
+        }
+
+
+
+        // Hiện giải thích
+
+        const expDiv = document.getElementById(`exp-${qIndex}`);
+
+        expDiv.style.display = 'block';
+
+
+
+        answeredQuestions++;
+
+    }
+
+
+
+    // Tính năng Mở dịch
+
+    function toggleTranslate(id) {
+
+        const el = document.getElementById(id);
+
+        if (el.style.display === 'block') {
+
+            el.style.display = 'none';
+
+        } else {
+
+            el.style.display = 'block';
+
+        }
+
+    }
+
+
+
+    // Tính năng Đồng hồ
+
+    let timeRemaining = 600; // 10 minutes
+
+    let timerInterval;
+
+    let isRunning = false;
+
+
+
+    function formatTime(seconds) {
+
+        const m = Math.floor(seconds / 60);
+
+        const s = seconds % 60;
+
+        return `${m < 10 ? '0':''}${m}:${s < 10 ? '0':''}${s}`;
+
+    }
+
+
+
+    function toggleTimer() {
+
+        const btn = document.getElementById('btn-timer-toggle');
+
+        const display = document.getElementById('timer');
+
+
+
+        if (isRunning) {
+
+            clearInterval(timerInterval);
+
+            isRunning = false;
+
+            btn.innerText = 'TIẾP TỤC';
+
+            btn.style.backgroundColor = '#FDCB6E';
+
+        } else {
+
+            initAudio(); // Initialize audio context on first click interaction
+
+            isRunning = true;
+
+            btn.innerText = 'TẠM DỪNG';
+
+            btn.style.backgroundColor = '#FF4757';
+
+            
+
+            timerInterval = setInterval(() => {
+
+                timeRemaining--;
+
+                display.innerText = formatTime(timeRemaining);
+
+                if (timeRemaining <= 0) {
+
+                    clearInterval(timerInterval);
+
+                    isRunning = false;
+
+                    alert("Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+
+                }
+
+            }, 1000);
+
+        }
+
+    }
+
+
+
+    // Tính năng Nộp bài
+
+    function submitTest() {
+
+        const modal = document.getElementById('result-modal');
+
+        const scoreDisplay = document.getElementById('final-score');
+
+        const messageDisplay = document.getElementById('final-message');
+
+
+
+        scoreDisplay.innerText = `${score}/${questionsData.length}`;
+
+
+
+        if (score === questionsData.length) {
+
+            messageDisplay.innerText = "Thiên tài ngoại ngữ! Bạn đã làm đúng tuyệt đối! 🏆";
+
+        } else if (score >= questionsData.length / 2) {
+
+            messageDisplay.innerText = "Làm tốt lắm! Bạn đã rất cố gắng! ⭐";
+
+        } else {
+
+            messageDisplay.innerText = "Cố lên nhé! Đọc kỹ phần giải thích để rút kinh nghiệm nha! 💪";
+
+        }
+
+
+
+        modal.style.display = 'flex';
+
+        if (score > 3) fireConfetti();
+
+    }
+
+
+
+    function closeModal() {
+
+        document.getElementById('result-modal').style.display = 'none';
+
+    }
+
+
+
+    // Initialize
+
+    window.onload = () => {
+
+        renderQuestions();
+
+    };
+
+
+
+</script>
+
+</body>
+
 </html>

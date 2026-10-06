@@ -1,914 +1,1827 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B1 English Reading Test - Ms MS Chí Nên</title>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            /* Pastel + Neon Palette for Music Festival Theme */
-            --primary: #A1C4FD;
-            --secondary: #FECFEF;
-            --accent1: #8854C0;
-            --accent2: #00C9A7;
-            --accent3: #FDCB6E;
-            --correct: #00D26A;
-            --correct-shadow: #00994D;
-            --wrong: #FF4757;
-            --wrong-shadow: #CC3946;
-            --text-dark: #2D3436;
-            --bg-glass: rgba(255, 255, 255, 0.45);
-            --border-glass: rgba(255, 255, 255, 0.6);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Quicksand', sans-serif;
-        }
-
-        body {
-            color: var(--text-dark);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            /* Dynamic Gradient BG */
-            background: linear-gradient(-45deg, #FF9A9E, #FECFEF, #A1C4FD, #C2E9FB);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            position: relative;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Dynamic SVG Background Overlay injected via JS */
-        #bg-pattern {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 0;
-            opacity: 0.6;
-            pointer-events: none;
-            animation: floatPattern 60s linear infinite;
-        }
-
-        @keyframes floatPattern {
-            from { background-position: 0 0; }
-            to { background-position: 1000px 1000px; }
-        }
-
-        /* Top Control Bar */
-        #header {
-            position: relative;
-            z-index: 10;
-            height: 80px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            background: rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-bottom: 2px solid var(--border-glass);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
-        .header-title {
-            font-size: 1rem;
-            font-weight: 800;
-            color: var(--accent1);
-            background: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            box-shadow: 0 3px 0 rgba(0,0,0,0.1);
-        }
-
-        .timer-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: white;
-            padding: 8px 25px;
-            border-radius: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--accent1);
-        }
-
-        .btn {
-            cursor: pointer;
-            border: none;
-            font-weight: 700;
-            border-radius: 15px;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            outline: none;
-            font-family: 'Quicksand', sans-serif;
-        }
-
-        .btn:active {
-            transform: translateY(4px) !important;
-        }
-
-        .btn-timer {
-            background: var(--accent3);
-            color: #fff;
-            padding: 8px 20px;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 0 #D4A65A;
-        }
-        .btn-timer:hover { transform: scale(1.05); }
-
-        .btn-submit {
-            background: var(--accent2);
-            color: white;
-            padding: 12px 30px;
-            font-size: 1.2rem;
-            border-radius: 20px;
-            box-shadow: 0 5px 0 #009B81;
-        }
-        .btn-submit:hover { transform: scale(1.05); }
-
-        /* Split Screen Layout */
-        #main-content {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-            z-index: 10;
-            padding: 20px;
-            gap: 20px;
-        }
-
-        .panel {
-            flex: 1;
-            overflow-y: auto;
-            border-radius: 25px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 2px solid var(--border-glass);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            padding: 30px;
-        }
-
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
-
-        /* Reading Side */
-        .passage-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--accent1);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .paragraph-box {
-            background: rgba(255, 255, 255, 0.6);
-            padding: 20px;
-            border-radius: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-            border: 1px solid white;
-        }
-
-        .paragraph-text {
-            font-size: 1.15rem;
-            line-height: 1.8;
-            margin-bottom: 15px;
-        }
-
-        .btn-translate {
-            background: #FFEAA7;
-            color: #D35400;
-            padding: 8px 15px;
-            font-size: 0.95rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 0 #F1C40F;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .btn-translate:hover { transform: scale(1.03); }
-
-        .translation-text {
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.8);
-            border-left: 5px solid var(--accent2);
-            border-radius: 10px;
-            font-size: 1.05rem;
-            color: #4A4A4A;
-            line-height: 1.6;
-        }
-
-        /* Glossary */
-        .glossary-box {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            margin-top: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-        .glossary-title {
-            font-size: 1.4rem;
-            color: var(--accent1);
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .glossary-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .glossary-table th, .glossary-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-            font-size: 1.05rem;
-        }
-        .glossary-table th {
-            background: var(--accent1);
-            color: white;
-        }
-        .glossary-table tr:last-child td { border-bottom: none; }
-        .glossary-table tr:hover { background: #f9f9f9; }
-
-        /* Quiz Side */
-        .question-card {
-            background: rgba(255, 255, 255, 0.7);
-            padding: 25px;
-            border-radius: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
-            border: 2px solid white;
-        }
-
-        .question-text {
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: var(--accent1);
-        }
-
-        .options-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .option-btn {
-            background: white;
-            border: 2px solid #E2E8F0;
-            padding: 15px 20px;
-            font-size: 1.08rem;
-            text-align: left;
-            border-radius: 15px;
-            color: var(--text-dark);
-            box-shadow: 0 4px 0 #E2E8F0;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-        }
-
-        .option-btn:not(.disabled):hover {
-            transform: scale(1.02);
-            border-color: var(--primary);
-            box-shadow: 0 4px 0 var(--primary);
-        }
-
-        .option-btn.correct {
-            background: var(--correct);
-            color: white;
-            border-color: var(--correct-shadow);
-            box-shadow: 0 4px 0 var(--correct-shadow);
-        }
-
-        .option-btn.wrong {
-            background: var(--wrong);
-            color: white;
-            border-color: var(--wrong-shadow);
-            box-shadow: 0 4px 0 var(--wrong-shadow);
-            animation: shake 0.4s;
-        }
-
-        .option-btn.disabled {
-            cursor: not-allowed;
-            opacity: 0.8;
-        }
-
-        .explanation-box {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            background: #F8F9FA;
-            border: 2px dashed var(--accent1);
-            border-radius: 15px;
-            font-size: 1rem;
-            line-height: 1.6;
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        /* Animations */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
-
-        @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.9); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* Modal Overlay */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(5px);
-            z-index: 1000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            text-align: center;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            animation: popIn 0.5s;
-        }
-
-        .modal-title {
-            font-size: 2.5rem;
-            color: var(--accent1);
-            margin-bottom: 10px;
-        }
-        .modal-score {
-            font-size: 4rem;
-            font-weight: 800;
-            color: var(--accent2);
-            margin: 20px 0;
-        }
-        .modal-message {
-            font-size: 1.2rem;
-            color: #636E72;
-            margin-bottom: 30px;
-        }
-
-        /* Confetti Canvas */
-        #confetti-canvas {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 2000;
-        }
-    </style>
-</head>
-<body>
-
-    <div id="bg-pattern"></div>
-
-    <canvas id="confetti-canvas"></canvas>
-
-    <div id="header">
-        <div class="header-title">Giáo viên tạo: Ms MS Chí Nên</div>
-        <div class="timer-container">
-            <span id="timer-display">10:00</span>
-            <button class="btn btn-timer" id="btn-timer-toggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
-        </div>
-        <button class="btn btn-submit" onclick="submitTest()">NỘP BÀI 🎉</button>
-    </div>
-
-    <div id="main-content">
-        <div class="panel" id="left-panel">
-            <div class="passage-title">Corinna Held talks about attending a music festival</div>
-            
-            <div id="reading-container">
-                </div>
-
-            <div class="glossary-box">
-                <div class="glossary-title">📚 Glossary (Từ vựng B1-C2)</div>
-                <table class="glossary-table" id="glossary-table">
-                    <thead>
-                        <tr>
-                            <th>Vocabulary</th>
-                            <th>Part of Speech</th>
-                            <th>Vietnamese Meaning</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="panel" id="right-panel">
-            <div id="quiz-container">
-                </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="result-modal">
-        <div class="modal-content">
-            <div class="modal-title" id="modal-title">Làm tốt lắm!</div>
-            <div class="modal-score" id="modal-score">0/5</div>
-            <div class="modal-message" id="modal-message">Tuyệt vời, bạn đã hoàn thành bài thi!</div>
-            <button class="btn btn-submit" onclick="closeModal()">Xem lại đáp án</button>
-        </div>
-    </div>
-
-    <script>
-        // ==========================================
-        // DYNAMIC BACKGROUND (SVG PATTERN)
-        // ==========================================
-        function initBackground() {
-            // Theme: Music Festival -> Emojis: 🎵, 🎪, 🎸, ✨, 🎤
-            const svgContent = `
-                <svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>
-                    <text x='20' y='40' font-size='30' opacity='0.5'>🎵</text>
-                    <text x='120' y='80' font-size='35' opacity='0.4'>🎪</text>
-                    <text x='40' y='150' font-size='30' opacity='0.5'>🎸</text>
-                    <text x='150' y='180' font-size='25' opacity='0.6'>✨</text>
-                    <text x='90' y='120' font-size='30' opacity='0.4'>🎤</text>
-                </svg>
-            `;
-            const encodedSVG = encodeURIComponent(svgContent).replace(/'/g, "%27").replace(/"/g, "%22");
-            document.getElementById('bg-pattern').style.backgroundImage = `url("data:image/svg+xml;utf8,${encodedSVG}")`;
-        }
-
-        // ==========================================
-        // DATA: READING PASSAGES & GLOSSARY
-        // ==========================================
-        const passages = [
-            {
-                en: "I’ve always been mad about music, whether it’s something I’m listening to on my headphones, dancing to at a club or enjoying at a concert. But my greatest love has always been going to music festivals. They are a great place to listen to your favourite musicians and to enjoy yourself with friends, and they are also an opportunity to meet new people. But the experience can be spoilt if you don’t take care, so here are some things I’ve learnt along the way.",
-                vi: "Tôi luôn có niềm đam mê mãnh liệt với âm nhạc, dù đó là thứ tôi đang nghe qua tai nghe, nhảy theo tại một câu lạc bộ hay thưởng thức tại một buổi hòa nhạc. Nhưng tình yêu lớn nhất của tôi luôn là việc tham gia các lễ hội âm nhạc. Chúng là một nơi tuyệt vời để lắng nghe những nhạc sĩ bạn yêu thích và vui vẻ cùng bạn bè, và chúng cũng là cơ hội để gặp gỡ những người mới. Nhưng trải nghiệm này có thể bị phá hỏng nếu bạn không cẩn thận, vì vậy dưới đây là một số điều tôi đã học được qua những trải nghiệm đó."
-            },
-            {
-                en: "Let’s start with what you should take. You can’t be sure of the weather so I’d suggest preparing for anything. Take sun cream. If it’s sunny you’ll be out in the open all day. And don’t forget something to keep you dry in a thunderstorm, even if it’s only a large plastic rubbish bag. Your mobile phone and charger are essentials, of course, but apart from these don’t take anything you wouldn’t want to lose. Take comfortable shoes as you’ll be on your feet all day, and if you’re camping bring a tent that’s easy to put up and weatherproof.",
-                vi: "Hãy bắt đầu với những gì bạn nên mang theo. Bạn không thể chắc chắn về thời tiết vì vậy tôi khuyên bạn nên chuẩn bị cho mọi tình huống. Hãy mang theo kem chống nắng. Nếu trời nắng, bạn sẽ ở ngoài trời cả ngày. Và đừng quên thứ gì đó để giữ cho bạn khô ráo trong một trận giông bão, ngay cả khi nó chỉ là một chiếc túi nilon đựng rác cỡ lớn. Tất nhiên, điện thoại di động và sạc của bạn là những thứ thiết yếu, nhưng ngoài những thứ này ra, đừng mang theo bất cứ thứ gì bạn không muốn bị mất. Hãy mang một đôi giày thoải mái vì bạn sẽ phải đứng trên đôi chân của mình cả ngày, và nếu bạn đi cắm trại, hãy mang theo một chiếc lều dễ dựng và có khả năng chống chọi thời tiết."
-            },
-            {
-                en: "Once you’re there, take a tour of the area so you know exactly where everything is. If you’re with friends, agree on meeting points. Your tent is likely to be a long way from the action so you need places to find each other closer to the stages. This will help if you and your friends decide to see different bands, which is likely as your taste in music is probably not exactly the same. Be polite to people camping near you as they could become good friends. Drink lots of water and check the programme carefully so you don’t miss your favourite acts.",
-                vi: "Khi bạn đã đến nơi, hãy đi tham quan một vòng khu vực để bạn biết chính xác mọi thứ nằm ở đâu. Nếu bạn đi cùng bạn bè, hãy thống nhất các điểm hẹn. Lều của bạn rất có thể nằm cách xa khu vực diễn ra các hoạt động chính, vì vậy bạn cần những nơi để tìm thấy nhau gần các sân khấu hơn. Điều này sẽ giúp ích nếu bạn và bạn bè của bạn quyết định xem các ban nhạc khác nhau, điều này rất dễ xảy ra vì gu âm nhạc của các bạn có thể không hoàn toàn giống nhau. Hãy lịch sự với những người cắm trại gần bạn vì họ có thể trở thành những người bạn tốt. Hãy uống nhiều nước và kiểm tra lịch trình cẩn thận để bạn không bỏ lỡ các tiết mục yêu thích của mình."
-            },
-            {
-                en: "And when it’s all over? Here’s my number one request: before you go home, please pick up all your litter in and around your tent. I can’t believe the mess people create at festivals. Some people even leave their tent behind. And as you leave, enjoy the feeling that you’ve just felt, with a wonderful connection to all those around you. You’ve just had an amazing opportunity to see lots of different bands and make friends and generally had an experience you’ll never forget.",
-                vi: "Và khi tất cả đã kết thúc? Đây là yêu cầu số một của tôi: trước khi bạn về nhà, làm ơn hãy nhặt tất cả rác của bạn ở trong và xung quanh lều của bạn. Tôi không thể tin nổi đống lộn xộn mà mọi người tạo ra tại các lễ hội. Một số người thậm chí còn bỏ lại lều của họ. Và khi bạn rời đi, hãy tận hưởng cảm giác mà bạn vừa cảm nhận, với một sự kết nối tuyệt vời với tất cả những người xung quanh bạn. Bạn vừa có một cơ hội tuyệt vời để xem nhiều ban nhạc khác nhau, kết bạn và nhìn chung là có một trải nghiệm bạn sẽ không bao giờ quên."
-            }
-        ];
-
-        const glossary = [
-            { word: "mad about", pos: "idiom", vi: "đam mê mãnh liệt, phát cuồng vì" },
-            { word: "opportunity", pos: "n", vi: "cơ hội" },
-            { word: "spoil", pos: "v", vi: "làm hỏng, phá hỏng" },
-            { word: "essential", pos: "n/adj", vi: "thiết yếu, cực kỳ quan trọng" },
-            { word: "weatherproof", pos: "adj", vi: "chịu được thời tiết (mưa, gió)" },
-            { word: "action", pos: "n", vi: "sự kiện/hoạt động chính (ở đây chỉ khu vực hội hè)" },
-            { word: "stage", pos: "n", vi: "sân khấu" },
-            { word: "taste", pos: "n", vi: "sở thích, gu (âm nhạc)" },
-            { word: "programme", pos: "n", vi: "chương trình, lịch trình" },
-            { word: "litter", pos: "n", vi: "rác thải (vứt bừa bãi)" },
-            { word: "mess", pos: "n", vi: "đống lộn xộn, bẩn thỉu" },
-            { word: "connection", pos: "n", vi: "sự kết nối, mối liên hệ" }
-        ];
-
-        // ==========================================
-        // DATA: QUIZ QUESTIONS
-        // ==========================================
-        const questionsData = [
-            {
-                id: 1,
-                question: "1. Corinna says that",
-                options: [
-                    { text: "music festivals are the best way to listen to music.", isCorrect: false, explanation: "Bài đọc nói lễ hội âm nhạc là 'greatest love' (tình yêu lớn nhất) của cô ấy, chứ không khẳng định đó là cách tốt nhất (best way) để nghe nhạc chung chung." },
-                    { text: "listening to music is her biggest love.", isCorrect: false, explanation: "Sai vì 'going to music festivals' (đi lễ hội) mới là 'greatest love' của cô ấy." },
-                    { text: "music festivals can be a great social event.", isCorrect: true, explanation: "" },
-                    { text: "careless behaviour spoils music festivals for other people.", isCorrect: false, explanation: "Bài đọc nhắc đến việc trải nghiệm 'can be spoilt if YOU don’t take care' (có thể bị hỏng nếu bạn không cẩn thận), khuyên bản thân người đi, không phải nói hành vi bất cẩn làm hỏng lễ hội của 'người khác'." }
-                ],
-                fullExplanation: `
-                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
-                    <strong>Tại sao chọn đáp án này?</strong><br>
-                    Đoạn 1 viết: "They are a great place to listen to your favourite musicians and to enjoy yourself with friends, and they are also an opportunity to meet new people." <br>
-                    <span style="color: red; font-weight: bold;">Lễ hội âm nhạc là cơ hội tuyệt vời để giao lưu, gặp gỡ bạn bè và người mới (great social event)</span>.
-                `
-            },
-            {
-                id: 2,
-                question: "2. What does Corinna advise people to do?",
-                options: [
-                    { text: "Be careful not to lose anything.", isCorrect: false, explanation: "Cô ấy nói 'don’t take anything you wouldn’t want to lose' (đừng mang thứ gì bạn sợ mất), chứ không khuyên 'cẩn thận đừng làm mất'." },
-                    { text: "Be prepared for any weather.", isCorrect: true, explanation: "" },
-                    { text: "Keep all your things in a plastic bag.", isCorrect: false, explanation: "Túi nilon rác cỡ lớn (large plastic rubbish bag) dùng để che mưa cho bản thân (keep you dry), không phải để đựng đồ." },
-                    { text: "Leave your mobile phone at home.", isCorrect: false, explanation: "Điện thoại là 'essentials' (những thứ thiết yếu) - bắt buộc phải mang." }
-                ],
-                fullExplanation: `
-                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
-                    <strong>Tại sao chọn đáp án này?</strong><br>
-                    Đoạn 2 viết: "You can’t be sure of the weather so I’d suggest preparing for anything." <br>
-                    <span style="color: red; font-weight: bold;">Khuyên mọi người nên chuẩn bị cho mọi loại thời tiết vì không thể đoán trước được</span>.
-                `
-            },
-            {
-                id: 3,
-                question: "3. Corinna says you should agree on a meeting point",
-                options: [
-                    { text: "so you can find your way back to your tent.", isCorrect: false, explanation: "Hẹn nhau không phải để tìm đường về lều." },
-                    { text: "in order to discuss which bands are on.", isCorrect: false, explanation: "Không phải hẹn nhau để thảo luận xem ban nhạc nào đang diễn." },
-                    { text: "so you can talk about your taste in music.", isCorrect: false, explanation: "Không có ý hẹn nhau để nói về gu âm nhạc." },
-                    { text: "because this is more convenient than going to your tent.", isCorrect: true, explanation: "" }
-                ],
-                fullExplanation: `
-                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
-                    <strong>Tại sao chọn đáp án này?</strong><br>
-                    Đoạn 3 viết: "Your tent is likely to be a long way from the action so you need places to find each other closer to the stages." <br>
-                    <span style="color: red; font-weight: bold;">Lều thường ở rất xa sân khấu, nên hẹn nhau ở điểm hẹn gần sân khấu sẽ tiện lợi hơn là phải quay tít về lều để tìm nhau</span>.
-                `
-            },
-            {
-                id: 4,
-                question: "4. What does Corinna say about litter?",
-                options: [
-                    { text: "People should request more litter bins.", isCorrect: false, explanation: "Bài không đề cập đến việc yêu cầu thêm thùng rác." },
-                    { text: "You should clear the area where you’ve been camping.", isCorrect: true, explanation: "" },
-                    { text: "People often leave litter in their tent.", isCorrect: false, explanation: "Cô ấy nói mọi người để lại đống lộn xộn/rác (mess) ở lễ hội, và một số bỏ lại cả lều (leave tent behind), không phải 'thường để rác TRONG lều'." },
-                    { text: "Take it home with you.", isCorrect: false, explanation: "Cô ấy bảo 'pick up all your litter' (nhặt rác), chứ không bảo 'mang rác về nhà' (Take it home)." }
-                ],
-                fullExplanation: `
-                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
-                    <strong>Tại sao chọn đáp án này?</strong><br>
-                    Đoạn 4 viết: "before you go home, please pick up all your litter in and around your tent." <br>
-                    <span style="color: red; font-weight: bold;">Hãy dọn dẹp sạch sẽ rác ở trong và xung quanh khu vực bạn cắm trại trước khi ra về (clear the area)</span>.
-                `
-            },
-            {
-                id: 5,
-                question: "5. What would be a good introduction to this article?",
-                options: [
-                    { text: "Going to a music festival? Corinna Held recommends some simple steps to make the experience a happy one.", isCorrect: true, explanation: "" },
-                    { text: "Music festivals can be a wonderful way to spend the weekend. Corinna Held tells us about her favourite events.", isCorrect: false, explanation: "Cô ấy không liệt kê hay kể về các 'sự kiện yêu thích' (favourite events) cụ thể nào." },
-                    { text: "With more and more of us attending music festivals, Corinna Held explains what it is about them people find so enjoyable.", isCorrect: false, explanation: "Bài viết chủ yếu đưa ra lời khuyên (mang gì, làm gì, dọn rác), chứ không tập trung giải thích 'tại sao mọi người lại thấy nó vui'." },
-                    { text: "We all love listening to music. But do we get the best experience using our headphones? Corinna Held tells us why we should be going to music festivals.", isCorrect: false, explanation: "Chỉ nhắc nhẹ tai nghe ở đoạn 1, không phải so sánh trải nghiệm để thuyết phục mọi người đi lễ hội." }
-                ],
-                fullExplanation: `
-                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
-                    <strong>Tại sao chọn đáp án này?</strong><br>
-                    Toàn bộ bài viết là lời khuyên thực tế của Corinna (mang kem chống nắng, giày, lều, hẹn điểm hẹn, nhặt rác...). <br>
-                    <span style="color: red; font-weight: bold;">Đáp án A tóm tắt đúng nhất mục đích bài viết: Giới thiệu những bước/lời khuyên đơn giản để có trải nghiệm vui vẻ, trọn vẹn tại lễ hội âm nhạc</span>.
-                `
-            }
-        ];
-
-        // ==========================================
-        // UTILITIES & STATE
-        // ==========================================
-        let audioCtx;
-        let score = 0;
-        let answeredQuestions = new Set();
-        let timerInterval;
-        let timeLeft = 600; // 10 minutes in seconds
-        let isTimerRunning = false;
-        let timerStarted = false;
-
-        // Shuffle array function
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        // ==========================================
-        // WEB AUDIO API SOUNDS
-        // ==========================================
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }
-
-        function playCorrectSound() {
-            initAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-            
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-
-        function playWrongSound() {
-            initAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-            
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-
-        // ==========================================
-        // RENDERING UI
-        // ==========================================
-        function renderPassages() {
-            const container = document.getElementById('reading-container');
-            passages.forEach((p, index) => {
-                const box = document.createElement('div');
-                box.className = 'paragraph-box';
-                box.innerHTML = `
-                    <div class="paragraph-text">${p.en}</div>
-                    <button class="btn btn-translate" onclick="toggleTranslation(${index})">
-                        Mở dịch đoạn này 🌟
-                    </button>
-                    <div class="translation-text" id="trans-${index}">
-                        <strong>Bản dịch:</strong><br>${p.vi}
-                    </div>
-                `;
-                container.appendChild(box);
-            });
-        }
-
-        function toggleTranslation(index) {
-            const el = document.getElementById(`trans-${index}`);
-            if (el.style.display === 'block') {
-                el.style.display = 'none';
-            } else {
-                el.style.display = 'block';
-            }
-        }
-
-        function renderGlossary() {
-            const tbody = document.querySelector('#glossary-table tbody');
-            glossary.forEach(g => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${g.word}</strong></td>
-                    <td><em>${g.pos}</em></td>
-                    <td>${g.vi}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderQuiz() {
-            const container = document.getElementById('quiz-container');
-            questionsData.forEach((q, qIndex) => {
-                const card = document.createElement('div');
-                card.className = 'question-card';
-                card.id = `qcard-${q.id}`;
-                
-                // Shuffle options
-                const shuffledOptions = shuffleArray([...q.options]);
-
-                let optionsHTML = '<div class="options-grid">';
-                const letters = ['A', 'B', 'C', 'D'];
-                
-                shuffledOptions.forEach((opt, oIndex) => {
-                    const btnId = `btn-${q.id}-${oIndex}`;
-                    optionsHTML += `
-                        <button class="btn option-btn" id="${btnId}" 
-                            onclick="handleAnswer(${q.id}, ${oIndex}, ${opt.isCorrect}, '${btnId}')">
-                            <strong>${letters[oIndex]}.</strong> &nbsp; ${opt.text}
-                        </button>
-                    `;
-                });
-                optionsHTML += '</div>';
-
-                card.innerHTML = `
-                    <div class="question-text">${q.question}</div>
-                    ${optionsHTML}
-                    <div class="explanation-box" id="exp-${q.id}">
-                        ${q.fullExplanation}
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // ==========================================
-        // QUIZ LOGIC
-        // ==========================================
-        function handleAnswer(qId, oIndex, isCorrect, btnId) {
-            if (answeredQuestions.has(qId)) return; // Prevent multiple clicks
-            answeredQuestions.add(qId);
-            initAudio();
-
-            const card = document.getElementById(`qcard-${qId}`);
-            const buttons = card.querySelectorAll('.option-btn');
-            const clickedBtn = document.getElementById(btnId);
-            const expBox = document.getElementById(`exp-${qId}`);
-
-            // Disable all buttons
-            buttons.forEach(btn => btn.classList.add('disabled'));
-
-            if (isCorrect) {
-                clickedBtn.classList.add('correct');
-                playCorrectSound();
-                score++;
-                triggerMiniConfetti(clickedBtn);
-            } else {
-                clickedBtn.classList.add('wrong');
-                playWrongSound();
-                
-                // Highlight correct answer
-                const qData = questionsData.find(q => q.id === qId);
-                // Need to find which button has the correct text since we shuffled
-                const correctText = qData.options.find(o => o.isCorrect).text;
-                buttons.forEach(btn => {
-                    if (btn.innerText.includes(correctText)) {
-                        btn.classList.add('correct');
-                    }
-                });
-            }
-
-            // Show explanation
-            expBox.style.display = 'block';
-        }
-
-        // ==========================================
-        // TIMER LOGIC
-        // ==========================================
-        function toggleTimer() {
-            initAudio(); // Initialize audio context on first user interaction
-            const btn = document.getElementById('btn-timer-toggle');
-            
-            if (!timerStarted) {
-                timerStarted = true;
-                isTimerRunning = true;
-                btn.innerText = "TẠM DỪNG ⏸️";
-                btn.style.background = "#FFB6C1";
-                btn.style.boxShadow = "0 4px 0 #D1949F";
-                timerInterval = setInterval(updateTimer, 1000);
-            } else {
-                if (isTimerRunning) {
-                    isTimerRunning = false;
-                    clearInterval(timerInterval);
-                    btn.innerText = "TIẾP TỤC ▶️";
-                    btn.style.background = varAccent3; 
-                } else {
-                    isTimerRunning = true;
-                    btn.innerText = "TẠM DỪNG ⏸️";
-                    btn.style.background = "#FFB6C1";
-                    timerInterval = setInterval(updateTimer, 1000);
-                }
-            }
-        }
-
-        function updateTimer() {
-            if (timeLeft > 0) {
-                timeLeft--;
-                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-                const s = (timeLeft % 60).toString().padStart(2, '0');
-                document.getElementById('timer-display').innerText = `${m}:${s}`;
-            } else {
-                clearInterval(timerInterval);
-                isTimerRunning = false;
-                alert("Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
-                document.getElementById('btn-timer-toggle').innerText = "HẾT GIỜ";
-                document.getElementById('btn-timer-toggle').classList.add('disabled');
-            }
-        }
-
-        // ==========================================
-        // SUBMIT & CONFETTI
-        // ==========================================
-        function submitTest() {
-            clearInterval(timerInterval);
-            const total = questionsData.length;
-            const modal = document.getElementById('result-modal');
-            const titleEl = document.getElementById('modal-title');
-            const scoreEl = document.getElementById('modal-score');
-            const msgEl = document.getElementById('modal-message');
-
-            scoreEl.innerText = `${score}/${total}`;
-
-            if (score === total) {
-                titleEl.innerText = "Thiên tài! 🏆";
-                msgEl.innerText = "Xuất sắc tuyệt đối! Bạn đã hiểu bài đọc 100%.";
-                startConfettiLoop();
-                playCorrectSound();
-                setTimeout(playCorrectSound, 200);
-            } else if (score >= total - 2) {
-                titleEl.innerText = "Làm tốt lắm! 🌟";
-                msgEl.innerText = "Kiến thức của bạn rất vững, chỉ sai một chút thôi.";
-                startConfettiLoop();
-                playCorrectSound();
-            } else {
-                titleEl.innerText = "Cố lên nhé! 💪";
-                msgEl.innerText = "Hãy đọc kỹ phần giải thích chi tiết để hiểu rõ hơn nha.";
-            }
-
-            modal.style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('result-modal').style.display = 'none';
-            stopConfettiLoop();
-        }
-
-        // Simple Confetti Implementation
-        let confettiParticles = [];
-        let confettiCtx;
-        let animationId;
-
-        function triggerMiniConfetti(element) {
-            // A simple localized pop effect is complex without absolute coords, 
-            // so we rely on CSS shake/pop animations for individual buttons.
-        }
-
-        function startConfettiLoop() {
-            const canvas = document.getElementById('confetti-canvas');
-            confettiCtx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            
-            for(let i=0; i<150; i++) {
-                confettiParticles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height - canvas.height,
-                    w: Math.random() * 10 + 5,
-                    h: Math.random() * 10 + 5,
-                    c: ['#00C9A7', '#FDCB6E', '#8854C0', '#FF4757', '#A1C4FD'][Math.floor(Math.random()*5)],
-                    v: Math.random() * 5 + 2,
-                    r: Math.random() * 360
-                });
-            }
-            renderConfetti();
-        }
-
-        function renderConfetti() {
-            confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-            confettiParticles.forEach(p => {
-                p.y += p.v;
-                p.r += 2;
-                if(p.y > window.innerHeight) p.y = -10;
-                
-                confettiCtx.save();
-                confettiCtx.translate(p.x, p.y);
-                confettiCtx.rotate(p.r * Math.PI / 180);
-                confettiCtx.fillStyle = p.c;
-                confettiCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
-                confettiCtx.restore();
-            });
-            animationId = requestAnimationFrame(renderConfetti);
-        }
-
-        function stopConfettiLoop() {
-            cancelAnimationFrame(animationId);
-            if(confettiCtx) confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-            confettiParticles = [];
-        }
-
-        // ==========================================
-        // INITIALIZATION
-        // ==========================================
-        window.onload = () => {
-            initBackground();
-            renderPassages();
-            renderGlossary();
-            renderQuiz();
-        };
-
-        // Resize canvas on window resize
-        window.addEventListener('resize', () => {
-            const canvas = document.getElementById('confetti-canvas');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-    </script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>B1 English Reading Test - Ms. Chí Nên</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+
+        :root {
+
+            /* Pastel + Neon Palette for Music Festival Theme */
+
+            --primary: #A1C4FD;
+
+            --secondary: #FECFEF;
+
+            --accent1: #8854C0;
+
+            --accent2: #00C9A7;
+
+            --accent3: #FDCB6E;
+
+            --correct: #00D26A;
+
+            --correct-shadow: #00994D;
+
+            --wrong: #FF4757;
+
+            --wrong-shadow: #CC3946;
+
+            --text-dark: #2D3436;
+
+            --bg-glass: rgba(255, 255, 255, 0.45);
+
+            --border-glass: rgba(255, 255, 255, 0.6);
+
+        }
+
+
+
+        * {
+
+            box-sizing: border-box;
+
+            margin: 0;
+
+            padding: 0;
+
+            font-family: 'Quicksand', sans-serif;
+
+        }
+
+
+
+        body {
+
+            color: var(--text-dark);
+
+            height: 100vh;
+
+            overflow: hidden;
+
+            display: flex;
+
+            flex-direction: column;
+
+            /* Dynamic Gradient BG */
+
+            background: linear-gradient(-45deg, #FF9A9E, #FECFEF, #A1C4FD, #C2E9FB);
+
+            background-size: 400% 400%;
+
+            animation: gradientBG 15s ease infinite;
+
+            position: relative;
+
+        }
+
+
+
+        @keyframes gradientBG {
+
+            0% { background-position: 0% 50%; }
+
+            50% { background-position: 100% 50%; }
+
+            100% { background-position: 0% 50%; }
+
+        }
+
+
+
+        /* Dynamic SVG Background Overlay injected via JS */
+
+        #bg-pattern {
+
+            position: absolute;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            z-index: 0;
+
+            opacity: 0.6;
+
+            pointer-events: none;
+
+            animation: floatPattern 60s linear infinite;
+
+        }
+
+
+
+        @keyframes floatPattern {
+
+            from { background-position: 0 0; }
+
+            to { background-position: 1000px 1000px; }
+
+        }
+
+
+
+        /* Top Control Bar */
+
+        #header {
+
+            position: relative;
+
+            z-index: 10;
+
+            height: 80px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            padding: 0 30px;
+
+            background: rgba(255, 255, 255, 0.3);
+
+            backdrop-filter: blur(15px);
+
+            -webkit-backdrop-filter: blur(15px);
+
+            border-bottom: 2px solid var(--border-glass);
+
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+
+        }
+
+
+
+        .header-title {
+
+            font-size: 1rem;
+
+            font-weight: 800;
+
+            color: var(--accent1);
+
+            background: white;
+
+            padding: 5px 15px;
+
+            border-radius: 20px;
+
+            box-shadow: 0 3px 0 rgba(0,0,0,0.1);
+
+        }
+
+
+
+        .timer-container {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+            background: white;
+
+            padding: 8px 25px;
+
+            border-radius: 30px;
+
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+
+            font-size: 1.5rem;
+
+            font-weight: 800;
+
+            color: var(--accent1);
+
+        }
+
+
+
+        .btn {
+
+            cursor: pointer;
+
+            border: none;
+
+            font-weight: 700;
+
+            border-radius: 15px;
+
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            outline: none;
+
+            font-family: 'Quicksand', sans-serif;
+
+        }
+
+
+
+        .btn:active {
+
+            transform: translateY(4px) !important;
+
+        }
+
+
+
+        .btn-timer {
+
+            background: var(--accent3);
+
+            color: #fff;
+
+            padding: 8px 20px;
+
+            font-size: 1.1rem;
+
+            box-shadow: 0 4px 0 #D4A65A;
+
+        }
+
+        .btn-timer:hover { transform: scale(1.05); }
+
+
+
+        .btn-submit {
+
+            background: var(--accent2);
+
+            color: white;
+
+            padding: 12px 30px;
+
+            font-size: 1.2rem;
+
+            border-radius: 20px;
+
+            box-shadow: 0 5px 0 #009B81;
+
+        }
+
+        .btn-submit:hover { transform: scale(1.05); }
+
+
+
+        /* Split Screen Layout */
+
+        #main-content {
+
+            display: flex;
+
+            flex: 1;
+
+            overflow: hidden;
+
+            position: relative;
+
+            z-index: 10;
+
+            padding: 20px;
+
+            gap: 20px;
+
+        }
+
+
+
+        .panel {
+
+            flex: 1;
+
+            overflow-y: auto;
+
+            border-radius: 25px;
+
+            background: var(--bg-glass);
+
+            backdrop-filter: blur(12px);
+
+            -webkit-backdrop-filter: blur(12px);
+
+            border: 2px solid var(--border-glass);
+
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+            padding: 30px;
+
+        }
+
+
+
+        /* Scrollbar Styling */
+
+        ::-webkit-scrollbar { width: 10px; }
+
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
+
+
+
+        /* Reading Side */
+
+        .passage-title {
+
+            font-size: 1.8rem;
+
+            font-weight: 800;
+
+            color: var(--accent1);
+
+            margin-bottom: 20px;
+
+            text-align: center;
+
+        }
+
+
+
+        .paragraph-box {
+
+            background: rgba(255, 255, 255, 0.6);
+
+            padding: 20px;
+
+            border-radius: 20px;
+
+            margin-bottom: 25px;
+
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+
+            border: 1px solid white;
+
+        }
+
+
+
+        .paragraph-text {
+
+            font-size: 1.15rem;
+
+            line-height: 1.8;
+
+            margin-bottom: 15px;
+
+        }
+
+
+
+        .btn-translate {
+
+            background: #FFEAA7;
+
+            color: #D35400;
+
+            padding: 8px 15px;
+
+            font-size: 0.95rem;
+
+            border-radius: 12px;
+
+            box-shadow: 0 4px 0 #F1C40F;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+        }
+
+        .btn-translate:hover { transform: scale(1.03); }
+
+
+
+        .translation-text {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 15px;
+
+            background: rgba(255, 255, 255, 0.8);
+
+            border-left: 5px solid var(--accent2);
+
+            border-radius: 10px;
+
+            font-size: 1.05rem;
+
+            color: #4A4A4A;
+
+            line-height: 1.6;
+
+        }
+
+
+
+        /* Glossary */
+
+        .glossary-box {
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 20px;
+
+            margin-top: 30px;
+
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+
+        }
+
+        .glossary-title {
+
+            font-size: 1.4rem;
+
+            color: var(--accent1);
+
+            margin-bottom: 15px;
+
+            text-align: center;
+
+        }
+
+        .glossary-table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+        }
+
+        .glossary-table th, .glossary-table td {
+
+            padding: 12px;
+
+            text-align: left;
+
+            border-bottom: 1px solid #eee;
+
+            font-size: 1.05rem;
+
+        }
+
+        .glossary-table th {
+
+            background: var(--accent1);
+
+            color: white;
+
+        }
+
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        .glossary-table tr:hover { background: #f9f9f9; }
+
+
+
+        /* Quiz Side */
+
+        .question-card {
+
+            background: rgba(255, 255, 255, 0.7);
+
+            padding: 25px;
+
+            border-radius: 20px;
+
+            margin-bottom: 30px;
+
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+
+            border: 2px solid white;
+
+        }
+
+
+
+        .question-text {
+
+            font-size: 1.15rem;
+
+            font-weight: 700;
+
+            margin-bottom: 20px;
+
+            color: var(--accent1);
+
+        }
+
+
+
+        .options-grid {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 12px;
+
+        }
+
+
+
+        .option-btn {
+
+            background: white;
+
+            border: 2px solid #E2E8F0;
+
+            padding: 15px 20px;
+
+            font-size: 1.08rem;
+
+            text-align: left;
+
+            border-radius: 15px;
+
+            color: var(--text-dark);
+
+            box-shadow: 0 4px 0 #E2E8F0;
+
+            transition: all 0.2s;
+
+            display: flex;
+
+            align-items: center;
+
+        }
+
+
+
+        .option-btn:not(.disabled):hover {
+
+            transform: scale(1.02);
+
+            border-color: var(--primary);
+
+            box-shadow: 0 4px 0 var(--primary);
+
+        }
+
+
+
+        .option-btn.correct {
+
+            background: var(--correct);
+
+            color: white;
+
+            border-color: var(--correct-shadow);
+
+            box-shadow: 0 4px 0 var(--correct-shadow);
+
+        }
+
+
+
+        .option-btn.wrong {
+
+            background: var(--wrong);
+
+            color: white;
+
+            border-color: var(--wrong-shadow);
+
+            box-shadow: 0 4px 0 var(--wrong-shadow);
+
+            animation: shake 0.4s;
+
+        }
+
+
+
+        .option-btn.disabled {
+
+            cursor: not-allowed;
+
+            opacity: 0.8;
+
+        }
+
+
+
+        .explanation-box {
+
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 20px;
+
+            background: #F8F9FA;
+
+            border: 2px dashed var(--accent1);
+
+            border-radius: 15px;
+
+            font-size: 1rem;
+
+            line-height: 1.6;
+
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+        }
+
+
+
+        /* Animations */
+
+        @keyframes shake {
+
+            0%, 100% { transform: translateX(0); }
+
+            20%, 60% { transform: translateX(-5px); }
+
+            40%, 80% { transform: translateX(5px); }
+
+        }
+
+
+
+        @keyframes popIn {
+
+            0% { opacity: 0; transform: scale(0.9); }
+
+            100% { opacity: 1; transform: scale(1); }
+
+        }
+
+
+
+        /* Modal Overlay */
+
+        .modal-overlay {
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.6);
+
+            backdrop-filter: blur(5px);
+
+            z-index: 1000;
+
+            display: none;
+
+            justify-content: center;
+
+            align-items: center;
+
+        }
+
+
+
+        .modal-content {
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 30px;
+
+            text-align: center;
+
+            max-width: 500px;
+
+            width: 90%;
+
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+
+            animation: popIn 0.5s;
+
+        }
+
+
+
+        .modal-title {
+
+            font-size: 2.5rem;
+
+            color: var(--accent1);
+
+            margin-bottom: 10px;
+
+        }
+
+        .modal-score {
+
+            font-size: 4rem;
+
+            font-weight: 800;
+
+            color: var(--accent2);
+
+            margin: 20px 0;
+
+        }
+
+        .modal-message {
+
+            font-size: 1.2rem;
+
+            color: #636E72;
+
+            margin-bottom: 30px;
+
+        }
+
+
+
+        /* Confetti Canvas */
+
+        #confetti-canvas {
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            pointer-events: none;
+
+            z-index: 2000;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <div id="bg-pattern"></div>
+
+
+
+    <canvas id="confetti-canvas"></canvas>
+
+
+
+    <div id="header">
+
+        <div class="header-title">Giáo viên tạo: Ms. Chí Nên</div>
+
+        <div class="timer-container">
+
+            <span id="timer-display">10:00</span>
+
+            <button class="btn btn-timer" id="btn-timer-toggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
+
+        </div>
+
+        <button class="btn btn-submit" onclick="submitTest()">NỘP BÀI 🎉</button>
+
+    </div>
+
+
+
+    <div id="main-content">
+
+        <div class="panel" id="left-panel">
+
+            <div class="passage-title">Corinna Held talks about attending a music festival</div>
+
+            
+
+            <div id="reading-container">
+
+                </div>
+
+
+
+            <div class="glossary-box">
+
+                <div class="glossary-title">📚 Glossary (Từ vựng B1-C2)</div>
+
+                <table class="glossary-table" id="glossary-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Vocabulary</th>
+
+                            <th>Part of Speech</th>
+
+                            <th>Vietnamese Meaning</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="panel" id="right-panel">
+
+            <div id="quiz-container">
+
+                </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="result-modal">
+
+        <div class="modal-content">
+
+            <div class="modal-title" id="modal-title">Làm tốt lắm!</div>
+
+            <div class="modal-score" id="modal-score">0/5</div>
+
+            <div class="modal-message" id="modal-message">Tuyệt vời, bạn đã hoàn thành bài thi!</div>
+
+            <button class="btn btn-submit" onclick="closeModal()">Xem lại đáp án</button>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        // ==========================================
+
+        // DYNAMIC BACKGROUND (SVG PATTERN)
+
+        // ==========================================
+
+        function initBackground() {
+
+            // Theme: Music Festival -> Emojis: 🎵, 🎪, 🎸, ✨, 🎤
+
+            const svgContent = `
+
+                <svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>
+
+                    <text x='20' y='40' font-size='30' opacity='0.5'>🎵</text>
+
+                    <text x='120' y='80' font-size='35' opacity='0.4'>🎪</text>
+
+                    <text x='40' y='150' font-size='30' opacity='0.5'>🎸</text>
+
+                    <text x='150' y='180' font-size='25' opacity='0.6'>✨</text>
+
+                    <text x='90' y='120' font-size='30' opacity='0.4'>🎤</text>
+
+                </svg>
+
+            `;
+
+            const encodedSVG = encodeURIComponent(svgContent).replace(/'/g, "%27").replace(/"/g, "%22");
+
+            document.getElementById('bg-pattern').style.backgroundImage = `url("data:image/svg+xml;utf8,${encodedSVG}")`;
+
+        }
+
+
+
+        // ==========================================
+
+        // DATA: READING PASSAGES & GLOSSARY
+
+        // ==========================================
+
+        const passages = [
+
+            {
+
+                en: "I’ve always been mad about music, whether it’s something I’m listening to on my headphones, dancing to at a club or enjoying at a concert. But my greatest love has always been going to music festivals. They are a great place to listen to your favourite musicians and to enjoy yourself with friends, and they are also an opportunity to meet new people. But the experience can be spoilt if you don’t take care, so here are some things I’ve learnt along the way.",
+
+                vi: "Tôi luôn có niềm đam mê mãnh liệt với âm nhạc, dù đó là thứ tôi đang nghe qua tai nghe, nhảy theo tại một câu lạc bộ hay thưởng thức tại một buổi hòa nhạc. Nhưng tình yêu lớn nhất của tôi luôn là việc tham gia các lễ hội âm nhạc. Chúng là một nơi tuyệt vời để lắng nghe những nhạc sĩ bạn yêu thích và vui vẻ cùng bạn bè, và chúng cũng là cơ hội để gặp gỡ những người mới. Nhưng trải nghiệm này có thể bị phá hỏng nếu bạn không cẩn thận, vì vậy dưới đây là một số điều tôi đã học được qua những trải nghiệm đó."
+
+            },
+
+            {
+
+                en: "Let’s start with what you should take. You can’t be sure of the weather so I’d suggest preparing for anything. Take sun cream. If it’s sunny you’ll be out in the open all day. And don’t forget something to keep you dry in a thunderstorm, even if it’s only a large plastic rubbish bag. Your mobile phone and charger are essentials, of course, but apart from these don’t take anything you wouldn’t want to lose. Take comfortable shoes as you’ll be on your feet all day, and if you’re camping bring a tent that’s easy to put up and weatherproof.",
+
+                vi: "Hãy bắt đầu với những gì bạn nên mang theo. Bạn không thể chắc chắn về thời tiết vì vậy tôi khuyên bạn nên chuẩn bị cho mọi tình huống. Hãy mang theo kem chống nắng. Nếu trời nắng, bạn sẽ ở ngoài trời cả ngày. Và đừng quên thứ gì đó để giữ cho bạn khô ráo trong một trận giông bão, ngay cả khi nó chỉ là một chiếc túi nilon đựng rác cỡ lớn. Tất nhiên, điện thoại di động và sạc của bạn là những thứ thiết yếu, nhưng ngoài những thứ này ra, đừng mang theo bất cứ thứ gì bạn không muốn bị mất. Hãy mang một đôi giày thoải mái vì bạn sẽ phải đứng trên đôi chân của mình cả ngày, và nếu bạn đi cắm trại, hãy mang theo một chiếc lều dễ dựng và có khả năng chống chọi thời tiết."
+
+            },
+
+            {
+
+                en: "Once you’re there, take a tour of the area so you know exactly where everything is. If you’re with friends, agree on meeting points. Your tent is likely to be a long way from the action so you need places to find each other closer to the stages. This will help if you and your friends decide to see different bands, which is likely as your taste in music is probably not exactly the same. Be polite to people camping near you as they could become good friends. Drink lots of water and check the programme carefully so you don’t miss your favourite acts.",
+
+                vi: "Khi bạn đã đến nơi, hãy đi tham quan một vòng khu vực để bạn biết chính xác mọi thứ nằm ở đâu. Nếu bạn đi cùng bạn bè, hãy thống nhất các điểm hẹn. Lều của bạn rất có thể nằm cách xa khu vực diễn ra các hoạt động chính, vì vậy bạn cần những nơi để tìm thấy nhau gần các sân khấu hơn. Điều này sẽ giúp ích nếu bạn và bạn bè của bạn quyết định xem các ban nhạc khác nhau, điều này rất dễ xảy ra vì gu âm nhạc của các bạn có thể không hoàn toàn giống nhau. Hãy lịch sự với những người cắm trại gần bạn vì họ có thể trở thành những người bạn tốt. Hãy uống nhiều nước và kiểm tra lịch trình cẩn thận để bạn không bỏ lỡ các tiết mục yêu thích của mình."
+
+            },
+
+            {
+
+                en: "And when it’s all over? Here’s my number one request: before you go home, please pick up all your litter in and around your tent. I can’t believe the mess people create at festivals. Some people even leave their tent behind. And as you leave, enjoy the feeling that you’ve just felt, with a wonderful connection to all those around you. You’ve just had an amazing opportunity to see lots of different bands and make friends and generally had an experience you’ll never forget.",
+
+                vi: "Và khi tất cả đã kết thúc? Đây là yêu cầu số một của tôi: trước khi bạn về nhà, làm ơn hãy nhặt tất cả rác của bạn ở trong và xung quanh lều của bạn. Tôi không thể tin nổi đống lộn xộn mà mọi người tạo ra tại các lễ hội. Một số người thậm chí còn bỏ lại lều của họ. Và khi bạn rời đi, hãy tận hưởng cảm giác mà bạn vừa cảm nhận, với một sự kết nối tuyệt vời với tất cả những người xung quanh bạn. Bạn vừa có một cơ hội tuyệt vời để xem nhiều ban nhạc khác nhau, kết bạn và nhìn chung là có một trải nghiệm bạn sẽ không bao giờ quên."
+
+            }
+
+        ];
+
+
+
+        const glossary = [
+
+            { word: "mad about", pos: "idiom", vi: "đam mê mãnh liệt, phát cuồng vì" },
+
+            { word: "opportunity", pos: "n", vi: "cơ hội" },
+
+            { word: "spoil", pos: "v", vi: "làm hỏng, phá hỏng" },
+
+            { word: "essential", pos: "n/adj", vi: "thiết yếu, cực kỳ quan trọng" },
+
+            { word: "weatherproof", pos: "adj", vi: "chịu được thời tiết (mưa, gió)" },
+
+            { word: "action", pos: "n", vi: "sự kiện/hoạt động chính (ở đây chỉ khu vực hội hè)" },
+
+            { word: "stage", pos: "n", vi: "sân khấu" },
+
+            { word: "taste", pos: "n", vi: "sở thích, gu (âm nhạc)" },
+
+            { word: "programme", pos: "n", vi: "chương trình, lịch trình" },
+
+            { word: "litter", pos: "n", vi: "rác thải (vứt bừa bãi)" },
+
+            { word: "mess", pos: "n", vi: "đống lộn xộn, bẩn thỉu" },
+
+            { word: "connection", pos: "n", vi: "sự kết nối, mối liên hệ" }
+
+        ];
+
+
+
+        // ==========================================
+
+        // DATA: QUIZ QUESTIONS
+
+        // ==========================================
+
+        const questionsData = [
+
+            {
+
+                id: 1,
+
+                question: "1. Corinna says that",
+
+                options: [
+
+                    { text: "music festivals are the best way to listen to music.", isCorrect: false, explanation: "Bài đọc nói lễ hội âm nhạc là 'greatest love' (tình yêu lớn nhất) của cô ấy, chứ không khẳng định đó là cách tốt nhất (best way) để nghe nhạc chung chung." },
+
+                    { text: "listening to music is her biggest love.", isCorrect: false, explanation: "Sai vì 'going to music festivals' (đi lễ hội) mới là 'greatest love' của cô ấy." },
+
+                    { text: "music festivals can be a great social event.", isCorrect: true, explanation: "" },
+
+                    { text: "careless behaviour spoils music festivals for other people.", isCorrect: false, explanation: "Bài đọc nhắc đến việc trải nghiệm 'can be spoilt if YOU don’t take care' (có thể bị hỏng nếu bạn không cẩn thận), khuyên bản thân người đi, không phải nói hành vi bất cẩn làm hỏng lễ hội của 'người khác'." }
+
+                ],
+
+                fullExplanation: `
+
+                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
+
+                    <strong>Tại sao chọn đáp án này?</strong><br>
+
+                    Đoạn 1 viết: "They are a great place to listen to your favourite musicians and to enjoy yourself with friends, and they are also an opportunity to meet new people." <br>
+
+                    <span style="color: red; font-weight: bold;">Lễ hội âm nhạc là cơ hội tuyệt vời để giao lưu, gặp gỡ bạn bè và người mới (great social event)</span>.
+
+                `
+
+            },
+
+            {
+
+                id: 2,
+
+                question: "2. What does Corinna advise people to do?",
+
+                options: [
+
+                    { text: "Be careful not to lose anything.", isCorrect: false, explanation: "Cô ấy nói 'don’t take anything you wouldn’t want to lose' (đừng mang thứ gì bạn sợ mất), chứ không khuyên 'cẩn thận đừng làm mất'." },
+
+                    { text: "Be prepared for any weather.", isCorrect: true, explanation: "" },
+
+                    { text: "Keep all your things in a plastic bag.", isCorrect: false, explanation: "Túi nilon rác cỡ lớn (large plastic rubbish bag) dùng để che mưa cho bản thân (keep you dry), không phải để đựng đồ." },
+
+                    { text: "Leave your mobile phone at home.", isCorrect: false, explanation: "Điện thoại là 'essentials' (những thứ thiết yếu) - bắt buộc phải mang." }
+
+                ],
+
+                fullExplanation: `
+
+                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
+
+                    <strong>Tại sao chọn đáp án này?</strong><br>
+
+                    Đoạn 2 viết: "You can’t be sure of the weather so I’d suggest preparing for anything." <br>
+
+                    <span style="color: red; font-weight: bold;">Khuyên mọi người nên chuẩn bị cho mọi loại thời tiết vì không thể đoán trước được</span>.
+
+                `
+
+            },
+
+            {
+
+                id: 3,
+
+                question: "3. Corinna says you should agree on a meeting point",
+
+                options: [
+
+                    { text: "so you can find your way back to your tent.", isCorrect: false, explanation: "Hẹn nhau không phải để tìm đường về lều." },
+
+                    { text: "in order to discuss which bands are on.", isCorrect: false, explanation: "Không phải hẹn nhau để thảo luận xem ban nhạc nào đang diễn." },
+
+                    { text: "so you can talk about your taste in music.", isCorrect: false, explanation: "Không có ý hẹn nhau để nói về gu âm nhạc." },
+
+                    { text: "because this is more convenient than going to your tent.", isCorrect: true, explanation: "" }
+
+                ],
+
+                fullExplanation: `
+
+                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
+
+                    <strong>Tại sao chọn đáp án này?</strong><br>
+
+                    Đoạn 3 viết: "Your tent is likely to be a long way from the action so you need places to find each other closer to the stages." <br>
+
+                    <span style="color: red; font-weight: bold;">Lều thường ở rất xa sân khấu, nên hẹn nhau ở điểm hẹn gần sân khấu sẽ tiện lợi hơn là phải quay tít về lều để tìm nhau</span>.
+
+                `
+
+            },
+
+            {
+
+                id: 4,
+
+                question: "4. What does Corinna say about litter?",
+
+                options: [
+
+                    { text: "People should request more litter bins.", isCorrect: false, explanation: "Bài không đề cập đến việc yêu cầu thêm thùng rác." },
+
+                    { text: "You should clear the area where you’ve been camping.", isCorrect: true, explanation: "" },
+
+                    { text: "People often leave litter in their tent.", isCorrect: false, explanation: "Cô ấy nói mọi người để lại đống lộn xộn/rác (mess) ở lễ hội, và một số bỏ lại cả lều (leave tent behind), không phải 'thường để rác TRONG lều'." },
+
+                    { text: "Take it home with you.", isCorrect: false, explanation: "Cô ấy bảo 'pick up all your litter' (nhặt rác), chứ không bảo 'mang rác về nhà' (Take it home)." }
+
+                ],
+
+                fullExplanation: `
+
+                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
+
+                    <strong>Tại sao chọn đáp án này?</strong><br>
+
+                    Đoạn 4 viết: "before you go home, please pick up all your litter in and around your tent." <br>
+
+                    <span style="color: red; font-weight: bold;">Hãy dọn dẹp sạch sẽ rác ở trong và xung quanh khu vực bạn cắm trại trước khi ra về (clear the area)</span>.
+
+                `
+
+            },
+
+            {
+
+                id: 5,
+
+                question: "5. What would be a good introduction to this article?",
+
+                options: [
+
+                    { text: "Going to a music festival? Corinna Held recommends some simple steps to make the experience a happy one.", isCorrect: true, explanation: "" },
+
+                    { text: "Music festivals can be a wonderful way to spend the weekend. Corinna Held tells us about her favourite events.", isCorrect: false, explanation: "Cô ấy không liệt kê hay kể về các 'sự kiện yêu thích' (favourite events) cụ thể nào." },
+
+                    { text: "With more and more of us attending music festivals, Corinna Held explains what it is about them people find so enjoyable.", isCorrect: false, explanation: "Bài viết chủ yếu đưa ra lời khuyên (mang gì, làm gì, dọn rác), chứ không tập trung giải thích 'tại sao mọi người lại thấy nó vui'." },
+
+                    { text: "We all love listening to music. But do we get the best experience using our headphones? Corinna Held tells us why we should be going to music festivals.", isCorrect: false, explanation: "Chỉ nhắc nhẹ tai nghe ở đoạn 1, không phải so sánh trải nghiệm để thuyết phục mọi người đi lễ hội." }
+
+                ],
+
+                fullExplanation: `
+
+                    <strong>PHẦN GIẢI THÍCH CHI TIẾT:</strong><br><br>
+
+                    <strong>Tại sao chọn đáp án này?</strong><br>
+
+                    Toàn bộ bài viết là lời khuyên thực tế của Corinna (mang kem chống nắng, giày, lều, hẹn điểm hẹn, nhặt rác...). <br>
+
+                    <span style="color: red; font-weight: bold;">Đáp án A tóm tắt đúng nhất mục đích bài viết: Giới thiệu những bước/lời khuyên đơn giản để có trải nghiệm vui vẻ, trọn vẹn tại lễ hội âm nhạc</span>.
+
+                `
+
+            }
+
+        ];
+
+
+
+        // ==========================================
+
+        // UTILITIES & STATE
+
+        // ==========================================
+
+        let audioCtx;
+
+        let score = 0;
+
+        let answeredQuestions = new Set();
+
+        let timerInterval;
+
+        let timeLeft = 600; // 10 minutes in seconds
+
+        let isTimerRunning = false;
+
+        let timerStarted = false;
+
+
+
+        // Shuffle array function
+
+        function shuffleArray(array) {
+
+            for (let i = array.length - 1; i > 0; i--) {
+
+                const j = Math.floor(Math.random() * (i + 1));
+
+                [array[i], array[j]] = [array[j], array[i]];
+
+            }
+
+            return array;
+
+        }
+
+
+
+        // ==========================================
+
+        // WEB AUDIO API SOUNDS
+
+        // ==========================================
+
+        function initAudio() {
+
+            if (!audioCtx) {
+
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            }
+
+        }
+
+
+
+        function playCorrectSound() {
+
+            initAudio();
+
+            const osc = audioCtx.createOscillator();
+
+            const gain = audioCtx.createGain();
+
+            osc.connect(gain);
+
+            gain.connect(audioCtx.destination);
+
+            
+
+            osc.type = 'sine';
+
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+
+            
+
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.3);
+
+        }
+
+
+
+        function playWrongSound() {
+
+            initAudio();
+
+            const osc = audioCtx.createOscillator();
+
+            const gain = audioCtx.createGain();
+
+            osc.connect(gain);
+
+            gain.connect(audioCtx.destination);
+
+            
+
+            osc.type = 'sawtooth';
+
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+
+            
+
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.3);
+
+        }
+
+
+
+        // ==========================================
+
+        // RENDERING UI
+
+        // ==========================================
+
+        function renderPassages() {
+
+            const container = document.getElementById('reading-container');
+
+            passages.forEach((p, index) => {
+
+                const box = document.createElement('div');
+
+                box.className = 'paragraph-box';
+
+                box.innerHTML = `
+
+                    <div class="paragraph-text">${p.en}</div>
+
+                    <button class="btn btn-translate" onclick="toggleTranslation(${index})">
+
+                        Mở dịch đoạn này 🌟
+
+                    </button>
+
+                    <div class="translation-text" id="trans-${index}">
+
+                        <strong>Bản dịch:</strong><br>${p.vi}
+
+                    </div>
+
+                `;
+
+                container.appendChild(box);
+
+            });
+
+        }
+
+
+
+        function toggleTranslation(index) {
+
+            const el = document.getElementById(`trans-${index}`);
+
+            if (el.style.display === 'block') {
+
+                el.style.display = 'none';
+
+            } else {
+
+                el.style.display = 'block';
+
+            }
+
+        }
+
+
+
+        function renderGlossary() {
+
+            const tbody = document.querySelector('#glossary-table tbody');
+
+            glossary.forEach(g => {
+
+                const tr = document.createElement('tr');
+
+                tr.innerHTML = `
+
+                    <td><strong>${g.word}</strong></td>
+
+                    <td><em>${g.pos}</em></td>
+
+                    <td>${g.vi}</td>
+
+                `;
+
+                tbody.appendChild(tr);
+
+            });
+
+        }
+
+
+
+        function renderQuiz() {
+
+            const container = document.getElementById('quiz-container');
+
+            questionsData.forEach((q, qIndex) => {
+
+                const card = document.createElement('div');
+
+                card.className = 'question-card';
+
+                card.id = `qcard-${q.id}`;
+
+                
+
+                // Shuffle options
+
+                const shuffledOptions = shuffleArray([...q.options]);
+
+
+
+                let optionsHTML = '<div class="options-grid">';
+
+                const letters = ['A', 'B', 'C', 'D'];
+
+                
+
+                shuffledOptions.forEach((opt, oIndex) => {
+
+                    const btnId = `btn-${q.id}-${oIndex}`;
+
+                    optionsHTML += `
+
+                        <button class="btn option-btn" id="${btnId}" 
+
+                            onclick="handleAnswer(${q.id}, ${oIndex}, ${opt.isCorrect}, '${btnId}')">
+
+                            <strong>${letters[oIndex]}.</strong> &nbsp; ${opt.text}
+
+                        </button>
+
+                    `;
+
+                });
+
+                optionsHTML += '</div>';
+
+
+
+                card.innerHTML = `
+
+                    <div class="question-text">${q.question}</div>
+
+                    ${optionsHTML}
+
+                    <div class="explanation-box" id="exp-${q.id}">
+
+                        ${q.fullExplanation}
+
+                    </div>
+
+                `;
+
+                container.appendChild(card);
+
+            });
+
+        }
+
+
+
+        // ==========================================
+
+        // QUIZ LOGIC
+
+        // ==========================================
+
+        function handleAnswer(qId, oIndex, isCorrect, btnId) {
+
+            if (answeredQuestions.has(qId)) return; // Prevent multiple clicks
+
+            answeredQuestions.add(qId);
+
+            initAudio();
+
+
+
+            const card = document.getElementById(`qcard-${qId}`);
+
+            const buttons = card.querySelectorAll('.option-btn');
+
+            const clickedBtn = document.getElementById(btnId);
+
+            const expBox = document.getElementById(`exp-${qId}`);
+
+
+
+            // Disable all buttons
+
+            buttons.forEach(btn => btn.classList.add('disabled'));
+
+
+
+            if (isCorrect) {
+
+                clickedBtn.classList.add('correct');
+
+                playCorrectSound();
+
+                score++;
+
+                triggerMiniConfetti(clickedBtn);
+
+            } else {
+
+                clickedBtn.classList.add('wrong');
+
+                playWrongSound();
+
+                
+
+                // Highlight correct answer
+
+                const qData = questionsData.find(q => q.id === qId);
+
+                // Need to find which button has the correct text since we shuffled
+
+                const correctText = qData.options.find(o => o.isCorrect).text;
+
+                buttons.forEach(btn => {
+
+                    if (btn.innerText.includes(correctText)) {
+
+                        btn.classList.add('correct');
+
+                    }
+
+                });
+
+            }
+
+
+
+            // Show explanation
+
+            expBox.style.display = 'block';
+
+        }
+
+
+
+        // ==========================================
+
+        // TIMER LOGIC
+
+        // ==========================================
+
+        function toggleTimer() {
+
+            initAudio(); // Initialize audio context on first user interaction
+
+            const btn = document.getElementById('btn-timer-toggle');
+
+            
+
+            if (!timerStarted) {
+
+                timerStarted = true;
+
+                isTimerRunning = true;
+
+                btn.innerText = "TẠM DỪNG ⏸️";
+
+                btn.style.background = "#FFB6C1";
+
+                btn.style.boxShadow = "0 4px 0 #D1949F";
+
+                timerInterval = setInterval(updateTimer, 1000);
+
+            } else {
+
+                if (isTimerRunning) {
+
+                    isTimerRunning = false;
+
+                    clearInterval(timerInterval);
+
+                    btn.innerText = "TIẾP TỤC ▶️";
+
+                    btn.style.background = varAccent3; 
+
+                } else {
+
+                    isTimerRunning = true;
+
+                    btn.innerText = "TẠM DỪNG ⏸️";
+
+                    btn.style.background = "#FFB6C1";
+
+                    timerInterval = setInterval(updateTimer, 1000);
+
+                }
+
+            }
+
+        }
+
+
+
+        function updateTimer() {
+
+            if (timeLeft > 0) {
+
+                timeLeft--;
+
+                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+
+                const s = (timeLeft % 60).toString().padStart(2, '0');
+
+                document.getElementById('timer-display').innerText = `${m}:${s}`;
+
+            } else {
+
+                clearInterval(timerInterval);
+
+                isTimerRunning = false;
+
+                alert("Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+
+                document.getElementById('btn-timer-toggle').innerText = "HẾT GIỜ";
+
+                document.getElementById('btn-timer-toggle').classList.add('disabled');
+
+            }
+
+        }
+
+
+
+        // ==========================================
+
+        // SUBMIT & CONFETTI
+
+        // ==========================================
+
+        function submitTest() {
+
+            clearInterval(timerInterval);
+
+            const total = questionsData.length;
+
+            const modal = document.getElementById('result-modal');
+
+            const titleEl = document.getElementById('modal-title');
+
+            const scoreEl = document.getElementById('modal-score');
+
+            const msgEl = document.getElementById('modal-message');
+
+
+
+            scoreEl.innerText = `${score}/${total}`;
+
+
+
+            if (score === total) {
+
+                titleEl.innerText = "Thiên tài! 🏆";
+
+                msgEl.innerText = "Xuất sắc tuyệt đối! Bạn đã hiểu bài đọc 100%.";
+
+                startConfettiLoop();
+
+                playCorrectSound();
+
+                setTimeout(playCorrectSound, 200);
+
+            } else if (score >= total - 2) {
+
+                titleEl.innerText = "Làm tốt lắm! 🌟";
+
+                msgEl.innerText = "Kiến thức của bạn rất vững, chỉ sai một chút thôi.";
+
+                startConfettiLoop();
+
+                playCorrectSound();
+
+            } else {
+
+                titleEl.innerText = "Cố lên nhé! 💪";
+
+                msgEl.innerText = "Hãy đọc kỹ phần giải thích chi tiết để hiểu rõ hơn nha.";
+
+            }
+
+
+
+            modal.style.display = 'flex';
+
+        }
+
+
+
+        function closeModal() {
+
+            document.getElementById('result-modal').style.display = 'none';
+
+            stopConfettiLoop();
+
+        }
+
+
+
+        // Simple Confetti Implementation
+
+        let confettiParticles = [];
+
+        let confettiCtx;
+
+        let animationId;
+
+
+
+        function triggerMiniConfetti(element) {
+
+            // A simple localized pop effect is complex without absolute coords, 
+
+            // so we rely on CSS shake/pop animations for individual buttons.
+
+        }
+
+
+
+        function startConfettiLoop() {
+
+            const canvas = document.getElementById('confetti-canvas');
+
+            confettiCtx = canvas.getContext('2d');
+
+            canvas.width = window.innerWidth;
+
+            canvas.height = window.innerHeight;
+
+            
+
+            for(let i=0; i<150; i++) {
+
+                confettiParticles.push({
+
+                    x: Math.random() * canvas.width,
+
+                    y: Math.random() * canvas.height - canvas.height,
+
+                    w: Math.random() * 10 + 5,
+
+                    h: Math.random() * 10 + 5,
+
+                    c: ['#00C9A7', '#FDCB6E', '#8854C0', '#FF4757', '#A1C4FD'][Math.floor(Math.random()*5)],
+
+                    v: Math.random() * 5 + 2,
+
+                    r: Math.random() * 360
+
+                });
+
+            }
+
+            renderConfetti();
+
+        }
+
+
+
+        function renderConfetti() {
+
+            confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+            confettiParticles.forEach(p => {
+
+                p.y += p.v;
+
+                p.r += 2;
+
+                if(p.y > window.innerHeight) p.y = -10;
+
+                
+
+                confettiCtx.save();
+
+                confettiCtx.translate(p.x, p.y);
+
+                confettiCtx.rotate(p.r * Math.PI / 180);
+
+                confettiCtx.fillStyle = p.c;
+
+                confettiCtx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+
+                confettiCtx.restore();
+
+            });
+
+            animationId = requestAnimationFrame(renderConfetti);
+
+        }
+
+
+
+        function stopConfettiLoop() {
+
+            cancelAnimationFrame(animationId);
+
+            if(confettiCtx) confettiCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+            confettiParticles = [];
+
+        }
+
+
+
+        // ==========================================
+
+        // INITIALIZATION
+
+        // ==========================================
+
+        window.onload = () => {
+
+            initBackground();
+
+            renderPassages();
+
+            renderGlossary();
+
+            renderQuiz();
+
+        };
+
+
+
+        // Resize canvas on window resize
+
+        window.addEventListener('resize', () => {
+
+            const canvas = document.getElementById('confetti-canvas');
+
+            canvas.width = window.innerWidth;
+
+            canvas.height = window.innerHeight;
+
+        });
+
+
+
+    </script>
+
+</body>
+
 </html>

@@ -1,709 +1,1418 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bài Kiểm Tra Tiếng Anh - Ms MS Chí Nên</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            /* Default Theme (Will be overridden by JS) */
-            --primary-color: #6c5ce7;
-            --secondary-color: #a29bfe;
-            --bg-emoji-1: "✨";
-            --bg-emoji-2: "🎓";
-            --text-color: #2d3436;
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --correct-color: #00D26A;
-            --wrong-color: #FF4757;
-        }
-
-        * { box-sizing: border-box; transition: all 0.3s ease; }
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Nunito', sans-serif;
-            color: var(--text-color);
-            height: 100vh;
-            overflow: hidden;
-            /* Dynamic Background Logic */
-            background-color: var(--secondary-color);
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
-                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
-                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='40' font-size='30'%3E✨%3C/text%3E%3Ctext x='50' y='90' font-size='30'%3E🎓%3C/text%3E%3C/svg%3E");
-            background-attachment: fixed;
-        }
-
-        /* --- Header --- */
-        header {
-            height: 60px;
-            background: #fff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 100;
-            position: relative;
-        }
-        .teacher-brand { font-weight: 800; font-size: 1.2rem; color: var(--primary-color); }
-        .timer-container { font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 1.5rem; color: var(--wrong-color); display: flex; align-items: center; gap: 10px; }
-        #timer-btn {
-            background: var(--primary-color); color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.2);
-        }
-        #timer-btn:active { transform: translateY(4px); box-shadow: none; }
-
-        /* --- Split Layout --- */
-        .split-container {
-            display: flex;
-            height: calc(100vh - 60px);
-        }
-        .panel {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            scroll-behavior: smooth;
-        }
-        .panel::-webkit-scrollbar { width: 8px; }
-        .panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
-
-        /* --- Reading Section (Left) --- */
-        #reading-section { border-right: 2px dashed rgba(0,0,0,0.1); }
-        .reading-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            border-left: 5px solid var(--primary-color);
-        }
-        .reading-title { font-family: 'Quicksand', sans-serif; font-size: 1.8rem; color: var(--primary-color); margin-bottom: 15px; }
-        .reading-content { font-size: 1.1rem; line-height: 1.8; text-align: justify; }
-        
-        .glossary-table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-            font-size: 0.95rem;
-            background: #fff;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .glossary-table th { background: var(--primary-color); color: white; padding: 10px; text-align: left; }
-        .glossary-table td { border-bottom: 1px solid #eee; padding: 10px; }
-        .glossary-table tr:last-child td { border-bottom: none; }
-
-        .translate-btn {
-            background: white; border: 2px solid var(--primary-color); color: var(--primary-color);
-            padding: 8px 15px; border-radius: 15px; cursor: pointer; font-weight: bold; margin-top: 15px; display: inline-block;
-        }
-        .translate-btn:hover { background: var(--primary-color); color: white; }
-        .translation-text {
-            display: none; margin-top: 15px; padding: 15px; background: #f0f3f8; border-radius: 10px; border-left: 4px solid #6c5ce7; font-style: italic; color: #555;
-        }
-
-        /* --- Exercise Section (Right) --- */
-        .question-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            position: relative;
-        }
-        .q-number {
-            background: var(--primary-color); color: white; padding: 5px 12px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px; font-size: 0.9rem;
-        }
-        .q-text { font-weight: 700; font-size: 1.1rem; margin-bottom: 15px; }
-        .gap-highlight { border-bottom: 2px solid var(--primary-color); display: inline-block; min-width: 50px; text-align: center; color: var(--primary-color); font-weight: bold; }
-
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .option-btn {
-            background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; padding: 12px; text-align: left; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1rem; position: relative; overflow: hidden;
-        }
-        .option-btn:hover { transform: scale(1.02); border-color: var(--primary-color); }
-        .option-btn.correct { background: var(--correct-color); color: white; border-color: var(--correct-color); }
-        .option-btn.wrong { background: var(--wrong-color); color: white; border-color: var(--wrong-color); animation: shake 0.5s; }
-        .option-btn.disabled { pointer-events: none; opacity: 0.6; }
-
-        /* --- Explanation Box --- */
-        .explanation-box {
-            display: none;
-            margin-top: 15px;
-            background: #fffde7;
-            border: 2px solid #f1c40f;
-            border-radius: 10px;
-            padding: 15px;
-        }
-        .teacher-avatar { width: 40px; height: 40px; border-radius: 50%; float: left; margin-right: 10px; background: #eee; display: flex; justify-content: center; align-items: center; font-size: 20px; }
-        .exp-content { overflow: hidden; }
-        .exp-title { font-weight: 800; color: #d35400; display: block; margin-bottom: 5px; }
-        .vocab-note { color: #2980b9; font-weight: bold; }
-
-        /* --- Animations --- */
-        @keyframes shake {
-            0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); }
-        }
-
-        /* --- Submit & Modal --- */
-        .submit-container { text-align: center; margin-top: 30px; padding-bottom: 50px; }
-        .submit-btn {
-            background: linear-gradient(45deg, #FF9F43, #EE5A24); color: white; font-size: 1.5rem; border: none; padding: 15px 40px; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 10px 20px rgba(238, 90, 36, 0.3);
-        }
-        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(238, 90, 36, 0.4); }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center;
-        }
-        .result-card {
-            background: white; width: 90%; max-width: 500px; border-radius: 30px; padding: 40px; text-align: center; position: relative; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        /* Canvas for Confetti */
-        #confetti-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 999; }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .split-container { flex-direction: column; height: auto; overflow: auto; }
-            .panel { height: auto; overflow: visible; }
-            #reading-section { border-right: none; border-bottom: 2px dashed #ccc; }
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <div class="teacher-brand">👩‍🏫 Ms MS Chí Nên</div>
-        <div class="timer-container">
-            <span>⏱️</span>
-            <span id="timer-display">10:00</span>
-            <button id="timer-btn" onclick="toggleTimer()">BẮT ĐẦU</button>
-        </div>
-    </header>
-
-    <div class="split-container">
-        <div class="panel" id="reading-section">
-            </div>
-
-        <div class="panel" id="exercise-section">
-            <div id="exercise-container">
-                </div>
-            <div class="submit-container">
-                <button class="submit-btn" onclick="showResults()">NỘP BÀI 🏆</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="result-modal">
-        <div class="result-card">
-            <h1 style="color: var(--primary-color)">KẾT QUẢ</h1>
-            <div style="font-size: 4rem; margin: 20px 0;">🏆</div>
-            <h2 id="final-score">0/12</h2>
-            <p id="teacher-comment" style="font-size: 1.2rem; color: #555;"></p>
-            <button class="submit-btn" onclick="closeModal()" style="font-size: 1rem; padding: 10px 30px; margin-top:20px;">Làm lại / Xem lại</button>
-        </div>
-    </div>
-
-    <canvas id="confetti-canvas"></canvas>
-
-    <script>
-        // --- DATA STORE ---
-        const examData = [
-            {
-                id: "passage1",
-                topic: "fashion",
-                theme: {
-                    primary: "#e056fd",
-                    secondary: "#f3a683",
-                    emojis: ["👗", "👠", "👒"],
-                    bg_svg: `data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='25'%3E👗%3C/text%3E%3Ctext x='60' y='80' font-size='25'%3E👠%3C/text%3E%3C/svg%3E`
-                },
-                title: "Fashion Show Success",
-                content: `Last Saturday, the fashion department at Mansion College held a fashion show.<br>
-The students created special designs (1) <span class='gap-highlight'>...........</span> were modelled by other students. Parents and shopkeepers were (2) <span class='gap-highlight'>...........</span> to the event and 200 tickets were sold.<br>
-(3) <span class='gap-highlight'>...........</span> of the designs were really original and the evening was a great success. The most popular items at the show were T-shirts designed by student Maria Daniella. A local clothes shop has already asked Maria to (4) <span class='gap-highlight'>...........</span> them with 20 T-shirts. Maria is very pleased by her success.<br>
-(5) <span class='gap-highlight'>...........</span> the fashion show finished late, many people stayed longer to listen to the college rock band. There was food and drink on sale and the event finally (6) <span class='gap-highlight'>...........</span> at midnight.<br>
-The money made from the sale of the tickets went to a well-known children’s charity.`,
-                translation: "Thứ bảy tuần trước, khoa thời trang tại trường Cao đẳng Mansion đã tổ chức một buổi trình diễn thời trang. Các sinh viên đã tạo ra những thiết kế đặc biệt, những thiết kế này được trình diễn bởi các sinh viên khác. Phụ huynh và các chủ cửa hàng đã được mời đến sự kiện và 200 vé đã được bán ra. Nhiều thiết kế thực sự độc đáo và buổi tối đã thành công rực rỡ. Những món đồ được yêu thích nhất tại buổi biểu diễn là những chiếc áo phông do sinh viên Maria Daniella thiết kế. Một cửa hàng quần áo địa phương đã yêu cầu Maria cung cấp cho họ 20 chiếc áo phông. Maria rất hài lòng với thành công của mình. Mặc dù buổi trình diễn thời trang kết thúc muộn, nhiều người vẫn ở lại lâu hơn để nghe ban nhạc rock của trường đại học. Có đồ ăn và thức uống được bán và sự kiện cuối cùng đã kết thúc vào lúc nửa đêm. Số tiền thu được từ việc bán vé đã được chuyển đến một tổ chức từ thiện trẻ em nổi tiếng.",
-                glossary: [
-                    { word: "Department", type: "n", mean: "Khoa/Ban (trong trường học/công ty)" },
-                    { word: "Model", type: "v", mean: "Trình diễn (mẫu)" },
-                    { word: "Original", type: "adj", mean: "Độc đáo, nguyên bản" },
-                    { word: "Charity", type: "n", mean: "Tổ chức từ thiện" },
-                    { word: "Pleased", type: "adj", mean: "Hài lòng" }
-                ],
-                questions: [
-                    {
-                        id: "p1q1",
-                        q: "Question 1",
-                        options: { A: "when", B: "which", C: "who", D: "whose" },
-                        correct: "B",
-                        explanation: `
-                            <b>1. Phân tích ngữ pháp:</b><br>
-                            Vị trí cần điền là một Đại từ quan hệ thay thế cho danh từ đứng trước "special designs" (những thiết kế đặc biệt - chỉ vật).<br>
-                            <b>2. Tại sao chọn B (which)?</b><br>
-                            - "Which": dùng cho vật.<br>
-                            - "Who": dùng cho người.<br>
-                            - "When": chỉ thời gian.<br>
-                            - "Whose": chỉ sở hữu.<br>
-                            => "designs which were modelled": những thiết kế mà được trình diễn.
-                        `
-                    },
-                    {
-                        id: "p1q2",
-                        q: "Question 2",
-                        options: { A: "called", B: "requested", C: "demanded", D: "invited" },
-                        correct: "D",
-                        explanation: `
-                            <b>1. Ngữ cảnh:</b><br>
-                            Phụ huynh và chủ cửa hàng được ... tới sự kiện.<br>
-                            <b>2. Phân tích từ vựng:</b><br>
-                            - A. called: gọi tên.<br>
-                            - B. requested: yêu cầu.<br>
-                            - C. demanded: đòi hỏi (gắt gao).<br>
-                            - D. invited: mời.<br>
-                            => Chọn D. "were invited to the event" (được mời tới sự kiện).
-                        `
-                    },
-                    {
-                        id: "p1q3",
-                        q: "Question 3",
-                        options: { A: "Many", B: "Lot", C: "Much", D: "Each" },
-                        correct: "A",
-                        explanation: `
-                            <b>1. Phân tích cấu trúc:</b><br>
-                            Sau chỗ trống là "of the designs" (danh từ đếm được số nhiều).<br>
-                            <b>2. Tại sao chọn A?</b><br>
-                            - A. Many of + N(số nhiều): Nhiều... -> Đúng.<br>
-                            - B. Lot: Phải là "A lot of" hoặc "Lots of". Thiếu "A" hoặc "s".<br>
-                            - C. Much: Dùng cho danh từ KHÔNG đếm được.<br>
-                            - D. Each: Dùng cho số ít (động từ sau đó phải chia số ít, nhưng trong bài là 'were' - số nhiều).
-                        `
-                    },
-                    {
-                        id: "p1q4",
-                        q: "Question 4",
-                        options: { A: "produce", B: "design", C: "give", D: "provide" },
-                        correct: "D",
-                        explanation: `
-                            <b>1. Cấu trúc (Collocation):</b><br>
-                            Cụm từ: <b>Provide someone WITH something</b> (Cung cấp cho ai cái gì).<br>
-                            <b>2. Loại trừ:</b><br>
-                            - Give someone something (Không có 'with').<br>
-                            - Design/Produce something for someone.<br>
-                            => Dựa vào giới từ "with" ở sau -> Chọn D. provide.
-                        `
-                    },
-                    {
-                        id: "p1q5",
-                        q: "Question 5",
-                        options: { A: "Even", B: "So", C: "Although", D: "But" },
-                        correct: "C",
-                        explanation: `
-                            <b>1. Ngữ nghĩa:</b><br>
-                            "____ buổi diễn kết thúc muộn, nhiều người vẫn ở lại..." -> Hai vế đối lập.<br>
-                            <b>2. Tại sao chọn C?</b><br>
-                            - C. Although + mệnh đề: Mặc dù.<br>
-                            - A. Even: Phải là "Even though" hoặc "Even if".<br>
-                            - B. So: Vì vậy (chỉ kết quả).<br>
-                            - D. But: Nhưng (thường không đứng đầu câu trong văn viết trang trọng, và nối 2 vế).
-                        `
-                    },
-                    {
-                        id: "p1q6",
-                        q: "Question 6",
-                        options: { A: "left", B: "ended", C: "done", D: "completed" },
-                        correct: "B",
-                        explanation: `
-                            <b>1. Ngữ nghĩa:</b><br>
-                            Sự kiện cuối cùng đã ____ lúc nửa đêm.<br>
-                            <b>2. Phân tích:</b><br>
-                            - B. ended: kết thúc (nội động từ, sự kiện tự kết thúc). -> Chuẩn nhất.<br>
-                            - A. left: rời đi (dùng cho người).<br>
-                            - C. done: làm xong (thường dùng dạng bị động be done).<br>
-                            - D. completed: hoàn thành (thường là hoàn thành một nhiệm vụ).
-                        `
-                    }
-                ]
-            },
-            {
-                id: "passage2",
-                topic: "health",
-                theme: {
-                    primary: "#20bf6b",
-                    secondary: "#f7b731",
-                    emojis: ["🥗", "🍎", "🚴"],
-                    bg_svg: `data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='20' y='30' font-size='25'%3E🥗%3C/text%3E%3Ctext x='70' y='80' font-size='25'%3E🍎%3C/text%3E%3C/svg%3E`
-                },
-                title: "Healthy snacks on the run",
-                content: `In today’s busy lives we often have little time for healthy eating, so we do the easy thing and eat snacks like crisps or sweets instead. (1) <span class='gap-highlight'>...........</span>, it’s possible to eat quickly and healthily. All you (2) <span class='gap-highlight'>...........</span> to do is to follow a few simple rules.<br>
-First of all, read what it (3) <span class='gap-highlight'>...........</span> on the packet before you buy a snack. This is important because people often think that they’re buying healthy snacks, but sugar may be the (4) <span class='gap-highlight'>...........</span> ingredient.<br>
-Try to look for healthier options – instead of eating ice cream, try frozen fruit juices and, most importantly, eat at (5) <span class='gap-highlight'>...........</span> times of the day. Learn when your body needs food so (6) <span class='gap-highlight'>...........</span> you don’t suddenly feel the need to eat a lot of unhealthy snack food.`,
-                translation: "Trong cuộc sống bận rộn ngày nay, chúng ta thường có ít thời gian cho việc ăn uống lành mạnh, vì vậy chúng ta làm điều dễ dàng là ăn đồ ăn nhẹ như khoai tây chiên hoặc đồ ngọt. Tuy nhiên, hoàn toàn có thể ăn nhanh mà vẫn lành mạnh. Tất cả những gì bạn cần làm là tuân theo một vài quy tắc đơn giản. Trước hết, hãy đọc những gì ghi trên bao bì trước khi bạn mua đồ ăn nhẹ. Điều này rất quan trọng vì mọi người thường nghĩ rằng họ đang mua đồ ăn nhẹ lành mạnh, nhưng đường có thể là thành phần chính. Hãy cố gắng tìm kiếm các lựa chọn lành mạnh hơn – thay vì ăn kem, hãy thử nước ép trái cây đông lạnh và quan trọng nhất là ăn vào những thời điểm đều đặn trong ngày. Hãy tìm hiểu khi nào cơ thể bạn cần thức ăn để bạn không đột nhiên cảm thấy cần ăn nhiều đồ ăn nhẹ không tốt cho sức khỏe.",
-                glossary: [
-                    { word: "Ingredient", type: "n", mean: "Thành phần/nguyên liệu" },
-                    { word: "Option", type: "n", mean: "Sự lựa chọn" },
-                    { word: "Packet", type: "n", mean: "Gói/Bao bì" },
-                    { word: "Regular", type: "adj", mean: "Đều đặn/thường xuyên" },
-                    { word: "Suddenly", type: "adv", mean: "Đột ngột" }
-                ],
-                questions: [
-                    {
-                        id: "p2q1",
-                        q: "Question 1",
-                        options: { A: "Ago", B: "Alike", C: "However", D: "Whenever" },
-                        correct: "C",
-                        explanation: `
-                            <b>1. Logic câu:</b><br>
-                            Câu trước: Chúng ta hay ăn vặt (tiêu cực).<br>
-                            Câu sau: Có thể ăn nhanh và lành mạnh (tích cực).<br>
-                            -> Cần từ nối chỉ sự đối lập.<br>
-                            <b>2. Tại sao chọn C?</b><br>
-                            - C. However: Tuy nhiên (đứng đầu câu, có dấu phẩy).<br>
-                            - A. Ago: Trước đây (chỉ thời gian).<br>
-                            - B. Alike: Giống nhau.<br>
-                            - D. Whenever: Bất cứ khi nào.
-                        `
-                    },
-                    {
-                        id: "p2q2",
-                        q: "Question 2",
-                        options: { A: "can", B: "must", C: "need", D: "should" },
-                        correct: "C",
-                        explanation: `
-                            <b>1. Cấu trúc cố định:</b><br>
-                            "All you need to do is..." (Tất cả những gì bạn cần làm là...).<br>
-                            <b>2. Phân tích:</b><br>
-                            Dùng "can", "must", "should" vào đây sẽ làm câu tối nghĩa hoặc sai ngữ pháp (All you can do is... nghe có vẻ bất lực). Ngữ cảnh ở đây là đưa ra lời khuyên nhẹ nhàng về yêu cầu.
-                        `
-                    },
-                    {
-                        id: "p2q3",
-                        q: "Question 3",
-                        options: { A: "puts", B: "says", C: "talks", D: "writes" },
-                        correct: "B",
-                        explanation: `
-                            <b>1. Collocation (Kết hợp từ):</b><br>
-                            Khi nói về thông tin ghi trên bao bì, biển báo, sách vở... tiếng Anh dùng động từ "SAY".<br>
-                            - "The sign says..." (Biển báo ghi là...).<br>
-                            - "Read what it says on the packet."<br>
-                            <b>2. Loại trừ:</b><br>
-                            - Writes: Ai đó viết (người viết), còn 'it' ở đây là cái gói.<br>
-                            - Talks: Nói chuyện (phải có âm thanh).
-                        `
-                    },
-                    {
-                        id: "p2q4",
-                        q: "Question 4",
-                        options: { A: "big", B: "great", C: "large", D: "main" },
-                        correct: "D",
-                        explanation: `
-                            <b>1. Ngữ nghĩa:</b><br>
-                            Đường có thể là thành phần _____ (chủ yếu/chính).<br>
-                            <b>2. Tại sao chọn D?</b><br>
-                            - D. main ingredient: thành phần chính.<br>
-                            - A, C (Big/Large): Chỉ kích thước vật lý.<br>
-                            - B. Great: Tuyệt vời hoặc to lớn (trừu tượng).
-                        `
-                    },
-                    {
-                        id: "p2q5",
-                        q: "Question 5",
-                        options: { A: "common", B: "equal", C: "even", D: "regular" },
-                        correct: "D",
-                        explanation: `
-                            <b>1. Cụm từ:</b><br>
-                            Ăn vào những khoảng thời gian ____ trong ngày.<br>
-                            <b>2. Tại sao chọn D?</b><br>
-                            - D. regular times: những giờ giấc đều đặn/cố định.<br>
-                            - A. common: phổ biến.<br>
-                            - B. equal: bình đẳng (về số lượng/quyền lợi).<br>
-                            - C. even: bằng phẳng/chẵn.
-                        `
-                    },
-                    {
-                        id: "p2q6",
-                        q: "Question 6",
-                        options: { A: "that", B: "what", C: "when", D: "which" },
-                        correct: "A",
-                        explanation: `
-                            <b>1. Cấu trúc chỉ mục đích:</b><br>
-                            - "So that + mệnh đề": Để mà...<br>
-                            Câu: "Learn when your body needs food SO THAT you don't..." (Học cách nhận biết khi nào cơ thể cần ăn ĐỂ BẠN KHÔNG bất chợt cảm thấy đói...).
-                        `
-                    }
-                ]
-            }
-        ];
-
-        let currentScore = 0;
-        let totalQuestions = 0;
-        let timerInterval;
-        let timeLeft = 600; // 10 minutes
-        let isTimerRunning = false;
-
-        // --- AUDIO CONTEXT FOR SOUNDS ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playSound(type) {
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            if (type === 'correct') {
-                // Ding sound (High pitch sine wave)
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-                osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1); // C6
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.5);
-            } else if (type === 'wrong') {
-                // Buzz sound (Low pitch sawtooth)
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            }
-        }
-
-        // --- INITIALIZATION ---
-        function init() {
-            const readingSection = document.getElementById('reading-section');
-            const exerciseContainer = document.getElementById('exercise-container');
-
-            examData.forEach((data, index) => {
-                totalQuestions += data.questions.length;
-
-                // 1. Render Reading Card
-                const readingCard = document.createElement('div');
-                readingCard.className = 'reading-card';
-                readingCard.id = `reading-card-${index}`;
-                // Store theme data in dataset for Observer
-                readingCard.dataset.primary = data.theme.primary;
-                readingCard.dataset.secondary = data.theme.secondary;
-                readingCard.dataset.bgSvg = data.theme.bg_svg;
-
-                // Render Glossary Rows
-                const glossaryRows = data.glossary.map(g => 
-                    `<tr><td><b>${g.word}</b></td><td><i>${g.type}</i></td><td>${g.mean}</td></tr>`
-                ).join('');
-
-                readingCard.innerHTML = `
-                    <div class="reading-title">${data.title}</div>
-                    <div class="reading-content">${data.content}</div>
-                    <button class="translate-btn" onclick="toggleTranslation('trans-${index}')">📜 BẢN DỊCH ĐẦY ĐỦ</button>
-                    <div id="trans-${index}" class="translation-text">${data.translation}</div>
-                    
-                    <h3 style="color:var(--text-color); margin-top:30px;">📖 Ms MS Chí Nên's Glossary</h3>
-                    <table class="glossary-table">
-                        <tr><th>Từ vựng</th><th>Loại</th><th>Nghĩa</th></tr>
-                        ${glossaryRows}
-                    </table>
-                `;
-                readingSection.appendChild(readingCard);
-
-                // 2. Render Questions
-                data.questions.forEach(q => {
-                    const qCard = document.createElement('div');
-                    qCard.className = 'question-card';
-                    qCard.innerHTML = `
-                        <div class="q-number" style="background:${data.theme.primary}">${q.q}</div>
-                        <div class="q-text">Choose the best answer:</div>
-                        <div class="options-grid" id="opts-${q.id}">
-                            ${Object.entries(q.options).map(([key, val]) => `
-                                <button class="option-btn" onclick="checkAnswer(this, '${q.id}', '${key}', '${q.correct}', '${data.theme.correct}')">
-                                    <b>${key}.</b> ${val}
-                                </button>
-                            `).join('')}
-                        </div>
-                        <div id="exp-${q.id}" class="explanation-box">
-                            <div class="teacher-avatar">👩‍🏫</div>
-                            <div class="exp-content">
-                                <span class="exp-title">GIẢI THÍCH CHI TIẾT:</span>
-                                ${q.explanation}
-                            </div>
-                        </div>
-                    `;
-                    exerciseContainer.appendChild(qCard);
-                });
-            });
-
-            setupObserver();
-        }
-
-        // --- INTERACTION LOGIC ---
-        function checkAnswer(btn, qId, selectedKey, correctKey) {
-            const parent = document.getElementById(`opts-${qId}`);
-            const buttons = parent.getElementsByClassName('option-btn');
-            const expBox = document.getElementById(`exp-${qId}`);
-
-            // Disable all buttons in this question
-            Array.from(buttons).forEach(b => b.classList.add('disabled'));
-
-            if (selectedKey === correctKey) {
-                // Correct
-                btn.classList.add('correct');
-                playSound('correct');
-                fireConfetti(btn);
-                currentScore++;
-            } else {
-                // Wrong
-                btn.classList.add('wrong');
-                playSound('wrong');
-                // Highlight the correct one
-                Array.from(buttons).forEach(b => {
-                    if (b.innerText.startsWith(correctKey)) {
-                        b.classList.add('correct');
-                    }
-                });
-            }
-
-            // Show Explanation
-            expBox.style.display = 'block';
-            expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        function toggleTranslation(id) {
-            const el = document.getElementById(id);
-            el.style.display = el.style.display === 'block' ? 'none' : 'block';
-        }
-
-        // --- TIMER LOGIC ---
-        function toggleTimer() {
-            const btn = document.getElementById('timer-btn');
-            if (isTimerRunning) {
-                clearInterval(timerInterval);
-                isTimerRunning = false;
-                btn.innerText = "TIẾP TỤC";
-                btn.style.background = "#bdc3c7";
-            } else {
-                isTimerRunning = true;
-                btn.innerText = "TẠM DỪNG";
-                btn.style.background = "#FF4757";
-                timerInterval = setInterval(() => {
-                    timeLeft--;
-                    updateTimerDisplay();
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        alert("Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục, nhưng nhớ là trong phòng thi thật chỉ có 10 phút thôi nha.");
-                    }
-                }, 1000);
-            }
-        }
-
-        function updateTimerDisplay() {
-            const m = Math.floor(timeLeft / 60);
-            const s = timeLeft % 60;
-            document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-        }
-
-        // --- DYNAMIC THEME OBSERVER ---
-        function setupObserver() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const root = document.documentElement;
-                        const primary = entry.target.dataset.primary;
-                        const secondary = entry.target.dataset.secondary;
-                        const svg = entry.target.dataset.bgSvg;
-
-                        root.style.setProperty('--primary-color', primary);
-                        root.style.setProperty('--secondary-color', secondary);
-                        document.body.style.backgroundImage = `
-                            radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
-                            radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
-                            url("${svg}")`;
-                    }
-                });
-            }, { threshold: 0.5 }); // Trigger when 50% of card is visible
-
-            document.querySelectorAll('.reading-card').forEach(card => observer.observe(card));
-        }
-
-        // --- RESULTS & CONFETTI ---
-        function showResults() {
-            const modal = document.getElementById('result-modal');
-            const scoreEl = document.getElementById('final-score');
-            const commentEl = document.getElementById('teacher-comment');
-            
-            scoreEl.innerText = `${currentScore}/${totalQuestions}`;
-            
-            const percentage = (currentScore / totalQuestions) * 100;
-            if (percentage === 100) commentEl.innerText = "XUẤT SẮC! Em là thiên tài ngôn ngữ! 🌟";
-            else if (percentage >= 80) commentEl.innerText = "Làm tốt lắm! Em nắm bài rất chắc. 👍";
-            else if (percentage >= 50) commentEl.innerText = "Khá tốt, nhưng hãy xem lại phần giải thích để hiểu sâu hơn nhé. 💪";
-            else commentEl.innerText = "Cố lên nhé! Đừng nản, hãy đọc kỹ giải thích của cô MS Chí Nên nào. ❤️";
-
-            modal.style.display = 'flex';
-            
-            if (percentage >= 50) {
-                // Big confetti burst
-                for(let i=0; i<5; i++) {
-                    setTimeout(() => fireConfetti(document.body, true), i * 300);
-                }
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('result-modal').style.display = 'none';
-        }
-
-        // Minimalist Confetti Logic
-        const canvas = document.getElementById('confetti-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        let particles = [];
-
-        function fireConfetti(element, isGlobal = false) {
-            const rect = isGlobal ? {left: window.innerWidth/2, top: window.innerHeight/2, width: 0, height: 0} : element.getBoundingClientRect();
-            const colors = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502'];
-            
-            for (let i = 0; i < 30; i++) {
-                particles.push({
-                    x: rect.left + rect.width / 2,
-                    y: rect.top + rect.height / 2,
-                    vx: (Math.random() - 0.5) * 10,
-                    vy: (Math.random() - 0.5) * 10 - 5,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    life: 100
-                });
-            }
-        }
-
-        function animateConfetti() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach((p, index) => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vy += 0.5; // Gravity
-                p.life--;
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 8, 8);
-                if (p.life <= 0) particles.splice(index, 1);
-            });
-            requestAnimationFrame(animateConfetti);
-        }
-
-        init();
-        animateConfetti();
-
-        // Resize handler
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-    </script>
-</body>
-</html>
-
-
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Bài Kiểm Tra Tiếng Anh - Ms. Chí Nên</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+
+        :root {
+
+            /* Default Theme (Will be overridden by JS) */
+
+            --primary-color: #6c5ce7;
+
+            --secondary-color: #a29bfe;
+
+            --bg-emoji-1: "✨";
+
+            --bg-emoji-2: "🎓";
+
+            --text-color: #2d3436;
+
+            --card-bg: rgba(255, 255, 255, 0.95);
+
+            --correct-color: #00D26A;
+
+            --wrong-color: #FF4757;
+
+        }
+
+
+
+        * { box-sizing: border-box; transition: all 0.3s ease; }
+
+        body {
+
+            margin: 0;
+
+            padding: 0;
+
+            font-family: 'Nunito', sans-serif;
+
+            color: var(--text-color);
+
+            height: 100vh;
+
+            overflow: hidden;
+
+            /* Dynamic Background Logic */
+
+            background-color: var(--secondary-color);
+
+            background-image: 
+
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
+
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
+
+                url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='40' font-size='30'%3E✨%3C/text%3E%3Ctext x='50' y='90' font-size='30'%3E🎓%3C/text%3E%3C/svg%3E");
+
+            background-attachment: fixed;
+
+        }
+
+
+
+        /* --- Header --- */
+
+        header {
+
+            height: 60px;
+
+            background: #fff;
+
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            padding: 0 20px;
+
+            z-index: 100;
+
+            position: relative;
+
+        }
+
+        .teacher-brand { font-weight: 800; font-size: 1.2rem; color: var(--primary-color); }
+
+        .timer-container { font-family: 'Quicksand', sans-serif; font-weight: 700; font-size: 1.5rem; color: var(--wrong-color); display: flex; align-items: center; gap: 10px; }
+
+        #timer-btn {
+
+            background: var(--primary-color); color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+
+        }
+
+        #timer-btn:active { transform: translateY(4px); box-shadow: none; }
+
+
+
+        /* --- Split Layout --- */
+
+        .split-container {
+
+            display: flex;
+
+            height: calc(100vh - 60px);
+
+        }
+
+        .panel {
+
+            flex: 1;
+
+            overflow-y: auto;
+
+            padding: 20px;
+
+            scroll-behavior: smooth;
+
+        }
+
+        .panel::-webkit-scrollbar { width: 8px; }
+
+        .panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+
+
+
+        /* --- Reading Section (Left) --- */
+
+        #reading-section { border-right: 2px dashed rgba(0,0,0,0.1); }
+
+        .reading-card {
+
+            background: var(--card-bg);
+
+            border-radius: 20px;
+
+            padding: 25px;
+
+            margin-bottom: 30px;
+
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+
+            border-left: 5px solid var(--primary-color);
+
+        }
+
+        .reading-title { font-family: 'Quicksand', sans-serif; font-size: 1.8rem; color: var(--primary-color); margin-bottom: 15px; }
+
+        .reading-content { font-size: 1.1rem; line-height: 1.8; text-align: justify; }
+
+        
+
+        .glossary-table {
+
+            width: 100%;
+
+            margin-top: 20px;
+
+            border-collapse: collapse;
+
+            font-size: 0.95rem;
+
+            background: #fff;
+
+            border-radius: 10px;
+
+            overflow: hidden;
+
+        }
+
+        .glossary-table th { background: var(--primary-color); color: white; padding: 10px; text-align: left; }
+
+        .glossary-table td { border-bottom: 1px solid #eee; padding: 10px; }
+
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+
+
+        .translate-btn {
+
+            background: white; border: 2px solid var(--primary-color); color: var(--primary-color);
+
+            padding: 8px 15px; border-radius: 15px; cursor: pointer; font-weight: bold; margin-top: 15px; display: inline-block;
+
+        }
+
+        .translate-btn:hover { background: var(--primary-color); color: white; }
+
+        .translation-text {
+
+            display: none; margin-top: 15px; padding: 15px; background: #f0f3f8; border-radius: 10px; border-left: 4px solid #6c5ce7; font-style: italic; color: #555;
+
+        }
+
+
+
+        /* --- Exercise Section (Right) --- */
+
+        .question-card {
+
+            background: white;
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            margin-bottom: 20px;
+
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+
+            position: relative;
+
+        }
+
+        .q-number {
+
+            background: var(--primary-color); color: white; padding: 5px 12px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px; font-size: 0.9rem;
+
+        }
+
+        .q-text { font-weight: 700; font-size: 1.1rem; margin-bottom: 15px; }
+
+        .gap-highlight { border-bottom: 2px solid var(--primary-color); display: inline-block; min-width: 50px; text-align: center; color: var(--primary-color); font-weight: bold; }
+
+
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .option-btn {
+
+            background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; padding: 12px; text-align: left; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 1rem; position: relative; overflow: hidden;
+
+        }
+
+        .option-btn:hover { transform: scale(1.02); border-color: var(--primary-color); }
+
+        .option-btn.correct { background: var(--correct-color); color: white; border-color: var(--correct-color); }
+
+        .option-btn.wrong { background: var(--wrong-color); color: white; border-color: var(--wrong-color); animation: shake 0.5s; }
+
+        .option-btn.disabled { pointer-events: none; opacity: 0.6; }
+
+
+
+        /* --- Explanation Box --- */
+
+        .explanation-box {
+
+            display: none;
+
+            margin-top: 15px;
+
+            background: #fffde7;
+
+            border: 2px solid #f1c40f;
+
+            border-radius: 10px;
+
+            padding: 15px;
+
+        }
+
+        .teacher-avatar { width: 40px; height: 40px; border-radius: 50%; float: left; margin-right: 10px; background: #eee; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+
+        .exp-content { overflow: hidden; }
+
+        .exp-title { font-weight: 800; color: #d35400; display: block; margin-bottom: 5px; }
+
+        .vocab-note { color: #2980b9; font-weight: bold; }
+
+
+
+        /* --- Animations --- */
+
+        @keyframes shake {
+
+            0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); }
+
+        }
+
+
+
+        /* --- Submit & Modal --- */
+
+        .submit-container { text-align: center; margin-top: 30px; padding-bottom: 50px; }
+
+        .submit-btn {
+
+            background: linear-gradient(45deg, #FF9F43, #EE5A24); color: white; font-size: 1.5rem; border: none; padding: 15px 40px; border-radius: 50px; cursor: pointer; font-weight: 800; box-shadow: 0 10px 20px rgba(238, 90, 36, 0.3);
+
+        }
+
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(238, 90, 36, 0.4); }
+
+
+
+        .modal-overlay {
+
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: none; justify-content: center; align-items: center;
+
+        }
+
+        .result-card {
+
+            background: white; width: 90%; max-width: 500px; border-radius: 30px; padding: 40px; text-align: center; position: relative; animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+        @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+
+
+        /* Canvas for Confetti */
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 999; }
+
+
+
+        /* Mobile Responsive */
+
+        @media (max-width: 768px) {
+
+            .split-container { flex-direction: column; height: auto; overflow: auto; }
+
+            .panel { height: auto; overflow: visible; }
+
+            #reading-section { border-right: none; border-bottom: 2px dashed #ccc; }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <header>
+
+        <div class="teacher-brand">👩‍🏫 Ms. Chí Nên</div>
+
+        <div class="timer-container">
+
+            <span>⏱️</span>
+
+            <span id="timer-display">10:00</span>
+
+            <button id="timer-btn" onclick="toggleTimer()">BẮT ĐẦU</button>
+
+        </div>
+
+    </header>
+
+
+
+    <div class="split-container">
+
+        <div class="panel" id="reading-section">
+
+            </div>
+
+
+
+        <div class="panel" id="exercise-section">
+
+            <div id="exercise-container">
+
+                </div>
+
+            <div class="submit-container">
+
+                <button class="submit-btn" onclick="showResults()">NỘP BÀI 🏆</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="result-modal">
+
+        <div class="result-card">
+
+            <h1 style="color: var(--primary-color)">KẾT QUẢ</h1>
+
+            <div style="font-size: 4rem; margin: 20px 0;">🏆</div>
+
+            <h2 id="final-score">0/12</h2>
+
+            <p id="teacher-comment" style="font-size: 1.2rem; color: #555;"></p>
+
+            <button class="submit-btn" onclick="closeModal()" style="font-size: 1rem; padding: 10px 30px; margin-top:20px;">Làm lại / Xem lại</button>
+
+        </div>
+
+    </div>
+
+
+
+    <canvas id="confetti-canvas"></canvas>
+
+
+
+    <script>
+
+        // --- DATA STORE ---
+
+        const examData = [
+
+            {
+
+                id: "passage1",
+
+                topic: "fashion",
+
+                theme: {
+
+                    primary: "#e056fd",
+
+                    secondary: "#f3a683",
+
+                    emojis: ["👗", "👠", "👒"],
+
+                    bg_svg: `data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='25'%3E👗%3C/text%3E%3Ctext x='60' y='80' font-size='25'%3E👠%3C/text%3E%3C/svg%3E`
+
+                },
+
+                title: "Fashion Show Success",
+
+                content: `Last Saturday, the fashion department at Mansion College held a fashion show.<br>
+
+The students created special designs (1) <span class='gap-highlight'>...........</span> were modelled by other students. Parents and shopkeepers were (2) <span class='gap-highlight'>...........</span> to the event and 200 tickets were sold.<br>
+
+(3) <span class='gap-highlight'>...........</span> of the designs were really original and the evening was a great success. The most popular items at the show were T-shirts designed by student Maria Daniella. A local clothes shop has already asked Maria to (4) <span class='gap-highlight'>...........</span> them with 20 T-shirts. Maria is very pleased by her success.<br>
+
+(5) <span class='gap-highlight'>...........</span> the fashion show finished late, many people stayed longer to listen to the college rock band. There was food and drink on sale and the event finally (6) <span class='gap-highlight'>...........</span> at midnight.<br>
+
+The money made from the sale of the tickets went to a well-known children’s charity.`,
+
+                translation: "Thứ bảy tuần trước, khoa thời trang tại trường Cao đẳng Mansion đã tổ chức một buổi trình diễn thời trang. Các sinh viên đã tạo ra những thiết kế đặc biệt, những thiết kế này được trình diễn bởi các sinh viên khác. Phụ huynh và các chủ cửa hàng đã được mời đến sự kiện và 200 vé đã được bán ra. Nhiều thiết kế thực sự độc đáo và buổi tối đã thành công rực rỡ. Những món đồ được yêu thích nhất tại buổi biểu diễn là những chiếc áo phông do sinh viên Maria Daniella thiết kế. Một cửa hàng quần áo địa phương đã yêu cầu Maria cung cấp cho họ 20 chiếc áo phông. Maria rất hài lòng với thành công của mình. Mặc dù buổi trình diễn thời trang kết thúc muộn, nhiều người vẫn ở lại lâu hơn để nghe ban nhạc rock của trường đại học. Có đồ ăn và thức uống được bán và sự kiện cuối cùng đã kết thúc vào lúc nửa đêm. Số tiền thu được từ việc bán vé đã được chuyển đến một tổ chức từ thiện trẻ em nổi tiếng.",
+
+                glossary: [
+
+                    { word: "Department", type: "n", mean: "Khoa/Ban (trong trường học/công ty)" },
+
+                    { word: "Model", type: "v", mean: "Trình diễn (mẫu)" },
+
+                    { word: "Original", type: "adj", mean: "Độc đáo, nguyên bản" },
+
+                    { word: "Charity", type: "n", mean: "Tổ chức từ thiện" },
+
+                    { word: "Pleased", type: "adj", mean: "Hài lòng" }
+
+                ],
+
+                questions: [
+
+                    {
+
+                        id: "p1q1",
+
+                        q: "Question 1",
+
+                        options: { A: "when", B: "which", C: "who", D: "whose" },
+
+                        correct: "B",
+
+                        explanation: `
+
+                            <b>1. Phân tích ngữ pháp:</b><br>
+
+                            Vị trí cần điền là một Đại từ quan hệ thay thế cho danh từ đứng trước "special designs" (những thiết kế đặc biệt - chỉ vật).<br>
+
+                            <b>2. Tại sao chọn B (which)?</b><br>
+
+                            - "Which": dùng cho vật.<br>
+
+                            - "Who": dùng cho người.<br>
+
+                            - "When": chỉ thời gian.<br>
+
+                            - "Whose": chỉ sở hữu.<br>
+
+                            => "designs which were modelled": những thiết kế mà được trình diễn.
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p1q2",
+
+                        q: "Question 2",
+
+                        options: { A: "called", B: "requested", C: "demanded", D: "invited" },
+
+                        correct: "D",
+
+                        explanation: `
+
+                            <b>1. Ngữ cảnh:</b><br>
+
+                            Phụ huynh và chủ cửa hàng được ... tới sự kiện.<br>
+
+                            <b>2. Phân tích từ vựng:</b><br>
+
+                            - A. called: gọi tên.<br>
+
+                            - B. requested: yêu cầu.<br>
+
+                            - C. demanded: đòi hỏi (gắt gao).<br>
+
+                            - D. invited: mời.<br>
+
+                            => Chọn D. "were invited to the event" (được mời tới sự kiện).
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p1q3",
+
+                        q: "Question 3",
+
+                        options: { A: "Many", B: "Lot", C: "Much", D: "Each" },
+
+                        correct: "A",
+
+                        explanation: `
+
+                            <b>1. Phân tích cấu trúc:</b><br>
+
+                            Sau chỗ trống là "of the designs" (danh từ đếm được số nhiều).<br>
+
+                            <b>2. Tại sao chọn A?</b><br>
+
+                            - A. Many of + N(số nhiều): Nhiều... -> Đúng.<br>
+
+                            - B. Lot: Phải là "A lot of" hoặc "Lots of". Thiếu "A" hoặc "s".<br>
+
+                            - C. Much: Dùng cho danh từ KHÔNG đếm được.<br>
+
+                            - D. Each: Dùng cho số ít (động từ sau đó phải chia số ít, nhưng trong bài là 'were' - số nhiều).
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p1q4",
+
+                        q: "Question 4",
+
+                        options: { A: "produce", B: "design", C: "give", D: "provide" },
+
+                        correct: "D",
+
+                        explanation: `
+
+                            <b>1. Cấu trúc (Collocation):</b><br>
+
+                            Cụm từ: <b>Provide someone WITH something</b> (Cung cấp cho ai cái gì).<br>
+
+                            <b>2. Loại trừ:</b><br>
+
+                            - Give someone something (Không có 'with').<br>
+
+                            - Design/Produce something for someone.<br>
+
+                            => Dựa vào giới từ "with" ở sau -> Chọn D. provide.
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p1q5",
+
+                        q: "Question 5",
+
+                        options: { A: "Even", B: "So", C: "Although", D: "But" },
+
+                        correct: "C",
+
+                        explanation: `
+
+                            <b>1. Ngữ nghĩa:</b><br>
+
+                            "____ buổi diễn kết thúc muộn, nhiều người vẫn ở lại..." -> Hai vế đối lập.<br>
+
+                            <b>2. Tại sao chọn C?</b><br>
+
+                            - C. Although + mệnh đề: Mặc dù.<br>
+
+                            - A. Even: Phải là "Even though" hoặc "Even if".<br>
+
+                            - B. So: Vì vậy (chỉ kết quả).<br>
+
+                            - D. But: Nhưng (thường không đứng đầu câu trong văn viết trang trọng, và nối 2 vế).
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p1q6",
+
+                        q: "Question 6",
+
+                        options: { A: "left", B: "ended", C: "done", D: "completed" },
+
+                        correct: "B",
+
+                        explanation: `
+
+                            <b>1. Ngữ nghĩa:</b><br>
+
+                            Sự kiện cuối cùng đã ____ lúc nửa đêm.<br>
+
+                            <b>2. Phân tích:</b><br>
+
+                            - B. ended: kết thúc (nội động từ, sự kiện tự kết thúc). -> Chuẩn nhất.<br>
+
+                            - A. left: rời đi (dùng cho người).<br>
+
+                            - C. done: làm xong (thường dùng dạng bị động be done).<br>
+
+                            - D. completed: hoàn thành (thường là hoàn thành một nhiệm vụ).
+
+                        `
+
+                    }
+
+                ]
+
+            },
+
+            {
+
+                id: "passage2",
+
+                topic: "health",
+
+                theme: {
+
+                    primary: "#20bf6b",
+
+                    secondary: "#f7b731",
+
+                    emojis: ["🥗", "🍎", "🚴"],
+
+                    bg_svg: `data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='20' y='30' font-size='25'%3E🥗%3C/text%3E%3Ctext x='70' y='80' font-size='25'%3E🍎%3C/text%3E%3C/svg%3E`
+
+                },
+
+                title: "Healthy snacks on the run",
+
+                content: `In today’s busy lives we often have little time for healthy eating, so we do the easy thing and eat snacks like crisps or sweets instead. (1) <span class='gap-highlight'>...........</span>, it’s possible to eat quickly and healthily. All you (2) <span class='gap-highlight'>...........</span> to do is to follow a few simple rules.<br>
+
+First of all, read what it (3) <span class='gap-highlight'>...........</span> on the packet before you buy a snack. This is important because people often think that they’re buying healthy snacks, but sugar may be the (4) <span class='gap-highlight'>...........</span> ingredient.<br>
+
+Try to look for healthier options – instead of eating ice cream, try frozen fruit juices and, most importantly, eat at (5) <span class='gap-highlight'>...........</span> times of the day. Learn when your body needs food so (6) <span class='gap-highlight'>...........</span> you don’t suddenly feel the need to eat a lot of unhealthy snack food.`,
+
+                translation: "Trong cuộc sống bận rộn ngày nay, chúng ta thường có ít thời gian cho việc ăn uống lành mạnh, vì vậy chúng ta làm điều dễ dàng là ăn đồ ăn nhẹ như khoai tây chiên hoặc đồ ngọt. Tuy nhiên, hoàn toàn có thể ăn nhanh mà vẫn lành mạnh. Tất cả những gì bạn cần làm là tuân theo một vài quy tắc đơn giản. Trước hết, hãy đọc những gì ghi trên bao bì trước khi bạn mua đồ ăn nhẹ. Điều này rất quan trọng vì mọi người thường nghĩ rằng họ đang mua đồ ăn nhẹ lành mạnh, nhưng đường có thể là thành phần chính. Hãy cố gắng tìm kiếm các lựa chọn lành mạnh hơn – thay vì ăn kem, hãy thử nước ép trái cây đông lạnh và quan trọng nhất là ăn vào những thời điểm đều đặn trong ngày. Hãy tìm hiểu khi nào cơ thể bạn cần thức ăn để bạn không đột nhiên cảm thấy cần ăn nhiều đồ ăn nhẹ không tốt cho sức khỏe.",
+
+                glossary: [
+
+                    { word: "Ingredient", type: "n", mean: "Thành phần/nguyên liệu" },
+
+                    { word: "Option", type: "n", mean: "Sự lựa chọn" },
+
+                    { word: "Packet", type: "n", mean: "Gói/Bao bì" },
+
+                    { word: "Regular", type: "adj", mean: "Đều đặn/thường xuyên" },
+
+                    { word: "Suddenly", type: "adv", mean: "Đột ngột" }
+
+                ],
+
+                questions: [
+
+                    {
+
+                        id: "p2q1",
+
+                        q: "Question 1",
+
+                        options: { A: "Ago", B: "Alike", C: "However", D: "Whenever" },
+
+                        correct: "C",
+
+                        explanation: `
+
+                            <b>1. Logic câu:</b><br>
+
+                            Câu trước: Chúng ta hay ăn vặt (tiêu cực).<br>
+
+                            Câu sau: Có thể ăn nhanh và lành mạnh (tích cực).<br>
+
+                            -> Cần từ nối chỉ sự đối lập.<br>
+
+                            <b>2. Tại sao chọn C?</b><br>
+
+                            - C. However: Tuy nhiên (đứng đầu câu, có dấu phẩy).<br>
+
+                            - A. Ago: Trước đây (chỉ thời gian).<br>
+
+                            - B. Alike: Giống nhau.<br>
+
+                            - D. Whenever: Bất cứ khi nào.
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p2q2",
+
+                        q: "Question 2",
+
+                        options: { A: "can", B: "must", C: "need", D: "should" },
+
+                        correct: "C",
+
+                        explanation: `
+
+                            <b>1. Cấu trúc cố định:</b><br>
+
+                            "All you need to do is..." (Tất cả những gì bạn cần làm là...).<br>
+
+                            <b>2. Phân tích:</b><br>
+
+                            Dùng "can", "must", "should" vào đây sẽ làm câu tối nghĩa hoặc sai ngữ pháp (All you can do is... nghe có vẻ bất lực). Ngữ cảnh ở đây là đưa ra lời khuyên nhẹ nhàng về yêu cầu.
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p2q3",
+
+                        q: "Question 3",
+
+                        options: { A: "puts", B: "says", C: "talks", D: "writes" },
+
+                        correct: "B",
+
+                        explanation: `
+
+                            <b>1. Collocation (Kết hợp từ):</b><br>
+
+                            Khi nói về thông tin ghi trên bao bì, biển báo, sách vở... tiếng Anh dùng động từ "SAY".<br>
+
+                            - "The sign says..." (Biển báo ghi là...).<br>
+
+                            - "Read what it says on the packet."<br>
+
+                            <b>2. Loại trừ:</b><br>
+
+                            - Writes: Ai đó viết (người viết), còn 'it' ở đây là cái gói.<br>
+
+                            - Talks: Nói chuyện (phải có âm thanh).
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p2q4",
+
+                        q: "Question 4",
+
+                        options: { A: "big", B: "great", C: "large", D: "main" },
+
+                        correct: "D",
+
+                        explanation: `
+
+                            <b>1. Ngữ nghĩa:</b><br>
+
+                            Đường có thể là thành phần _____ (chủ yếu/chính).<br>
+
+                            <b>2. Tại sao chọn D?</b><br>
+
+                            - D. main ingredient: thành phần chính.<br>
+
+                            - A, C (Big/Large): Chỉ kích thước vật lý.<br>
+
+                            - B. Great: Tuyệt vời hoặc to lớn (trừu tượng).
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p2q5",
+
+                        q: "Question 5",
+
+                        options: { A: "common", B: "equal", C: "even", D: "regular" },
+
+                        correct: "D",
+
+                        explanation: `
+
+                            <b>1. Cụm từ:</b><br>
+
+                            Ăn vào những khoảng thời gian ____ trong ngày.<br>
+
+                            <b>2. Tại sao chọn D?</b><br>
+
+                            - D. regular times: những giờ giấc đều đặn/cố định.<br>
+
+                            - A. common: phổ biến.<br>
+
+                            - B. equal: bình đẳng (về số lượng/quyền lợi).<br>
+
+                            - C. even: bằng phẳng/chẵn.
+
+                        `
+
+                    },
+
+                    {
+
+                        id: "p2q6",
+
+                        q: "Question 6",
+
+                        options: { A: "that", B: "what", C: "when", D: "which" },
+
+                        correct: "A",
+
+                        explanation: `
+
+                            <b>1. Cấu trúc chỉ mục đích:</b><br>
+
+                            - "So that + mệnh đề": Để mà...<br>
+
+                            Câu: "Learn when your body needs food SO THAT you don't..." (Học cách nhận biết khi nào cơ thể cần ăn ĐỂ BẠN KHÔNG bất chợt cảm thấy đói...).
+
+                        `
+
+                    }
+
+                ]
+
+            }
+
+        ];
+
+
+
+        let currentScore = 0;
+
+        let totalQuestions = 0;
+
+        let timerInterval;
+
+        let timeLeft = 600; // 10 minutes
+
+        let isTimerRunning = false;
+
+
+
+        // --- AUDIO CONTEXT FOR SOUNDS ---
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        
+
+        function playSound(type) {
+
+            const osc = audioCtx.createOscillator();
+
+            const gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+
+            gainNode.connect(audioCtx.destination);
+
+
+
+            if (type === 'correct') {
+
+                // Ding sound (High pitch sine wave)
+
+                osc.type = 'sine';
+
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+
+                osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1); // C6
+
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+                osc.start();
+
+                osc.stop(audioCtx.currentTime + 0.5);
+
+            } else if (type === 'wrong') {
+
+                // Buzz sound (Low pitch sawtooth)
+
+                osc.type = 'sawtooth';
+
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+                osc.start();
+
+                osc.stop(audioCtx.currentTime + 0.3);
+
+            }
+
+        }
+
+
+
+        // --- INITIALIZATION ---
+
+        function init() {
+
+            const readingSection = document.getElementById('reading-section');
+
+            const exerciseContainer = document.getElementById('exercise-container');
+
+
+
+            examData.forEach((data, index) => {
+
+                totalQuestions += data.questions.length;
+
+
+
+                // 1. Render Reading Card
+
+                const readingCard = document.createElement('div');
+
+                readingCard.className = 'reading-card';
+
+                readingCard.id = `reading-card-${index}`;
+
+                // Store theme data in dataset for Observer
+
+                readingCard.dataset.primary = data.theme.primary;
+
+                readingCard.dataset.secondary = data.theme.secondary;
+
+                readingCard.dataset.bgSvg = data.theme.bg_svg;
+
+
+
+                // Render Glossary Rows
+
+                const glossaryRows = data.glossary.map(g => 
+
+                    `<tr><td><b>${g.word}</b></td><td><i>${g.type}</i></td><td>${g.mean}</td></tr>`
+
+                ).join('');
+
+
+
+                readingCard.innerHTML = `
+
+                    <div class="reading-title">${data.title}</div>
+
+                    <div class="reading-content">${data.content}</div>
+
+                    <button class="translate-btn" onclick="toggleTranslation('trans-${index}')">📜 BẢN DỊCH ĐẦY ĐỦ</button>
+
+                    <div id="trans-${index}" class="translation-text">${data.translation}</div>
+
+                    
+
+                    <h3 style="color:var(--text-color); margin-top:30px;">📖 Ms. Chí Nên's Glossary</h3>
+
+                    <table class="glossary-table">
+
+                        <tr><th>Từ vựng</th><th>Loại</th><th>Nghĩa</th></tr>
+
+                        ${glossaryRows}
+
+                    </table>
+
+                `;
+
+                readingSection.appendChild(readingCard);
+
+
+
+                // 2. Render Questions
+
+                data.questions.forEach(q => {
+
+                    const qCard = document.createElement('div');
+
+                    qCard.className = 'question-card';
+
+                    qCard.innerHTML = `
+
+                        <div class="q-number" style="background:${data.theme.primary}">${q.q}</div>
+
+                        <div class="q-text">Choose the best answer:</div>
+
+                        <div class="options-grid" id="opts-${q.id}">
+
+                            ${Object.entries(q.options).map(([key, val]) => `
+
+                                <button class="option-btn" onclick="checkAnswer(this, '${q.id}', '${key}', '${q.correct}', '${data.theme.correct}')">
+
+                                    <b>${key}.</b> ${val}
+
+                                </button>
+
+                            `).join('')}
+
+                        </div>
+
+                        <div id="exp-${q.id}" class="explanation-box">
+
+                            <div class="teacher-avatar">👩‍🏫</div>
+
+                            <div class="exp-content">
+
+                                <span class="exp-title">GIẢI THÍCH CHI TIẾT:</span>
+
+                                ${q.explanation}
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                    exerciseContainer.appendChild(qCard);
+
+                });
+
+            });
+
+
+
+            setupObserver();
+
+        }
+
+
+
+        // --- INTERACTION LOGIC ---
+
+        function checkAnswer(btn, qId, selectedKey, correctKey) {
+
+            const parent = document.getElementById(`opts-${qId}`);
+
+            const buttons = parent.getElementsByClassName('option-btn');
+
+            const expBox = document.getElementById(`exp-${qId}`);
+
+
+
+            // Disable all buttons in this question
+
+            Array.from(buttons).forEach(b => b.classList.add('disabled'));
+
+
+
+            if (selectedKey === correctKey) {
+
+                // Correct
+
+                btn.classList.add('correct');
+
+                playSound('correct');
+
+                fireConfetti(btn);
+
+                currentScore++;
+
+            } else {
+
+                // Wrong
+
+                btn.classList.add('wrong');
+
+                playSound('wrong');
+
+                // Highlight the correct one
+
+                Array.from(buttons).forEach(b => {
+
+                    if (b.innerText.startsWith(correctKey)) {
+
+                        b.classList.add('correct');
+
+                    }
+
+                });
+
+            }
+
+
+
+            // Show Explanation
+
+            expBox.style.display = 'block';
+
+            expBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        }
+
+
+
+        function toggleTranslation(id) {
+
+            const el = document.getElementById(id);
+
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+
+        }
+
+
+
+        // --- TIMER LOGIC ---
+
+        function toggleTimer() {
+
+            const btn = document.getElementById('timer-btn');
+
+            if (isTimerRunning) {
+
+                clearInterval(timerInterval);
+
+                isTimerRunning = false;
+
+                btn.innerText = "TIẾP TỤC";
+
+                btn.style.background = "#bdc3c7";
+
+            } else {
+
+                isTimerRunning = true;
+
+                btn.innerText = "TẠM DỪNG";
+
+                btn.style.background = "#FF4757";
+
+                timerInterval = setInterval(() => {
+
+                    timeLeft--;
+
+                    updateTimerDisplay();
+
+                    if (timeLeft <= 0) {
+
+                        clearInterval(timerInterval);
+
+                        alert("Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục, nhưng nhớ là trong phòng thi thật chỉ có 10 phút thôi nha.");
+
+                    }
+
+                }, 1000);
+
+            }
+
+        }
+
+
+
+        function updateTimerDisplay() {
+
+            const m = Math.floor(timeLeft / 60);
+
+            const s = timeLeft % 60;
+
+            document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+
+        }
+
+
+
+        // --- DYNAMIC THEME OBSERVER ---
+
+        function setupObserver() {
+
+            const observer = new IntersectionObserver((entries) => {
+
+                entries.forEach(entry => {
+
+                    if (entry.isIntersecting) {
+
+                        const root = document.documentElement;
+
+                        const primary = entry.target.dataset.primary;
+
+                        const secondary = entry.target.dataset.secondary;
+
+                        const svg = entry.target.dataset.bgSvg;
+
+
+
+                        root.style.setProperty('--primary-color', primary);
+
+                        root.style.setProperty('--secondary-color', secondary);
+
+                        document.body.style.backgroundImage = `
+
+                            radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
+
+                            radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.4) 0%, transparent 20%),
+
+                            url("${svg}")`;
+
+                    }
+
+                });
+
+            }, { threshold: 0.5 }); // Trigger when 50% of card is visible
+
+
+
+            document.querySelectorAll('.reading-card').forEach(card => observer.observe(card));
+
+        }
+
+
+
+        // --- RESULTS & CONFETTI ---
+
+        function showResults() {
+
+            const modal = document.getElementById('result-modal');
+
+            const scoreEl = document.getElementById('final-score');
+
+            const commentEl = document.getElementById('teacher-comment');
+
+            
+
+            scoreEl.innerText = `${currentScore}/${totalQuestions}`;
+
+            
+
+            const percentage = (currentScore / totalQuestions) * 100;
+
+            if (percentage === 100) commentEl.innerText = "XUẤT SẮC! Em là thiên tài ngôn ngữ! 🌟";
+
+            else if (percentage >= 80) commentEl.innerText = "Làm tốt lắm! Em nắm bài rất chắc. 👍";
+
+            else if (percentage >= 50) commentEl.innerText = "Khá tốt, nhưng hãy xem lại phần giải thích để hiểu sâu hơn nhé. 💪";
+
+            else commentEl.innerText = "Cố lên nhé! Đừng nản, hãy đọc kỹ giải thích của Ms. Chí Nên nào. ❤️";
+
+
+
+            modal.style.display = 'flex';
+
+            
+
+            if (percentage >= 50) {
+
+                // Big confetti burst
+
+                for(let i=0; i<5; i++) {
+
+                    setTimeout(() => fireConfetti(document.body, true), i * 300);
+
+                }
+
+            }
+
+        }
+
+
+
+        function closeModal() {
+
+            document.getElementById('result-modal').style.display = 'none';
+
+        }
+
+
+
+        // Minimalist Confetti Logic
+
+        const canvas = document.getElementById('confetti-canvas');
+
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+
+
+
+        function fireConfetti(element, isGlobal = false) {
+
+            const rect = isGlobal ? {left: window.innerWidth/2, top: window.innerHeight/2, width: 0, height: 0} : element.getBoundingClientRect();
+
+            const colors = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502'];
+
+            
+
+            for (let i = 0; i < 30; i++) {
+
+                particles.push({
+
+                    x: rect.left + rect.width / 2,
+
+                    y: rect.top + rect.height / 2,
+
+                    vx: (Math.random() - 0.5) * 10,
+
+                    vy: (Math.random() - 0.5) * 10 - 5,
+
+                    color: colors[Math.floor(Math.random() * colors.length)],
+
+                    life: 100
+
+                });
+
+            }
+
+        }
+
+
+
+        function animateConfetti() {
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((p, index) => {
+
+                p.x += p.vx;
+
+                p.y += p.vy;
+
+                p.vy += 0.5; // Gravity
+
+                p.life--;
+
+                ctx.fillStyle = p.color;
+
+                ctx.fillRect(p.x, p.y, 8, 8);
+
+                if (p.life <= 0) particles.splice(index, 1);
+
+            });
+
+            requestAnimationFrame(animateConfetti);
+
+        }
+
+
+
+        init();
+
+        animateConfetti();
+
+
+
+        // Resize handler
+
+        window.addEventListener('resize', () => {
+
+            canvas.width = window.innerWidth;
+
+            canvas.height = window.innerHeight;
+
+        });
+
+
+
+    </script>
+
+</body>
+
+</html>
+
+
+
+
+

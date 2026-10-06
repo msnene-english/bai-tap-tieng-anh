@@ -1,842 +1,1683 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bài kiểm tra: Digging into the past - Ms MS Chí Nên</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            /* DYNAMIC THEME: Archaeology / History */
-            --primary-color: #795548; /* Nâu đất */
-            --primary-light: #A1887F;
-            --secondary-color: #FFF3E0; /* Màu cát nhạt */
-            --accent-color: #FF6F00; /* Màu cam đất nung */
-            --success-color: #00C853; /* Xanh lá */
-            --error-color: #FF5252; /* Đỏ */
-            --text-color: #3E2723;
-            --glass-bg: rgba(255, 255, 255, 0.95);
-            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none; /* Ngăn bôi đen để tập trung làm bài */
-        }
-
-        body {
-            font-family: 'Nunito', sans-serif;
-            color: var(--text-color);
-            height: 100vh;
-            overflow: hidden;
-            background-color: var(--secondary-color);
-            /* Auto-generated SVG Background with Emojis: 🏺 ⛏️ 🦴 🗺️ */
-            background-image: radial-gradient(circle at center, rgba(255,255,255,0.8), rgba(255,243,224,0.4)), url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='20'%3E🏺%3C/text%3E%3Ctext x='60' y='70' font-size='20'%3E⛏️%3C/text%3E%3Ctext x='80' y='20' font-size='15'%3E🦴%3C/text%3E%3C/svg%3E");
-        }
-
-        /* --- TOP BAR --- */
-        .top-bar {
-            height: 60px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(8px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-        }
-
-        .teacher-brand {
-            font-family: 'Quicksand', sans-serif;
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .timer-container {
-            background: #fff;
-            padding: 8px 20px;
-            border-radius: 30px;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: var(--accent-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .timer-container:hover {
-            transform: scale(1.05);
-        }
-
-        .timer-controls {
-            font-size: 0.8rem;
-            color: #888;
-        }
-
-        /* --- MAIN LAYOUT (SPLIT SCREEN) --- */
-        .main-container {
-            display: flex;
-            height: calc(100vh - 60px);
-            margin-top: 60px;
-        }
-
-        .panel {
-            flex: 1;
-            overflow-y: auto;
-            padding: 30px;
-            scroll-behavior: smooth;
-        }
-
-        /* --- LEFT PANEL: READING --- */
-        .left-panel {
-            border-right: 2px solid rgba(121, 85, 72, 0.1);
-            background: rgba(255, 255, 255, 0.6);
-        }
-
-        h1.passage-title {
-            font-family: 'Quicksand', sans-serif;
-            color: var(--primary-color);
-            font-size: 2rem;
-            margin-bottom: 20px;
-            text-align: center;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
-        }
-
-        .reading-text p {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            margin-bottom: 25px;
-            text-align: justify;
-            background: #fff;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            position: relative;
-        }
-
-        .gap-marker {
-            background: var(--accent-color);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-weight: bold;
-            margin: 0 5px;
-            cursor: help;
-        }
-
-        .translate-btn {
-            display: block;
-            margin-top: 10px;
-            font-size: 0.85rem;
-            color: var(--primary-light);
-            background: none;
-            border: 1px dashed var(--primary-light);
-            padding: 5px 10px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .translate-btn:hover {
-            background: var(--primary-light);
-            color: white;
-        }
-
-        .translation-text {
-            display: none;
-            margin-top: 10px;
-            padding: 10px;
-            background: #EFEBE9;
-            border-left: 4px solid var(--primary-color);
-            font-style: italic;
-            color: #5D4037;
-            border-radius: 0 10px 10px 0;
-            animation: fadeIn 0.5s ease;
-        }
-
-        /* GLOSSARY */
-        .glossary-box {
-            margin-top: 40px;
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            border-top: 5px solid var(--accent-color);
-        }
-
-        .glossary-title {
-            font-weight: 800;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .glossary-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .glossary-table th, .glossary-table td {
-            text-align: left;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .glossary-table th {
-            color: var(--accent-color);
-        }
-
-        /* --- RIGHT PANEL: EXERCISES --- */
-        .right-panel {
-            background: transparent;
-            padding-bottom: 100px;
-        }
-
-        .question-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            transition: transform 0.3s;
-            border-bottom: 6px solid #E0E0E0;
-        }
-
-        .question-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .q-header {
-            font-weight: 800;
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .q-header .badge {
-            background: var(--primary-color);
-            color: white;
-            padding: 5px 12px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-        }
-
-        .options-grid {
-            display: grid;
-            gap: 12px;
-        }
-
-        .option-btn {
-            background: #fff;
-            border: 2px solid #EEE;
-            padding: 15px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-family: 'Nunito', sans-serif;
-            font-size: 1rem;
-            text-align: left;
-            transition: all 0.2s;
-            position: relative;
-            box-shadow: 0 4px 0 #EEE;
-        }
-
-        .option-btn:active {
-            transform: translateY(4px);
-            box-shadow: none;
-        }
-
-        .option-btn:hover:not(.disabled) {
-            border-color: var(--primary-light);
-            background-color: #FAFAFA;
-            transform: scale(1.02);
-        }
-
-        /* STATES */
-        .option-btn.correct {
-            background-color: var(--success-color) !important;
-            color: white !important;
-            border-color: #00A040 !important;
-            box-shadow: 0 4px 0 #008030 !important;
-        }
-
-        .option-btn.wrong {
-            background-color: var(--error-color) !important;
-            color: white !important;
-            border-color: #D32F2F !important;
-            box-shadow: 0 4px 0 #B71C1C !important;
-            animation: shake 0.5s;
-        }
-
-        .option-btn.disabled {
-            pointer-events: none;
-            opacity: 0.7;
-        }
-
-        /* FEEDBACK SECTION */
-        .feedback-panel {
-            margin-top: 20px;
-            display: none; /* Hidden by default */
-            animation: slideDown 0.4s ease-out;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .action-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            color: white;
-            transition: opacity 0.2s;
-        }
-
-        .btn-explain { background: #5C6BC0; }
-        .btn-trans { background: #FFA726; }
-        .btn-vocab { background: #26A69A; }
-
-        .feedback-content {
-            background: #F5F7FA;
-            padding: 15px;
-            border-radius: 12px;
-            border: 2px solid #E0E0E0;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        .teacher-avatar {
-            width: 40px;
-            height: 40px;
-            background: #FFD54F;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-            font-size: 20px;
-            vertical-align: middle;
-            border: 2px solid white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .submit-all-btn {
-            display: block;
-            width: 100%;
-            padding: 20px;
-            margin-top: 30px;
-            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 800;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 10px 25px rgba(121, 85, 72, 0.4);
-            transition: transform 0.3s;
-        }
-
-        .submit-all-btn:hover {
-            transform: scale(1.05) translateY(-5px);
-        }
-
-        /* --- MODALS --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
-            z-index: 1000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            text-align: center;
-            max-width: 500px;
-            width: 90%;
-            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            position: relative;
-        }
-
-        .score-circle {
-            width: 120px;
-            height: 120px;
-            background: var(--accent-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            font-weight: 900;
-            margin: 0 auto 20px;
-            box-shadow: 0 10px 20px rgba(255, 111, 0, 0.4);
-        }
-
-        /* ANIMATIONS */
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            50% { transform: translateX(10px); }
-            75% { transform: translateX(-10px); }
-            100% { transform: translateX(0); }
-        }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
-        
-        /* MOBILE RESPONSIVE */
-        @media (max-width: 768px) {
-            .main-container { flex-direction: column; overflow: hidden; }
-            .panel { height: 50%; border: none; border-bottom: 2px solid #ddd; }
-            .top-bar { font-size: 0.8rem; }
-        }
-    </style>
-</head>
-<body>
-
-    <script>
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            if (type === 'correct') {
-                // Ding sound (High pitch, sine wave)
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-                osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1); // C6
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.5);
-            } else if (type === 'wrong') {
-                // Fail sound (Low pitch, sawtooth)
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            } else if (type === 'win') {
-                // Fanfare snippet
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                gainNode.gain.value = 0.3;
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            }
-        }
-    </script>
-
-    <div class="top-bar">
-        <div class="teacher-brand">
-            <span>👩‍🏫</span> Ms MS Chí Nên
-        </div>
-        <div class="timer-container" onclick="toggleTimer()">
-            <span id="timer">10:00</span>
-            <span class="timer-controls">⏯️</span>
-        </div>
-    </div>
-
-    <div class="main-container">
-        
-        <div class="left-panel panel">
-            <h1 class="passage-title">🏺 Digging into the past</h1>
-            
-            <div class="reading-text">
-                <p>
-                    Last year, Kate Marshall was given a very exciting opportunity – to help her father, who’s a history lecturer, at a historical site! He was leading a team to dig up and explore the area.
-                    <button class="translate-btn" onclick="toggleTrans('p1')">👁️ Bản dịch đầy đủ</button>
-                    <span id="p1" class="translation-text">Năm ngoái, Kate Marshall đã được trao một cơ hội vô cùng thú vị – giúp đỡ cha mình, một giảng viên lịch sử, tại một di tích lịch sử! Ông đang dẫn đầu một nhóm khai quật và khám phá khu vực này.</span>
-                </p>
-
-                <p>
-                    When they arrived, though, the site wasn’t quite what Kate had expected. <span class="gap-marker">(1)</span> So the first job was to remove it all and prepare the land for digging. Says Kate, ‘Dad hadn’t warned me I’d have to work so hard as soon as we got there!’
-                    <button class="translate-btn" onclick="toggleTrans('p2')">👁️ Bản dịch đầy đủ</button>
-                    <span id="p2" class="translation-text">Tuy nhiên, khi họ đến nơi, khu di tích không hoàn toàn giống như những gì Kate đã mong đợi. <span class="gap-marker">(1)</span> Vì vậy, công việc đầu tiên là dọn sạch tất cả và chuẩn bị đất để đào. Kate nói: "Bố đã không cảnh báo tôi rằng tôi sẽ phải làm việc vất vả như vậy ngay khi chúng tôi đến đó!"</span>
-                </p>
-
-                <p>
-                    But when the site was completely cleared, the team found pieces of ancient pots on the ground. However, those weren’t as exciting as everyone had thought. Kate’s dad told them that the important pots were still under the ground. And because no-one had touched them for centuries, the team would learn far more about their history – but first they would have to dig deeper. Says Kate, <span class="gap-marker">(2)</span> But we all knew Dad was right!’
-                    <button class="translate-btn" onclick="toggleTrans('p3')">👁️ Bản dịch đầy đủ</button>
-                    <span id="p3" class="translation-text">Nhưng khi khu vực này đã được dọn sạch hoàn toàn, nhóm đã tìm thấy những mảnh bình gốm cổ trên mặt đất. Tuy nhiên, chúng không thú vị như mọi người nghĩ. Cha của Kate bảo họ rằng những chiếc bình quan trọng vẫn còn nằm dưới lòng đất. Và vì chưa ai chạm vào chúng trong nhiều thế kỷ, nhóm sẽ tìm hiểu được nhiều hơn về lịch sử của chúng – nhưng trước tiên họ phải đào sâu hơn. Kate nói, <span class="gap-marker">(2)</span> Nhưng tất cả chúng tôi đều biết bố đã đúng!"</span>
-                </p>
-
-                <p>
-                    The site was divided into small squares, with a leader for each square, who told everyone how to dig. ‘That wasn’t as easy as it sounded, either,’ Kate reports. ‘Instead of just digging great big holes, we all had to dig really carefully, and remove small amounts of soil each time. <span class="gap-marker">(3)</span> So it made sense.’
-                    <button class="translate-btn" onclick="toggleTrans('p4')">👁️ Bản dịch đầy đủ</button>
-                    <span id="p4" class="translation-text">Khu vực được chia thành các ô vuông nhỏ, với một người phụ trách cho mỗi ô, người này hướng dẫn mọi người cách đào. "Việc đó cũng không dễ dàng như cái tên của nó đâu," Kate kể lại. "Thay vì chỉ đào những cái hố to đùng, tất cả chúng tôi phải đào thật cẩn thận và loại bỏ từng lượng đất nhỏ mỗi lần. <span class="gap-marker">(3)</span> Vì vậy điều đó hoàn toàn hợp lý."</span>
-                </p>
-
-                <p>
-                    ‘My friends at home were really interested in what I was doing,’ Kate explains. ‘They kept texting me to ask what I’d found. <span class="gap-marker">(4)</span> But actually, we were looking for ordinary, everyday objects that could tell us about the people who’d lived in the area centuries ago.’
-                    <button class="translate-btn" onclick="toggleTrans('p5')">👁️ Bản dịch đầy đủ</button>
-                    <span id="p5" class="translation-text">"Bạn bè ở nhà thực sự quan tâm đến những gì tôi đang làm," Kate giải thích. "Họ liên tục nhắn tin hỏi tôi đã tìm thấy gì. <span class="gap-marker">(4)</span> Nhưng thực ra, chúng tôi đang tìm kiếm những vật dụng bình thường, hàng ngày có thể cho chúng tôi biết về những người đã sống ở khu vực này từ nhiều thế kỷ trước."</span>
-                </p>
-
-                <p>
-                    In the end, though, Kate wasn’t disappointed by what she found. ‘One day, when I was digging away, I found a stone with a strange shape. <span class="gap-marker">(5)</span> Someone had obviously made it hundreds of years ago, which meant it was really important. So Dad cleaned it up, and said it would go to the nearby museum. So I was pleased that at last, I’d found something interesting!
-                    <button class="translate-btn" onclick="toggleTrans('p6')">👁️ Bản dịch đầy đủ</button>
-                    <span id="p6" class="translation-text">Tuy nhiên, cuối cùng, Kate không thất vọng với những gì mình tìm thấy. "Một ngày nọ, khi tôi đang mải miết đào, tôi tìm thấy một hòn đá có hình thù kỳ lạ. <span class="gap-marker">(5)</span> Rõ ràng ai đó đã làm ra nó hàng trăm năm trước, điều đó có nghĩa là nó thực sự quan trọng. Vì vậy, bố đã làm sạch nó và nói rằng nó sẽ được đưa đến bảo tàng gần đó. Thế nên tôi rất vui vì cuối cùng tôi đã tìm thấy thứ gì đó thú vị!"</span>
-                </p>
-            </div>
-
-            <div class="glossary-box">
-                <div class="glossary-title">📖 Glossary - Từ vựng cần nhớ</div>
-                <table class="glossary-table">
-                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
-                    <tr><td>Exciting opportunity</td><td>NP</td><td>Cơ hội thú vị</td></tr>
-                    <tr><td>Historical site</td><td>NP</td><td>Di tích lịch sử</td></tr>
-                    <tr><td>Ancient</td><td>Adj</td><td>Cổ đại, xưa</td></tr>
-                    <tr><td>Lecturer</td><td>N</td><td>Giảng viên</td></tr>
-                    <tr><td>Disappointed</td><td>Adj</td><td>Thất vọng</td></tr>
-                    <tr><td>Ordinary</td><td>Adj</td><td>Bình thường</td></tr>
-                    <tr><td>Dig up</td><td>Phr.V</td><td>Đào lên, khai quật</td></tr>
-                    <tr><td>Obviously</td><td>Adv</td><td>Rõ ràng là</td></tr>
-                    <tr><td>Jewellery</td><td>N</td><td>Trang sức</td></tr>
-                    <tr><td>Figure</td><td>N</td><td>Bức tượng nhỏ / Hình dáng</td></tr>
-                </table>
-            </div>
-        </div>
-
-        <div class="right-panel panel" id="quiz-container">
-            </div>
-    </div>
-
-    <div class="modal-overlay" id="scoreModal">
-        <div class="modal-content">
-            <div class="score-circle" id="finalScore">0/5</div>
-            <h2 id="finalMessage" style="color: var(--primary-color); margin-bottom: 10px;"></h2>
-            <p id="finalSubMessage" style="color: #666;"></p>
-            <button class="submit-all-btn" onclick="location.reload()">Làm lại bài thi</button>
-        </div>
-    </div>
-
-    <canvas id="confetti" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999;"></canvas>
-
-    <script>
-        // --- DATA ---
-        const quizData = [
-            {
-                id: 1,
-                gap: "(1)",
-                correct: "D",
-                options: [
-                    { id: "C", text: "That way, everyone made sure they didn’t miss anything." },
-                    { id: "D", text: "In fact, the whole area was actually still covered in grass." },
-                    { id: "H", text: "It was a new experience for me, too." },
-                    { id: "B", text: "No-one made that mistake, luckily." }
-                ],
-                explain: "Dựa vào câu sau: 'So the first job was to remove it all' (Công việc đầu tiên là dọn sạch nó). 'It' ở đây thay thế cho 'grass' (cỏ) ở đáp án D. Ngữ cảnh: Đến nơi thấy đất đầy cỏ -> phải dọn cỏ mới đào được.",
-                transQ: "Khoảng trống (1) cần điền gì?",
-                transA: "D: Thực tế là toàn bộ khu vực vẫn bị bao phủ bởi cỏ.",
-                vocab: "Covered in (được bao phủ bởi), Remove (loại bỏ)."
-            },
-            {
-                id: 2,
-                gap: "(2)",
-                correct: "F",
-                options: [
-                    { id: "F", text: "Some people were a bit disappointed by that news." },
-                    { id: "A", text: "It turned out to be a small figure of a horse." },
-                    { id: "E", text: "It was a bit sad to see it disappear." },
-                    { id: "G", text: "They probably imagined it was things like gold jewellery." }
-                ],
-                explain: "Trước đó, bố bảo 'important pots were still under' (bình quan trọng vẫn ở dưới) -> phải 'dig deeper' (đào sâu hơn). Đáp án F 'disappointed' (thất vọng) phù hợp vì họ muốn tìm thấy ngay nhưng lại phải đào tiếp. Câu sau 'But we all knew Dad was right' củng cố việc họ chấp nhận nỗi thất vọng đó.",
-                transQ: "Khoảng trống (2) cần điền gì?",
-                transA: "F: Một số người hơi thất vọng khi nghe tin đó.",
-                vocab: "Disappointed (thất vọng), News (tin tức)."
-            },
-            {
-                id: 3,
-                gap: "(3)",
-                correct: "C",
-                options: [
-                    { id: "B", text: "No-one made that mistake, luckily." },
-                    { id: "C", text: "That way, everyone made sure they didn’t miss anything." },
-                    { id: "D", text: "In fact, the whole area was actually still covered in grass." },
-                    { id: "H", text: "It was a new experience for me, too." }
-                ],
-                explain: "Câu trước mô tả cách đào: 'remove small amounts of soil' (loại bỏ từng lượng đất nhỏ). Tại sao? Để không bỏ sót gì cả. Đáp án C khớp hoàn toàn về mặt logic.",
-                transQ: "Khoảng trống (3) cần điền gì?",
-                transA: "C: Bằng cách đó, mọi người đảm bảo rằng họ không bỏ sót bất cứ thứ gì.",
-                vocab: "Miss (bỏ lỡ/bỏ sót), Make sure (đảm bảo)."
-            },
-            {
-                id: 4,
-                gap: "(4)",
-                correct: "G",
-                options: [
-                    { id: "G", text: "They probably imagined it was things like gold jewellery." },
-                    { id: "A", text: "It turned out to be a small figure of a horse." },
-                    { id: "F", text: "Some people were a bit disappointed by that news." },
-                    { id: "E", text: "It was a bit sad to see it disappear." }
-                ],
-                explain: "Bạn bè nhắn tin hỏi tìm được gì. Câu sau 'But actually... looking for ordinary objects' (Nhưng thực ra... tìm đồ bình thường). Chữ 'But' cho thấy sự tương phản với sự kỳ vọng 'hoành tráng' ở đáp án G (vàng bạc châu báu).",
-                transQ: "Khoảng trống (4) cần điền gì?",
-                transA: "G: Họ có lẽ đã tưởng tượng đó là những thứ như đồ trang sức bằng vàng.",
-                vocab: "Imagine (tưởng tượng), Jewellery (trang sức)."
-            },
-            {
-                id: 5,
-                gap: "(5)",
-                correct: "A",
-                options: [
-                    { id: "H", text: "It was a new experience for me, too." },
-                    { id: "B", text: "No-one made that mistake, luckily." },
-                    { id: "A", text: "It turned out to be a small figure of a horse." },
-                    { id: "C", text: "That way, everyone made sure they didn’t miss anything." }
-                ],
-                explain: "Câu trước: 'found a stone with a strange shape' (tìm thấy hòn đá hình thù lạ). Đáp án A giải thích hình thù đó là gì: 'figure of a horse' (tượng con ngựa).",
-                transQ: "Khoảng trống (5) cần điền gì?",
-                transA: "A: Hóa ra đó là một bức tượng nhỏ hình con ngựa.",
-                vocab: "Turn out (hóa ra là), Figure (tượng/hình dáng)."
-            }
-        ];
-
-        let score = 0;
-        let answeredCount = 0;
-        let timerInterval;
-        let timeRemaining = 600; // 10 minutes
-        let isPaused = false;
-
-        // --- INIT ---
-        window.onload = function() {
-            renderQuiz();
-            startTimer();
-        };
-
-        function renderQuiz() {
-            const container = document.getElementById('quiz-container');
-            let html = '';
-            
-            quizData.forEach((q, index) => {
-                html += `
-                <div class="question-card" id="card-${q.id}">
-                    <div class="q-header">
-                        <span class="badge">Câu ${index + 1}</span>
-                        <span>Chọn câu phù hợp điền vào ô trống <strong>${q.gap}</strong>:</span>
-                    </div>
-                    
-                    <div class="options-grid" id="options-${q.id}">
-                        ${q.options.map(opt => `
-                            <div class="option-btn" onclick="checkAnswer(${q.id}, '${opt.id}', '${q.correct}', this)">
-                                <strong>${opt.id}.</strong> ${opt.text}
-                            </div>
-                        `).join('')}
-                    </div>
-
-                    <div class="feedback-panel" id="feedback-${q.id}">
-                        <div class="action-buttons">
-                            <button class="action-btn btn-explain" onclick="showContent(${q.id}, 'explain')">👩‍🏫 Giải thích</button>
-                            <button class="action-btn btn-trans" onclick="showContent(${q.id}, 'trans')">📝 Dịch nghĩa</button>
-                            <button class="action-btn btn-vocab" onclick="showContent(${q.id}, 'vocab')">📚 Từ vựng</button>
-                        </div>
-                        <div class="feedback-content" id="content-${q.id}">
-                            <em>Bấm vào các nút trên để xem chi tiết nha!</em>
-                        </div>
-                    </div>
-                </div>
-                `;
-            });
-
-            html += `<button class="submit-all-btn" onclick="finishQuiz()">NỘP BÀI & XEM ĐIỂM</button>`;
-            container.innerHTML = html;
-        }
-
-        // --- LOGIC ---
-        function checkAnswer(qId, selectedId, correctId, btnElement) {
-            const card = document.getElementById(`card-${qId}`);
-            const feedback = document.getElementById(`feedback-${qId}`);
-            const optionsDiv = document.getElementById(`options-${qId}`);
-            const allOpts = optionsDiv.querySelectorAll('.option-btn');
-
-            // Disable further clicks
-            allOpts.forEach(btn => btn.classList.add('disabled'));
-
-            if (selectedId === correctId) {
-                // CORRECT
-                btnElement.classList.add('correct');
-                playSound('correct');
-                score++;
-                fireConfetti(btnElement);
-                // Mở feedback ngay định dạng "Giải thích"
-                feedback.style.display = 'block';
-                showContent(qId, 'explain');
-            } else {
-                // WRONG
-                btnElement.classList.add('wrong');
-                playSound('wrong');
-                // Highlight correct one
-                allOpts.forEach(btn => {
-                    if(btn.innerText.startsWith(correctId + '.')) {
-                        btn.classList.add('correct');
-                    }
-                });
-                feedback.style.display = 'block';
-                showContent(qId, 'explain');
-            }
-            answeredCount++;
-        }
-
-        function showContent(qId, type) {
-            const contentDiv = document.getElementById(`content-${qId}`);
-            const qData = quizData.find(q => q.id === qId);
-            
-            let html = '';
-            if (type === 'explain') {
-                html = `<p><span class="teacher-avatar">👩‍🏫</span> <strong>Cô MS Chí Nên giải thích:</strong><br>${qData.explain}</p>`;
-            } else if (type === 'trans') {
-                html = `<p><strong>Dịch câu hỏi:</strong> ${qData.transQ}<br><br><strong>Dịch đáp án đúng:</strong> ${qData.transA}</p>`;
-            } else if (type === 'vocab') {
-                html = `<p><strong>Từ vựng hay:</strong> ${qData.vocab}</p>`;
-            }
-            contentDiv.innerHTML = html;
-        }
-
-        function toggleTrans(id) {
-            const el = document.getElementById(id);
-            if (el.style.display === 'block') {
-                el.style.display = 'none';
-            } else {
-                el.style.display = 'block';
-            }
-        }
-
-        // --- TIMER ---
-        function startTimer() {
-            timerInterval = setInterval(() => {
-                if (!isPaused) {
-                    timeRemaining--;
-                    updateTimerDisplay();
-                    if (timeRemaining <= 0) {
-                        clearInterval(timerInterval);
-                        alert("Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục, nhưng hãy nhớ luyện tập tốc độ nhé.");
-                    }
-                }
-            }, 1000);
-        }
-
-        function toggleTimer() {
-            isPaused = !isPaused;
-            const btn = document.querySelector('.timer-controls');
-            btn.innerText = isPaused ? '▶️' : '⏯️';
-        }
-
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeRemaining / 60);
-            const seconds = timeRemaining % 60;
-            document.getElementById('timer').innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-        }
-
-        // --- FINISH ---
-        function finishQuiz() {
-            const modal = document.getElementById('scoreModal');
-            const scoreText = document.getElementById('finalScore');
-            const msg = document.getElementById('finalMessage');
-            const sub = document.getElementById('finalSubMessage');
-            
-            scoreText.innerText = `${score}/5`;
-            
-            if (score === 5) {
-                msg.innerText = "Tuyệt vời! Thiên tài khảo cổ học! 🏺";
-                sub.innerText = "Bạn đã hiểu rất sâu bài đọc. Xuất sắc!";
-                playSound('win');
-                fireConfettiGlobal();
-            } else if (score >= 3) {
-                msg.innerText = "Làm tốt lắm! 👍";
-                sub.innerText = "Bạn nắm khá vững nội dung, chỉ cần cẩn thận hơn chút xíu thôi.";
-            } else {
-                msg.innerText = "Cố lên nhé! 💪";
-                sub.innerText = "Đừng nản lòng, hãy xem lại phần giải thích chi tiết để hiểu rõ hơn nha.";
-            }
-
-            modal.style.display = 'flex';
-        }
-
-        // --- CONFETTI EFFECT (Simple Implementation) ---
-        function fireConfetti(element) {
-            const rect = element.getBoundingClientRect();
-            const x = (rect.left + rect.width / 2) / window.innerWidth;
-            const y = (rect.top + rect.height / 2) / window.innerHeight;
-            // Simple logic placeholder: In a real complex lib we'd use canvas. 
-            // For single file simplicity, we rely on the global confetti below.
-        }
-
-        function fireConfettiGlobal() {
-            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
-            const canvas = document.getElementById('confetti');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            let particles = [];
-            for(let i=0; i<100; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height - canvas.height,
-                    vx: Math.random() * 4 - 2,
-                    vy: Math.random() * 4 + 2,
-                    color: colors[Math.floor(Math.random() * colors.length)]
-                });
-            }
-
-            function animate() {
-                ctx.clearRect(0,0,canvas.width, canvas.height);
-                particles.forEach(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    ctx.fillStyle = p.color;
-                    ctx.fillRect(p.x, p.y, 5, 5);
-                    if(p.y > canvas.height) p.y = -10;
-                });
-                requestAnimationFrame(animate);
-            }
-            animate();
-            setTimeout(() => { canvas.width=0; }, 3000);
-        }
-    </script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Bài kiểm tra: Digging into the past - Ms. Chí Nên</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+
+    
+
+    <style>
+
+        :root {
+
+            /* DYNAMIC THEME: Archaeology / History */
+
+            --primary-color: #795548; /* Nâu đất */
+
+            --primary-light: #A1887F;
+
+            --secondary-color: #FFF3E0; /* Màu cát nhạt */
+
+            --accent-color: #FF6F00; /* Màu cam đất nung */
+
+            --success-color: #00C853; /* Xanh lá */
+
+            --error-color: #FF5252; /* Đỏ */
+
+            --text-color: #3E2723;
+
+            --glass-bg: rgba(255, 255, 255, 0.95);
+
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
+        }
+
+
+
+        * {
+
+            box-sizing: border-box;
+
+            margin: 0;
+
+            padding: 0;
+
+            user-select: none; /* Ngăn bôi đen để tập trung làm bài */
+
+        }
+
+
+
+        body {
+
+            font-family: 'Nunito', sans-serif;
+
+            color: var(--text-color);
+
+            height: 100vh;
+
+            overflow: hidden;
+
+            background-color: var(--secondary-color);
+
+            /* Auto-generated SVG Background with Emojis: 🏺 ⛏️ 🦴 🗺️ */
+
+            background-image: radial-gradient(circle at center, rgba(255,255,255,0.8), rgba(255,243,224,0.4)), url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='20'%3E🏺%3C/text%3E%3Ctext x='60' y='70' font-size='20'%3E⛏️%3C/text%3E%3Ctext x='80' y='20' font-size='15'%3E🦴%3C/text%3E%3C/svg%3E");
+
+        }
+
+
+
+        /* --- TOP BAR --- */
+
+        .top-bar {
+
+            height: 60px;
+
+            background: var(--glass-bg);
+
+            backdrop-filter: blur(8px);
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            padding: 0 20px;
+
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+            right: 0;
+
+            z-index: 100;
+
+        }
+
+
+
+        .teacher-brand {
+
+            font-family: 'Quicksand', sans-serif;
+
+            font-weight: 700;
+
+            font-size: 1.1rem;
+
+            color: var(--primary-color);
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+
+        .timer-container {
+
+            background: #fff;
+
+            padding: 8px 20px;
+
+            border-radius: 30px;
+
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+
+            font-weight: 800;
+
+            font-size: 1.2rem;
+
+            color: var(--accent-color);
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            cursor: pointer;
+
+            transition: all 0.3s;
+
+        }
+
+
+
+        .timer-container:hover {
+
+            transform: scale(1.05);
+
+        }
+
+
+
+        .timer-controls {
+
+            font-size: 0.8rem;
+
+            color: #888;
+
+        }
+
+
+
+        /* --- MAIN LAYOUT (SPLIT SCREEN) --- */
+
+        .main-container {
+
+            display: flex;
+
+            height: calc(100vh - 60px);
+
+            margin-top: 60px;
+
+        }
+
+
+
+        .panel {
+
+            flex: 1;
+
+            overflow-y: auto;
+
+            padding: 30px;
+
+            scroll-behavior: smooth;
+
+        }
+
+
+
+        /* --- LEFT PANEL: READING --- */
+
+        .left-panel {
+
+            border-right: 2px solid rgba(121, 85, 72, 0.1);
+
+            background: rgba(255, 255, 255, 0.6);
+
+        }
+
+
+
+        h1.passage-title {
+
+            font-family: 'Quicksand', sans-serif;
+
+            color: var(--primary-color);
+
+            font-size: 2rem;
+
+            margin-bottom: 20px;
+
+            text-align: center;
+
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+
+        }
+
+
+
+        .reading-text p {
+
+            font-size: 1.1rem;
+
+            line-height: 1.8;
+
+            margin-bottom: 25px;
+
+            text-align: justify;
+
+            background: #fff;
+
+            padding: 20px;
+
+            border-radius: 15px;
+
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+
+            position: relative;
+
+        }
+
+
+
+        .gap-marker {
+
+            background: var(--accent-color);
+
+            color: white;
+
+            padding: 2px 8px;
+
+            border-radius: 6px;
+
+            font-weight: bold;
+
+            margin: 0 5px;
+
+            cursor: help;
+
+        }
+
+
+
+        .translate-btn {
+
+            display: block;
+
+            margin-top: 10px;
+
+            font-size: 0.85rem;
+
+            color: var(--primary-light);
+
+            background: none;
+
+            border: 1px dashed var(--primary-light);
+
+            padding: 5px 10px;
+
+            border-radius: 20px;
+
+            cursor: pointer;
+
+            transition: all 0.2s;
+
+        }
+
+
+
+        .translate-btn:hover {
+
+            background: var(--primary-light);
+
+            color: white;
+
+        }
+
+
+
+        .translation-text {
+
+            display: none;
+
+            margin-top: 10px;
+
+            padding: 10px;
+
+            background: #EFEBE9;
+
+            border-left: 4px solid var(--primary-color);
+
+            font-style: italic;
+
+            color: #5D4037;
+
+            border-radius: 0 10px 10px 0;
+
+            animation: fadeIn 0.5s ease;
+
+        }
+
+
+
+        /* GLOSSARY */
+
+        .glossary-box {
+
+            margin-top: 40px;
+
+            background: white;
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            box-shadow: var(--shadow);
+
+            border-top: 5px solid var(--accent-color);
+
+        }
+
+
+
+        .glossary-title {
+
+            font-weight: 800;
+
+            color: var(--primary-color);
+
+            margin-bottom: 15px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+
+        .glossary-table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+        }
+
+
+
+        .glossary-table th, .glossary-table td {
+
+            text-align: left;
+
+            padding: 10px;
+
+            border-bottom: 1px solid #eee;
+
+        }
+
+
+
+        .glossary-table th {
+
+            color: var(--accent-color);
+
+        }
+
+
+
+        /* --- RIGHT PANEL: EXERCISES --- */
+
+        .right-panel {
+
+            background: transparent;
+
+            padding-bottom: 100px;
+
+        }
+
+
+
+        .question-card {
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 25px;
+
+            margin-bottom: 30px;
+
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+
+            transition: transform 0.3s;
+
+            border-bottom: 6px solid #E0E0E0;
+
+        }
+
+
+
+        .question-card:hover {
+
+            transform: translateY(-5px);
+
+        }
+
+
+
+        .q-header {
+
+            font-weight: 800;
+
+            font-size: 1.2rem;
+
+            margin-bottom: 15px;
+
+            color: var(--primary-color);
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+
+        .q-header .badge {
+
+            background: var(--primary-color);
+
+            color: white;
+
+            padding: 5px 12px;
+
+            border-radius: 50px;
+
+            font-size: 0.9rem;
+
+        }
+
+
+
+        .options-grid {
+
+            display: grid;
+
+            gap: 12px;
+
+        }
+
+
+
+        .option-btn {
+
+            background: #fff;
+
+            border: 2px solid #EEE;
+
+            padding: 15px;
+
+            border-radius: 15px;
+
+            cursor: pointer;
+
+            font-family: 'Nunito', sans-serif;
+
+            font-size: 1rem;
+
+            text-align: left;
+
+            transition: all 0.2s;
+
+            position: relative;
+
+            box-shadow: 0 4px 0 #EEE;
+
+        }
+
+
+
+        .option-btn:active {
+
+            transform: translateY(4px);
+
+            box-shadow: none;
+
+        }
+
+
+
+        .option-btn:hover:not(.disabled) {
+
+            border-color: var(--primary-light);
+
+            background-color: #FAFAFA;
+
+            transform: scale(1.02);
+
+        }
+
+
+
+        /* STATES */
+
+        .option-btn.correct {
+
+            background-color: var(--success-color) !important;
+
+            color: white !important;
+
+            border-color: #00A040 !important;
+
+            box-shadow: 0 4px 0 #008030 !important;
+
+        }
+
+
+
+        .option-btn.wrong {
+
+            background-color: var(--error-color) !important;
+
+            color: white !important;
+
+            border-color: #D32F2F !important;
+
+            box-shadow: 0 4px 0 #B71C1C !important;
+
+            animation: shake 0.5s;
+
+        }
+
+
+
+        .option-btn.disabled {
+
+            pointer-events: none;
+
+            opacity: 0.7;
+
+        }
+
+
+
+        /* FEEDBACK SECTION */
+
+        .feedback-panel {
+
+            margin-top: 20px;
+
+            display: none; /* Hidden by default */
+
+            animation: slideDown 0.4s ease-out;
+
+        }
+
+
+
+        .action-buttons {
+
+            display: flex;
+
+            gap: 10px;
+
+            margin-bottom: 15px;
+
+        }
+
+
+
+        .action-btn {
+
+            flex: 1;
+
+            padding: 10px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            color: white;
+
+            transition: opacity 0.2s;
+
+        }
+
+
+
+        .btn-explain { background: #5C6BC0; }
+
+        .btn-trans { background: #FFA726; }
+
+        .btn-vocab { background: #26A69A; }
+
+
+
+        .feedback-content {
+
+            background: #F5F7FA;
+
+            padding: 15px;
+
+            border-radius: 12px;
+
+            border: 2px solid #E0E0E0;
+
+            font-size: 0.95rem;
+
+            line-height: 1.6;
+
+        }
+
+
+
+        .teacher-avatar {
+
+            width: 40px;
+
+            height: 40px;
+
+            background: #FFD54F;
+
+            border-radius: 50%;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            margin-right: 10px;
+
+            font-size: 20px;
+
+            vertical-align: middle;
+
+            border: 2px solid white;
+
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+        }
+
+
+
+        .submit-all-btn {
+
+            display: block;
+
+            width: 100%;
+
+            padding: 20px;
+
+            margin-top: 30px;
+
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+
+            color: white;
+
+            font-size: 1.5rem;
+
+            font-weight: 800;
+
+            border: none;
+
+            border-radius: 50px;
+
+            cursor: pointer;
+
+            box-shadow: 0 10px 25px rgba(121, 85, 72, 0.4);
+
+            transition: transform 0.3s;
+
+        }
+
+
+
+        .submit-all-btn:hover {
+
+            transform: scale(1.05) translateY(-5px);
+
+        }
+
+
+
+        /* --- MODALS --- */
+
+        .modal-overlay {
+
+            position: fixed;
+
+            top: 0; left: 0; right: 0; bottom: 0;
+
+            background: rgba(0,0,0,0.7);
+
+            z-index: 1000;
+
+            display: none;
+
+            justify-content: center;
+
+            align-items: center;
+
+            backdrop-filter: blur(5px);
+
+        }
+
+
+
+        .modal-content {
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 30px;
+
+            text-align: center;
+
+            max-width: 500px;
+
+            width: 90%;
+
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+
+            position: relative;
+
+        }
+
+
+
+        .score-circle {
+
+            width: 120px;
+
+            height: 120px;
+
+            background: var(--accent-color);
+
+            color: white;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 3rem;
+
+            font-weight: 900;
+
+            margin: 0 auto 20px;
+
+            box-shadow: 0 10px 20px rgba(255, 111, 0, 0.4);
+
+        }
+
+
+
+        /* ANIMATIONS */
+
+        @keyframes shake {
+
+            0% { transform: translateX(0); }
+
+            25% { transform: translateX(-10px); }
+
+            50% { transform: translateX(10px); }
+
+            75% { transform: translateX(-10px); }
+
+            100% { transform: translateX(0); }
+
+        }
+
+
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+
+
+        /* SCROLLBAR */
+
+        ::-webkit-scrollbar { width: 10px; }
+
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+
+        ::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 10px; }
+
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
+
+        
+
+        /* MOBILE RESPONSIVE */
+
+        @media (max-width: 768px) {
+
+            .main-container { flex-direction: column; overflow: hidden; }
+
+            .panel { height: 50%; border: none; border-bottom: 2px solid #ddd; }
+
+            .top-bar { font-size: 0.8rem; }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <script>
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        
+
+        function playSound(type) {
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+
+            const gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+
+            gainNode.connect(audioCtx.destination);
+
+
+
+            if (type === 'correct') {
+
+                // Ding sound (High pitch, sine wave)
+
+                osc.type = 'sine';
+
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+
+                osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1); // C6
+
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+                osc.start();
+
+                osc.stop(audioCtx.currentTime + 0.5);
+
+            } else if (type === 'wrong') {
+
+                // Fail sound (Low pitch, sawtooth)
+
+                osc.type = 'sawtooth';
+
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+
+                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+                osc.start();
+
+                osc.stop(audioCtx.currentTime + 0.3);
+
+            } else if (type === 'win') {
+
+                // Fanfare snippet
+
+                osc.type = 'triangle';
+
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+
+                gainNode.gain.value = 0.3;
+
+                osc.start();
+
+                osc.stop(audioCtx.currentTime + 0.1);
+
+            }
+
+        }
+
+    </script>
+
+
+
+    <div class="top-bar">
+
+        <div class="teacher-brand">
+
+            <span>👩‍🏫</span> Ms. Chí Nên
+
+        </div>
+
+        <div class="timer-container" onclick="toggleTimer()">
+
+            <span id="timer">10:00</span>
+
+            <span class="timer-controls">⏯️</span>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="main-container">
+
+        
+
+        <div class="left-panel panel">
+
+            <h1 class="passage-title">🏺 Digging into the past</h1>
+
+            
+
+            <div class="reading-text">
+
+                <p>
+
+                    Last year, Kate Marshall was given a very exciting opportunity – to help her father, who’s a history lecturer, at a historical site! He was leading a team to dig up and explore the area.
+
+                    <button class="translate-btn" onclick="toggleTrans('p1')">👁️ Bản dịch đầy đủ</button>
+
+                    <span id="p1" class="translation-text">Năm ngoái, Kate Marshall đã được trao một cơ hội vô cùng thú vị – giúp đỡ cha mình, một giảng viên lịch sử, tại một di tích lịch sử! Ông đang dẫn đầu một nhóm khai quật và khám phá khu vực này.</span>
+
+                </p>
+
+
+
+                <p>
+
+                    When they arrived, though, the site wasn’t quite what Kate had expected. <span class="gap-marker">(1)</span> So the first job was to remove it all and prepare the land for digging. Says Kate, ‘Dad hadn’t warned me I’d have to work so hard as soon as we got there!’
+
+                    <button class="translate-btn" onclick="toggleTrans('p2')">👁️ Bản dịch đầy đủ</button>
+
+                    <span id="p2" class="translation-text">Tuy nhiên, khi họ đến nơi, khu di tích không hoàn toàn giống như những gì Kate đã mong đợi. <span class="gap-marker">(1)</span> Vì vậy, công việc đầu tiên là dọn sạch tất cả và chuẩn bị đất để đào. Kate nói: "Bố đã không cảnh báo tôi rằng tôi sẽ phải làm việc vất vả như vậy ngay khi chúng tôi đến đó!"</span>
+
+                </p>
+
+
+
+                <p>
+
+                    But when the site was completely cleared, the team found pieces of ancient pots on the ground. However, those weren’t as exciting as everyone had thought. Kate’s dad told them that the important pots were still under the ground. And because no-one had touched them for centuries, the team would learn far more about their history – but first they would have to dig deeper. Says Kate, <span class="gap-marker">(2)</span> But we all knew Dad was right!’
+
+                    <button class="translate-btn" onclick="toggleTrans('p3')">👁️ Bản dịch đầy đủ</button>
+
+                    <span id="p3" class="translation-text">Nhưng khi khu vực này đã được dọn sạch hoàn toàn, nhóm đã tìm thấy những mảnh bình gốm cổ trên mặt đất. Tuy nhiên, chúng không thú vị như mọi người nghĩ. Cha của Kate bảo họ rằng những chiếc bình quan trọng vẫn còn nằm dưới lòng đất. Và vì chưa ai chạm vào chúng trong nhiều thế kỷ, nhóm sẽ tìm hiểu được nhiều hơn về lịch sử của chúng – nhưng trước tiên họ phải đào sâu hơn. Kate nói, <span class="gap-marker">(2)</span> Nhưng tất cả chúng tôi đều biết bố đã đúng!"</span>
+
+                </p>
+
+
+
+                <p>
+
+                    The site was divided into small squares, with a leader for each square, who told everyone how to dig. ‘That wasn’t as easy as it sounded, either,’ Kate reports. ‘Instead of just digging great big holes, we all had to dig really carefully, and remove small amounts of soil each time. <span class="gap-marker">(3)</span> So it made sense.’
+
+                    <button class="translate-btn" onclick="toggleTrans('p4')">👁️ Bản dịch đầy đủ</button>
+
+                    <span id="p4" class="translation-text">Khu vực được chia thành các ô vuông nhỏ, với một người phụ trách cho mỗi ô, người này hướng dẫn mọi người cách đào. "Việc đó cũng không dễ dàng như cái tên của nó đâu," Kate kể lại. "Thay vì chỉ đào những cái hố to đùng, tất cả chúng tôi phải đào thật cẩn thận và loại bỏ từng lượng đất nhỏ mỗi lần. <span class="gap-marker">(3)</span> Vì vậy điều đó hoàn toàn hợp lý."</span>
+
+                </p>
+
+
+
+                <p>
+
+                    ‘My friends at home were really interested in what I was doing,’ Kate explains. ‘They kept texting me to ask what I’d found. <span class="gap-marker">(4)</span> But actually, we were looking for ordinary, everyday objects that could tell us about the people who’d lived in the area centuries ago.’
+
+                    <button class="translate-btn" onclick="toggleTrans('p5')">👁️ Bản dịch đầy đủ</button>
+
+                    <span id="p5" class="translation-text">"Bạn bè ở nhà thực sự quan tâm đến những gì tôi đang làm," Kate giải thích. "Họ liên tục nhắn tin hỏi tôi đã tìm thấy gì. <span class="gap-marker">(4)</span> Nhưng thực ra, chúng tôi đang tìm kiếm những vật dụng bình thường, hàng ngày có thể cho chúng tôi biết về những người đã sống ở khu vực này từ nhiều thế kỷ trước."</span>
+
+                </p>
+
+
+
+                <p>
+
+                    In the end, though, Kate wasn’t disappointed by what she found. ‘One day, when I was digging away, I found a stone with a strange shape. <span class="gap-marker">(5)</span> Someone had obviously made it hundreds of years ago, which meant it was really important. So Dad cleaned it up, and said it would go to the nearby museum. So I was pleased that at last, I’d found something interesting!
+
+                    <button class="translate-btn" onclick="toggleTrans('p6')">👁️ Bản dịch đầy đủ</button>
+
+                    <span id="p6" class="translation-text">Tuy nhiên, cuối cùng, Kate không thất vọng với những gì mình tìm thấy. "Một ngày nọ, khi tôi đang mải miết đào, tôi tìm thấy một hòn đá có hình thù kỳ lạ. <span class="gap-marker">(5)</span> Rõ ràng ai đó đã làm ra nó hàng trăm năm trước, điều đó có nghĩa là nó thực sự quan trọng. Vì vậy, bố đã làm sạch nó và nói rằng nó sẽ được đưa đến bảo tàng gần đó. Thế nên tôi rất vui vì cuối cùng tôi đã tìm thấy thứ gì đó thú vị!"</span>
+
+                </p>
+
+            </div>
+
+
+
+            <div class="glossary-box">
+
+                <div class="glossary-title">📖 Glossary - Từ vựng cần nhớ</div>
+
+                <table class="glossary-table">
+
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+
+                    <tr><td>Exciting opportunity</td><td>NP</td><td>Cơ hội thú vị</td></tr>
+
+                    <tr><td>Historical site</td><td>NP</td><td>Di tích lịch sử</td></tr>
+
+                    <tr><td>Ancient</td><td>Adj</td><td>Cổ đại, xưa</td></tr>
+
+                    <tr><td>Lecturer</td><td>N</td><td>Giảng viên</td></tr>
+
+                    <tr><td>Disappointed</td><td>Adj</td><td>Thất vọng</td></tr>
+
+                    <tr><td>Ordinary</td><td>Adj</td><td>Bình thường</td></tr>
+
+                    <tr><td>Dig up</td><td>Phr.V</td><td>Đào lên, khai quật</td></tr>
+
+                    <tr><td>Obviously</td><td>Adv</td><td>Rõ ràng là</td></tr>
+
+                    <tr><td>Jewellery</td><td>N</td><td>Trang sức</td></tr>
+
+                    <tr><td>Figure</td><td>N</td><td>Bức tượng nhỏ / Hình dáng</td></tr>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="right-panel panel" id="quiz-container">
+
+            </div>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="scoreModal">
+
+        <div class="modal-content">
+
+            <div class="score-circle" id="finalScore">0/5</div>
+
+            <h2 id="finalMessage" style="color: var(--primary-color); margin-bottom: 10px;"></h2>
+
+            <p id="finalSubMessage" style="color: #666;"></p>
+
+            <button class="submit-all-btn" onclick="location.reload()">Làm lại bài thi</button>
+
+        </div>
+
+    </div>
+
+
+
+    <canvas id="confetti" style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999;"></canvas>
+
+
+
+    <script>
+
+        // --- DATA ---
+
+        const quizData = [
+
+            {
+
+                id: 1,
+
+                gap: "(1)",
+
+                correct: "D",
+
+                options: [
+
+                    { id: "C", text: "That way, everyone made sure they didn’t miss anything." },
+
+                    { id: "D", text: "In fact, the whole area was actually still covered in grass." },
+
+                    { id: "H", text: "It was a new experience for me, too." },
+
+                    { id: "B", text: "No-one made that mistake, luckily." }
+
+                ],
+
+                explain: "Dựa vào câu sau: 'So the first job was to remove it all' (Công việc đầu tiên là dọn sạch nó). 'It' ở đây thay thế cho 'grass' (cỏ) ở đáp án D. Ngữ cảnh: Đến nơi thấy đất đầy cỏ -> phải dọn cỏ mới đào được.",
+
+                transQ: "Khoảng trống (1) cần điền gì?",
+
+                transA: "D: Thực tế là toàn bộ khu vực vẫn bị bao phủ bởi cỏ.",
+
+                vocab: "Covered in (được bao phủ bởi), Remove (loại bỏ)."
+
+            },
+
+            {
+
+                id: 2,
+
+                gap: "(2)",
+
+                correct: "F",
+
+                options: [
+
+                    { id: "F", text: "Some people were a bit disappointed by that news." },
+
+                    { id: "A", text: "It turned out to be a small figure of a horse." },
+
+                    { id: "E", text: "It was a bit sad to see it disappear." },
+
+                    { id: "G", text: "They probably imagined it was things like gold jewellery." }
+
+                ],
+
+                explain: "Trước đó, bố bảo 'important pots were still under' (bình quan trọng vẫn ở dưới) -> phải 'dig deeper' (đào sâu hơn). Đáp án F 'disappointed' (thất vọng) phù hợp vì họ muốn tìm thấy ngay nhưng lại phải đào tiếp. Câu sau 'But we all knew Dad was right' củng cố việc họ chấp nhận nỗi thất vọng đó.",
+
+                transQ: "Khoảng trống (2) cần điền gì?",
+
+                transA: "F: Một số người hơi thất vọng khi nghe tin đó.",
+
+                vocab: "Disappointed (thất vọng), News (tin tức)."
+
+            },
+
+            {
+
+                id: 3,
+
+                gap: "(3)",
+
+                correct: "C",
+
+                options: [
+
+                    { id: "B", text: "No-one made that mistake, luckily." },
+
+                    { id: "C", text: "That way, everyone made sure they didn’t miss anything." },
+
+                    { id: "D", text: "In fact, the whole area was actually still covered in grass." },
+
+                    { id: "H", text: "It was a new experience for me, too." }
+
+                ],
+
+                explain: "Câu trước mô tả cách đào: 'remove small amounts of soil' (loại bỏ từng lượng đất nhỏ). Tại sao? Để không bỏ sót gì cả. Đáp án C khớp hoàn toàn về mặt logic.",
+
+                transQ: "Khoảng trống (3) cần điền gì?",
+
+                transA: "C: Bằng cách đó, mọi người đảm bảo rằng họ không bỏ sót bất cứ thứ gì.",
+
+                vocab: "Miss (bỏ lỡ/bỏ sót), Make sure (đảm bảo)."
+
+            },
+
+            {
+
+                id: 4,
+
+                gap: "(4)",
+
+                correct: "G",
+
+                options: [
+
+                    { id: "G", text: "They probably imagined it was things like gold jewellery." },
+
+                    { id: "A", text: "It turned out to be a small figure of a horse." },
+
+                    { id: "F", text: "Some people were a bit disappointed by that news." },
+
+                    { id: "E", text: "It was a bit sad to see it disappear." }
+
+                ],
+
+                explain: "Bạn bè nhắn tin hỏi tìm được gì. Câu sau 'But actually... looking for ordinary objects' (Nhưng thực ra... tìm đồ bình thường). Chữ 'But' cho thấy sự tương phản với sự kỳ vọng 'hoành tráng' ở đáp án G (vàng bạc châu báu).",
+
+                transQ: "Khoảng trống (4) cần điền gì?",
+
+                transA: "G: Họ có lẽ đã tưởng tượng đó là những thứ như đồ trang sức bằng vàng.",
+
+                vocab: "Imagine (tưởng tượng), Jewellery (trang sức)."
+
+            },
+
+            {
+
+                id: 5,
+
+                gap: "(5)",
+
+                correct: "A",
+
+                options: [
+
+                    { id: "H", text: "It was a new experience for me, too." },
+
+                    { id: "B", text: "No-one made that mistake, luckily." },
+
+                    { id: "A", text: "It turned out to be a small figure of a horse." },
+
+                    { id: "C", text: "That way, everyone made sure they didn’t miss anything." }
+
+                ],
+
+                explain: "Câu trước: 'found a stone with a strange shape' (tìm thấy hòn đá hình thù lạ). Đáp án A giải thích hình thù đó là gì: 'figure of a horse' (tượng con ngựa).",
+
+                transQ: "Khoảng trống (5) cần điền gì?",
+
+                transA: "A: Hóa ra đó là một bức tượng nhỏ hình con ngựa.",
+
+                vocab: "Turn out (hóa ra là), Figure (tượng/hình dáng)."
+
+            }
+
+        ];
+
+
+
+        let score = 0;
+
+        let answeredCount = 0;
+
+        let timerInterval;
+
+        let timeRemaining = 600; // 10 minutes
+
+        let isPaused = false;
+
+
+
+        // --- INIT ---
+
+        window.onload = function() {
+
+            renderQuiz();
+
+            startTimer();
+
+        };
+
+
+
+        function renderQuiz() {
+
+            const container = document.getElementById('quiz-container');
+
+            let html = '';
+
+            
+
+            quizData.forEach((q, index) => {
+
+                html += `
+
+                <div class="question-card" id="card-${q.id}">
+
+                    <div class="q-header">
+
+                        <span class="badge">Câu ${index + 1}</span>
+
+                        <span>Chọn câu phù hợp điền vào ô trống <strong>${q.gap}</strong>:</span>
+
+                    </div>
+
+                    
+
+                    <div class="options-grid" id="options-${q.id}">
+
+                        ${q.options.map(opt => `
+
+                            <div class="option-btn" onclick="checkAnswer(${q.id}, '${opt.id}', '${q.correct}', this)">
+
+                                <strong>${opt.id}.</strong> ${opt.text}
+
+                            </div>
+
+                        `).join('')}
+
+                    </div>
+
+
+
+                    <div class="feedback-panel" id="feedback-${q.id}">
+
+                        <div class="action-buttons">
+
+                            <button class="action-btn btn-explain" onclick="showContent(${q.id}, 'explain')">👩‍🏫 Giải thích</button>
+
+                            <button class="action-btn btn-trans" onclick="showContent(${q.id}, 'trans')">📝 Dịch nghĩa</button>
+
+                            <button class="action-btn btn-vocab" onclick="showContent(${q.id}, 'vocab')">📚 Từ vựng</button>
+
+                        </div>
+
+                        <div class="feedback-content" id="content-${q.id}">
+
+                            <em>Bấm vào các nút trên để xem chi tiết nha!</em>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                `;
+
+            });
+
+
+
+            html += `<button class="submit-all-btn" onclick="finishQuiz()">NỘP BÀI & XEM ĐIỂM</button>`;
+
+            container.innerHTML = html;
+
+        }
+
+
+
+        // --- LOGIC ---
+
+        function checkAnswer(qId, selectedId, correctId, btnElement) {
+
+            const card = document.getElementById(`card-${qId}`);
+
+            const feedback = document.getElementById(`feedback-${qId}`);
+
+            const optionsDiv = document.getElementById(`options-${qId}`);
+
+            const allOpts = optionsDiv.querySelectorAll('.option-btn');
+
+
+
+            // Disable further clicks
+
+            allOpts.forEach(btn => btn.classList.add('disabled'));
+
+
+
+            if (selectedId === correctId) {
+
+                // CORRECT
+
+                btnElement.classList.add('correct');
+
+                playSound('correct');
+
+                score++;
+
+                fireConfetti(btnElement);
+
+                // Mở feedback ngay định dạng "Giải thích"
+
+                feedback.style.display = 'block';
+
+                showContent(qId, 'explain');
+
+            } else {
+
+                // WRONG
+
+                btnElement.classList.add('wrong');
+
+                playSound('wrong');
+
+                // Highlight correct one
+
+                allOpts.forEach(btn => {
+
+                    if(btn.innerText.startsWith(correctId + '.')) {
+
+                        btn.classList.add('correct');
+
+                    }
+
+                });
+
+                feedback.style.display = 'block';
+
+                showContent(qId, 'explain');
+
+            }
+
+            answeredCount++;
+
+        }
+
+
+
+        function showContent(qId, type) {
+
+            const contentDiv = document.getElementById(`content-${qId}`);
+
+            const qData = quizData.find(q => q.id === qId);
+
+            
+
+            let html = '';
+
+            if (type === 'explain') {
+
+                html = `<p><span class="teacher-avatar">👩‍🏫</span> <strong>Ms. Chí Nên giải thích:</strong><br>${qData.explain}</p>`;
+
+            } else if (type === 'trans') {
+
+                html = `<p><strong>Dịch câu hỏi:</strong> ${qData.transQ}<br><br><strong>Dịch đáp án đúng:</strong> ${qData.transA}</p>`;
+
+            } else if (type === 'vocab') {
+
+                html = `<p><strong>Từ vựng hay:</strong> ${qData.vocab}</p>`;
+
+            }
+
+            contentDiv.innerHTML = html;
+
+        }
+
+
+
+        function toggleTrans(id) {
+
+            const el = document.getElementById(id);
+
+            if (el.style.display === 'block') {
+
+                el.style.display = 'none';
+
+            } else {
+
+                el.style.display = 'block';
+
+            }
+
+        }
+
+
+
+        // --- TIMER ---
+
+        function startTimer() {
+
+            timerInterval = setInterval(() => {
+
+                if (!isPaused) {
+
+                    timeRemaining--;
+
+                    updateTimerDisplay();
+
+                    if (timeRemaining <= 0) {
+
+                        clearInterval(timerInterval);
+
+                        alert("Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục, nhưng hãy nhớ luyện tập tốc độ nhé.");
+
+                    }
+
+                }
+
+            }, 1000);
+
+        }
+
+
+
+        function toggleTimer() {
+
+            isPaused = !isPaused;
+
+            const btn = document.querySelector('.timer-controls');
+
+            btn.innerText = isPaused ? '▶️' : '⏯️';
+
+        }
+
+
+
+        function updateTimerDisplay() {
+
+            const minutes = Math.floor(timeRemaining / 60);
+
+            const seconds = timeRemaining % 60;
+
+            document.getElementById('timer').innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+        }
+
+
+
+        // --- FINISH ---
+
+        function finishQuiz() {
+
+            const modal = document.getElementById('scoreModal');
+
+            const scoreText = document.getElementById('finalScore');
+
+            const msg = document.getElementById('finalMessage');
+
+            const sub = document.getElementById('finalSubMessage');
+
+            
+
+            scoreText.innerText = `${score}/5`;
+
+            
+
+            if (score === 5) {
+
+                msg.innerText = "Tuyệt vời! Thiên tài khảo cổ học! 🏺";
+
+                sub.innerText = "Bạn đã hiểu rất sâu bài đọc. Xuất sắc!";
+
+                playSound('win');
+
+                fireConfettiGlobal();
+
+            } else if (score >= 3) {
+
+                msg.innerText = "Làm tốt lắm! 👍";
+
+                sub.innerText = "Bạn nắm khá vững nội dung, chỉ cần cẩn thận hơn chút xíu thôi.";
+
+            } else {
+
+                msg.innerText = "Cố lên nhé! 💪";
+
+                sub.innerText = "Đừng nản lòng, hãy xem lại phần giải thích chi tiết để hiểu rõ hơn nha.";
+
+            }
+
+
+
+            modal.style.display = 'flex';
+
+        }
+
+
+
+        // --- CONFETTI EFFECT (Simple Implementation) ---
+
+        function fireConfetti(element) {
+
+            const rect = element.getBoundingClientRect();
+
+            const x = (rect.left + rect.width / 2) / window.innerWidth;
+
+            const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+            // Simple logic placeholder: In a real complex lib we'd use canvas. 
+
+            // For single file simplicity, we rely on the global confetti below.
+
+        }
+
+
+
+        function fireConfettiGlobal() {
+
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
+
+            const canvas = document.getElementById('confetti');
+
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = window.innerWidth;
+
+            canvas.height = window.innerHeight;
+
+
+
+            let particles = [];
+
+            for(let i=0; i<100; i++) {
+
+                particles.push({
+
+                    x: Math.random() * canvas.width,
+
+                    y: Math.random() * canvas.height - canvas.height,
+
+                    vx: Math.random() * 4 - 2,
+
+                    vy: Math.random() * 4 + 2,
+
+                    color: colors[Math.floor(Math.random() * colors.length)]
+
+                });
+
+            }
+
+
+
+            function animate() {
+
+                ctx.clearRect(0,0,canvas.width, canvas.height);
+
+                particles.forEach(p => {
+
+                    p.x += p.vx;
+
+                    p.y += p.vy;
+
+                    ctx.fillStyle = p.color;
+
+                    ctx.fillRect(p.x, p.y, 5, 5);
+
+                    if(p.y > canvas.height) p.y = -10;
+
+                });
+
+                requestAnimationFrame(animate);
+
+            }
+
+            animate();
+
+            setTimeout(() => { canvas.width=0; }, 3000);
+
+        }
+
+    </script>
+
+</body>
+
 </html>

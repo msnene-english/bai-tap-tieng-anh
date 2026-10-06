@@ -1,942 +1,1883 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Quiz - Gamification</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        /* CSS BIẾN ĐỔI MÀU SẮC & PHONG CÁCH GAMIFICATION */
-        :root {
-            --primary: #00D26A; /* Correct Green */
-            --danger: #FF4757; /* Wrong Red */
-            --bg-ocean-1: #0a192f;
-            --bg-ocean-2: #112240;
-            --bg-ocean-3: #233554;
-            --bg-ocean-4: #00bcd4;
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --text-color: #2d3436;
-        }
-
-        * {
-            box-sizing: border-box;
-            font-family: 'Nunito', sans-serif;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            /* Animated Deep Ocean Gradient */
-            background: linear-gradient(135deg, var(--bg-ocean-1), var(--bg-ocean-2), var(--bg-ocean-3), var(--bg-ocean-4));
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            position: relative;
-            overflow-x: hidden;
-            color: var(--text-color);
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Lớp họa tiết lơ lửng: Tôm, cua, cá, bạch tuộc, bong bóng */
-        .ocean-patterns {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            background-image: 
-                url("data:image/svg+xml,%3Csvg width='300' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='20' y='50' font-size='30'%3E🐠%3C/text%3E%3Ctext x='150' y='100' font-size='40'%3E🦀%3C/text%3E%3Ctext x='60' y='200' font-size='35'%3E🦐%3C/text%3E%3Ctext x='220' y='250' font-size='30'%3E🐙%3C/text%3E%3Ctext x='120' y='160' font-size='30'%3E🐡%3C/text%3E%3Ccircle cx='80' cy='40' r='4' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='90' cy='20' r='6' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='200' cy='180' r='5' fill='%23fff' opacity='0.5'/%3E%3C/svg%3E");
-            opacity: 0.2; /* Độ mờ vừa phải để hòa quyện với đại dương */
-            animation: floatUp 40s linear infinite; /* Chuyển động chậm rãi tự nhiên */
-        }
-
-        @keyframes floatUp {
-            from { background-position: 0 1000px, 0 1000px; }
-            to { background-position: 0 0, 0 0; }
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 30px 15px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .teacher-tag {
-            text-align: right;
-            color: #fff;
-            font-size: 0.9rem;
-            opacity: 0.8;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 900;
-            margin: 0;
-            color: #00FFD1; /* Neon cyan */
-        }
-
-        .exercise-block {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border: 4px solid #fff;
-        }
-
-        .exercise-title {
-            font-size: 1.5rem;
-            color: #8854C0;
-            font-weight: 900;
-            margin-top: 0;
-            margin-bottom: 20px;
-            border-bottom: 3px dashed #FDCB6E;
-            padding-bottom: 10px;
-        }
-
-        .word-bank {
-            background: #FDCB6E;
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            box-shadow: 0 4px 0 #e1b15c;
-        }
-
-        .word-badge {
-            background: #fff;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 700;
-            color: #e67e22;
-            box-shadow: 0 3px 0 #d35400;
-        }
-
-        .question-row {
-            margin-bottom: 25px;
-            font-size: 1.15rem;
-            line-height: 1.8;
-            padding: 15px;
-            border-radius: 15px;
-            background: #f8f9fc;
-            border: 2px solid #e2e8f0;
-            transition: all 0.3s ease;
-        }
-
-        .question-row:hover {
-            border-color: #00C9A7;
-            transform: translateY(-2px);
-        }
-
-        .q-number {
-            font-weight: 900;
-            color: #3498db;
-            margin-right: 5px;
-        }
-
-        /* Dropdown style (Ex 4) */
-        select.gamified-select {
-            appearance: none;
-            background: #fff;
-            border: 3px solid #00C9A7;
-            padding: 8px 30px 8px 15px;
-            font-size: 1.08rem;
-            font-weight: 700;
-            border-radius: 15px;
-            color: #2d3436;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #00A388;
-            transition: all 0.2s;
-            outline: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300C9A7%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 10px top 50%;
-            background-size: 12px auto;
-        }
-
-        select.gamified-select:hover { transform: scale(1.05); }
-
-        /* Input style (Ex 5) */
-        input.gamified-input {
-            border: 3px solid #8854C0;
-            padding: 8px 15px;
-            font-size: 1.08rem;
-            font-weight: 700;
-            border-radius: 15px;
-            color: #8854C0;
-            outline: none;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-            width: 150px;
-            text-align: center;
-        }
-        
-        .check-btn {
-            background: #8854C0;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 15px;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #5f3a87;
-            margin-left: 10px;
-            transition: all 0.2s;
-        }
-        .check-btn:hover { transform: scale(1.05); }
-        .check-btn:active { transform: translateY(4px); box-shadow: none; }
-
-        /* Binary Choice style (Ex 8) */
-        .binary-btn {
-            background: #fff;
-            border: 3px solid #3498db;
-            color: #3498db;
-            padding: 8px 20px;
-            font-size: 1.08rem;
-            font-weight: 700;
-            border-radius: 20px;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #2980b9;
-            margin: 0 5px;
-            transition: all 0.2s;
-        }
-        .binary-btn:hover { background: #e0f2fe; transform: scale(1.05); }
-
-        /* Status Colors */
-        .correct-ans {
-            background-color: var(--primary) !important;
-            color: white !important;
-            border-color: #00a855 !important;
-            box-shadow: 0 4px 0 #008f48 !important;
-            pointer-events: none;
-        }
-        .wrong-ans {
-            background-color: var(--danger) !important;
-            color: white !important;
-            border-color: #d63031 !important;
-            box-shadow: 0 4px 0 #b33939 !important;
-        }
-
-        /* Shake Animation */
-        .shake {
-            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-2px, 0, 0); }
-            20%, 80% { transform: translate3d(4px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
-            40%, 60% { transform: translate3d(6px, 0, 0); }
-        }
-
-        /* Explanation Box */
-        .explanation-box {
-            display: none;
-            margin-top: 15px;
-            background: #fff8e1;
-            border-left: 5px solid #ffb300;
-            padding: 15px 20px;
-            border-radius: 0 15px 15px 0;
-            font-size: 1rem;
-            color: #3e2723;
-            animation: slideDown 0.3s ease-out;
-            line-height: 1.6;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .expl-title {
-            font-weight: 900;
-            color: #e65100;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .expl-step {
-            margin-bottom: 8px;
-        }
-        .expl-step strong { color: #1565c0; }
-
-        /* Confetti Container */
-        #confetti-container {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 9999;
-        }
-        .confetti-piece {
-            position: absolute;
-            width: 10px; height: 20px;
-            background-color: #f00;
-            animation: fall linear forwards;
-        }
-        @keyframes fall {
-            to { transform: translateY(100vh) rotate(720deg); }
-        }
-
-        /* Submit Section */
-        .submit-section {
-            text-align: center;
-            margin-top: 40px;
-            padding-bottom: 50px;
-        }
-        .btn-submit {
-            background: linear-gradient(to right, #FF416C, #FF4B2B);
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 900;
-            padding: 15px 50px;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            box-shadow: 0 8px 0 #c0392b, 0 15px 20px rgba(0,0,0,0.3);
-            transition: all 0.2s;
-            text-transform: uppercase;
-        }
-        .btn-submit:hover { transform: scale(1.05); }
-        .btn-submit:active { transform: translateY(8px); box-shadow: 0 0 0 #c0392b; }
-
-        /* Popup Score */
-        .score-popup {
-            display: none;
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            text-align: center;
-            z-index: 10000;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            border: 5px solid #00D26A;
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes popIn {
-            0% { transform: translate(-50%, -50%) scale(0); }
-            100% { transform: translate(-50%, -50%) scale(1); }
-        }
-        .score-popup h2 { font-size: 2.5rem; margin: 0 0 10px 0; color: #00D26A; }
-        .score-popup p { font-size: 1.5rem; font-weight: bold; color: #2d3436; }
-        .overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 9999;
-        }
-
-    </style>
-</head>
-<body>
-
-    <div class="ocean-patterns"></div>
-
-    <div class="container">
-        <div class="teacher-tag">📝 Created by: Ms MS Chí Nên</div>
-        
-        <div class="header">
-            <h1>🌊 English Gamified Quiz 🌊</h1>
-            <p>Hoàn thành thử thách để khám phá đại dương kiến thức!</p>
-        </div>
-
-        <div class="exercise-block">
-            <h2 class="exercise-title">🎯 Exercise 4. Complete interesting facts about English-speaking countries.</h2>
-            <div class="word-bank">
-                <div class="word-badge">the USA</div>
-                <div class="word-badge">Canadian</div>
-                <div class="word-badge">New Zealand</div>
-                <div class="word-badge">50 states</div>
-                <div class="word-badge">Australia</div>
-                <div class="word-badge">Washington, D.C</div>
-                <div class="word-badge">Wales</div>
-                <div class="word-badge">Canada</div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">1.</span> 
-                <select class="gamified-select" onchange="checkSelect(this, 'Canada', 'ex4_1')">
-                    <option value="">-- Choose --</option>
-                    <option value="the USA">the USA</option>
-                    <option value="Canadian">Canadian</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="50 states">50 states</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Washington, D.C">Washington, D.C</option>
-                    <option value="Wales">Wales</option>
-                    <option value="Canada">Canada</option>
-                </select>
-                is the second largest nation in area in the world - made up of 10 provinces and 3 territories.
-                <div class="explanation-box" id="ex4_1">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> [Canada] là quốc gia lớn thứ hai trên thế giới về diện tích - bao gồm 10 tỉnh và 3 vùng lãnh thổ.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Chỗ trống cần điền tên một quốc gia. Từ khóa "second largest nation" (quốc gia lớn thứ hai thế giới) và "10 provinces and 3 territories" (10 tỉnh và 3 vùng lãnh thổ) là dữ kiện địa lý đặc trưng của <strong>Canada</strong>.</div>
-                    <div class="expl-step"><strong>3. Vì sao chọn Canada?</strong> Các đáp án khác như Australia, the USA hay New Zealand không khớp với dữ kiện diện tích và số lượng tỉnh/vùng lãnh thổ này. Canada là đáp án duy nhất đúng.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">2.</span> 
-                <select class="gamified-select" onchange="checkSelect(this, 'Australia', 'ex4_2')">
-                    <option value="">-- Choose --</option>
-                    <option value="the USA">the USA</option>
-                    <option value="Canadian">Canadian</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="50 states">50 states</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Washington, D.C">Washington, D.C</option>
-                    <option value="Wales">Wales</option>
-                    <option value="Canada">Canada</option>
-                </select>
-                is also a continent with a range of different landscapes, including urban areas, mountain ranges, deserts and rain forests.
-                <div class="explanation-box" id="ex4_2">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> [Australia] cũng là một lục địa với nhiều cảnh quan khác nhau, bao gồm khu vực đô thị, dãy núi, sa mạc và rừng mưa.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Từ khóa quan trọng nhất là "continent" (lục địa). Trong số các nước nói tiếng Anh được cho, chỉ có <strong>Australia</strong> (nước Úc) vừa là một quốc gia độc lập, vừa được coi là một lục địa.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">3.</span> Annually, the National Eisteddfod festival of 
-                <select class="gamified-select" onchange="checkSelect(this, 'Wales', 'ex4_3')">
-                    <option value="">-- Choose --</option>
-                    <option value="the USA">the USA</option>
-                    <option value="Canadian">Canadian</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="50 states">50 states</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Washington, D.C">Washington, D.C</option>
-                    <option value="Wales">Wales</option>
-                    <option value="Canada">Canada</option>
-                </select>
-                - a country of the UK and in the west of England – takes place for eight days at the start of August.
-                <div class="explanation-box" id="ex4_3">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Hàng năm, lễ hội Eisteddfod Quốc gia của [Wales - xứ Wales] - một quốc gia thuộc Vương quốc Anh và ở phía tây nước Anh - diễn ra trong tám ngày vào đầu tháng Tám.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Phần chú thích "a country of the UK and in the west of England" (một quốc gia thuộc Vương quốc Anh nằm ở phía tây nước Anh) chính là định nghĩa vị trí địa lý của <strong>Wales</strong> (Xứ Wales).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">4.</span> The Statue of Liberty has welcomed over 12 million immigrants entering 
-                <select class="gamified-select" onchange="checkSelect(this, 'the USA', 'ex4_4')">
-                    <option value="">-- Choose --</option>
-                    <option value="the USA">the USA</option>
-                    <option value="Canadian">Canadian</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="50 states">50 states</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Washington, D.C">Washington, D.C</option>
-                    <option value="Wales">Wales</option>
-                    <option value="Canada">Canada</option>
-                </select>
-                through New York Harbor since 1900.
-                <div class="explanation-box" id="ex4_4">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tượng Nữ thần Tự do đã chào đón hơn 12 triệu người nhập cư vào [nước Mỹ] qua cảng New York kể từ năm 1900.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Từ khóa "Statue of Liberty" (Tượng Nữ thần Tự do) và "New York Harbor" (cảng New York) chỉ đích danh <strong>the USA</strong> (Hợp chủng quốc Hoa Kỳ / Nước Mỹ).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">5.</span> Each of 
-                <select class="gamified-select" onchange="checkSelect(this, '50 states', 'ex4_5')">
-                    <option value="">-- Choose --</option>
-                    <option value="the USA">the USA</option>
-                    <option value="Canadian">Canadian</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="50 states">50 states</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Washington, D.C">Washington, D.C</option>
-                    <option value="Wales">Wales</option>
-                    <option value="Canada">Canada</option>
-                </select>
-                in the USA has adopted an official state flower so far.
-                <div class="explanation-box" id="ex4_5">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Mỗi [tiểu bang trong số 50 bang] ở Mỹ cho đến nay đều đã chọn một loài hoa biểu tượng chính thức cho bang mình.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Cấu trúc "Each of + Danh từ số nhiều" (Mỗi ... trong số...). Đề bài nhắc đến "...in the USA" (ở Mỹ). Nước Mỹ có 50 bang, do đó cụm <strong>50 states</strong> là đáp án hợp lý nhất.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">6.</span> Since 1965, the maple tree with the leaves has become the most well-known 
-                <select class="gamified-select" onchange="checkSelect(this, 'Canadian', 'ex4_6')">
-                    <option value="">-- Choose --</option>
-                    <option value="the USA">the USA</option>
-                    <option value="Canadian">Canadian</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="50 states">50 states</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Washington, D.C">Washington, D.C</option>
-                    <option value="Wales">Wales</option>
-                    <option value="Canada">Canada</option>
-                </select>
-                symbol.
-                <div class="explanation-box" id="ex4_6">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Kể từ năm 1965, cây phong với những chiếc lá đã trở thành biểu tượng nổi tiếng nhất của [người Canada / nước Canada].</div>
-                    <div class="expl-step"><strong>2. Phân tích ngữ pháp:</strong> Chỗ trống đứng trước danh từ "symbol" (biểu tượng) nên cần một Tính từ. Trong các từ được cho, <strong>Canadian</strong> (thuộc về Canada) đóng vai trò làm tính từ bổ nghĩa cho "symbol". ("Canadian symbol" = biểu tượng của Canada). Lá phong (maple leaf) cũng là hình ảnh trên quốc kỳ nước này.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">7.</span> At present, the National Cherry Blossom Festival is occurring in 
-                <select class="gamified-select" onchange="checkSelect(this, 'Washington, D.C', 'ex4_7')">
-                    <option value="">-- Choose --</option>
-                    <option value="the USA">the USA</option>
-                    <option value="Canadian">Canadian</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="50 states">50 states</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Washington, D.C">Washington, D.C</option>
-                    <option value="Wales">Wales</option>
-                    <option value="Canada">Canada</option>
-                </select>
-                to celebrate spring’s arrival.
-                <div class="explanation-box" id="ex4_7">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Hiện tại, Lễ hội Hoa anh đào Quốc gia đang diễn ra tại [Washington, D.C] để chào mừng mùa xuân đến.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Lễ hội Hoa anh đào Quốc gia (National Cherry Blossom Festival) là một sự kiện văn hóa lớn được tổ chức hàng năm vào mùa xuân tại thủ đô <strong>Washington, D.C</strong> của Mỹ.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">8.</span> Maori has been recognized as an official language of 
-                <select class="gamified-select" onchange="checkSelect(this, 'New Zealand', 'ex4_8')">
-                    <option value="">-- Choose --</option>
-                    <option value="the USA">the USA</option>
-                    <option value="Canadian">Canadian</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="50 states">50 states</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Washington, D.C">Washington, D.C</option>
-                    <option value="Wales">Wales</option>
-                    <option value="Canada">Canada</option>
-                </select>
-                since the Maori Language Act of 1987.
-                <div class="explanation-box" id="ex4_8">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tiếng Maori đã được công nhận là ngôn ngữ chính thức của [New Zealand] kể từ Đạo luật Ngôn ngữ Maori năm 1987.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Người Maori là những cư dân bản địa của <strong>New Zealand</strong>. Đạo luật công nhận tiếng Maori là ngôn ngữ chính thức (cùng với tiếng Anh và ngôn ngữ ký hiệu) được ban hành ở quốc gia này.</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="exercise-block">
-            <h2 class="exercise-title">🎯 Exercise 5. Put the words in brackets into the correct form.</h2>
-            <p><em>Gõ dạng đúng của từ trong ngoặc vào ô trống và bấm nút <strong>Check</strong> nhé!</em></p>
-
-            <div class="question-row">
-                <span class="q-number">1.</span> I like going to England to study English because I can practice English with 
-                <input type="text" class="gamified-input" id="in5_1" placeholder="(nation)"> speakers. 
-                <button class="check-btn" onclick="checkInput('in5_1', 'native', 'ex5_1')">Check</button>
-                <div class="explanation-box" id="ex5_1">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tôi thích đến nước Anh để học tiếng Anh vì tôi có thể luyện tập với người [bản xứ].</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "speakers" (người nói) cần một Tính từ bổ nghĩa. <br> Từ gốc: <strong>nation</strong> (n - quốc gia). <br> Chuyển sang tính từ phù hợp ngữ cảnh: <strong>native</strong> (bản xứ). Cụm "native speakers" = người bản xứ.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">2.</span> English is an 
-                <input type="text" class="gamified-input" id="in5_2" placeholder="(officially)"> language in this country. 
-                <button class="check-btn" onclick="checkInput('in5_2', 'official', 'ex5_2')">Check</button>
-                <div class="explanation-box" id="ex5_2">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tiếng Anh là một ngôn ngữ [chính thức] ở quốc gia này.</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng giữa mạo từ "an" và danh từ "language" cần một Tính từ. <br> Từ gốc: <strong>officially</strong> (adv - một cách chính thức). <br> Chuyển sang tính từ: <strong>official</strong> (adj - chính thức).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">3.</span> People in the south of my country speak the language with 
-                <input type="text" class="gamified-input" id="in5_3" placeholder="(differ)"> accent. 
-                <button class="check-btn" onclick="checkInput('in5_3', 'different', 'ex5_3')">Check</button>
-                <div class="explanation-box" id="ex5_3">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Người dân ở miền nam nước tôi nói ngôn ngữ này với giọng điệu [khác biệt].</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "accent" (giọng điệu) cần một Tính từ. <br> Từ gốc: <strong>differ</strong> (v - khác nhau). <br> Chuyển sang tính từ: <strong>different</strong> (adj - khác biệt).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">4.</span> Last summer holiday, my family went to Da Nang and Hoi An. We had a 
-                <input type="text" class="gamified-input" id="in5_4" placeholder="(wonder)"> time there. 
-                <button class="check-btn" onclick="checkInput('in5_4', 'wonderful', 'ex5_4')">Check</button>
-                <div class="explanation-box" id="ex5_4">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Kỳ nghỉ hè năm ngoái, gia đình tôi đi Đà Nẵng và Hội An. Chúng tôi đã có một thời gian [tuyệt vời] ở đó.</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "time" cần một Tính từ. <br> Từ gốc: <strong>wonder</strong> (n/v - kỳ quan/tự hỏi). <br> Chuyển sang tính từ: <strong>wonderful</strong> (adj - tuyệt vời).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">5.</span> Why has she improved her English a lot? – Ah, she’s just come back from an English 
-                <input type="text" class="gamified-input" id="in5_5" placeholder="(speak)"> country. 
-                <button class="check-btn" onclick="checkInput('in5_5', 'speaking', 'ex5_5')">Check</button>
-                <div class="explanation-box" id="ex5_5">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tại sao cô ấy cải thiện tiếng Anh nhiều thế? - À, cô ấy vừa mới trở về từ một nước [nói] tiếng Anh.</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đây là dạng Tính từ ghép (Compound adjective) cấu tạo bởi "Noun + V-ing" bổ nghĩa cho danh từ "country". <br> English-<strong>speaking</strong> country (quốc gia nói tiếng Anh).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">6.</span> The wheel in the Indian flag is a 
-                <input type="text" class="gamified-input" id="in5_6" placeholder="(symbolize)"> of peace. 
-                <button class="check-btn" onclick="checkInput('in5_6', 'symbol', 'ex5_6')">Check</button>
-                <div class="explanation-box" id="ex5_6">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Bánh xe trên lá cờ Ấn Độ là một [biểu tượng] của hòa bình.</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng sau mạo từ "a" và trước giới từ "of" cần một Danh từ đếm được số ít. <br> Từ gốc: <strong>symbolize</strong> (v - tượng trưng). <br> Chuyển sang danh từ: <strong>symbol</strong> (n - biểu tượng).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">7.</span> Mr. Graham was 
-                <input type="text" class="gamified-input" id="in5_7" placeholder="(amazement)"> to find 46 ancient gold coins inside the pot. 
-                <button class="check-btn" onclick="checkInput('in5_7', 'amazed', 'ex5_7')">Check</button>
-                <div class="explanation-box" id="ex5_7">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Ông Graham đã rất [kinh ngạc] khi tìm thấy 46 đồng tiền vàng cổ bên trong cái hũ.</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng sau to be "was" miêu tả cảm xúc của người (Mr. Graham) cần một Tính từ đuôi -ed. <br> Từ gốc: <strong>amazement</strong> (n - sự kinh ngạc). <br> Chuyển sang tính từ: <strong>amazed</strong> (adj - kinh ngạc).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">8.</span> 
-                <input type="text" class="gamified-input" id="in5_8" placeholder="(Canadian)"> is a big country in North America. 
-                <button class="check-btn" onclick="checkInput('in5_8', 'Canada', 'ex5_8')">Check</button>
-                <div class="explanation-box" id="ex5_8">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> [Canada] là một quốc gia lớn ở Bắc Mỹ.</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Chỗ trống đứng đầu câu làm Chủ ngữ, tiếp theo là "is a big country", nên cần một Danh từ chỉ tên quốc gia. <br> Từ gốc: <strong>Canadian</strong> (adj/n - thuộc về Canada / người Canada). <br> Chuyển sang tên nước: <strong>Canada</strong>.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">9.</span> Australia has its own 
-                <input type="text" class="gamified-input" id="in5_9" placeholder="(culture)"> identity, which is very different from that of Britain. 
-                <button class="check-btn" onclick="checkInput('in5_9', 'cultural', 'ex5_9')">Check</button>
-                <div class="explanation-box" id="ex5_9">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Úc có bản sắc [văn hóa] riêng, thứ rất khác biệt so với bản sắc của nước Anh.</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "identity" (bản sắc) cần một Tính từ. <br> Từ gốc: <strong>culture</strong> (n - văn hóa). <br> Chuyển sang tính từ: <strong>cultural</strong> (adj - thuộc về văn hóa). Cụm "cultural identity" = bản sắc văn hóa.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">10.</span> How many 
-                <input type="text" class="gamified-input" id="in5_10" placeholder="(history)"> buildings are damaged by fire each year? 
-                <button class="check-btn" onclick="checkInput('in5_10', 'historic', 'ex5_10')">Check</button>
-                <div class="explanation-box" id="ex5_10">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Có bao nhiêu tòa nhà [mang tính lịch sử] bị hư hại do hỏa hoạn mỗi năm?</div>
-                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "buildings" (các tòa nhà) cần một Tính từ. <br> Từ gốc: <strong>history</strong> (n - lịch sử). <br> Chuyển sang tính từ phù hợp mang nghĩa "có ý nghĩa quan trọng về mặt lịch sử": <strong>historic</strong> (historic buildings). <em>Lưu ý phân biệt với historical (thuộc về quá khứ).</em></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="exercise-block">
-            <h2 class="exercise-title">🎯 Exercise 8. Circle the correct word to complete the sentences.</h2>
-            <p><em>Click vào một trong hai đáp án màu xanh (Blue) để chọn nhé!</em></p>
-
-            <div class="question-row">
-                <span class="q-number">1.</span> New Zealand is a small island 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_1')">city</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_1')">country</button> 
-                in the Pacific Ocean.
-                <div class="explanation-box" id="ex8_1">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> New Zealand là một [quốc gia] đảo nhỏ ở Thái Bình Dương.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> New Zealand là một <strong>country</strong> (quốc gia), không phải <strong>city</strong> (thành phố). Do đó chọn 'country' là chính xác về mặt địa lý.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">2.</span> Buckingham Palace is a tourist 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_2')">attraction</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_2')">education</button> 
-                in the UK.
-                <div class="explanation-box" id="ex8_2">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Cung điện Buckingham là một [điểm thu hút] khách du lịch ở Vương quốc Anh.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Ta có cụm danh từ cố định (collocation): <strong>tourist attraction</strong> = điểm thu hút khách du lịch. <br> - <strong>education</strong>: giáo dục (Sai hoàn toàn về nghĩa).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">3.</span> She often sits on the beach watching the 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_3')">sunrise</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_3')">sunset</button> 
-                in the early morning.
-                <div class="explanation-box" id="ex8_3">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Cô ấy thường ngồi trên bãi biển ngắm [bình minh] vào lúc sáng sớm.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Dấu hiệu nhận biết là cụm "in the early morning" (vào lúc sáng sớm). Vào buổi sáng thì ta ngắm <strong>sunrise</strong> (bình minh). <br> - <strong>sunset</strong>: hoàng hôn (chỉ xảy ra vào buổi chiều muộn/tối).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">4.</span> They speak Vietnamese, but their 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_4')">native</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_4')">nation</button> 
-                language is Korean.
-                <div class="explanation-box" id="ex8_4">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Họ nói tiếng Việt, nhưng ngôn ngữ [mẹ đẻ] của họ là tiếng Hàn Quốc.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Cụm từ cố định: <strong>native language</strong> (ngôn ngữ mẹ đẻ / ngôn ngữ bản xứ). <br> - <strong>nation</strong> (n - quốc gia) không đứng trước language để tạo thành cụm nghĩa đúng được.</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">5.</span> The Statue of Liberty is in New York city of 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_5')">the UK</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_5')">the USA</button>.
-                <div class="explanation-box" id="ex8_5">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tượng Nữ thần Tự do nằm ở thành phố New York của [nước Mỹ].</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Thành phố New York nằm ở <strong>the USA</strong> (Mỹ). <br> - <strong>the UK</strong> là Vương quốc Anh (sai về địa lý).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">6.</span> Could you show me Australia on this 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_6')">map</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_6')">nature</button>?
-                <div class="explanation-box" id="ex8_6">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Bạn có thể chỉ cho tôi nước Úc trên tấm [bản đồ] này được không?</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Động từ "show... on..." (chỉ cho xem trên...). Chỉ vị trí địa lý thì phải chỉ trên <strong>map</strong> (bản đồ). <br> - <strong>nature</strong>: thiên nhiên (sai ngữ cảnh).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">7.</span> The London Eye is a great attraction in 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_7')">Paris</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_7')">London</button>.
-                <div class="explanation-box" id="ex8_7">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Vòng quay London Eye là một điểm thu hút tuyệt vời ở [London].</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Ngay trong tên của công trình đã có chữ "London Eye" -> nó nằm ở thủ đô <strong>London</strong> (Anh). <br> - <strong>Paris</strong> là thủ đô của Pháp (sai địa lý).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">8.</span> Although 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_8')">penguins</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_8')">kangaroos</button> 
-                can’t fly, they can use their wings for swimming.
-                <div class="explanation-box" id="ex8_8">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> Mặc dù [chim cánh cụt] không thể bay, chúng có thể sử dụng đôi cánh của mình để bơi.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Từ khóa "wings for swimming" (cánh để bơi). Chim cánh cụt (<strong>penguins</strong>) là loài chim dùng cánh để bơi. <br> - <strong>kangaroos</strong>: chuột túi (chúng có tay chân để nhảy, không có cánh và không dùng để bơi).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">9.</span> Big Ben 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_9')">Tower</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_9')">Bridge</button> 
-                is at the north end of the Palace of Westminster in London, England.
-                <div class="explanation-box" id="ex8_9">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> [Tháp] Big Ben nằm ở cực bắc của Cung điện Westminster ở London, Anh.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Big Ben là tên của một cái tháp đồng hồ, nên đi kèm với <strong>Tower</strong> (tháp). <br> - <strong>Bridge</strong>: cây cầu (London có Tower Bridge nhưng Big Ben không phải là tên cầu).</div>
-                </div>
-            </div>
-
-            <div class="question-row">
-                <span class="q-number">10.</span> New Jersey is one of the 
-                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_10')">states</button> / 
-                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_10')">capitals</button> 
-                in the USA.
-                <div class="explanation-box" id="ex8_10">
-                    <div class="expl-title">💡 Giải thích chi tiết:</div>
-                    <div class="expl-step"><strong>1. Dịch câu:</strong> New Jersey là một trong những [tiểu bang] ở nước Mỹ.</div>
-                    <div class="expl-step"><strong>2. Phân tích:</strong> Nước Mỹ được tạo thành từ 50 <strong>states</strong> (tiểu bang), và New Jersey là một trong số đó. <br> - <strong>capitals</strong>: thủ đô (Mỹ chỉ có 1 thủ đô là Washington D.C).</div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="submit-section">
-            <button class="btn-submit" onclick="finishQuiz()">Nộp bài hoàn thành</button>
-        </div>
-    </div>
-
-    <div class="overlay" id="overlay"></div>
-    <div class="score-popup" id="score-popup">
-        <h2>🎉 TỔNG KẾT 🎉</h2>
-        <p id="final-score-text">Bạn đã làm rất xuất sắc!</p>
-        <button class="btn-submit" onclick="closePopup()" style="font-size: 1rem; padding: 10px 30px; margin-top: 15px;">Chơi lại nhé</button>
-    </div>
-
-    <div id="confetti-container"></div>
-
-    <script>
-        // WEB AUDIO API - TẠO ÂM THANH KHÔNG CẦN LINK NGOÀI
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playDing() {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
-        }
-
-        function playBuzz() {
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-            gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-
-        // TẠO HIỆU ỨNG PHÁO GIẤY (CONFETTI)
-        function shootConfetti() {
-            const container = document.getElementById('confetti-container');
-            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff'];
-            for (let i = 0; i < 50; i++) {
-                const conf = document.createElement('div');
-                conf.classList.add('confetti-piece');
-                conf.style.left = Math.random() * 100 + 'vw';
-                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                conf.style.animationDuration = (Math.random() * 2 + 1) + 's';
-                conf.style.opacity = Math.random();
-                container.appendChild(conf);
-                setTimeout(() => conf.remove(), 3000);
-            }
-        }
-
-        let totalCorrect = 0;
-        let answeredQuestions = new Set(); // Chống cộng dồn điểm
-
-        // LOGIC CHẤM ĐIỂM
-        function handleResult(isCorrect, element, explId, questionId) {
-            document.getElementById(explId).style.display = 'block'; // Luôn hiện giải thích
-            
-            if (isCorrect) {
-                playDing();
-                shootConfetti();
-                element.classList.remove('wrong-ans');
-                element.classList.add('correct-ans');
-                if(!answeredQuestions.has(questionId)) {
-                    totalCorrect++;
-                    answeredQuestions.add(questionId);
-                }
-            } else {
-                playBuzz();
-                element.classList.add('wrong-ans');
-                element.classList.remove('shake');
-                void element.offsetWidth; // trigger reflow
-                element.classList.add('shake');
-                // Loại điểm nếu làm sai sau khi đã làm đúng (tùy chọn)
-                if(answeredQuestions.has(questionId)) {
-                    totalCorrect--;
-                    answeredQuestions.delete(questionId);
-                }
-            }
-        }
-
-        // Exercise 4 Check
-        function checkSelect(selectElem, correctVal, explId) {
-            if(selectElem.value === "") return;
-            const isCorrect = selectElem.value === correctVal;
-            handleResult(isCorrect, selectElem, explId, explId);
-            if(isCorrect) selectElem.disabled = true; // Khóa lại nếu đúng
-        }
-
-        // Exercise 5 Check
-        function checkInput(inputId, correctVal, explId) {
-            const inputElem = document.getElementById(inputId);
-            const userVal = inputElem.value.trim().toLowerCase();
-            if(userVal === "") return;
-            const isCorrect = userVal === correctVal.toLowerCase();
-            handleResult(isCorrect, inputElem, explId, explId);
-            if(isCorrect) {
-                inputElem.disabled = true;
-                inputElem.nextElementSibling.disabled = true;
-            }
-        }
-
-        // Exercise 8 Check
-        function checkBinary(btnElem, status, explId) {
-            const isCorrect = status === 'correct';
-            // Disable nút kia trong cùng câu
-            const siblings = btnElem.parentElement.querySelectorAll('.binary-btn');
-            siblings.forEach(b => b.classList.remove('wrong-ans', 'correct-ans'));
-            
-            handleResult(isCorrect, btnElem, explId, explId);
-            if(isCorrect) {
-                siblings.forEach(b => b.style.pointerEvents = 'none'); // Khóa lại nếu đúng
-            }
-        }
-
-        // Final Submit
-        function finishQuiz() {
-            const totalQ = 28; // 8 (ex4) + 10 (ex5) + 10 (ex8)
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById('score-popup').style.display = 'block';
-            document.getElementById('final-score-text').innerHTML = 
-                `Tuyệt vời!<br>Bạn đã đúng <span>${totalCorrect}</span> / ${totalQ} câu! 🚀`;
-            shootConfetti();
-            shootConfetti();
-            playDing();
-        }
-
-        function closePopup() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('score-popup').style.display = 'none';
-        }
-
-        // Tự động xáo trộn option trong Ex 4 (Gamification Element)
-        document.addEventListener("DOMContentLoaded", function() {
-            const selects = document.querySelectorAll('select.gamified-select');
-            selects.forEach(sel => {
-                const options = Array.from(sel.options).slice(1); // Bỏ qua option "-- Choose --"
-                // Thuật toán Fisher-Yates shuffle
-                for (let i = options.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    sel.insertBefore(options[j], options[i]);
-                }
-            });
-        });
-    </script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>English Quiz - Gamification</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+
+        /* CSS BIẾN ĐỔI MÀU SẮC & PHONG CÁCH GAMIFICATION */
+
+        :root {
+
+            --primary: #00D26A; /* Correct Green */
+
+            --danger: #FF4757; /* Wrong Red */
+
+            --bg-ocean-1: #0a192f;
+
+            --bg-ocean-2: #112240;
+
+            --bg-ocean-3: #233554;
+
+            --bg-ocean-4: #00bcd4;
+
+            --card-bg: rgba(255, 255, 255, 0.95);
+
+            --text-color: #2d3436;
+
+        }
+
+
+
+        * {
+
+            box-sizing: border-box;
+
+            font-family: 'Nunito', sans-serif;
+
+        }
+
+
+
+        body {
+
+            margin: 0;
+
+            padding: 0;
+
+            min-height: 100vh;
+
+            /* Animated Deep Ocean Gradient */
+
+            background: linear-gradient(135deg, var(--bg-ocean-1), var(--bg-ocean-2), var(--bg-ocean-3), var(--bg-ocean-4));
+
+            background-size: 400% 400%;
+
+            animation: gradientBG 15s ease infinite;
+
+            position: relative;
+
+            overflow-x: hidden;
+
+            color: var(--text-color);
+
+        }
+
+
+
+        @keyframes gradientBG {
+
+            0% { background-position: 0% 50%; }
+
+            50% { background-position: 100% 50%; }
+
+            100% { background-position: 0% 50%; }
+
+        }
+
+
+
+        /* Lớp họa tiết lơ lửng: Tôm, cua, cá, bạch tuộc, bong bóng */
+
+        .ocean-patterns {
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            pointer-events: none;
+
+            z-index: 0;
+
+            background-image: 
+
+                url("data:image/svg+xml,%3Csvg width='300' height='300' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='20' y='50' font-size='30'%3E🐠%3C/text%3E%3Ctext x='150' y='100' font-size='40'%3E🦀%3C/text%3E%3Ctext x='60' y='200' font-size='35'%3E🦐%3C/text%3E%3Ctext x='220' y='250' font-size='30'%3E🐙%3C/text%3E%3Ctext x='120' y='160' font-size='30'%3E🐡%3C/text%3E%3Ccircle cx='80' cy='40' r='4' fill='%23fff' opacity='0.6'/%3E%3Ccircle cx='90' cy='20' r='6' fill='%23fff' opacity='0.4'/%3E%3Ccircle cx='200' cy='180' r='5' fill='%23fff' opacity='0.5'/%3E%3C/svg%3E");
+
+            opacity: 0.2; /* Độ mờ vừa phải để hòa quyện với đại dương */
+
+            animation: floatUp 40s linear infinite; /* Chuyển động chậm rãi tự nhiên */
+
+        }
+
+
+
+        @keyframes floatUp {
+
+            from { background-position: 0 1000px, 0 1000px; }
+
+            to { background-position: 0 0, 0 0; }
+
+        }
+
+
+
+        .container {
+
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            padding: 30px 15px;
+
+            position: relative;
+
+            z-index: 1;
+
+        }
+
+
+
+        .teacher-tag {
+
+            text-align: right;
+
+            color: #fff;
+
+            font-size: 0.9rem;
+
+            opacity: 0.8;
+
+            margin-bottom: 20px;
+
+            font-weight: bold;
+
+        }
+
+
+
+        .header {
+
+            text-align: center;
+
+            color: white;
+
+            margin-bottom: 40px;
+
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+
+        }
+
+
+
+        .header h1 {
+
+            font-size: 2.5rem;
+
+            font-weight: 900;
+
+            margin: 0;
+
+            color: #00FFD1; /* Neon cyan */
+
+        }
+
+
+
+        .exercise-block {
+
+            background: var(--card-bg);
+
+            border-radius: 20px;
+
+            padding: 30px;
+
+            margin-bottom: 40px;
+
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+            border: 4px solid #fff;
+
+        }
+
+
+
+        .exercise-title {
+
+            font-size: 1.5rem;
+
+            color: #8854C0;
+
+            font-weight: 900;
+
+            margin-top: 0;
+
+            margin-bottom: 20px;
+
+            border-bottom: 3px dashed #FDCB6E;
+
+            padding-bottom: 10px;
+
+        }
+
+
+
+        .word-bank {
+
+            background: #FDCB6E;
+
+            padding: 15px;
+
+            border-radius: 15px;
+
+            margin-bottom: 25px;
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 10px;
+
+            justify-content: center;
+
+            box-shadow: 0 4px 0 #e1b15c;
+
+        }
+
+
+
+        .word-badge {
+
+            background: #fff;
+
+            padding: 8px 15px;
+
+            border-radius: 20px;
+
+            font-weight: 700;
+
+            color: #e67e22;
+
+            box-shadow: 0 3px 0 #d35400;
+
+        }
+
+
+
+        .question-row {
+
+            margin-bottom: 25px;
+
+            font-size: 1.15rem;
+
+            line-height: 1.8;
+
+            padding: 15px;
+
+            border-radius: 15px;
+
+            background: #f8f9fc;
+
+            border: 2px solid #e2e8f0;
+
+            transition: all 0.3s ease;
+
+        }
+
+
+
+        .question-row:hover {
+
+            border-color: #00C9A7;
+
+            transform: translateY(-2px);
+
+        }
+
+
+
+        .q-number {
+
+            font-weight: 900;
+
+            color: #3498db;
+
+            margin-right: 5px;
+
+        }
+
+
+
+        /* Dropdown style (Ex 4) */
+
+        select.gamified-select {
+
+            appearance: none;
+
+            background: #fff;
+
+            border: 3px solid #00C9A7;
+
+            padding: 8px 30px 8px 15px;
+
+            font-size: 1.08rem;
+
+            font-weight: 700;
+
+            border-radius: 15px;
+
+            color: #2d3436;
+
+            cursor: pointer;
+
+            box-shadow: 0 4px 0 #00A388;
+
+            transition: all 0.2s;
+
+            outline: none;
+
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300C9A7%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+
+            background-repeat: no-repeat;
+
+            background-position: right 10px top 50%;
+
+            background-size: 12px auto;
+
+        }
+
+
+
+        select.gamified-select:hover { transform: scale(1.05); }
+
+
+
+        /* Input style (Ex 5) */
+
+        input.gamified-input {
+
+            border: 3px solid #8854C0;
+
+            padding: 8px 15px;
+
+            font-size: 1.08rem;
+
+            font-weight: 700;
+
+            border-radius: 15px;
+
+            color: #8854C0;
+
+            outline: none;
+
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+
+            width: 150px;
+
+            text-align: center;
+
+        }
+
+        
+
+        .check-btn {
+
+            background: #8854C0;
+
+            color: white;
+
+            border: none;
+
+            padding: 8px 15px;
+
+            font-size: 1rem;
+
+            font-weight: bold;
+
+            border-radius: 15px;
+
+            cursor: pointer;
+
+            box-shadow: 0 4px 0 #5f3a87;
+
+            margin-left: 10px;
+
+            transition: all 0.2s;
+
+        }
+
+        .check-btn:hover { transform: scale(1.05); }
+
+        .check-btn:active { transform: translateY(4px); box-shadow: none; }
+
+
+
+        /* Binary Choice style (Ex 8) */
+
+        .binary-btn {
+
+            background: #fff;
+
+            border: 3px solid #3498db;
+
+            color: #3498db;
+
+            padding: 8px 20px;
+
+            font-size: 1.08rem;
+
+            font-weight: 700;
+
+            border-radius: 20px;
+
+            cursor: pointer;
+
+            box-shadow: 0 4px 0 #2980b9;
+
+            margin: 0 5px;
+
+            transition: all 0.2s;
+
+        }
+
+        .binary-btn:hover { background: #e0f2fe; transform: scale(1.05); }
+
+
+
+        /* Status Colors */
+
+        .correct-ans {
+
+            background-color: var(--primary) !important;
+
+            color: white !important;
+
+            border-color: #00a855 !important;
+
+            box-shadow: 0 4px 0 #008f48 !important;
+
+            pointer-events: none;
+
+        }
+
+        .wrong-ans {
+
+            background-color: var(--danger) !important;
+
+            color: white !important;
+
+            border-color: #d63031 !important;
+
+            box-shadow: 0 4px 0 #b33939 !important;
+
+        }
+
+
+
+        /* Shake Animation */
+
+        .shake {
+
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+
+        }
+
+        @keyframes shake {
+
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+
+        }
+
+
+
+        /* Explanation Box */
+
+        .explanation-box {
+
+            display: none;
+
+            margin-top: 15px;
+
+            background: #fff8e1;
+
+            border-left: 5px solid #ffb300;
+
+            padding: 15px 20px;
+
+            border-radius: 0 15px 15px 0;
+
+            font-size: 1rem;
+
+            color: #3e2723;
+
+            animation: slideDown 0.3s ease-out;
+
+            line-height: 1.6;
+
+        }
+
+
+
+        @keyframes slideDown {
+
+            from { opacity: 0; transform: translateY(-10px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+        }
+
+
+
+        .expl-title {
+
+            font-weight: 900;
+
+            color: #e65100;
+
+            margin-bottom: 8px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+        }
+
+
+
+        .expl-step {
+
+            margin-bottom: 8px;
+
+        }
+
+        .expl-step strong { color: #1565c0; }
+
+
+
+        /* Confetti Container */
+
+        #confetti-container {
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            pointer-events: none; z-index: 9999;
+
+        }
+
+        .confetti-piece {
+
+            position: absolute;
+
+            width: 10px; height: 20px;
+
+            background-color: #f00;
+
+            animation: fall linear forwards;
+
+        }
+
+        @keyframes fall {
+
+            to { transform: translateY(100vh) rotate(720deg); }
+
+        }
+
+
+
+        /* Submit Section */
+
+        .submit-section {
+
+            text-align: center;
+
+            margin-top: 40px;
+
+            padding-bottom: 50px;
+
+        }
+
+        .btn-submit {
+
+            background: linear-gradient(to right, #FF416C, #FF4B2B);
+
+            color: white;
+
+            font-size: 1.5rem;
+
+            font-weight: 900;
+
+            padding: 15px 50px;
+
+            border: none;
+
+            border-radius: 30px;
+
+            cursor: pointer;
+
+            box-shadow: 0 8px 0 #c0392b, 0 15px 20px rgba(0,0,0,0.3);
+
+            transition: all 0.2s;
+
+            text-transform: uppercase;
+
+        }
+
+        .btn-submit:hover { transform: scale(1.05); }
+
+        .btn-submit:active { transform: translateY(8px); box-shadow: 0 0 0 #c0392b; }
+
+
+
+        /* Popup Score */
+
+        .score-popup {
+
+            display: none;
+
+            position: fixed;
+
+            top: 50%; left: 50%;
+
+            transform: translate(-50%, -50%);
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 30px;
+
+            text-align: center;
+
+            z-index: 10000;
+
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+
+            border: 5px solid #00D26A;
+
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+        @keyframes popIn {
+
+            0% { transform: translate(-50%, -50%) scale(0); }
+
+            100% { transform: translate(-50%, -50%) scale(1); }
+
+        }
+
+        .score-popup h2 { font-size: 2.5rem; margin: 0 0 10px 0; color: #00D26A; }
+
+        .score-popup p { font-size: 1.5rem; font-weight: bold; color: #2d3436; }
+
+        .overlay {
+
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.7); z-index: 9999;
+
+        }
+
+
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <div class="ocean-patterns"></div>
+
+
+
+    <div class="container">
+
+        <div class="teacher-tag">📝 Created by: Ms. Chí Nên</div>
+
+        
+
+        <div class="header">
+
+            <h1>🌊 English Gamified Quiz 🌊</h1>
+
+            <p>Hoàn thành thử thách để khám phá đại dương kiến thức!</p>
+
+        </div>
+
+
+
+        <div class="exercise-block">
+
+            <h2 class="exercise-title">🎯 Exercise 4. Complete interesting facts about English-speaking countries.</h2>
+
+            <div class="word-bank">
+
+                <div class="word-badge">the USA</div>
+
+                <div class="word-badge">Canadian</div>
+
+                <div class="word-badge">New Zealand</div>
+
+                <div class="word-badge">50 states</div>
+
+                <div class="word-badge">Australia</div>
+
+                <div class="word-badge">Washington, D.C</div>
+
+                <div class="word-badge">Wales</div>
+
+                <div class="word-badge">Canada</div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">1.</span> 
+
+                <select class="gamified-select" onchange="checkSelect(this, 'Canada', 'ex4_1')">
+
+                    <option value="">-- Choose --</option>
+
+                    <option value="the USA">the USA</option>
+
+                    <option value="Canadian">Canadian</option>
+
+                    <option value="New Zealand">New Zealand</option>
+
+                    <option value="50 states">50 states</option>
+
+                    <option value="Australia">Australia</option>
+
+                    <option value="Washington, D.C">Washington, D.C</option>
+
+                    <option value="Wales">Wales</option>
+
+                    <option value="Canada">Canada</option>
+
+                </select>
+
+                is the second largest nation in area in the world - made up of 10 provinces and 3 territories.
+
+                <div class="explanation-box" id="ex4_1">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> [Canada] là quốc gia lớn thứ hai trên thế giới về diện tích - bao gồm 10 tỉnh và 3 vùng lãnh thổ.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Chỗ trống cần điền tên một quốc gia. Từ khóa "second largest nation" (quốc gia lớn thứ hai thế giới) và "10 provinces and 3 territories" (10 tỉnh và 3 vùng lãnh thổ) là dữ kiện địa lý đặc trưng của <strong>Canada</strong>.</div>
+
+                    <div class="expl-step"><strong>3. Vì sao chọn Canada?</strong> Các đáp án khác như Australia, the USA hay New Zealand không khớp với dữ kiện diện tích và số lượng tỉnh/vùng lãnh thổ này. Canada là đáp án duy nhất đúng.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">2.</span> 
+
+                <select class="gamified-select" onchange="checkSelect(this, 'Australia', 'ex4_2')">
+
+                    <option value="">-- Choose --</option>
+
+                    <option value="the USA">the USA</option>
+
+                    <option value="Canadian">Canadian</option>
+
+                    <option value="New Zealand">New Zealand</option>
+
+                    <option value="50 states">50 states</option>
+
+                    <option value="Australia">Australia</option>
+
+                    <option value="Washington, D.C">Washington, D.C</option>
+
+                    <option value="Wales">Wales</option>
+
+                    <option value="Canada">Canada</option>
+
+                </select>
+
+                is also a continent with a range of different landscapes, including urban areas, mountain ranges, deserts and rain forests.
+
+                <div class="explanation-box" id="ex4_2">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> [Australia] cũng là một lục địa với nhiều cảnh quan khác nhau, bao gồm khu vực đô thị, dãy núi, sa mạc và rừng mưa.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Từ khóa quan trọng nhất là "continent" (lục địa). Trong số các nước nói tiếng Anh được cho, chỉ có <strong>Australia</strong> (nước Úc) vừa là một quốc gia độc lập, vừa được coi là một lục địa.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">3.</span> Annually, the National Eisteddfod festival of 
+
+                <select class="gamified-select" onchange="checkSelect(this, 'Wales', 'ex4_3')">
+
+                    <option value="">-- Choose --</option>
+
+                    <option value="the USA">the USA</option>
+
+                    <option value="Canadian">Canadian</option>
+
+                    <option value="New Zealand">New Zealand</option>
+
+                    <option value="50 states">50 states</option>
+
+                    <option value="Australia">Australia</option>
+
+                    <option value="Washington, D.C">Washington, D.C</option>
+
+                    <option value="Wales">Wales</option>
+
+                    <option value="Canada">Canada</option>
+
+                </select>
+
+                - a country of the UK and in the west of England – takes place for eight days at the start of August.
+
+                <div class="explanation-box" id="ex4_3">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Hàng năm, lễ hội Eisteddfod Quốc gia của [Wales - xứ Wales] - một quốc gia thuộc Vương quốc Anh và ở phía tây nước Anh - diễn ra trong tám ngày vào đầu tháng Tám.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Phần chú thích "a country of the UK and in the west of England" (một quốc gia thuộc Vương quốc Anh nằm ở phía tây nước Anh) chính là định nghĩa vị trí địa lý của <strong>Wales</strong> (Xứ Wales).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">4.</span> The Statue of Liberty has welcomed over 12 million immigrants entering 
+
+                <select class="gamified-select" onchange="checkSelect(this, 'the USA', 'ex4_4')">
+
+                    <option value="">-- Choose --</option>
+
+                    <option value="the USA">the USA</option>
+
+                    <option value="Canadian">Canadian</option>
+
+                    <option value="New Zealand">New Zealand</option>
+
+                    <option value="50 states">50 states</option>
+
+                    <option value="Australia">Australia</option>
+
+                    <option value="Washington, D.C">Washington, D.C</option>
+
+                    <option value="Wales">Wales</option>
+
+                    <option value="Canada">Canada</option>
+
+                </select>
+
+                through New York Harbor since 1900.
+
+                <div class="explanation-box" id="ex4_4">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tượng Nữ thần Tự do đã chào đón hơn 12 triệu người nhập cư vào [nước Mỹ] qua cảng New York kể từ năm 1900.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Từ khóa "Statue of Liberty" (Tượng Nữ thần Tự do) và "New York Harbor" (cảng New York) chỉ đích danh <strong>the USA</strong> (Hợp chủng quốc Hoa Kỳ / Nước Mỹ).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">5.</span> Each of 
+
+                <select class="gamified-select" onchange="checkSelect(this, '50 states', 'ex4_5')">
+
+                    <option value="">-- Choose --</option>
+
+                    <option value="the USA">the USA</option>
+
+                    <option value="Canadian">Canadian</option>
+
+                    <option value="New Zealand">New Zealand</option>
+
+                    <option value="50 states">50 states</option>
+
+                    <option value="Australia">Australia</option>
+
+                    <option value="Washington, D.C">Washington, D.C</option>
+
+                    <option value="Wales">Wales</option>
+
+                    <option value="Canada">Canada</option>
+
+                </select>
+
+                in the USA has adopted an official state flower so far.
+
+                <div class="explanation-box" id="ex4_5">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Mỗi [tiểu bang trong số 50 bang] ở Mỹ cho đến nay đều đã chọn một loài hoa biểu tượng chính thức cho bang mình.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Cấu trúc "Each of + Danh từ số nhiều" (Mỗi ... trong số...). Đề bài nhắc đến "...in the USA" (ở Mỹ). Nước Mỹ có 50 bang, do đó cụm <strong>50 states</strong> là đáp án hợp lý nhất.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">6.</span> Since 1965, the maple tree with the leaves has become the most well-known 
+
+                <select class="gamified-select" onchange="checkSelect(this, 'Canadian', 'ex4_6')">
+
+                    <option value="">-- Choose --</option>
+
+                    <option value="the USA">the USA</option>
+
+                    <option value="Canadian">Canadian</option>
+
+                    <option value="New Zealand">New Zealand</option>
+
+                    <option value="50 states">50 states</option>
+
+                    <option value="Australia">Australia</option>
+
+                    <option value="Washington, D.C">Washington, D.C</option>
+
+                    <option value="Wales">Wales</option>
+
+                    <option value="Canada">Canada</option>
+
+                </select>
+
+                symbol.
+
+                <div class="explanation-box" id="ex4_6">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Kể từ năm 1965, cây phong với những chiếc lá đã trở thành biểu tượng nổi tiếng nhất của [người Canada / nước Canada].</div>
+
+                    <div class="expl-step"><strong>2. Phân tích ngữ pháp:</strong> Chỗ trống đứng trước danh từ "symbol" (biểu tượng) nên cần một Tính từ. Trong các từ được cho, <strong>Canadian</strong> (thuộc về Canada) đóng vai trò làm tính từ bổ nghĩa cho "symbol". ("Canadian symbol" = biểu tượng của Canada). Lá phong (maple leaf) cũng là hình ảnh trên quốc kỳ nước này.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">7.</span> At present, the National Cherry Blossom Festival is occurring in 
+
+                <select class="gamified-select" onchange="checkSelect(this, 'Washington, D.C', 'ex4_7')">
+
+                    <option value="">-- Choose --</option>
+
+                    <option value="the USA">the USA</option>
+
+                    <option value="Canadian">Canadian</option>
+
+                    <option value="New Zealand">New Zealand</option>
+
+                    <option value="50 states">50 states</option>
+
+                    <option value="Australia">Australia</option>
+
+                    <option value="Washington, D.C">Washington, D.C</option>
+
+                    <option value="Wales">Wales</option>
+
+                    <option value="Canada">Canada</option>
+
+                </select>
+
+                to celebrate spring’s arrival.
+
+                <div class="explanation-box" id="ex4_7">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Hiện tại, Lễ hội Hoa anh đào Quốc gia đang diễn ra tại [Washington, D.C] để chào mừng mùa xuân đến.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Lễ hội Hoa anh đào Quốc gia (National Cherry Blossom Festival) là một sự kiện văn hóa lớn được tổ chức hàng năm vào mùa xuân tại thủ đô <strong>Washington, D.C</strong> của Mỹ.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">8.</span> Maori has been recognized as an official language of 
+
+                <select class="gamified-select" onchange="checkSelect(this, 'New Zealand', 'ex4_8')">
+
+                    <option value="">-- Choose --</option>
+
+                    <option value="the USA">the USA</option>
+
+                    <option value="Canadian">Canadian</option>
+
+                    <option value="New Zealand">New Zealand</option>
+
+                    <option value="50 states">50 states</option>
+
+                    <option value="Australia">Australia</option>
+
+                    <option value="Washington, D.C">Washington, D.C</option>
+
+                    <option value="Wales">Wales</option>
+
+                    <option value="Canada">Canada</option>
+
+                </select>
+
+                since the Maori Language Act of 1987.
+
+                <div class="explanation-box" id="ex4_8">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tiếng Maori đã được công nhận là ngôn ngữ chính thức của [New Zealand] kể từ Đạo luật Ngôn ngữ Maori năm 1987.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Người Maori là những cư dân bản địa của <strong>New Zealand</strong>. Đạo luật công nhận tiếng Maori là ngôn ngữ chính thức (cùng với tiếng Anh và ngôn ngữ ký hiệu) được ban hành ở quốc gia này.</div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="exercise-block">
+
+            <h2 class="exercise-title">🎯 Exercise 5. Put the words in brackets into the correct form.</h2>
+
+            <p><em>Gõ dạng đúng của từ trong ngoặc vào ô trống và bấm nút <strong>Check</strong> nhé!</em></p>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">1.</span> I like going to England to study English because I can practice English with 
+
+                <input type="text" class="gamified-input" id="in5_1" placeholder="(nation)"> speakers. 
+
+                <button class="check-btn" onclick="checkInput('in5_1', 'native', 'ex5_1')">Check</button>
+
+                <div class="explanation-box" id="ex5_1">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tôi thích đến nước Anh để học tiếng Anh vì tôi có thể luyện tập với người [bản xứ].</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "speakers" (người nói) cần một Tính từ bổ nghĩa. <br> Từ gốc: <strong>nation</strong> (n - quốc gia). <br> Chuyển sang tính từ phù hợp ngữ cảnh: <strong>native</strong> (bản xứ). Cụm "native speakers" = người bản xứ.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">2.</span> English is an 
+
+                <input type="text" class="gamified-input" id="in5_2" placeholder="(officially)"> language in this country. 
+
+                <button class="check-btn" onclick="checkInput('in5_2', 'official', 'ex5_2')">Check</button>
+
+                <div class="explanation-box" id="ex5_2">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tiếng Anh là một ngôn ngữ [chính thức] ở quốc gia này.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng giữa mạo từ "an" và danh từ "language" cần một Tính từ. <br> Từ gốc: <strong>officially</strong> (adv - một cách chính thức). <br> Chuyển sang tính từ: <strong>official</strong> (adj - chính thức).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">3.</span> People in the south of my country speak the language with 
+
+                <input type="text" class="gamified-input" id="in5_3" placeholder="(differ)"> accent. 
+
+                <button class="check-btn" onclick="checkInput('in5_3', 'different', 'ex5_3')">Check</button>
+
+                <div class="explanation-box" id="ex5_3">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Người dân ở miền nam nước tôi nói ngôn ngữ này với giọng điệu [khác biệt].</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "accent" (giọng điệu) cần một Tính từ. <br> Từ gốc: <strong>differ</strong> (v - khác nhau). <br> Chuyển sang tính từ: <strong>different</strong> (adj - khác biệt).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">4.</span> Last summer holiday, my family went to Da Nang and Hoi An. We had a 
+
+                <input type="text" class="gamified-input" id="in5_4" placeholder="(wonder)"> time there. 
+
+                <button class="check-btn" onclick="checkInput('in5_4', 'wonderful', 'ex5_4')">Check</button>
+
+                <div class="explanation-box" id="ex5_4">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Kỳ nghỉ hè năm ngoái, gia đình tôi đi Đà Nẵng và Hội An. Chúng tôi đã có một thời gian [tuyệt vời] ở đó.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "time" cần một Tính từ. <br> Từ gốc: <strong>wonder</strong> (n/v - kỳ quan/tự hỏi). <br> Chuyển sang tính từ: <strong>wonderful</strong> (adj - tuyệt vời).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">5.</span> Why has she improved her English a lot? – Ah, she’s just come back from an English 
+
+                <input type="text" class="gamified-input" id="in5_5" placeholder="(speak)"> country. 
+
+                <button class="check-btn" onclick="checkInput('in5_5', 'speaking', 'ex5_5')">Check</button>
+
+                <div class="explanation-box" id="ex5_5">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tại sao cô ấy cải thiện tiếng Anh nhiều thế? - À, cô ấy vừa mới trở về từ một nước [nói] tiếng Anh.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đây là dạng Tính từ ghép (Compound adjective) cấu tạo bởi "Noun + V-ing" bổ nghĩa cho danh từ "country". <br> English-<strong>speaking</strong> country (quốc gia nói tiếng Anh).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">6.</span> The wheel in the Indian flag is a 
+
+                <input type="text" class="gamified-input" id="in5_6" placeholder="(symbolize)"> of peace. 
+
+                <button class="check-btn" onclick="checkInput('in5_6', 'symbol', 'ex5_6')">Check</button>
+
+                <div class="explanation-box" id="ex5_6">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Bánh xe trên lá cờ Ấn Độ là một [biểu tượng] của hòa bình.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng sau mạo từ "a" và trước giới từ "of" cần một Danh từ đếm được số ít. <br> Từ gốc: <strong>symbolize</strong> (v - tượng trưng). <br> Chuyển sang danh từ: <strong>symbol</strong> (n - biểu tượng).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">7.</span> Mr. Graham was 
+
+                <input type="text" class="gamified-input" id="in5_7" placeholder="(amazement)"> to find 46 ancient gold coins inside the pot. 
+
+                <button class="check-btn" onclick="checkInput('in5_7', 'amazed', 'ex5_7')">Check</button>
+
+                <div class="explanation-box" id="ex5_7">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Ông Graham đã rất [kinh ngạc] khi tìm thấy 46 đồng tiền vàng cổ bên trong cái hũ.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng sau to be "was" miêu tả cảm xúc của người (Mr. Graham) cần một Tính từ đuôi -ed. <br> Từ gốc: <strong>amazement</strong> (n - sự kinh ngạc). <br> Chuyển sang tính từ: <strong>amazed</strong> (adj - kinh ngạc).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">8.</span> 
+
+                <input type="text" class="gamified-input" id="in5_8" placeholder="(Canadian)"> is a big country in North America. 
+
+                <button class="check-btn" onclick="checkInput('in5_8', 'Canada', 'ex5_8')">Check</button>
+
+                <div class="explanation-box" id="ex5_8">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> [Canada] là một quốc gia lớn ở Bắc Mỹ.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Chỗ trống đứng đầu câu làm Chủ ngữ, tiếp theo là "is a big country", nên cần một Danh từ chỉ tên quốc gia. <br> Từ gốc: <strong>Canadian</strong> (adj/n - thuộc về Canada / người Canada). <br> Chuyển sang tên nước: <strong>Canada</strong>.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">9.</span> Australia has its own 
+
+                <input type="text" class="gamified-input" id="in5_9" placeholder="(culture)"> identity, which is very different from that of Britain. 
+
+                <button class="check-btn" onclick="checkInput('in5_9', 'cultural', 'ex5_9')">Check</button>
+
+                <div class="explanation-box" id="ex5_9">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Úc có bản sắc [văn hóa] riêng, thứ rất khác biệt so với bản sắc của nước Anh.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "identity" (bản sắc) cần một Tính từ. <br> Từ gốc: <strong>culture</strong> (n - văn hóa). <br> Chuyển sang tính từ: <strong>cultural</strong> (adj - thuộc về văn hóa). Cụm "cultural identity" = bản sắc văn hóa.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">10.</span> How many 
+
+                <input type="text" class="gamified-input" id="in5_10" placeholder="(history)"> buildings are damaged by fire each year? 
+
+                <button class="check-btn" onclick="checkInput('in5_10', 'historic', 'ex5_10')">Check</button>
+
+                <div class="explanation-box" id="ex5_10">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Có bao nhiêu tòa nhà [mang tính lịch sử] bị hư hại do hỏa hoạn mỗi năm?</div>
+
+                    <div class="expl-step"><strong>2. Phân tích từ loại:</strong> Đứng trước danh từ "buildings" (các tòa nhà) cần một Tính từ. <br> Từ gốc: <strong>history</strong> (n - lịch sử). <br> Chuyển sang tính từ phù hợp mang nghĩa "có ý nghĩa quan trọng về mặt lịch sử": <strong>historic</strong> (historic buildings). <em>Lưu ý phân biệt với historical (thuộc về quá khứ).</em></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="exercise-block">
+
+            <h2 class="exercise-title">🎯 Exercise 8. Circle the correct word to complete the sentences.</h2>
+
+            <p><em>Click vào một trong hai đáp án màu xanh (Blue) để chọn nhé!</em></p>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">1.</span> New Zealand is a small island 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_1')">city</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_1')">country</button> 
+
+                in the Pacific Ocean.
+
+                <div class="explanation-box" id="ex8_1">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> New Zealand là một [quốc gia] đảo nhỏ ở Thái Bình Dương.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> New Zealand là một <strong>country</strong> (quốc gia), không phải <strong>city</strong> (thành phố). Do đó chọn 'country' là chính xác về mặt địa lý.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">2.</span> Buckingham Palace is a tourist 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_2')">attraction</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_2')">education</button> 
+
+                in the UK.
+
+                <div class="explanation-box" id="ex8_2">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Cung điện Buckingham là một [điểm thu hút] khách du lịch ở Vương quốc Anh.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Ta có cụm danh từ cố định (collocation): <strong>tourist attraction</strong> = điểm thu hút khách du lịch. <br> - <strong>education</strong>: giáo dục (Sai hoàn toàn về nghĩa).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">3.</span> She often sits on the beach watching the 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_3')">sunrise</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_3')">sunset</button> 
+
+                in the early morning.
+
+                <div class="explanation-box" id="ex8_3">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Cô ấy thường ngồi trên bãi biển ngắm [bình minh] vào lúc sáng sớm.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Dấu hiệu nhận biết là cụm "in the early morning" (vào lúc sáng sớm). Vào buổi sáng thì ta ngắm <strong>sunrise</strong> (bình minh). <br> - <strong>sunset</strong>: hoàng hôn (chỉ xảy ra vào buổi chiều muộn/tối).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">4.</span> They speak Vietnamese, but their 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_4')">native</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_4')">nation</button> 
+
+                language is Korean.
+
+                <div class="explanation-box" id="ex8_4">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Họ nói tiếng Việt, nhưng ngôn ngữ [mẹ đẻ] của họ là tiếng Hàn Quốc.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Cụm từ cố định: <strong>native language</strong> (ngôn ngữ mẹ đẻ / ngôn ngữ bản xứ). <br> - <strong>nation</strong> (n - quốc gia) không đứng trước language để tạo thành cụm nghĩa đúng được.</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">5.</span> The Statue of Liberty is in New York city of 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_5')">the UK</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_5')">the USA</button>.
+
+                <div class="explanation-box" id="ex8_5">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Tượng Nữ thần Tự do nằm ở thành phố New York của [nước Mỹ].</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Thành phố New York nằm ở <strong>the USA</strong> (Mỹ). <br> - <strong>the UK</strong> là Vương quốc Anh (sai về địa lý).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">6.</span> Could you show me Australia on this 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_6')">map</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_6')">nature</button>?
+
+                <div class="explanation-box" id="ex8_6">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Bạn có thể chỉ cho tôi nước Úc trên tấm [bản đồ] này được không?</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Động từ "show... on..." (chỉ cho xem trên...). Chỉ vị trí địa lý thì phải chỉ trên <strong>map</strong> (bản đồ). <br> - <strong>nature</strong>: thiên nhiên (sai ngữ cảnh).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">7.</span> The London Eye is a great attraction in 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_7')">Paris</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_7')">London</button>.
+
+                <div class="explanation-box" id="ex8_7">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Vòng quay London Eye là một điểm thu hút tuyệt vời ở [London].</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Ngay trong tên của công trình đã có chữ "London Eye" -> nó nằm ở thủ đô <strong>London</strong> (Anh). <br> - <strong>Paris</strong> là thủ đô của Pháp (sai địa lý).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">8.</span> Although 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_8')">penguins</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_8')">kangaroos</button> 
+
+                can’t fly, they can use their wings for swimming.
+
+                <div class="explanation-box" id="ex8_8">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> Mặc dù [chim cánh cụt] không thể bay, chúng có thể sử dụng đôi cánh của mình để bơi.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Từ khóa "wings for swimming" (cánh để bơi). Chim cánh cụt (<strong>penguins</strong>) là loài chim dùng cánh để bơi. <br> - <strong>kangaroos</strong>: chuột túi (chúng có tay chân để nhảy, không có cánh và không dùng để bơi).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">9.</span> Big Ben 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_9')">Tower</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_9')">Bridge</button> 
+
+                is at the north end of the Palace of Westminster in London, England.
+
+                <div class="explanation-box" id="ex8_9">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> [Tháp] Big Ben nằm ở cực bắc của Cung điện Westminster ở London, Anh.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Big Ben là tên của một cái tháp đồng hồ, nên đi kèm với <strong>Tower</strong> (tháp). <br> - <strong>Bridge</strong>: cây cầu (London có Tower Bridge nhưng Big Ben không phải là tên cầu).</div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="question-row">
+
+                <span class="q-number">10.</span> New Jersey is one of the 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'correct', 'ex8_10')">states</button> / 
+
+                <button class="binary-btn" onclick="checkBinary(this, 'wrong', 'ex8_10')">capitals</button> 
+
+                in the USA.
+
+                <div class="explanation-box" id="ex8_10">
+
+                    <div class="expl-title">💡 Giải thích chi tiết:</div>
+
+                    <div class="expl-step"><strong>1. Dịch câu:</strong> New Jersey là một trong những [tiểu bang] ở nước Mỹ.</div>
+
+                    <div class="expl-step"><strong>2. Phân tích:</strong> Nước Mỹ được tạo thành từ 50 <strong>states</strong> (tiểu bang), và New Jersey là một trong số đó. <br> - <strong>capitals</strong>: thủ đô (Mỹ chỉ có 1 thủ đô là Washington D.C).</div>
+
+                </div>
+
+            </div>
+
+
+
+        </div>
+
+
+
+        <div class="submit-section">
+
+            <button class="btn-submit" onclick="finishQuiz()">Nộp bài hoàn thành</button>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="overlay" id="overlay"></div>
+
+    <div class="score-popup" id="score-popup">
+
+        <h2>🎉 TỔNG KẾT 🎉</h2>
+
+        <p id="final-score-text">Bạn đã làm rất xuất sắc!</p>
+
+        <button class="btn-submit" onclick="closePopup()" style="font-size: 1rem; padding: 10px 30px; margin-top: 15px;">Chơi lại nhé</button>
+
+    </div>
+
+
+
+    <div id="confetti-container"></div>
+
+
+
+    <script>
+
+        // WEB AUDIO API - TẠO ÂM THANH KHÔNG CẦN LINK NGOÀI
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        
+
+        function playDing() {
+
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+
+            const gain = audioCtx.createGain();
+
+            osc.connect(gain);
+
+            gain.connect(audioCtx.destination);
+
+            osc.type = 'sine';
+
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.5);
+
+        }
+
+
+
+        function playBuzz() {
+
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+
+            const gain = audioCtx.createGain();
+
+            osc.connect(gain);
+
+            gain.connect(audioCtx.destination);
+
+            osc.type = 'sawtooth';
+
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.3);
+
+        }
+
+
+
+        // TẠO HIỆU ỨNG PHÁO GIẤY (CONFETTI)
+
+        function shootConfetti() {
+
+            const container = document.getElementById('confetti-container');
+
+            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff'];
+
+            for (let i = 0; i < 50; i++) {
+
+                const conf = document.createElement('div');
+
+                conf.classList.add('confetti-piece');
+
+                conf.style.left = Math.random() * 100 + 'vw';
+
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+                conf.style.animationDuration = (Math.random() * 2 + 1) + 's';
+
+                conf.style.opacity = Math.random();
+
+                container.appendChild(conf);
+
+                setTimeout(() => conf.remove(), 3000);
+
+            }
+
+        }
+
+
+
+        let totalCorrect = 0;
+
+        let answeredQuestions = new Set(); // Chống cộng dồn điểm
+
+
+
+        // LOGIC CHẤM ĐIỂM
+
+        function handleResult(isCorrect, element, explId, questionId) {
+
+            document.getElementById(explId).style.display = 'block'; // Luôn hiện giải thích
+
+            
+
+            if (isCorrect) {
+
+                playDing();
+
+                shootConfetti();
+
+                element.classList.remove('wrong-ans');
+
+                element.classList.add('correct-ans');
+
+                if(!answeredQuestions.has(questionId)) {
+
+                    totalCorrect++;
+
+                    answeredQuestions.add(questionId);
+
+                }
+
+            } else {
+
+                playBuzz();
+
+                element.classList.add('wrong-ans');
+
+                element.classList.remove('shake');
+
+                void element.offsetWidth; // trigger reflow
+
+                element.classList.add('shake');
+
+                // Loại điểm nếu làm sai sau khi đã làm đúng (tùy chọn)
+
+                if(answeredQuestions.has(questionId)) {
+
+                    totalCorrect--;
+
+                    answeredQuestions.delete(questionId);
+
+                }
+
+            }
+
+        }
+
+
+
+        // Exercise 4 Check
+
+        function checkSelect(selectElem, correctVal, explId) {
+
+            if(selectElem.value === "") return;
+
+            const isCorrect = selectElem.value === correctVal;
+
+            handleResult(isCorrect, selectElem, explId, explId);
+
+            if(isCorrect) selectElem.disabled = true; // Khóa lại nếu đúng
+
+        }
+
+
+
+        // Exercise 5 Check
+
+        function checkInput(inputId, correctVal, explId) {
+
+            const inputElem = document.getElementById(inputId);
+
+            const userVal = inputElem.value.trim().toLowerCase();
+
+            if(userVal === "") return;
+
+            const isCorrect = userVal === correctVal.toLowerCase();
+
+            handleResult(isCorrect, inputElem, explId, explId);
+
+            if(isCorrect) {
+
+                inputElem.disabled = true;
+
+                inputElem.nextElementSibling.disabled = true;
+
+            }
+
+        }
+
+
+
+        // Exercise 8 Check
+
+        function checkBinary(btnElem, status, explId) {
+
+            const isCorrect = status === 'correct';
+
+            // Disable nút kia trong cùng câu
+
+            const siblings = btnElem.parentElement.querySelectorAll('.binary-btn');
+
+            siblings.forEach(b => b.classList.remove('wrong-ans', 'correct-ans'));
+
+            
+
+            handleResult(isCorrect, btnElem, explId, explId);
+
+            if(isCorrect) {
+
+                siblings.forEach(b => b.style.pointerEvents = 'none'); // Khóa lại nếu đúng
+
+            }
+
+        }
+
+
+
+        // Final Submit
+
+        function finishQuiz() {
+
+            const totalQ = 28; // 8 (ex4) + 10 (ex5) + 10 (ex8)
+
+            document.getElementById('overlay').style.display = 'block';
+
+            document.getElementById('score-popup').style.display = 'block';
+
+            document.getElementById('final-score-text').innerHTML = 
+
+                `Tuyệt vời!<br>Bạn đã đúng <span>${totalCorrect}</span> / ${totalQ} câu! 🚀`;
+
+            shootConfetti();
+
+            shootConfetti();
+
+            playDing();
+
+        }
+
+
+
+        function closePopup() {
+
+            document.getElementById('overlay').style.display = 'none';
+
+            document.getElementById('score-popup').style.display = 'none';
+
+        }
+
+
+
+        // Tự động xáo trộn option trong Ex 4 (Gamification Element)
+
+        document.addEventListener("DOMContentLoaded", function() {
+
+            const selects = document.querySelectorAll('select.gamified-select');
+
+            selects.forEach(sel => {
+
+                const options = Array.from(sel.options).slice(1); // Bỏ qua option "-- Choose --"
+
+                // Thuật toán Fisher-Yates shuffle
+
+                for (let i = options.length - 1; i > 0; i--) {
+
+                    const j = Math.floor(Math.random() * (i + 1));
+
+                    sel.insertBefore(options[j], options[i]);
+
+                }
+
+            });
+
+        });
+
+    </script>
+
+</body>
+
 </html>

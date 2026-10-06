@@ -1,855 +1,1709 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading Test - Playing Music</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            /* Dynamic Theme: Music & Rock (Pastel Blue, Lavender, Pink) */
-            --primary-bg: #89CFF0; /* Baby Blue */
-            --secondary-bg: #E6E6FA; /* Lavender */
-            --tertiary-bg: #FAD0C4; /* Pastel Pink */
-            
-            --correct-color: #00D26A;
-            --wrong-color: #FF4757;
-            
-            --glass-bg: rgba(255, 255, 255, 0.55);
-            --glass-border: rgba(255, 255, 255, 0.7);
-            --glass-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
-            
-            --text-main: #2d3436;
-            --font-main: 'Nunito', sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: var(--font-main);
-        }
-
-        body {
-            background: linear-gradient(-45deg, var(--primary-bg), var(--secondary-bg), var(--tertiary-bg), #a18cd1);
-            background-size: 400% 400%;
-            animation: gradientMove 15s ease infinite;
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Auto-generated SVG Background Pattern - Theme: Music */
-        .pattern-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ctext x='40' y='70' font-size='40'%3E🎸%3C/text%3E%3Ctext x='180' y='140' font-size='40'%3E🎶%3C/text%3E%3Ctext x='90' y='250' font-size='40'%3E🥁%3C/text%3E%3Ctext x='240' y='50' font-size='30'%3E🌟%3C/text%3E%3C/svg%3E");
-            opacity: 0.35;
-            z-index: 0;
-            animation: floatPattern 50s linear infinite;
-            pointer-events: none;
-        }
-
-        @keyframes floatPattern {
-            from { background-position: 0 0; }
-            to { background-position: -1000px 1000px; }
-        }
-
-        /* Top Control Bar */
-        .top-bar {
-            position: relative;
-            z-index: 10;
-            background: var(--glass-bg);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-bottom: 2px solid var(--glass-border);
-            padding: 12px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--glass-shadow);
-        }
-
-        .header-title {
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: #4834d4;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            background: rgba(255,255,255,0.6);
-            padding: 8px 15px;
-            border-radius: 12px;
-        }
-
-        .timer-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        #timer-display {
-            font-size: 1.6rem;
-            font-weight: 900;
-            color: #d63031;
-            background: #ffeaa7;
-            padding: 6px 20px;
-            border-radius: 15px;
-            box-shadow: 0 5px 0 #fdcb6e;
-            letter-spacing: 2px;
-        }
-
-        .btn {
-            cursor: pointer;
-            border: none;
-            font-weight: 800;
-            border-radius: 18px;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-family: var(--font-main);
-            outline: none;
-        }
-
-        .btn-timer {
-            background: #0984e3;
-            color: white;
-            padding: 12px 25px;
-            font-size: 1.1rem;
-            box-shadow: 0 6px 0 #005691;
-            text-transform: uppercase;
-        }
-
-        .btn-timer:active {
-            transform: translateY(6px);
-            box-shadow: 0 0 0 transparent;
-        }
-
-        /* Split Screen Container */
-        .main-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-            z-index: 10;
-            padding: 25px;
-            gap: 25px;
-        }
-
-        .pane {
-            flex: 1;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 2px solid var(--glass-border);
-            border-radius: 25px;
-            box-shadow: var(--glass-shadow);
-            padding: 35px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 12px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px;}
-        ::-webkit-scrollbar-thumb { background: rgba(108, 92, 231, 0.4); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box;}
-        ::-webkit-scrollbar-thumb:hover { background-color: rgba(108, 92, 231, 0.7); }
-
-        /* Reading Styles */
-        .reading-title {
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: #6c5ce7;
-            margin-bottom: 10px;
-            text-align: center;
-            text-shadow: 2px 2px 0px white;
-        }
-
-        .reading-subtitle {
-            text-align: center; color: #2d3436; font-weight: 700; margin-bottom: 30px;
-            background: rgba(255,255,255,0.7); padding: 10px; border-radius: 15px;
-        }
-
-        .paragraph-box {
-            background: rgba(255,255,255,0.75);
-            padding: 25px;
-            border-radius: 20px;
-            margin-bottom: 25px;
-            border-left: 8px solid #a29bfe;
-            font-size: 1.15rem;
-            line-height: 1.8;
-            color: #2d3436;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        }
-
-        .btn-translate {
-            background: #fdcb6e;
-            color: #2d3436;
-            padding: 10px 18px;
-            font-size: 1rem;
-            margin-top: 15px;
-            box-shadow: 0 5px 0 #e1b12c;
-            display: inline-flex;
-            align-items: center;
-        }
-        .btn-translate:active {
-            transform: translateY(5px);
-            box-shadow: 0 0 0 transparent;
-        }
-
-        .translation-text {
-            display: none;
-            margin-top: 15px;
-            padding: 18px;
-            background: rgba(255, 243, 205, 0.85);
-            border-radius: 15px;
-            color: #b33939;
-            font-size: 1.1rem;
-            line-height: 1.7;
-            border: 2px dashed #f6b93b;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Glossary Table */
-        .glossary-box {
-            margin-top: 40px;
-            background: rgba(255,255,255,0.85);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            border: 2px solid var(--glass-border);
-        }
-        .glossary-box h3 {
-            color: #e84393;
-            margin-bottom: 20px;
-            font-size: 1.6rem;
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 2px solid rgba(0,0,0,0.05);
-            font-size: 1.05rem;
-        }
-        th { 
-            background: linear-gradient(135deg, #fd79a8, #e84393); 
-            color: white; 
-            font-weight: 800;
-        }
-        th:first-child { border-top-left-radius: 15px; }
-        th:last-child { border-top-right-radius: 15px; }
-        td:first-child { font-weight: 800; color: #6c5ce7; font-size: 1.1rem;}
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: rgba(108, 92, 231, 0.05); }
-
-        /* Exercises Styles */
-        .question-card {
-            background: rgba(255,255,255,0.9);
-            border-radius: 25px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 2px solid transparent;
-        }
-        .question-card:hover { 
-            transform: translateY(-5px); 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            border-color: rgba(162, 155, 254, 0.5);
-        }
-
-        .question-text {
-            font-size: 1.15rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            color: #2d3436;
-            line-height: 1.5;
-        }
-
-        .options-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .option-btn {
-            background: white;
-            border: 3px solid #dfe6e9;
-            padding: 18px 20px;
-            font-size: 1.08rem;
-            text-align: left;
-            border-radius: 20px;
-            box-shadow: 0 6px 0 #dfe6e9;
-            display: flex;
-            align-items: center;
-            color: #2d3436;
-        }
-        .option-btn:hover:not(.disabled) {
-            transform: scale(1.02);
-            border-color: #74b9ff;
-            box-shadow: 0 6px 0 #74b9ff;
-            background: #f1f8ff;
-        }
-        .option-btn:active:not(.disabled) {
-            transform: scale(1.02) translateY(6px);
-            box-shadow: 0 0 0 transparent;
-        }
-        .option-btn.correct {
-            background: var(--correct-color);
-            color: white;
-            border-color: #00b894;
-            box-shadow: 0 6px 0 #00b894;
-        }
-        .option-btn.correct .option-label { background: rgba(255,255,255,0.3); color: white;}
-        
-        .option-btn.wrong {
-            background: var(--wrong-color);
-            color: white;
-            border-color: #d63031;
-            box-shadow: 0 6px 0 #d63031;
-        }
-        .option-btn.wrong .option-label { background: rgba(255,255,255,0.3); color: white;}
-        
-        .option-btn.disabled { cursor: not-allowed; opacity: 0.7; transform: none !important;}
-
-        .option-label {
-            background: #f1f2f6;
-            color: #636e72;
-            padding: 8px 15px;
-            border-radius: 12px;
-            margin-right: 18px;
-            font-weight: 900;
-            font-size: 1.1rem;
-            transition: all 0.2s;
-        }
-
-        .explanation-box {
-            display: none;
-            margin-top: 25px;
-            background: #f8efba;
-            padding: 25px;
-            border-radius: 20px;
-            border-left: 8px solid #f39c12;
-            font-size: 1rem;
-            line-height: 1.7;
-            animation: slideDown 0.4s ease-out;
-            color: #2c3e50;
-            box-shadow: inset 0 0 20px rgba(255,255,255,0.5);
-        }
-        .exp-title { font-weight: 900; color: #e67e22; margin-bottom: 15px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;}
-        .exp-evidence { background: #ffeaa7; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: inline-block; margin-bottom: 8px; border: 1px dashed #fdcb6e; color: #d35400;}
-        .exp-vocab { color: #0984e3; font-weight: 800; background: rgba(9, 132, 227, 0.1); padding: 2px 6px; border-radius: 6px;}
-
-        .btn-submit {
-            display: block; width: 100%;
-            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
-            color: white; padding: 25px; font-size: 1.8rem;
-            text-transform: uppercase; box-shadow: 0 10px 0 #4834d4;
-            margin-top: 40px; margin-bottom: 50px;
-            border-radius: 25px; letter-spacing: 2px;
-        }
-        .btn-submit:active { transform: translateY(10px); box-shadow: 0 0 0 transparent; }
-
-        /* Animations */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-12px); }
-            40%, 80% { transform: translateX(12px); }
-        }
-        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-
-        /* Modal Score */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
-            display: none; justify-content: center; align-items: center; z-index: 100;
-        }
-        .modal-content {
-            background: white; padding: 50px; border-radius: 40px;
-            text-align: center; max-width: 550px; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            transform: scale(0.7); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 8px solid #ffeaa7;
-        }
-        .modal-content.show { transform: scale(1); opacity: 1; }
-        .score-circle {
-            width: 180px; height: 180px; background: #fff3cd; border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 4rem; font-weight: 900; color: #f39c12; margin: 0 auto 25px;
-            border: 12px solid #fdcb6e; box-shadow: inset 0 0 30px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.1);
-        }
-        .modal-message { font-size: 2rem; font-weight: 900; color: #2d3436; margin-bottom: 15px; text-transform: uppercase;}
-        .modal-sub { font-size: 1.2rem; color: #636e72; margin-bottom: 35px; line-height: 1.5; font-weight: 600;}
-        
-        /* Confetti Container */
-        #confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; }
-        .confetti { position: absolute; width: 12px; height: 12px; opacity: 0.9; border-radius: 3px;}
-
-        /* Responsive */
-        @media (max-width: 900px) {
-            .main-container { flex-direction: column; overflow-y: auto;}
-            .pane { overflow-y: visible; }
-            body { height: auto; overflow: auto; }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="pattern-overlay"></div>
-    <div id="confetti-container"></div>
-
-    <div class="top-bar">
-        <div class="header-title">Giáo viên tạo: Ms MS Chí Nên</div>
-        <div class="timer-container">
-            <div id="timer-display">10:00</div>
-            <button class="btn btn-timer" id="btn-timer-toggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
-        </div>
-    </div>
-
-    <div class="main-container">
-        <div class="pane reading-pane">
-            <h1 class="reading-title">🎸 Playing Music 🎶</h1>
-            <div class="reading-subtitle">Reading Tests for A2<br>For each question, choose the correct answer.</div>
-
-            <div class="paragraph-box">
-                <p>Playing music in a rock band is a great way to meet people who are interested in the same things as you, and to have a lot of fun. The first thing you’ll need to do is decide what instruments you want in your band. Most bands have one or two guitars, a singer, drums and keyboards, but you can change this. However, every band must have drums – you will need someone who can play those.</p>
-                <button class="btn btn-translate" onclick="toggleTranslation('trans1')">🌟 Mở bản dịch đầy đủ</button>
-                <div class="translation-text" id="trans1">
-                    Chơi nhạc trong một ban nhạc rock là một cách tuyệt vời để gặp gỡ những người có cùng sở thích với bạn và để có thật nhiều niềm vui. Điều đầu tiên bạn cần làm là quyết định những loại nhạc cụ nào bạn muốn có trong ban nhạc của mình. Hầu hết các ban nhạc đều có một hoặc hai cây đàn guitar, một ca sĩ, trống và đàn phím điện tử (keyboards), nhưng bạn có thể thay đổi điều này. Tuy nhiên, mọi ban nhạc đều phải có trống – bạn sẽ cần một ai đó có thể chơi chúng.
-                </div>
-            </div>
-
-            <div class="paragraph-box">
-                <p>The next thing is to find your bandmates. Begin by making a poster. Describe the kind of music you want to make and the instruments you want in your band. Put the poster up in your school or college and ask your friends if they know anyone who would like to join.</p>
-                <button class="btn btn-translate" onclick="toggleTranslation('trans2')">🌟 Mở bản dịch đầy đủ</button>
-                <div class="translation-text" id="trans2">
-                    Điều tiếp theo là tìm kiếm các thành viên cho ban nhạc của bạn. Hãy bắt đầu bằng việc tạo một tấm áp phích. Miêu tả loại nhạc mà bạn muốn chơi và những nhạc cụ bạn muốn có trong ban nhạc. Hãy dán tấm áp phích đó ở trường học hoặc trường đại học của bạn và hỏi bạn bè xem họ có biết ai muốn tham gia không.
-                </div>
-            </div>
-
-            <div class="paragraph-box">
-                <p>Once you have a band, you’ll need to quickly think of a name. The best way to do this is to spend two hours with your bandmates, writing down hundreds of ideas. Most will be really bad, but there will be a few good ones. Choose something surprising and interesting, that people won’t be able to forget.</p>
-                <button class="btn btn-translate" onclick="toggleTranslation('trans3')">🌟 Mở bản dịch đầy đủ</button>
-                <div class="translation-text" id="trans3">
-                    Một khi bạn đã có một ban nhạc, bạn sẽ cần nhanh chóng nghĩ ra một cái tên. Cách tốt nhất để làm việc này là dành hai giờ đồng hồ với các thành viên trong ban nhạc, viết ra hàng trăm ý tưởng. Hầu hết sẽ là những ý tưởng tồi, nhưng sẽ có một vài ý hay. Hãy chọn một cái tên mang tính bất ngờ và thú vị, sao cho mọi người sẽ không thể nào quên.
-                </div>
-            </div>
-
-            <div class="paragraph-box">
-                <p>Next, you’ll need to practise as much as you can. You will need a place where you can make a lot of noise without making your neighbours angry. Trying to play quietly will not help you get better. Don’t spend time learning songs written by other people. Try writing your own. And don’t be afraid of writing about your normal everyday experiences. All bands begin like this.</p>
-                <button class="btn btn-translate" onclick="toggleTranslation('trans4')">🌟 Mở bản dịch đầy đủ</button>
-                <div class="translation-text" id="trans4">
-                    Tiếp theo, bạn sẽ cần luyện tập càng nhiều càng tốt. Bạn sẽ cần một nơi mà bạn có thể gây ra nhiều tiếng ồn mà không làm hàng xóm tức giận. Cố gắng chơi nhạc một cách nhẹ nhàng (yên tĩnh) sẽ không giúp bạn giỏi lên được. Đừng dành thời gian học các bài hát do người khác viết. Hãy thử tự viết bài hát của riêng bạn. Và đừng e ngại việc viết về những trải nghiệm bình thường hằng ngày của bạn. Tất cả các ban nhạc đều bắt đầu như vậy.
-                </div>
-            </div>
-
-            <div class="glossary-box">
-                <h3>📚 Academic Glossary (Bảng từ vựng)</h3>
-                <table>
-                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa Tiếng Việt</th></tr>
-                    <tr><td>Instrument</td><td>Noun (n)</td><td>Nhạc cụ, dụng cụ âm nhạc</td></tr>
-                    <tr><td>Bandmate</td><td>Noun (n)</td><td>Thành viên trong ban nhạc</td></tr>
-                    <tr><td>Describe</td><td>Verb (v)</td><td>Miêu tả, mô tả</td></tr>
-                    <tr><td>Poster</td><td>Noun (n)</td><td>Áp phích, tờ quảng cáo</td></tr>
-                    <tr><td>Join</td><td>Verb (v)</td><td>Tham gia, gia nhập</td></tr>
-                    <tr><td>Surprising</td><td>Adjective (adj)</td><td>Đáng ngạc nhiên, bất ngờ</td></tr>
-                    <tr><td>Forget</td><td>Verb (v)</td><td>Quên</td></tr>
-                    <tr><td>Practise</td><td>Verb (v)</td><td>Luyện tập, thực hành</td></tr>
-                    <tr><td>Neighbour</td><td>Noun (n)</td><td>Hàng xóm, láng giềng</td></tr>
-                    <tr><td>Experience</td><td>Noun (n)</td><td>Trải nghiệm, kinh nghiệm</td></tr>
-                    <tr><td>Everyday</td><td>Adjective (adj)</td><td>Thông thường, hằng ngày</td></tr>
-                    <tr><td>Quietly</td><td>Adverb (adv)</td><td>Một cách yên tĩnh, nhẹ nhàng</td></tr>
-                </table>
-            </div>
-        </div>
-
-        <div class="pane exercise-pane" id="exercise-container">
-            </div>
-    </div>
-
-    <div class="modal-overlay" id="score-modal">
-        <div class="modal-content" id="modal-content">
-            <div class="score-circle" id="final-score">0/5</div>
-            <div class="modal-message" id="modal-msg">Làm tốt lắm!</div>
-            <div class="modal-sub" id="modal-submsg">Cùng xem lại các câu sai để rút kinh nghiệm nhé!</div>
-            <button class="btn btn-submit" style="margin: 0; padding: 15px; font-size: 1.2rem;" onclick="closeModal()">Xem chi tiết bài làm 🔍</button>
-        </div>
-    </div>
-
-    <script>
-        // --- DATA & CONFIG ---
-        const questionsData = [
-            {
-                id: 1,
-                question: "1. Which instrument does the writer think is most important in a band?",
-                choices: [
-                    "drums",
-                    "guitars",
-                    "keyboards"
-                ],
-                correctString: "drums",
-                explanation: `
-                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
-                    <p><strong>1. Phân tích câu hỏi:</strong> Tác giả nghĩ <span class="exp-vocab">instrument</span> (nhạc cụ) nào là quan trọng nhất trong ban nhạc?</p>
-                    <p><strong>2. Dẫn chứng trong bài:</strong> <span class="exp-evidence">'However, every band must have drums – you will need someone who can play those.'</span><br>
-                    (Dịch: <em>Tuy nhiên, mọi ban nhạc đều phải có trống – bạn sẽ cần một ai đó có thể chơi chúng.</em>)</p>
-                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
-                    Bài đọc sử dụng cụm từ <strong>"must have"</strong> (phải có) đối với "drums", trong khi các nhạc cụ khác có thể thay đổi ("you can change this"). Điều này chứng tỏ trống là nhạc cụ bắt buộc/quan trọng nhất.</p>
-                `
-            },
-            {
-                id: 2,
-                question: "2. What does the writer suggest in the second paragraph?",
-                choices: [
-                    "listen to your classmates’ bands",
-                    "advertise in the place where you study",
-                    "ask your friends to join your band"
-                ],
-                correctString: "advertise in the place where you study",
-                explanation: `
-                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
-                    <p><strong>1. Phân tích từ vựng:</strong> <span class="exp-vocab">suggest</span> (gợi ý), <span class="exp-vocab">advertise</span> (quảng cáo), <span class="exp-vocab">place where you study</span> (nơi bạn học = school/college).</p>
-                    <p><strong>2. Dẫn chứng trong bài:</strong> <span class="exp-evidence">'Begin by making a poster... Put the poster up in your school or college...'</span><br>
-                    (Dịch: <em>Hãy bắt đầu bằng việc tạo một tấm áp phích... Hãy dán tấm áp phích đó ở trường học hoặc trường đại học của bạn...</em>)</p>
-                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
-                    Việc dán poster (áp phích) chính là hành động "advertise" (quảng cáo), và "school or college" chính là "the place where you study".<br>
-                    - Loại đáp án "ask your friends to join" vì tác giả bảo hỏi bạn bè xem <strong>họ có biết ai không</strong> (ask if they know anyone), chứ không bảo trực tiếp rủ bạn bè tham gia.<br>
-                    - Loại đáp án "listen to classmates' bands" vì không hề được nhắc đến.</p>
-                `
-            },
-            {
-                id: 3,
-                question: "3. What does the writer say about choosing a band name?",
-                choices: [
-                    "Make sure it is easy to remember.",
-                    "Be ready to change it if it is not popular.",
-                    "Spend a few weeks thinking about it."
-                ],
-                correctString: "Make sure it is easy to remember.",
-                explanation: `
-                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
-                    <p><strong>1. Phân tích từ vựng:</strong> <span class="exp-vocab">easy to remember</span> (dễ nhớ) = <span class="exp-vocab">won't be able to forget</span> (không thể nào quên).</p>
-                    <p><strong>2. Dẫn chứng trong bài:</strong> <span class="exp-evidence">'Choose something surprising and interesting, that people won’t be able to forget.'</span><br>
-                    (Dịch: <em>Hãy chọn một thứ gì đó bất ngờ và thú vị, sao cho mọi người sẽ không thể nào quên.</em>)</p>
-                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
-                    Một cái tên mà mọi người "không thể nào quên" đồng nghĩa với việc nó "dễ nhớ".<br>
-                    - Loại đáp án "spend a few weeks" (dành vài tuần) vì bài đọc khuyên chỉ dành "two hours" (2 giờ).<br>
-                    - Loại đáp án "ready to change it" vì bài không đề cập đến việc đổi tên.</p>
-                `
-            },
-            {
-                id: 4,
-                question: "4. The writer thinks it is important for new bands to",
-                choices: [
-                    "write songs about unusual things.",
-                    "begin by learning famous songs.",
-                    "play loudly when they practise."
-                ],
-                correctString: "play loudly when they practise.",
-                explanation: `
-                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
-                    <p><strong>1. Phân tích từ vựng:</strong> <span class="exp-vocab">play loudly</span> (chơi to/ồn ào) = <span class="exp-vocab">make a lot of noise</span> (gây nhiều tiếng ồn).</p>
-                    <p><strong>2. Dẫn chứng trong bài:</strong> <span class="exp-evidence">'You will need a place where you can make a lot of noise... Trying to play quietly will not help you get better.'</span><br>
-                    (Dịch: <em>Bạn sẽ cần một nơi mà bạn có thể gây ra nhiều tiếng ồn... Cố gắng chơi nhạc một cách nhẹ nhàng/yên tĩnh sẽ không giúp bạn giỏi lên được.</em>)</p>
-                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
-                    Việc không nên chơi nhỏ/yên tĩnh ("play quietly will not help") và cần nơi tạo tiếng ồn đồng nghĩa với việc họ cần "play loudly".<br>
-                    - Loại đáp án "unusual things" vì tác giả khuyên viết về "normal everyday experiences" (những thứ bình thường hàng ngày).<br>
-                    - Loại đáp án "learning famous songs" vì tác giả nói "Don't spend time learning songs written by other people" (Đừng tốn thời gian học bài hát của người khác).</p>
-                `
-            },
-            {
-                id: 5,
-                question: "5. What is the best title for this article?",
-                choices: [
-                    "The world’s best rock band",
-                    "How to start a rock band",
-                    "My life in a rock band"
-                ],
-                correctString: "How to start a rock band",
-                explanation: `
-                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
-                    <p><strong>1. Phân tích toàn bài:</strong> Đoạn văn liên tục đưa ra các lời khuyên theo trình tự để thành lập ban nhạc.</p>
-                    <p><strong>2. Dẫn chứng cấu trúc:</strong><br>
-                    - Bước 1: <em>'The first thing you’ll need to do is...'</em> (chọn nhạc cụ)<br>
-                    - Bước 2: <em>'The next thing is to find your bandmates.'</em> (tìm thành viên)<br>
-                    - Bước 3: <em>'Once you have a band, you’ll need to quickly think of a name.'</em> (đặt tên)<br>
-                    - Bước 4: <em>'Next, you’ll need to practise...'</em> (luyện tập)</p>
-                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
-                    Bài viết rõ ràng là một bài hướng dẫn (How to) cho những ai muốn lập ban nhạc rock. Tác giả không kể chuyện đời mình ("My life") hay nói về ban nhạc giỏi nhất ("The world's best").</p>
-                `
-            }
-        ];
-
-        let score = 0;
-        let answeredQuestions = 0;
-        let timerInterval;
-        let timeRemaining = 600; // 10 minutes
-        let isTimerRunning = false;
-
-        // --- WEB AUDIO API (SOUNDS) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            if (type === 'correct') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(500, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.15);
-                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc.start(audioCtx.currentTime);
-                osc.stop(audioCtx.currentTime + 0.5);
-            } else if (type === 'wrong') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(250, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
-                gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc.start(audioCtx.currentTime);
-                osc.stop(audioCtx.currentTime + 0.5);
-            }
-        }
-
-        // --- CONFETTI EFFECT ---
-        function createConfetti() {
-            const container = document.getElementById('confetti-container');
-            const colors = ['#00d2ff', '#00D26A', '#fdcb6e', '#a29bfe', '#ff9a9e'];
-            for (let i = 0; i < 60; i++) {
-                const conf = document.createElement('div');
-                conf.classList.add('confetti');
-                conf.style.left = Math.random() * 100 + 'vw';
-                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                
-                // Randomize shape (square or rectangle)
-                if(Math.random() > 0.5) conf.style.height = '20px';
-                
-                conf.style.transform = `rotate(${Math.random() * 360}deg)`;
-                
-                const duration = Math.random() * 2 + 1.5;
-                conf.style.transition = `all ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
-                
-                container.appendChild(conf);
-
-                setTimeout(() => {
-                    conf.style.top = '100vh';
-                    conf.style.transform = `rotate(${Math.random() * 720}deg)`;
-                    conf.style.opacity = '0';
-                }, 10);
-
-                setTimeout(() => conf.remove(), duration * 1000);
-            }
-        }
-
-        // --- UTILS & LOGIC ---
-        function shuffleArray(array) {
-            let curId = array.length, randomId;
-            while (0 !== curId) {
-                randomId = Math.floor(Math.random() * curId);
-                curId -= 1;
-                [array[curId], array[randomId]] = [array[randomId], array[curId]];
-            }
-            return array;
-        }
-
-        function toggleTranslation(id) {
-            const el = document.getElementById(id);
-            if(el.style.display === 'block') {
-                el.style.display = 'none';
-            } else {
-                el.style.display = 'block';
-            }
-        }
-
-        // --- TIMER ---
-        function updateTimerDisplay() {
-            const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
-            const s = (timeRemaining % 60).toString().padStart(2, '0');
-            document.getElementById('timer-display').innerText = `${m}:${s}`;
-        }
-
-        function toggleTimer() {
-            const btn = document.getElementById('btn-timer-toggle');
-            if (isTimerRunning) {
-                clearInterval(timerInterval);
-                isTimerRunning = false;
-                btn.innerText = "TIẾP TỤC LÀM BÀI";
-                btn.style.background = "#00b894";
-                btn.style.boxShadow = "0 6px 0 #008f73";
-            } else {
-                isTimerRunning = true;
-                btn.innerText = "TẠM DỪNG";
-                btn.style.background = "#e17055";
-                btn.style.boxShadow = "0 6px 0 #b35944";
-                timerInterval = setInterval(() => {
-                    timeRemaining--;
-                    updateTimerDisplay();
-                    if (timeRemaining <= 0) {
-                        clearInterval(timerInterval);
-                        isTimerRunning = false;
-                        btn.innerText = "HẾT GIỜ";
-                        btn.style.background = "#b2bec3";
-                        btn.style.boxShadow = "none";
-                        btn.disabled = true;
-                        alert("Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
-                    }
-                }, 1000);
-            }
-        }
-
-        // --- RENDER QUIZ ---
-        function renderQuiz() {
-            const container = document.getElementById('exercise-container');
-            container.innerHTML = '';
-
-            questionsData.forEach((q, index) => {
-                const card = document.createElement('div');
-                card.className = 'question-card';
-                card.id = `qcard-${index}`;
-
-                const qText = document.createElement('div');
-                qText.className = 'question-text';
-                qText.innerText = q.question;
-                card.appendChild(qText);
-
-                const optionsGrid = document.createElement('div');
-                optionsGrid.className = 'options-grid';
-                
-                const shuffledChoices = shuffleArray([...q.choices]);
-                const labels = ['A', 'B', 'C', 'D'];
-
-                shuffledChoices.forEach((choice, cIndex) => {
-                    const btn = document.createElement('button');
-                    btn.className = `btn option-btn q-${index}-btn`;
-                    
-                    const label = document.createElement('span');
-                    label.className = 'option-label';
-                    label.innerText = labels[cIndex];
-                    
-                    const textNode = document.createTextNode(choice);
-                    
-                    btn.appendChild(label);
-                    btn.appendChild(textNode);
-
-                    btn.onclick = () => handleAnswer(index, choice, btn);
-                    optionsGrid.appendChild(btn);
-                });
-
-                card.appendChild(optionsGrid);
-
-                const expBox = document.createElement('div');
-                expBox.className = 'explanation-box';
-                expBox.id = `exp-${index}`;
-                expBox.innerHTML = q.explanation;
-                card.appendChild(expBox);
-
-                container.appendChild(card);
-            });
-
-            // Submit Button
-            const submitBtn = document.createElement('button');
-            submitBtn.className = 'btn btn-submit';
-            submitBtn.innerText = "🤘 NỘP BÀI THÔI 🤘";
-            submitBtn.onclick = showFinalScore;
-            container.appendChild(submitBtn);
-        }
-
-        function handleAnswer(qIndex, selectedChoice, btnElement) {
-            const allBtns = document.querySelectorAll(`.q-${qIndex}-btn`);
-            if (allBtns[0].classList.contains('disabled')) return; // Already answered
-
-            const qData = questionsData[qIndex];
-            const isCorrect = (selectedChoice === qData.correctString);
-
-            allBtns.forEach(b => b.classList.add('disabled'));
-
-            if (isCorrect) {
-                btnElement.classList.add('correct');
-                playSound('correct');
-                createConfetti();
-                score++;
-            } else {
-                btnElement.classList.add('wrong');
-                btnElement.classList.add('shake');
-                playSound('wrong');
-                
-                // Show the correct one
-                allBtns.forEach(b => {
-                    if (b.innerText.includes(qData.correctString)) {
-                        b.classList.add('correct');
-                    }
-                });
-            }
-
-            // Scroll slightly and show explanation
-            const expDiv = document.getElementById(`exp-${qIndex}`);
-            expDiv.style.display = 'block';
-            answeredQuestions++;
-        }
-
-        function showFinalScore() {
-            if(answeredQuestions < questionsData.length) {
-                if(!confirm("Cảnh báo: Bạn chưa làm hết các câu hỏi. Vẫn muốn nộp bài chứ?")) {
-                    return;
-                }
-            }
-
-            document.getElementById('final-score').innerText = `${score}/${questionsData.length}`;
-            
-            const msgEl = document.getElementById('modal-msg');
-            const subEl = document.getElementById('modal-submsg');
-            
-            if (score === 5) {
-                msgEl.innerText = "🌟 ROCKSTAR THỰC THỤ! 🌟";
-                msgEl.style.color = "#d63031";
-                subEl.innerText = "Tuyệt đỉnh! Bạn đã làm đúng toàn bộ 100%. Kỹ năng đọc hiểu của bạn sắc bén y như một đoạn solo Guitar vậy!";
-                createConfetti(); setTimeout(createConfetti, 400); setTimeout(createConfetti, 800);
-            } else if (score >= 3) {
-                msgEl.innerText = "🎸 LÀM TỐT LẮM! 🎸";
-                msgEl.style.color = "#0984e3";
-                subEl.innerText = "Bạn nắm bắt thông tin rất tốt. Cùng xem lại phần giải thích chi tiết các câu sai để nhịp điệu hoàn hảo hơn nhé!";
-                createConfetti();
-            } else {
-                msgEl.innerText = "🥁 CỐ LÊN NHÉ! 🥁";
-                msgEl.style.color = "#e17055";
-                subEl.innerText = "Ban nhạc nào cũng có lúc chơi trật nhịp. Hãy đọc kỹ phần giải thích bên dưới để nâng cao trình độ ngay nào!";
-            }
-
-            const modal = document.getElementById('score-modal');
-            const content = document.getElementById('modal-content');
-            modal.style.display = 'flex';
-            playSound('correct');
-            setTimeout(() => content.classList.add('show'), 10);
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('score-modal');
-            const content = document.getElementById('modal-content');
-            content.classList.remove('show');
-            setTimeout(() => modal.style.display = 'none', 400);
-        }
-
-        // Init
-        window.onload = () => {
-            renderQuiz();
-        };
-    </script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reading Test - Playing Music</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+
+        :root {
+
+            /* Dynamic Theme: Music & Rock (Pastel Blue, Lavender, Pink) */
+
+            --primary-bg: #89CFF0; /* Baby Blue */
+
+            --secondary-bg: #E6E6FA; /* Lavender */
+
+            --tertiary-bg: #FAD0C4; /* Pastel Pink */
+
+            
+
+            --correct-color: #00D26A;
+
+            --wrong-color: #FF4757;
+
+            
+
+            --glass-bg: rgba(255, 255, 255, 0.55);
+
+            --glass-border: rgba(255, 255, 255, 0.7);
+
+            --glass-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
+
+            
+
+            --text-main: #2d3436;
+
+            --font-main: 'Nunito', sans-serif;
+
+        }
+
+
+
+        * {
+
+            box-sizing: border-box;
+
+            margin: 0;
+
+            padding: 0;
+
+            font-family: var(--font-main);
+
+        }
+
+
+
+        body {
+
+            background: linear-gradient(-45deg, var(--primary-bg), var(--secondary-bg), var(--tertiary-bg), #a18cd1);
+
+            background-size: 400% 400%;
+
+            animation: gradientMove 15s ease infinite;
+
+            color: var(--text-main);
+
+            height: 100vh;
+
+            overflow: hidden;
+
+            display: flex;
+
+            flex-direction: column;
+
+        }
+
+
+
+        @keyframes gradientMove {
+
+            0% { background-position: 0% 50%; }
+
+            50% { background-position: 100% 50%; }
+
+            100% { background-position: 0% 50%; }
+
+        }
+
+
+
+        /* Auto-generated SVG Background Pattern - Theme: Music */
+
+        .pattern-overlay {
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ctext x='40' y='70' font-size='40'%3E🎸%3C/text%3E%3Ctext x='180' y='140' font-size='40'%3E🎶%3C/text%3E%3Ctext x='90' y='250' font-size='40'%3E🥁%3C/text%3E%3Ctext x='240' y='50' font-size='30'%3E🌟%3C/text%3E%3C/svg%3E");
+
+            opacity: 0.35;
+
+            z-index: 0;
+
+            animation: floatPattern 50s linear infinite;
+
+            pointer-events: none;
+
+        }
+
+
+
+        @keyframes floatPattern {
+
+            from { background-position: 0 0; }
+
+            to { background-position: -1000px 1000px; }
+
+        }
+
+
+
+        /* Top Control Bar */
+
+        .top-bar {
+
+            position: relative;
+
+            z-index: 10;
+
+            background: var(--glass-bg);
+
+            backdrop-filter: blur(15px);
+
+            -webkit-backdrop-filter: blur(15px);
+
+            border-bottom: 2px solid var(--glass-border);
+
+            padding: 12px 30px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            box-shadow: var(--glass-shadow);
+
+        }
+
+
+
+        .header-title {
+
+            font-size: 1.1rem;
+
+            font-weight: 800;
+
+            color: #4834d4;
+
+            text-transform: uppercase;
+
+            letter-spacing: 1px;
+
+            background: rgba(255,255,255,0.6);
+
+            padding: 8px 15px;
+
+            border-radius: 12px;
+
+        }
+
+
+
+        .timer-container {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+        }
+
+
+
+        #timer-display {
+
+            font-size: 1.6rem;
+
+            font-weight: 900;
+
+            color: #d63031;
+
+            background: #ffeaa7;
+
+            padding: 6px 20px;
+
+            border-radius: 15px;
+
+            box-shadow: 0 5px 0 #fdcb6e;
+
+            letter-spacing: 2px;
+
+        }
+
+
+
+        .btn {
+
+            cursor: pointer;
+
+            border: none;
+
+            font-weight: 800;
+
+            border-radius: 18px;
+
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            font-family: var(--font-main);
+
+            outline: none;
+
+        }
+
+
+
+        .btn-timer {
+
+            background: #0984e3;
+
+            color: white;
+
+            padding: 12px 25px;
+
+            font-size: 1.1rem;
+
+            box-shadow: 0 6px 0 #005691;
+
+            text-transform: uppercase;
+
+        }
+
+
+
+        .btn-timer:active {
+
+            transform: translateY(6px);
+
+            box-shadow: 0 0 0 transparent;
+
+        }
+
+
+
+        /* Split Screen Container */
+
+        .main-container {
+
+            display: flex;
+
+            flex: 1;
+
+            overflow: hidden;
+
+            position: relative;
+
+            z-index: 10;
+
+            padding: 25px;
+
+            gap: 25px;
+
+        }
+
+
+
+        .pane {
+
+            flex: 1;
+
+            background: var(--glass-bg);
+
+            backdrop-filter: blur(20px);
+
+            -webkit-backdrop-filter: blur(20px);
+
+            border: 2px solid var(--glass-border);
+
+            border-radius: 25px;
+
+            box-shadow: var(--glass-shadow);
+
+            padding: 35px;
+
+            overflow-y: auto;
+
+            scroll-behavior: smooth;
+
+        }
+
+
+
+        /* Custom Scrollbar */
+
+        ::-webkit-scrollbar { width: 12px; }
+
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px;}
+
+        ::-webkit-scrollbar-thumb { background: rgba(108, 92, 231, 0.4); border-radius: 10px; border: 2px solid transparent; background-clip: padding-box;}
+
+        ::-webkit-scrollbar-thumb:hover { background-color: rgba(108, 92, 231, 0.7); }
+
+
+
+        /* Reading Styles */
+
+        .reading-title {
+
+            font-size: 2.2rem;
+
+            font-weight: 900;
+
+            color: #6c5ce7;
+
+            margin-bottom: 10px;
+
+            text-align: center;
+
+            text-shadow: 2px 2px 0px white;
+
+        }
+
+
+
+        .reading-subtitle {
+
+            text-align: center; color: #2d3436; font-weight: 700; margin-bottom: 30px;
+
+            background: rgba(255,255,255,0.7); padding: 10px; border-radius: 15px;
+
+        }
+
+
+
+        .paragraph-box {
+
+            background: rgba(255,255,255,0.75);
+
+            padding: 25px;
+
+            border-radius: 20px;
+
+            margin-bottom: 25px;
+
+            border-left: 8px solid #a29bfe;
+
+            font-size: 1.15rem;
+
+            line-height: 1.8;
+
+            color: #2d3436;
+
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+
+        }
+
+
+
+        .btn-translate {
+
+            background: #fdcb6e;
+
+            color: #2d3436;
+
+            padding: 10px 18px;
+
+            font-size: 1rem;
+
+            margin-top: 15px;
+
+            box-shadow: 0 5px 0 #e1b12c;
+
+            display: inline-flex;
+
+            align-items: center;
+
+        }
+
+        .btn-translate:active {
+
+            transform: translateY(5px);
+
+            box-shadow: 0 0 0 transparent;
+
+        }
+
+
+
+        .translation-text {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 18px;
+
+            background: rgba(255, 243, 205, 0.85);
+
+            border-radius: 15px;
+
+            color: #b33939;
+
+            font-size: 1.1rem;
+
+            line-height: 1.7;
+
+            border: 2px dashed #f6b93b;
+
+            animation: slideDown 0.3s ease-out;
+
+        }
+
+
+
+        @keyframes slideDown {
+
+            from { opacity: 0; transform: translateY(-10px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+        }
+
+
+
+        /* Glossary Table */
+
+        .glossary-box {
+
+            margin-top: 40px;
+
+            background: rgba(255,255,255,0.85);
+
+            border-radius: 20px;
+
+            padding: 25px;
+
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+
+            border: 2px solid var(--glass-border);
+
+        }
+
+        .glossary-box h3 {
+
+            color: #e84393;
+
+            margin-bottom: 20px;
+
+            font-size: 1.6rem;
+
+            text-align: center;
+
+        }
+
+        table {
+
+            width: 100%;
+
+            border-collapse: separate;
+
+            border-spacing: 0;
+
+        }
+
+        th, td {
+
+            padding: 15px;
+
+            text-align: left;
+
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+
+            font-size: 1.05rem;
+
+        }
+
+        th { 
+
+            background: linear-gradient(135deg, #fd79a8, #e84393); 
+
+            color: white; 
+
+            font-weight: 800;
+
+        }
+
+        th:first-child { border-top-left-radius: 15px; }
+
+        th:last-child { border-top-right-radius: 15px; }
+
+        td:first-child { font-weight: 800; color: #6c5ce7; font-size: 1.1rem;}
+
+        tr:last-child td { border-bottom: none; }
+
+        tr:hover td { background: rgba(108, 92, 231, 0.05); }
+
+
+
+        /* Exercises Styles */
+
+        .question-card {
+
+            background: rgba(255,255,255,0.9);
+
+            border-radius: 25px;
+
+            padding: 30px;
+
+            margin-bottom: 30px;
+
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+            border: 2px solid transparent;
+
+        }
+
+        .question-card:hover { 
+
+            transform: translateY(-5px); 
+
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+
+            border-color: rgba(162, 155, 254, 0.5);
+
+        }
+
+
+
+        .question-text {
+
+            font-size: 1.15rem;
+
+            font-weight: 800;
+
+            margin-bottom: 20px;
+
+            color: #2d3436;
+
+            line-height: 1.5;
+
+        }
+
+
+
+        .options-grid {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 15px;
+
+        }
+
+
+
+        .option-btn {
+
+            background: white;
+
+            border: 3px solid #dfe6e9;
+
+            padding: 18px 20px;
+
+            font-size: 1.08rem;
+
+            text-align: left;
+
+            border-radius: 20px;
+
+            box-shadow: 0 6px 0 #dfe6e9;
+
+            display: flex;
+
+            align-items: center;
+
+            color: #2d3436;
+
+        }
+
+        .option-btn:hover:not(.disabled) {
+
+            transform: scale(1.02);
+
+            border-color: #74b9ff;
+
+            box-shadow: 0 6px 0 #74b9ff;
+
+            background: #f1f8ff;
+
+        }
+
+        .option-btn:active:not(.disabled) {
+
+            transform: scale(1.02) translateY(6px);
+
+            box-shadow: 0 0 0 transparent;
+
+        }
+
+        .option-btn.correct {
+
+            background: var(--correct-color);
+
+            color: white;
+
+            border-color: #00b894;
+
+            box-shadow: 0 6px 0 #00b894;
+
+        }
+
+        .option-btn.correct .option-label { background: rgba(255,255,255,0.3); color: white;}
+
+        
+
+        .option-btn.wrong {
+
+            background: var(--wrong-color);
+
+            color: white;
+
+            border-color: #d63031;
+
+            box-shadow: 0 6px 0 #d63031;
+
+        }
+
+        .option-btn.wrong .option-label { background: rgba(255,255,255,0.3); color: white;}
+
+        
+
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.7; transform: none !important;}
+
+
+
+        .option-label {
+
+            background: #f1f2f6;
+
+            color: #636e72;
+
+            padding: 8px 15px;
+
+            border-radius: 12px;
+
+            margin-right: 18px;
+
+            font-weight: 900;
+
+            font-size: 1.1rem;
+
+            transition: all 0.2s;
+
+        }
+
+
+
+        .explanation-box {
+
+            display: none;
+
+            margin-top: 25px;
+
+            background: #f8efba;
+
+            padding: 25px;
+
+            border-radius: 20px;
+
+            border-left: 8px solid #f39c12;
+
+            font-size: 1rem;
+
+            line-height: 1.7;
+
+            animation: slideDown 0.4s ease-out;
+
+            color: #2c3e50;
+
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.5);
+
+        }
+
+        .exp-title { font-weight: 900; color: #e67e22; margin-bottom: 15px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;}
+
+        .exp-evidence { background: #ffeaa7; padding: 6px 12px; border-radius: 8px; font-weight: 700; display: inline-block; margin-bottom: 8px; border: 1px dashed #fdcb6e; color: #d35400;}
+
+        .exp-vocab { color: #0984e3; font-weight: 800; background: rgba(9, 132, 227, 0.1); padding: 2px 6px; border-radius: 6px;}
+
+
+
+        .btn-submit {
+
+            display: block; width: 100%;
+
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+
+            color: white; padding: 25px; font-size: 1.8rem;
+
+            text-transform: uppercase; box-shadow: 0 10px 0 #4834d4;
+
+            margin-top: 40px; margin-bottom: 50px;
+
+            border-radius: 25px; letter-spacing: 2px;
+
+        }
+
+        .btn-submit:active { transform: translateY(10px); box-shadow: 0 0 0 transparent; }
+
+
+
+        /* Animations */
+
+        @keyframes shake {
+
+            0%, 100% { transform: translateX(0); }
+
+            20%, 60% { transform: translateX(-12px); }
+
+            40%, 80% { transform: translateX(12px); }
+
+        }
+
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+
+
+        /* Modal Score */
+
+        .modal-overlay {
+
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+
+            display: none; justify-content: center; align-items: center; z-index: 100;
+
+        }
+
+        .modal-content {
+
+            background: white; padding: 50px; border-radius: 40px;
+
+            text-align: center; max-width: 550px; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+
+            transform: scale(0.7); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            border: 8px solid #ffeaa7;
+
+        }
+
+        .modal-content.show { transform: scale(1); opacity: 1; }
+
+        .score-circle {
+
+            width: 180px; height: 180px; background: #fff3cd; border-radius: 50%;
+
+            display: flex; justify-content: center; align-items: center;
+
+            font-size: 4rem; font-weight: 900; color: #f39c12; margin: 0 auto 25px;
+
+            border: 12px solid #fdcb6e; box-shadow: inset 0 0 30px rgba(0,0,0,0.1), 0 10px 20px rgba(0,0,0,0.1);
+
+        }
+
+        .modal-message { font-size: 2rem; font-weight: 900; color: #2d3436; margin-bottom: 15px; text-transform: uppercase;}
+
+        .modal-sub { font-size: 1.2rem; color: #636e72; margin-bottom: 35px; line-height: 1.5; font-weight: 600;}
+
+        
+
+        /* Confetti Container */
+
+        #confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99; }
+
+        .confetti { position: absolute; width: 12px; height: 12px; opacity: 0.9; border-radius: 3px;}
+
+
+
+        /* Responsive */
+
+        @media (max-width: 900px) {
+
+            .main-container { flex-direction: column; overflow-y: auto;}
+
+            .pane { overflow-y: visible; }
+
+            body { height: auto; overflow: auto; }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <div class="pattern-overlay"></div>
+
+    <div id="confetti-container"></div>
+
+
+
+    <div class="top-bar">
+
+        <div class="header-title">Giáo viên tạo: Ms. Chí Nên</div>
+
+        <div class="timer-container">
+
+            <div id="timer-display">10:00</div>
+
+            <button class="btn btn-timer" id="btn-timer-toggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="main-container">
+
+        <div class="pane reading-pane">
+
+            <h1 class="reading-title">🎸 Playing Music 🎶</h1>
+
+            <div class="reading-subtitle">Reading Tests for A2<br>For each question, choose the correct answer.</div>
+
+
+
+            <div class="paragraph-box">
+
+                <p>Playing music in a rock band is a great way to meet people who are interested in the same things as you, and to have a lot of fun. The first thing you’ll need to do is decide what instruments you want in your band. Most bands have one or two guitars, a singer, drums and keyboards, but you can change this. However, every band must have drums – you will need someone who can play those.</p>
+
+                <button class="btn btn-translate" onclick="toggleTranslation('trans1')">🌟 Mở bản dịch đầy đủ</button>
+
+                <div class="translation-text" id="trans1">
+
+                    Chơi nhạc trong một ban nhạc rock là một cách tuyệt vời để gặp gỡ những người có cùng sở thích với bạn và để có thật nhiều niềm vui. Điều đầu tiên bạn cần làm là quyết định những loại nhạc cụ nào bạn muốn có trong ban nhạc của mình. Hầu hết các ban nhạc đều có một hoặc hai cây đàn guitar, một ca sĩ, trống và đàn phím điện tử (keyboards), nhưng bạn có thể thay đổi điều này. Tuy nhiên, mọi ban nhạc đều phải có trống – bạn sẽ cần một ai đó có thể chơi chúng.
+
+                </div>
+
+            </div>
+
+
+
+            <div class="paragraph-box">
+
+                <p>The next thing is to find your bandmates. Begin by making a poster. Describe the kind of music you want to make and the instruments you want in your band. Put the poster up in your school or college and ask your friends if they know anyone who would like to join.</p>
+
+                <button class="btn btn-translate" onclick="toggleTranslation('trans2')">🌟 Mở bản dịch đầy đủ</button>
+
+                <div class="translation-text" id="trans2">
+
+                    Điều tiếp theo là tìm kiếm các thành viên cho ban nhạc của bạn. Hãy bắt đầu bằng việc tạo một tấm áp phích. Miêu tả loại nhạc mà bạn muốn chơi và những nhạc cụ bạn muốn có trong ban nhạc. Hãy dán tấm áp phích đó ở trường học hoặc trường đại học của bạn và hỏi bạn bè xem họ có biết ai muốn tham gia không.
+
+                </div>
+
+            </div>
+
+
+
+            <div class="paragraph-box">
+
+                <p>Once you have a band, you’ll need to quickly think of a name. The best way to do this is to spend two hours with your bandmates, writing down hundreds of ideas. Most will be really bad, but there will be a few good ones. Choose something surprising and interesting, that people won’t be able to forget.</p>
+
+                <button class="btn btn-translate" onclick="toggleTranslation('trans3')">🌟 Mở bản dịch đầy đủ</button>
+
+                <div class="translation-text" id="trans3">
+
+                    Một khi bạn đã có một ban nhạc, bạn sẽ cần nhanh chóng nghĩ ra một cái tên. Cách tốt nhất để làm việc này là dành hai giờ đồng hồ với các thành viên trong ban nhạc, viết ra hàng trăm ý tưởng. Hầu hết sẽ là những ý tưởng tồi, nhưng sẽ có một vài ý hay. Hãy chọn một cái tên mang tính bất ngờ và thú vị, sao cho mọi người sẽ không thể nào quên.
+
+                </div>
+
+            </div>
+
+
+
+            <div class="paragraph-box">
+
+                <p>Next, you’ll need to practise as much as you can. You will need a place where you can make a lot of noise without making your neighbours angry. Trying to play quietly will not help you get better. Don’t spend time learning songs written by other people. Try writing your own. And don’t be afraid of writing about your normal everyday experiences. All bands begin like this.</p>
+
+                <button class="btn btn-translate" onclick="toggleTranslation('trans4')">🌟 Mở bản dịch đầy đủ</button>
+
+                <div class="translation-text" id="trans4">
+
+                    Tiếp theo, bạn sẽ cần luyện tập càng nhiều càng tốt. Bạn sẽ cần một nơi mà bạn có thể gây ra nhiều tiếng ồn mà không làm hàng xóm tức giận. Cố gắng chơi nhạc một cách nhẹ nhàng (yên tĩnh) sẽ không giúp bạn giỏi lên được. Đừng dành thời gian học các bài hát do người khác viết. Hãy thử tự viết bài hát của riêng bạn. Và đừng e ngại việc viết về những trải nghiệm bình thường hằng ngày của bạn. Tất cả các ban nhạc đều bắt đầu như vậy.
+
+                </div>
+
+            </div>
+
+
+
+            <div class="glossary-box">
+
+                <h3>📚 Academic Glossary (Bảng từ vựng)</h3>
+
+                <table>
+
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa Tiếng Việt</th></tr>
+
+                    <tr><td>Instrument</td><td>Noun (n)</td><td>Nhạc cụ, dụng cụ âm nhạc</td></tr>
+
+                    <tr><td>Bandmate</td><td>Noun (n)</td><td>Thành viên trong ban nhạc</td></tr>
+
+                    <tr><td>Describe</td><td>Verb (v)</td><td>Miêu tả, mô tả</td></tr>
+
+                    <tr><td>Poster</td><td>Noun (n)</td><td>Áp phích, tờ quảng cáo</td></tr>
+
+                    <tr><td>Join</td><td>Verb (v)</td><td>Tham gia, gia nhập</td></tr>
+
+                    <tr><td>Surprising</td><td>Adjective (adj)</td><td>Đáng ngạc nhiên, bất ngờ</td></tr>
+
+                    <tr><td>Forget</td><td>Verb (v)</td><td>Quên</td></tr>
+
+                    <tr><td>Practise</td><td>Verb (v)</td><td>Luyện tập, thực hành</td></tr>
+
+                    <tr><td>Neighbour</td><td>Noun (n)</td><td>Hàng xóm, láng giềng</td></tr>
+
+                    <tr><td>Experience</td><td>Noun (n)</td><td>Trải nghiệm, kinh nghiệm</td></tr>
+
+                    <tr><td>Everyday</td><td>Adjective (adj)</td><td>Thông thường, hằng ngày</td></tr>
+
+                    <tr><td>Quietly</td><td>Adverb (adv)</td><td>Một cách yên tĩnh, nhẹ nhàng</td></tr>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="pane exercise-pane" id="exercise-container">
+
+            </div>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="score-modal">
+
+        <div class="modal-content" id="modal-content">
+
+            <div class="score-circle" id="final-score">0/5</div>
+
+            <div class="modal-message" id="modal-msg">Làm tốt lắm!</div>
+
+            <div class="modal-sub" id="modal-submsg">Cùng xem lại các câu sai để rút kinh nghiệm nhé!</div>
+
+            <button class="btn btn-submit" style="margin: 0; padding: 15px; font-size: 1.2rem;" onclick="closeModal()">Xem chi tiết bài làm 🔍</button>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        // --- DATA & CONFIG ---
+
+        const questionsData = [
+
+            {
+
+                id: 1,
+
+                question: "1. Which instrument does the writer think is most important in a band?",
+
+                choices: [
+
+                    "drums",
+
+                    "guitars",
+
+                    "keyboards"
+
+                ],
+
+                correctString: "drums",
+
+                explanation: `
+
+                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
+
+                    <p><strong>1. Phân tích câu hỏi:</strong> Tác giả nghĩ <span class="exp-vocab">instrument</span> (nhạc cụ) nào là quan trọng nhất trong ban nhạc?</p>
+
+                    <p><strong>2. Dẫn chứng trong bài:</strong> <span class="exp-evidence">'However, every band must have drums – you will need someone who can play those.'</span><br>
+
+                    (Dịch: <em>Tuy nhiên, mọi ban nhạc đều phải có trống – bạn sẽ cần một ai đó có thể chơi chúng.</em>)</p>
+
+                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
+
+                    Bài đọc sử dụng cụm từ <strong>"must have"</strong> (phải có) đối với "drums", trong khi các nhạc cụ khác có thể thay đổi ("you can change this"). Điều này chứng tỏ trống là nhạc cụ bắt buộc/quan trọng nhất.</p>
+
+                `
+
+            },
+
+            {
+
+                id: 2,
+
+                question: "2. What does the writer suggest in the second paragraph?",
+
+                choices: [
+
+                    "listen to your classmates’ bands",
+
+                    "advertise in the place where you study",
+
+                    "ask your friends to join your band"
+
+                ],
+
+                correctString: "advertise in the place where you study",
+
+                explanation: `
+
+                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
+
+                    <p><strong>1. Phân tích từ vựng:</strong> <span class="exp-vocab">suggest</span> (gợi ý), <span class="exp-vocab">advertise</span> (quảng cáo), <span class="exp-vocab">place where you study</span> (nơi bạn học = school/college).</p>
+
+                    <p><strong>2. Dẫn chứng trong bài:</strong> <span class="exp-evidence">'Begin by making a poster... Put the poster up in your school or college...'</span><br>
+
+                    (Dịch: <em>Hãy bắt đầu bằng việc tạo một tấm áp phích... Hãy dán tấm áp phích đó ở trường học hoặc trường đại học của bạn...</em>)</p>
+
+                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
+
+                    Việc dán poster (áp phích) chính là hành động "advertise" (quảng cáo), và "school or college" chính là "the place where you study".<br>
+
+                    - Loại đáp án "ask your friends to join" vì tác giả bảo hỏi bạn bè xem <strong>họ có biết ai không</strong> (ask if they know anyone), chứ không bảo trực tiếp rủ bạn bè tham gia.<br>
+
+                    - Loại đáp án "listen to classmates' bands" vì không hề được nhắc đến.</p>
+
+                `
+
+            },
+
+            {
+
+                id: 3,
+
+                question: "3. What does the writer say about choosing a band name?",
+
+                choices: [
+
+                    "Make sure it is easy to remember.",
+
+                    "Be ready to change it if it is not popular.",
+
+                    "Spend a few weeks thinking about it."
+
+                ],
+
+                correctString: "Make sure it is easy to remember.",
+
+                explanation: `
+
+                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
+
+                    <p><strong>1. Phân tích từ vựng:</strong> <span class="exp-vocab">easy to remember</span> (dễ nhớ) = <span class="exp-vocab">won't be able to forget</span> (không thể nào quên).</p>
+
+                    <p><strong>2. Dẫn chứng trong bài:</strong> <span class="exp-evidence">'Choose something surprising and interesting, that people won’t be able to forget.'</span><br>
+
+                    (Dịch: <em>Hãy chọn một thứ gì đó bất ngờ và thú vị, sao cho mọi người sẽ không thể nào quên.</em>)</p>
+
+                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
+
+                    Một cái tên mà mọi người "không thể nào quên" đồng nghĩa với việc nó "dễ nhớ".<br>
+
+                    - Loại đáp án "spend a few weeks" (dành vài tuần) vì bài đọc khuyên chỉ dành "two hours" (2 giờ).<br>
+
+                    - Loại đáp án "ready to change it" vì bài không đề cập đến việc đổi tên.</p>
+
+                `
+
+            },
+
+            {
+
+                id: 4,
+
+                question: "4. The writer thinks it is important for new bands to",
+
+                choices: [
+
+                    "write songs about unusual things.",
+
+                    "begin by learning famous songs.",
+
+                    "play loudly when they practise."
+
+                ],
+
+                correctString: "play loudly when they practise.",
+
+                explanation: `
+
+                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
+
+                    <p><strong>1. Phân tích từ vựng:</strong> <span class="exp-vocab">play loudly</span> (chơi to/ồn ào) = <span class="exp-vocab">make a lot of noise</span> (gây nhiều tiếng ồn).</p>
+
+                    <p><strong>2. Dẫn chứng trong bài:</strong> <span class="exp-evidence">'You will need a place where you can make a lot of noise... Trying to play quietly will not help you get better.'</span><br>
+
+                    (Dịch: <em>Bạn sẽ cần một nơi mà bạn có thể gây ra nhiều tiếng ồn... Cố gắng chơi nhạc một cách nhẹ nhàng/yên tĩnh sẽ không giúp bạn giỏi lên được.</em>)</p>
+
+                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
+
+                    Việc không nên chơi nhỏ/yên tĩnh ("play quietly will not help") và cần nơi tạo tiếng ồn đồng nghĩa với việc họ cần "play loudly".<br>
+
+                    - Loại đáp án "unusual things" vì tác giả khuyên viết về "normal everyday experiences" (những thứ bình thường hàng ngày).<br>
+
+                    - Loại đáp án "learning famous songs" vì tác giả nói "Don't spend time learning songs written by other people" (Đừng tốn thời gian học bài hát của người khác).</p>
+
+                `
+
+            },
+
+            {
+
+                id: 5,
+
+                question: "5. What is the best title for this article?",
+
+                choices: [
+
+                    "The world’s best rock band",
+
+                    "How to start a rock band",
+
+                    "My life in a rock band"
+
+                ],
+
+                correctString: "How to start a rock band",
+
+                explanation: `
+
+                    <div class="exp-title">📝 PHẦN GIẢI THÍCH CHI TIẾT:</div>
+
+                    <p><strong>1. Phân tích toàn bài:</strong> Đoạn văn liên tục đưa ra các lời khuyên theo trình tự để thành lập ban nhạc.</p>
+
+                    <p><strong>2. Dẫn chứng cấu trúc:</strong><br>
+
+                    - Bước 1: <em>'The first thing you’ll need to do is...'</em> (chọn nhạc cụ)<br>
+
+                    - Bước 2: <em>'The next thing is to find your bandmates.'</em> (tìm thành viên)<br>
+
+                    - Bước 3: <em>'Once you have a band, you’ll need to quickly think of a name.'</em> (đặt tên)<br>
+
+                    - Bước 4: <em>'Next, you’ll need to practise...'</em> (luyện tập)</p>
+
+                    <p><strong>3. Tại sao chọn đáp án này?</strong><br>
+
+                    Bài viết rõ ràng là một bài hướng dẫn (How to) cho những ai muốn lập ban nhạc rock. Tác giả không kể chuyện đời mình ("My life") hay nói về ban nhạc giỏi nhất ("The world's best").</p>
+
+                `
+
+            }
+
+        ];
+
+
+
+        let score = 0;
+
+        let answeredQuestions = 0;
+
+        let timerInterval;
+
+        let timeRemaining = 600; // 10 minutes
+
+        let isTimerRunning = false;
+
+
+
+        // --- WEB AUDIO API (SOUNDS) ---
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+
+            const gainNode = audioCtx.createGain();
+
+            osc.connect(gainNode);
+
+            gainNode.connect(audioCtx.destination);
+
+
+
+            if (type === 'correct') {
+
+                osc.type = 'sine';
+
+                osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+
+                osc.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.15);
+
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+                osc.start(audioCtx.currentTime);
+
+                osc.stop(audioCtx.currentTime + 0.5);
+
+            } else if (type === 'wrong') {
+
+                osc.type = 'sawtooth';
+
+                osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+
+                osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.4);
+
+                gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+                osc.start(audioCtx.currentTime);
+
+                osc.stop(audioCtx.currentTime + 0.5);
+
+            }
+
+        }
+
+
+
+        // --- CONFETTI EFFECT ---
+
+        function createConfetti() {
+
+            const container = document.getElementById('confetti-container');
+
+            const colors = ['#00d2ff', '#00D26A', '#fdcb6e', '#a29bfe', '#ff9a9e'];
+
+            for (let i = 0; i < 60; i++) {
+
+                const conf = document.createElement('div');
+
+                conf.classList.add('confetti');
+
+                conf.style.left = Math.random() * 100 + 'vw';
+
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+                
+
+                // Randomize shape (square or rectangle)
+
+                if(Math.random() > 0.5) conf.style.height = '20px';
+
+                
+
+                conf.style.transform = `rotate(${Math.random() * 360}deg)`;
+
+                
+
+                const duration = Math.random() * 2 + 1.5;
+
+                conf.style.transition = `all ${duration}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+
+                
+
+                container.appendChild(conf);
+
+
+
+                setTimeout(() => {
+
+                    conf.style.top = '100vh';
+
+                    conf.style.transform = `rotate(${Math.random() * 720}deg)`;
+
+                    conf.style.opacity = '0';
+
+                }, 10);
+
+
+
+                setTimeout(() => conf.remove(), duration * 1000);
+
+            }
+
+        }
+
+
+
+        // --- UTILS & LOGIC ---
+
+        function shuffleArray(array) {
+
+            let curId = array.length, randomId;
+
+            while (0 !== curId) {
+
+                randomId = Math.floor(Math.random() * curId);
+
+                curId -= 1;
+
+                [array[curId], array[randomId]] = [array[randomId], array[curId]];
+
+            }
+
+            return array;
+
+        }
+
+
+
+        function toggleTranslation(id) {
+
+            const el = document.getElementById(id);
+
+            if(el.style.display === 'block') {
+
+                el.style.display = 'none';
+
+            } else {
+
+                el.style.display = 'block';
+
+            }
+
+        }
+
+
+
+        // --- TIMER ---
+
+        function updateTimerDisplay() {
+
+            const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+
+            const s = (timeRemaining % 60).toString().padStart(2, '0');
+
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+
+        }
+
+
+
+        function toggleTimer() {
+
+            const btn = document.getElementById('btn-timer-toggle');
+
+            if (isTimerRunning) {
+
+                clearInterval(timerInterval);
+
+                isTimerRunning = false;
+
+                btn.innerText = "TIẾP TỤC LÀM BÀI";
+
+                btn.style.background = "#00b894";
+
+                btn.style.boxShadow = "0 6px 0 #008f73";
+
+            } else {
+
+                isTimerRunning = true;
+
+                btn.innerText = "TẠM DỪNG";
+
+                btn.style.background = "#e17055";
+
+                btn.style.boxShadow = "0 6px 0 #b35944";
+
+                timerInterval = setInterval(() => {
+
+                    timeRemaining--;
+
+                    updateTimerDisplay();
+
+                    if (timeRemaining <= 0) {
+
+                        clearInterval(timerInterval);
+
+                        isTimerRunning = false;
+
+                        btn.innerText = "HẾT GIỜ";
+
+                        btn.style.background = "#b2bec3";
+
+                        btn.style.boxShadow = "none";
+
+                        btn.disabled = true;
+
+                        alert("Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+
+                    }
+
+                }, 1000);
+
+            }
+
+        }
+
+
+
+        // --- RENDER QUIZ ---
+
+        function renderQuiz() {
+
+            const container = document.getElementById('exercise-container');
+
+            container.innerHTML = '';
+
+
+
+            questionsData.forEach((q, index) => {
+
+                const card = document.createElement('div');
+
+                card.className = 'question-card';
+
+                card.id = `qcard-${index}`;
+
+
+
+                const qText = document.createElement('div');
+
+                qText.className = 'question-text';
+
+                qText.innerText = q.question;
+
+                card.appendChild(qText);
+
+
+
+                const optionsGrid = document.createElement('div');
+
+                optionsGrid.className = 'options-grid';
+
+                
+
+                const shuffledChoices = shuffleArray([...q.choices]);
+
+                const labels = ['A', 'B', 'C', 'D'];
+
+
+
+                shuffledChoices.forEach((choice, cIndex) => {
+
+                    const btn = document.createElement('button');
+
+                    btn.className = `btn option-btn q-${index}-btn`;
+
+                    
+
+                    const label = document.createElement('span');
+
+                    label.className = 'option-label';
+
+                    label.innerText = labels[cIndex];
+
+                    
+
+                    const textNode = document.createTextNode(choice);
+
+                    
+
+                    btn.appendChild(label);
+
+                    btn.appendChild(textNode);
+
+
+
+                    btn.onclick = () => handleAnswer(index, choice, btn);
+
+                    optionsGrid.appendChild(btn);
+
+                });
+
+
+
+                card.appendChild(optionsGrid);
+
+
+
+                const expBox = document.createElement('div');
+
+                expBox.className = 'explanation-box';
+
+                expBox.id = `exp-${index}`;
+
+                expBox.innerHTML = q.explanation;
+
+                card.appendChild(expBox);
+
+
+
+                container.appendChild(card);
+
+            });
+
+
+
+            // Submit Button
+
+            const submitBtn = document.createElement('button');
+
+            submitBtn.className = 'btn btn-submit';
+
+            submitBtn.innerText = "🤘 NỘP BÀI THÔI 🤘";
+
+            submitBtn.onclick = showFinalScore;
+
+            container.appendChild(submitBtn);
+
+        }
+
+
+
+        function handleAnswer(qIndex, selectedChoice, btnElement) {
+
+            const allBtns = document.querySelectorAll(`.q-${qIndex}-btn`);
+
+            if (allBtns[0].classList.contains('disabled')) return; // Already answered
+
+
+
+            const qData = questionsData[qIndex];
+
+            const isCorrect = (selectedChoice === qData.correctString);
+
+
+
+            allBtns.forEach(b => b.classList.add('disabled'));
+
+
+
+            if (isCorrect) {
+
+                btnElement.classList.add('correct');
+
+                playSound('correct');
+
+                createConfetti();
+
+                score++;
+
+            } else {
+
+                btnElement.classList.add('wrong');
+
+                btnElement.classList.add('shake');
+
+                playSound('wrong');
+
+                
+
+                // Show the correct one
+
+                allBtns.forEach(b => {
+
+                    if (b.innerText.includes(qData.correctString)) {
+
+                        b.classList.add('correct');
+
+                    }
+
+                });
+
+            }
+
+
+
+            // Scroll slightly and show explanation
+
+            const expDiv = document.getElementById(`exp-${qIndex}`);
+
+            expDiv.style.display = 'block';
+
+            answeredQuestions++;
+
+        }
+
+
+
+        function showFinalScore() {
+
+            if(answeredQuestions < questionsData.length) {
+
+                if(!confirm("Cảnh báo: Bạn chưa làm hết các câu hỏi. Vẫn muốn nộp bài chứ?")) {
+
+                    return;
+
+                }
+
+            }
+
+
+
+            document.getElementById('final-score').innerText = `${score}/${questionsData.length}`;
+
+            
+
+            const msgEl = document.getElementById('modal-msg');
+
+            const subEl = document.getElementById('modal-submsg');
+
+            
+
+            if (score === 5) {
+
+                msgEl.innerText = "🌟 ROCKSTAR THỰC THỤ! 🌟";
+
+                msgEl.style.color = "#d63031";
+
+                subEl.innerText = "Tuyệt đỉnh! Bạn đã làm đúng toàn bộ 100%. Kỹ năng đọc hiểu của bạn sắc bén y như một đoạn solo Guitar vậy!";
+
+                createConfetti(); setTimeout(createConfetti, 400); setTimeout(createConfetti, 800);
+
+            } else if (score >= 3) {
+
+                msgEl.innerText = "🎸 LÀM TỐT LẮM! 🎸";
+
+                msgEl.style.color = "#0984e3";
+
+                subEl.innerText = "Bạn nắm bắt thông tin rất tốt. Cùng xem lại phần giải thích chi tiết các câu sai để nhịp điệu hoàn hảo hơn nhé!";
+
+                createConfetti();
+
+            } else {
+
+                msgEl.innerText = "🥁 CỐ LÊN NHÉ! 🥁";
+
+                msgEl.style.color = "#e17055";
+
+                subEl.innerText = "Ban nhạc nào cũng có lúc chơi trật nhịp. Hãy đọc kỹ phần giải thích bên dưới để nâng cao trình độ ngay nào!";
+
+            }
+
+
+
+            const modal = document.getElementById('score-modal');
+
+            const content = document.getElementById('modal-content');
+
+            modal.style.display = 'flex';
+
+            playSound('correct');
+
+            setTimeout(() => content.classList.add('show'), 10);
+
+        }
+
+
+
+        function closeModal() {
+
+            const modal = document.getElementById('score-modal');
+
+            const content = document.getElementById('modal-content');
+
+            content.classList.remove('show');
+
+            setTimeout(() => modal.style.display = 'none', 400);
+
+        }
+
+
+
+        // Init
+
+        window.onload = () => {
+
+            renderQuiz();
+
+        };
+
+    </script>
+
+</body>
+
 </html>

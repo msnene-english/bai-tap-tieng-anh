@@ -1,850 +1,1699 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ms MS Chí Nên - English Quiz</title>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-        :root {
-            --primary-bg: linear-gradient(-45deg, #8854C0, #FDCB6E, #00C9A7, #E84393);
-            --correct-color: #00D26A;
-            --wrong-color: #FF4757;
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --text-color: #2D3436;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            font-family: 'Quicksand', sans-serif;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            background: var(--primary-bg);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
-        }
-
-        /* Pattern Background Overlay */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        header {
-            z-index: 10;
-            text-align: center;
-            color: white;
-            padding: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        header h4 { margin: 0; font-weight: 500; opacity: 0.9; }
-        header h1 { margin: 5px 0; font-size: 2rem; }
-
-        #quiz-container {
-            width: 95%;
-            max-width: 800px;
-            z-index: 1;
-            margin-bottom: 50px;
-        }
-
-        .question-card {
-            background: var(--card-bg);
-            border-radius: 30px;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            position: relative;
-            transform: translateY(0);
-            transition: all 0.3s ease;
-        }
-
-        .question-text {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-color);
-            margin-bottom: 25px;
-            line-height: 1.5;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        @media (max-width: 600px) {
-            .options-grid { grid-template-columns: 1fr; }
-        }
-
-        .option-btn {
-            background: white;
-            border: 3px solid #E0E0E0;
-            border-radius: 20px;
-            padding: 15px 20px;
-            font-size: 1.1rem;
-            font-family: 'Quicksand', sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 6px 0 #E0E0E0;
-            color: var(--text-color);
-            text-align: left;
-            position: relative;
-        }
-
-        .option-btn:hover {
-            transform: scale(1.02);
-            background: #F8F9FA;
-        }
-
-        .option-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #E0E0E0;
-        }
-
-        .option-btn.correct {
-            background-color: var(--correct-color) !important;
-            border-color: #00B358 !important;
-            color: white !important;
-            box-shadow: 0 6px 0 #008F46 !important;
-        }
-
-        .option-btn.wrong {
-            background-color: var(--wrong-color) !important;
-            border-color: #E83E4D !important;
-            color: white !important;
-            box-shadow: 0 6px 0 #B3313D !important;
-            animation: shake 0.5s ease;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
-        .explanation-box {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 20px;
-            background: #F0F7FF;
-            border-left: 8px solid #3498DB;
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .explanation-box h3 {
-            margin-top: 0;
-            color: #2980B9;
-            font-size: 1.1rem;
-        }
-
-        .explanation-content {
-            font-size: 0.95rem;
-            line-height: 1.6;
-            color: #34495E;
-        }
-
-        /* Gap Fill Styles */
-        .gap-fill-container {
-            line-height: 2.5;
-        }
-
-        .gap-box {
-            display: inline-block;
-            min-width: 100px;
-            height: 40px;
-            border-bottom: 3px dashed #8854C0;
-            margin: 0 5px;
-            padding: 0 10px;
-            cursor: pointer;
-            text-align: center;
-            font-weight: bold;
-            color: #8854C0;
-            transition: all 0.2s;
-        }
-
-        .gap-box:hover {
-            background: rgba(136, 84, 192, 0.1);
-        }
-
-        /* Signage & Phone CSS UI */
-        .sale-sign {
-            background: #FFD700;
-            border: 4px solid #000;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-            border-radius: 10px;
-            max-width: 250px;
-            margin: 10px auto;
-            box-shadow: 5px 5px 0px #000;
-        }
-
-        .phone-ui {
-            background: #F1F1F1;
-            border-radius: 20px;
-            border: 8px solid #333;
-            padding: 15px;
-            max-width: 300px;
-            margin: 10px auto;
-        }
-
-        .chat-bubble {
-            background: #0084FF;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 18px;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            float: left;
-            clear: both;
-        }
-
-        .submit-area {
-            text-align: center;
-            margin: 40px 0;
-        }
-
-        .submit-btn {
-            background: #FF7675;
-            color: white;
-            border: none;
-            padding: 20px 60px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 10px 0 #D63031;
-            transition: all 0.2s;
-        }
-
-        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 13px 0 #D63031; }
-        .submit-btn:active { transform: translateY(7px); box-shadow: 0 3px 0 #D63031; }
-
-        /* Popup Score */
-        #score-popup {
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            box-shadow: 0 0 100px rgba(0,0,0,0.5);
-            z-index: 1000;
-            text-align: center;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            width: 90%;
-            max-width: 500px;
-        }
-
-        #score-popup.active { transform: translate(-50%, -50%) scale(1); }
-
-        .overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 999;
-            display: none;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Modal for Gap Fill Selection */
-        #selection-modal {
-            position: fixed;
-            bottom: -100%; left: 0; width: 100%;
-            background: white;
-            z-index: 1001;
-            border-radius: 30px 30px 0 0;
-            padding: 30px;
-            transition: bottom 0.4s ease;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
-        }
-
-        #selection-modal.active { bottom: 0; }
-        
-        .modal-options {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-    </style>
-</head>
-<body>
-
-<header>
-    <h4>Giáo viên tạo: Ms MS Chí Nên</h4>
-    <h1>🌈 English Adventure: Energy & Environment 🌟</h1>
-</header>
-
-<div id="quiz-container">
-    </div>
-
-<div class="submit-area">
-    <button class="submit-btn" onclick="showFinalResult()">NỘP BÀI 🏆</button>
-</div>
-
-<div class="overlay" id="overlay"></div>
-<div id="score-popup">
-    <h2 id="compliment">TUYỆT VỜI! 🌟</h2>
-    <p style="font-size: 1.5rem;">Bạn đã đạt được:</p>
-    <div id="final-score" style="font-size: 3rem; font-weight: bold; color: #8854C0; margin: 20px 0;">0/50</div>
-    <button class="option-btn" onclick="location.reload()" style="text-align: center; width: 100%;">LÀM LẠI 🔄</button>
-</div>
-
-<div id="selection-modal">
-    <h3 style="text-align: center;">Chọn đáp án đúng:</h3>
-    <div class="modal-options" id="modal-options"></div>
-</div>
-
-<script>
-    // Audio Context Setup for procedurally generated sounds
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    function playSound(type) {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        if (type === 'correct') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        } else {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.4);
-        }
-    }
-
-    const quizData = [
-        // Multiple Choice Questions
-        {
-            type: "mcq",
-            q: "31. Look! The solar panels _______ electricity from the sunlight right now.",
-            options: ["produce", "is producing", "are producing", "produces"],
-            correct: 2,
-            translate: "Nhìn kìa! Những tấm pin mặt trời đang tạo ra điện từ ánh nắng ngay lúc này.",
-            vocab: ["A. produce (v): sản xuất (hiện tại đơn)", "B. is producing: đang sản xuất (số ít)", "C. are producing: đang sản xuất (số nhiều)", "D. produces: sản xuất (số ít)"],
-            whyCorrect: "Câu có dấu hiệu 'Look!' và 'right now' nên dùng Hiện tại tiếp diễn. Chủ ngữ 'The solar panels' là số nhiều nên dùng 'are producing'.",
-            whyWrong: "A và D sai thì (HTĐ). B sai hòa hợp chủ ngữ (số ít)."
-        },
-        {
-            type: "mcq",
-            q: "32. At the moment, scientists _______ new ways to save energy in our homes.",
-            options: ["are developing", "develops", "is developing", "develop"],
-            correct: 0,
-            translate: "Vào lúc này, các nhà khoa học đang phát triển những cách mới để tiết kiệm năng lượng trong nhà.",
-            vocab: ["A. are developing: đang phát triển (số nhiều)", "B. develops: phát triển (số ít)", "C. is developing: đang phát triển (số ít)", "D. develop: phát triển (số nhiều)"],
-            whyCorrect: "Dấu hiệu 'At the moment' dùng Hiện tại tiếp diễn. 'Scientists' số nhiều nên đi với 'are'.",
-            whyWrong: "B và D sai thì. C sai vì dùng 'is' cho chủ ngữ số nhiều."
-        },
-        {
-            type: "mcq",
-            q: "33. Listen! The wind turbines _______ very loudly because of the strong wind today.",
-            options: ["turns", "are turning", "is turning", "turn"],
-            correct: 1,
-            translate: "Nghe kìa! Những tuabin gió đang quay rất mạnh vì hôm nay gió lớn.",
-            vocab: ["A. turns: quay (số ít)", "B. are turning: đang quay (số nhiều)", "C. is turning: đang quay (số ít)", "D. turn: quay (số nhiều)"],
-            whyCorrect: "Dấu hiệu 'Listen!' dùng Hiện tại tiếp diễn. 'Wind turbines' số nhiều nên chọn 'are turning'.",
-            whyWrong: "A và D sai thì. C sai hòa hợp chủ ngữ."
-        },
-        {
-            type: "mcq",
-            q: "34. This week, our school _______ a campaign to reduce electricity use.",
-            options: ["run", "runs", "are running", "is running"],
-            correct: 3,
-            translate: "Tuần này, trường chúng tôi đang thực hiện một chiến dịch giảm sử dụng điện.",
-            vocab: ["A. run: chạy/thực hiện (số nhiều)", "B. runs: thực hiện (số ít)", "C. are running: đang thực hiện (số nhiều)", "D. is running: đang thực hiện (số ít)"],
-            whyCorrect: "Dấu hiệu 'This week' diễn tả hành động tạm thời trong HTTD. 'Our school' là danh từ số ít nên dùng 'is running'.",
-            whyWrong: "A và B sai thì. C sai vì 'School' là số ít."
-        },
-        {
-            type: "mcq",
-            q: "35. We _______ coal for heating anymore because it pollutes the air too much.",
-            options: ["aren't using", "doesn't use", "isn't using", "don't using"],
-            correct: 0,
-            translate: "Chúng tôi không còn sử dụng than để sưởi ấm nữa vì nó gây ô nhiễm không khí quá nhiều.",
-            vocab: ["A. aren't using: đang không sử dụng (số nhiều)", "B. doesn't use: không sử dụng (số ít)", "C. isn't using: đang không sử dụng (số ít)", "D. don't using: Sai ngữ pháp"],
-            whyCorrect: "Dùng Hiện tại tiếp diễn diễn tả sự thay đổi/phát triển. Chủ ngữ 'We' đi với 'are not'.",
-            whyWrong: "B và C sai hòa hợp chủ ngữ. D sai cấu trúc (Don't + V-nguyên thể)."
-        },
-        {
-            type: "mcq",
-            q: "36. _______ the government _______ new laws about renewable energy this month?",
-            options: ["Do / make", "Is / making", "Are / making", "Does / make"],
-            correct: 1,
-            translate: "Chính phủ có đang đưa ra các luật mới về năng lượng tái tạo trong tháng này không?",
-            vocab: ["A. Do/make: HTĐ (số nhiều)", "B. Is/making: HTTD (số ít)", "C. Are/making: HTTD (số nhiều)", "D. Does/make: HTĐ (số ít)"],
-            whyCorrect: "'This month' dùng HTTD. 'The government' (chính phủ) được coi là danh từ số ít.",
-            whyWrong: "A và D sai thì. C sai hòa hợp chủ ngữ."
-        },
-        {
-            type: "mcq",
-            q: "37. Right now, many countries _______ from fossil fuels to solar and wind energy.",
-            options: ["changes", "change", "is changing", "are changing"],
-            correct: 3,
-            translate: "Ngay lúc này, nhiều quốc gia đang chuyển đổi từ nhiên liệu hóa thạch sang năng lượng mặt trời và gió.",
-            vocab: ["A. changes (số ít)", "B. change (số nhiều)", "C. is changing (HTTD số ít)", "D. are changing (HTTD số nhiều)"],
-            whyCorrect: "'Right now' dùng HTTD. 'Many countries' là số nhiều.",
-            whyWrong: "A và B sai thì. C dùng sai trợ động từ 'is'."
-        },
-        {
-            type: "mcq",
-            q: "38. My neighbors _______ solar panels on their roof at this moment.",
-            options: ["installs", "are installing", "is installing", "install"],
-            correct: 1,
-            translate: "Hàng xóm của tôi đang lắp đặt các tấm pin mặt trời trên mái nhà của họ ngay lúc này.",
-            vocab: ["A. HTĐ (số ít)", "B. HTTD (số nhiều)", "C. HTTD (số ít)", "D. HTĐ (số nhiều)"],
-            whyCorrect: "'At this moment' dùng HTTD. 'Neighbors' số nhiều nên dùng 'are'.",
-            whyWrong: "A và D sai thì. C sai hòa hợp chủ ngữ."
-        },
-        {
-            type: "mcq",
-            q: "39. He _______ always _______ the lights on when he leaves the room! It wastes electricity.",
-            options: ["is / leaving", "are / leaving", "does / leave", "do / leave"],
-            correct: 0,
-            translate: "Anh ấy cứ luôn luôn để điện sáng khi rời phòng! Thật lãng phí điện.",
-            vocab: ["A. is leaving: HTTD", "B. are leaving", "C. does leave", "D. do leave"],
-            whyCorrect: "Cấu trúc 'Be + always + V-ing' dùng để phàn nàn về một thói quen gây khó chịu.",
-            whyWrong: "Các phương án khác không đúng cấu trúc phàn nàn."
-        },
-        {
-            type: "mcq",
-            q: "40. Currently, oil prices _______ because there is less supply in the market.",
-            options: ["increases", "is increasing", "are increasing", "increase"],
-            correct: 2,
-            translate: "Hiện tại, giá dầu đang tăng vì nguồn cung trên thị trường ít đi.",
-            vocab: ["A. increases (số ít)", "B. is increasing (HTTD số ít)", "C. are increasing (HTTD số nhiều)", "D. increase (HTĐ số nhiều)"],
-            whyCorrect: "'Currently' dùng HTTD. 'Oil prices' (giá dầu) là danh từ số nhiều.",
-            whyWrong: "A và D sai thì. B sai vì dùng 'is' cho số nhiều."
-        },
-        {
-            type: "mcq",
-            q: "41. Which sentence is correct about what's happening now?",
-            options: ["The factory produces less pollution these days.", "The factory is producing less pollution right now.", "The factory produce less pollution these days.", "The factory producing less pollution these days."],
-            correct: 1,
-            translate: "Câu nào đúng về việc đang xảy ra ngay bây giờ?",
-            vocab: ["A. Sai thì", "B. Đúng cấu trúc HTTD", "C. Sai hòa hợp chủ ngữ", "D. Thiếu to-be"],
-            whyCorrect: "'Right now' đi kèm với 'is producing' là đúng ngữ pháp nhất.",
-            whyWrong: "Các câu khác vi phạm quy tắc chia thì hoặc cấu trúc."
-        },
-        {
-            type: "mcq",
-            q: "42. They _______ a new hydro power station next month. Everything is already arranged.",
-            options: ["build", "builds", "is building", "are building"],
-            correct: 3,
-            translate: "Họ sẽ xây dựng một nhà máy thủy điện mới vào tháng tới. Mọi thứ đã được sắp xếp xong.",
-            vocab: ["A. build (HTĐ)", "B. builds (HTĐ)", "C. is building (số ít)", "D. are building (số nhiều)"],
-            whyCorrect: "HTTD dùng để diễn tả một kế hoạch chắc chắn trong tương lai (Everything is already arranged).",
-            whyWrong: "A và B sai thì. C dùng sai 'is' cho 'They'."
-        },
-        {
-            type: "mcq",
-            q: "43. Find the mistake: 'The engineer are checking the nuclear reactor for safety right now.'",
-            options: ["The engineer", "are checking", "nuclear reactor", "right now"],
-            correct: 1,
-            translate: "Tìm lỗi sai: 'Kỹ sư đang kiểm tra lò phản ứng hạt nhân để đảm bảo an toàn ngay lúc này.'",
-            vocab: ["B. are checking -> is checking"],
-            whyCorrect: "Chủ ngữ 'The engineer' là số ít nên phải dùng 'is checking'.",
-            whyWrong: "Các từ khác đều đúng ngữ cảnh và ngữ pháp."
-        },
-        {
-            type: "mcq",
-            q: "44. At the moment, more people _______ public transport to save energy and money.",
-            options: ["uses", "is using", "are using", "use"],
-            correct: 2,
-            translate: "Hiện nay, nhiều người đang sử dụng phương tiện công cộng để tiết kiệm năng lượng và tiền bạc.",
-            vocab: ["A. uses (HTĐ số ít)", "B. is using (HTTD số ít)", "C. are using (HTTD số nhiều)", "D. use (HTĐ số nhiều)"],
-            whyCorrect: "'At the moment' dùng HTTD. 'More people' là số nhiều nên dùng 'are'.",
-            whyWrong: "A và D sai thì. B dùng sai trợ động từ."
-        },
-        {
-            type: "mcq",
-            q: "45. Why _______ you _______ so much electricity today? The bill will be very high!",
-            options: ["are / using", "do / use", "is / using", "does / use"],
-            correct: 0,
-            translate: "Tại sao hôm nay bạn lại dùng nhiều điện thế? Hóa đơn sẽ cao lắm đấy!",
-            vocab: ["A. are using (HTTD)", "B. do use (HTĐ)"],
-            whyCorrect: "Hành động đang diễn ra gây hậu quả trong tương lai gần, dùng HTTD.",
-            whyWrong: "B và D sai thì. C sai hòa hợp chủ ngữ với 'You'."
-        },
-        {
-            type: "mcq",
-            q: "46. The water level in the dam _______ because there is no rain this month.",
-            options: ["drops", "drop", "are dropping", "is dropping"],
-            correct: 3,
-            translate: "Mực nước trong đập đang giảm vì tháng này không có mưa.",
-            vocab: ["A. HTĐ số ít", "B. HTĐ số nhiều", "C. HTTD số nhiều", "D. HTTD số ít"],
-            whyCorrect: "Diễn tả một xu hướng đang xảy ra. 'Water level' là số ít.",
-            whyWrong: "A và B sai thì. C dùng sai trợ động từ."
-        },
-        {
-            type: "mcq",
-            q: "47. Choose the correct response: 'Is your family saving energy at home?' - '_______'",
-            options: ["Yes, we do.", "Yes, we are.", "Yes, we is.", "Yes, we does."],
-            correct: 1,
-            translate: "Gia đình bạn có đang tiết kiệm điện không? - Có, chúng tôi đang làm vậy.",
-            vocab: ["A. Trả lời cho Do/Does", "B. Đúng cho câu hỏi HTTD", "C. Sai ngữ pháp", "D. Sai ngữ pháp"],
-            whyCorrect: "Câu hỏi bắt đầu bằng 'Is' (HTTD) nên trả lời bằng 'Be'. 'We' đi với 'are'.",
-            whyWrong: "Các phương án khác sai trợ động từ."
-        },
-        {
-            type: "mcq",
-            q: "48. Find the mistake: 'Natural gas are becoming more expensive in many countries now.'",
-            options: ["Natural gas", "are becoming", "more expensive", "many countries"],
-            correct: 1,
-            translate: "Tìm lỗi sai: 'Khí thiên nhiên đang trở nên đắt đỏ hơn ở nhiều quốc gia.'",
-            vocab: ["B. are becoming -> is becoming"],
-            whyCorrect: "'Natural gas' là danh từ không đếm được (số ít) nên dùng 'is'.",
-            whyWrong: "Các phần khác đúng cấu trúc."
-        },
-        {
-            type: "mcq",
-            q: "49. This year, our city _______ all old street lights with low energy light bulbs.",
-            options: ["replaces", "replace", "is replacing", "are replacing"],
-            correct: 2,
-            translate: "Năm nay, thành phố chúng tôi đang thay thế tất cả đèn đường cũ bằng bóng đèn tiết kiệm năng lượng.",
-            vocab: ["A. HTĐ", "B. HTĐ", "C. HTTD số ít", "D. HTTD số nhiều"],
-            whyCorrect: "'This year' dùng HTTD. 'Our city' là số ít.",
-            whyWrong: "A và B sai thì. D dùng sai 'are'."
-        },
-        {
-            type: "mcq",
-            q: "50. Look at those workers! They _______ new electrical appliances in the building today.",
-            options: ["is fixing", "fixes", "fix", "are fixing"],
-            correct: 3,
-            translate: "Hãy nhìn những công nhân kia kìa! Họ đang lắp đặt các thiết bị điện mới trong tòa nhà hôm nay.",
-            vocab: ["A. HTTD số ít", "B. HTĐ số ít", "C. HTĐ số nhiều", "D. HTTD số nhiều"],
-            whyCorrect: "'Look!' dùng HTTD. 'They' là số nhiều.",
-            whyWrong: "B và C sai thì. A sai trợ động từ."
-        },
-        // Closest meaning
-        {
-            type: "mcq",
-            q: "Ex 4.1. Solar panels are <u>easy to use</u> because you just need to put them on your roof.",
-            options: ["difficult to operate", "hard to install", "simple to operate", "complex to handle"],
-            correct: 2,
-            translate: "Các tấm pin mặt trời rất dễ sử dụng vì bạn chỉ cần đặt chúng lên mái nhà.",
-            vocab: ["A. khó vận hành", "B. khó lắp đặt", "C. đơn giản để vận hành (đồng nghĩa)", "D. phức tạp để xử lý"],
-            whyCorrect: "Easy to use = simple to operate.",
-            whyWrong: "A, B, D mang nghĩa trái ngược (khó khăn)."
-        },
-        {
-            type: "mcq",
-            q: "Ex 4.2. Clean energy sources are becoming <u>harder to find</u> in some developing countries.",
-            options: ["simpler to locate", "more difficult to discover", "easier to get", "quicker to obtain"],
-            correct: 1,
-            translate: "Các nguồn năng lượng sạch đang trở nên khó tìm thấy hơn ở một số nước đang phát triển.",
-            vocab: ["A. dễ định vị hơn", "B. khó khám phá/tìm ra hơn (đồng nghĩa)", "C. dễ lấy hơn", "D. nhanh hơn để đạt được"],
-            whyCorrect: "harder to find = more difficult to discover.",
-            whyWrong: "A, C, D là nghĩa trái ngược."
-        },
-        {
-            type: "mcq",
-            q: "Ex 4.3. Many students go to school <u>on foot</u> every day to save energy.",
-            options: ["ride to school", "drive to school", "fly to school", "walk to school"],
-            correct: 3,
-            translate: "Nhiều học sinh đi bộ đến trường mỗi ngày để tiết kiệm năng lượng.",
-            vocab: ["A. đi bằng xe", "B. lái xe", "C. đi máy bay", "D. đi bộ (đồng nghĩa)"],
-            whyCorrect: "on foot = walking (đi bằng chân).",
-            whyWrong: "A, B, C là các phương tiện khác."
-        },
-        {
-            type: "mcq",
-            q: "Ex 4.4. When children <u>walk to school</u> instead of using cars, they help protect the environment.",
-            options: ["go to school on foot", "run to school quickly", "travel to school by bus", "cycle to school daily"],
-            correct: 0,
-            translate: "Khi trẻ em đi bộ đến trường thay vì đi ô tô, các em giúp bảo vệ môi trường.",
-            vocab: ["A. đi bộ tới trường (đồng nghĩa)", "B. chạy nhanh", "C. đi bằng xe buýt", "D. đạp xe"],
-            whyCorrect: "walk to school = go to school on foot.",
-            whyWrong: "B, C, D sai phương thức di chuyển."
-        },
-        {
-            type: "mcq",
-            q: "Ex 4.5. Our teacher asked us to <u>write an essay</u> about renewable energy.",
-            options: ["draw a picture", "compose a paper", "make a poster", "create a video"],
-            correct: 1,
-            translate: "Giáo viên yêu cầu chúng tôi viết một bài luận về năng lượng tái tạo.",
-            vocab: ["A. vẽ tranh", "B. soạn thảo một bài viết (đồng nghĩa)", "C. làm áp phích", "D. tạo video"],
-            whyCorrect: "write an essay ≈ compose a paper.",
-            whyWrong: "A, C, D là các hình thức làm bài khác."
-        },
-        // Opposite meaning
-        {
-            type: "mcq",
-            q: "Ex 5.1. The teacher will <u>explain</u> how solar panels work.",
-            options: ["describe", "confuse", "clarify", "demonstrate"],
-            correct: 1,
-            translate: "Giáo viên sẽ giải thích cách pin mặt trời hoạt động.",
-            vocab: ["A. mô tả (đồng nghĩa)", "B. làm cho bối rối (trái nghĩa)", "C. làm sáng tỏ (đồng nghĩa)", "D. chứng minh"],
-            whyCorrect: "Giải thích rõ ràng trái nghĩa với việc làm cho bối rối, khó hiểu.",
-            whyWrong: "A, C, D không phải nghĩa trái ngược."
-        },
-        {
-            type: "mcq",
-            q: "Ex 5.2. Wind energy is very <u>effective</u> for making electricity.",
-            options: ["useful", "helpful", "successful", "useless"],
-            correct: 3,
-            translate: "Năng lượng gió rất hiệu quả để tạo ra điện.",
-            vocab: ["A. hữu ích", "B. giúp ích", "C. thành công", "D. vô dụng (trái nghĩa)"],
-            whyCorrect: "Effective (hiệu quả) trái ngược với Useless (vô dụng).",
-            whyWrong: "Các từ khác là từ tích cực/đồng nghĩa."
-        },
-        {
-            type: "mcq",
-            q: "Ex 5.3. Remember to turn off all lights when you <u>leave</u> the classroom.",
-            options: ["exit", "depart", "arrive", "go out"],
-            correct: 2,
-            translate: "Nhớ tắt đèn khi bạn rời khỏi lớp học.",
-            vocab: ["A. thoát ra", "B. khởi hành", "C. đến nơi (trái nghĩa)", "D. đi ra ngoài"],
-            whyCorrect: "Rời đi (leave) trái nghĩa với Đến nơi (arrive).",
-            whyWrong: "Các từ khác là đồng nghĩa."
-        },
-        {
-            type: "mcq",
-            q: "Ex 5.4. The old coal power plant is <u>not in use</u> anymore.",
-            options: ["is working", "is broken", "is closed", "is stopped"],
-            correct: 0,
-            translate: "Nhà máy điện than cũ không còn được sử dụng nữa.",
-            vocab: ["A. đang hoạt động (trái nghĩa)", "B. bị hỏng", "C. bị đóng cửa", "D. bị dừng"],
-            whyCorrect: "Không sử dụng trái nghĩa với đang hoạt động/làm việc.",
-            whyWrong: "Các từ khác cùng nhóm nghĩa tiêu cực."
-        },
-        {
-            type: "mcq",
-            q: "Ex 5.5. Don't forget to <u>turn off</u> the water tap.",
-            options: ["turn into", "turn on", "turn away", "turn to"],
-            correct: 1,
-            translate: "Đừng quên tắt vòi nước.",
-            vocab: ["A. biến thành", "B. bật lên (trái nghĩa)", "C. quay đi", "D. quay sang"],
-            whyCorrect: "Tắt (turn off) trái nghĩa với Bật (turn on).",
-            whyWrong: "Các từ khác không liên quan."
-        }
-    ];
-
-    // Gap fill data
-    const gapFillData = [
-        { q: "1. Look! The workers [gap] solar panels on our school roof right now.", options: ["is installing", "are installing", "installs"], correct: "are installing" },
-        { q: "2. At the moment, scientists [gap] new ways to use wind energy more effectively.", options: ["developing", "are developing", "develops"], correct: "are developing" },
-        { q: "3. My family [gap] the air conditioner today because we want to save electricity.", options: ["is not using", "are not using", "doesn't use"], correct: "is not using" },
-        { q: "4. Listen! The teacher [gap] how hydroelectric power plants work.", options: ["is explaining", "are explaining", "explains"], correct: "is explaining" },
-        { q: "5. [gap] you [gap] about renewable energy sources in your science class this week?", options: ["Are/learning", "Do/learn", "Is/learning"], correct: "Are/learning" },
-        { q: "6. The old coal factory [gap] today because it is causing too much pollution.", options: ["is not working", "is not work", "doesn't work"], correct: "is not working" },
-        { q: "7. These days, many countries [gap] to reduce their use of fossil fuels.", options: ["is trying", "are trying", "tries"], correct: "are trying" },
-        { q: "8. Right now, the sun [gap] brightly, so our solar panels [gap] a lot of electricity.", options: ["is shining/are producing", "shines/produce", "is shining/is producing"], correct: "is shining/are producing" },
-        { q: "9. We [gap] a wind farm tomorrow morning. It's already arranged.", options: ["is visiting", "are visiting", "visit"], correct: "are visiting" },
-        { q: "10. My brother always [gap] the lights on when he goes out. It's so annoying!", options: ["is leaving", "leaves", "are leaving"], correct: "is leaving" }
-    ];
-
-    let userScore = 0;
-    const totalQuestions = quizData.length + gapFillData.length;
-
-    function initQuiz() {
-        const container = document.getElementById('quiz-container');
-        
-        // Render MCQ
-        quizData.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.className = 'question-card';
-            card.id = `q-${index}`;
-            
-            // UI elements for Q29, Q30 equivalent logic
-            let extraUI = '';
-            if(index === 10) { // Ví dụ minh họa UI đặc biệt
-                extraUI = `<div class="sale-sign">☀️ SOLAR SALE! ☀️<br>Easy to use!</div>`;
-            }
-            
-            card.innerHTML = `
-                ${extraUI}
-                <div class="question-text">${item.q}</div>
-                <div class="options-grid">
-                    ${item.options.map((opt, i) => `
-                        <button class="option-btn" onclick="checkAnswer(${index}, ${i}, this)">${opt}</button>
-                    `).join('')}
-                </div>
-                <div class="explanation-box" id="exp-${index}">
-                    <h3>Phân tích chi tiết từ Ms MS Chí Nên:</h3>
-                    <div class="explanation-content">
-                        <b>1. Dịch nghĩa:</b> ${item.translate}<br><br>
-                        <b>2. Từ vựng:</b><br>${item.vocab.join('<br>')}<br><br>
-                        <b>3. Tại sao đúng?</b><br>${item.whyCorrect}<br><br>
-                        <b>4. Tại sao các câu khác sai?</b><br>${item.whyWrong}
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-
-        // Render Gap Fill
-        const gapHeader = document.createElement('h2');
-        gapHeader.innerHTML = "Exercise 6: Fill in the blanks (Present Continuous)";
-        gapHeader.style.color = "white";
-        gapHeader.style.textAlign = "center";
-        container.appendChild(gapHeader);
-
-        gapFillData.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.className = 'question-card';
-            const gapId = `gap-${index}`;
-            const displayQ = item.q.replace('[gap]', `<span class="gap-box" id="${gapId}" onclick="openGapModal('${gapId}', ${index})">_______</span>`);
-            
-            card.innerHTML = `
-                <div class="question-text gap-fill-container">${displayQ}</div>
-                <div class="explanation-box" id="exp-gap-${index}">
-                    <h3>Giải thích:</h3>
-                    <div class="explanation-content">
-                        Đáp án đúng là <b>${item.correct}</b>. <br>
-                        Vì đây là thì Hiện tại tiếp diễn, ta dùng cấu trúc Be + V-ing. Cần chú ý hòa hợp giữa chủ ngữ và trợ động từ (is/are).
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    function checkAnswer(qIdx, optIdx, btn) {
-        const item = quizData[qIdx];
-        const card = document.getElementById(`q-${qIdx}`);
-        const allBtns = card.querySelectorAll('.option-btn');
-        
-        if (card.classList.contains('answered')) return;
-        card.classList.contains('answered', true);
-
-        if (optIdx === item.correct) {
-            btn.classList.add('correct');
-            playSound('correct');
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            userScore++;
-        } else {
-            btn.classList.add('wrong');
-            allBtns[item.correct].classList.add('correct');
-            playSound('wrong');
-        }
-
-        document.getElementById(`exp-${qIdx}`).style.display = 'block';
-        card.classList.add('answered');
-    }
-
-    let currentGapId = null;
-    let currentGapIdx = null;
-
-    function openGapModal(gapId, idx) {
-        currentGapId = gapId;
-        currentGapIdx = idx;
-        const modal = document.getElementById('selection-modal');
-        const optionsContainer = document.getElementById('modal-options');
-        const overlay = document.getElementById('overlay');
-
-        optionsContainer.innerHTML = '';
-        gapFillData[idx].options.forEach(opt => {
-            const btn = document.createElement('button');
-            btn.className = 'option-btn';
-            btn.innerText = opt;
-            btn.onclick = () => selectGapOption(opt);
-            optionsContainer.appendChild(btn);
-        });
-
-        modal.classList.add('active');
-        overlay.style.display = 'block';
-    }
-
-    function selectGapOption(val) {
-        const item = gapFillData[currentGapIdx];
-        const gapElement = document.getElementById(currentGapId);
-        const card = gapElement.closest('.question-card');
-        
-        gapElement.innerText = val;
-        
-        if (val === item.correct) {
-            gapElement.style.color = 'var(--correct-color)';
-            playSound('correct');
-            userScore++;
-        } else {
-            gapElement.style.color = 'var(--wrong-color)';
-            playSound('wrong');
-        }
-
-        document.getElementById(`exp-gap-${currentGapIdx}`).style.display = 'block';
-        closeModal();
-    }
-
-    function closeModal() {
-        document.getElementById('selection-modal').classList.remove('active');
-        document.getElementById('overlay').style.display = 'none';
-    }
-
-    function showFinalResult() {
-        const popup = document.getElementById('score-popup');
-        const overlay = document.getElementById('overlay');
-        const finalScore = document.getElementById('final-score');
-        const compliment = document.getElementById('compliment');
-
-        finalScore.innerText = `${userScore}/${totalQuestions}`;
-        
-        const percent = (userScore / totalQuestions) * 100;
-        if (percent >= 90) compliment.innerText = "XUẤT SẮC! Ms MS Chí Nên rất tự hào về bạn! 🏆";
-        else if (percent >= 70) compliment.innerText = "LÀM TỐT LẮM! Cố gắng thêm chút nữa nhé! 🌟";
-        else compliment.innerText = "CỐ GẮNG LÊN! Học kỹ phần giải thích nhé! 💪";
-
-        overlay.style.display = 'block';
-        popup.classList.add('active');
-        confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
-    }
-
-    // Shuffle ABCD logic
-    function shuffleOptions() {
-        quizData.forEach(item => {
-            const correctText = item.options[item.correct];
-            for (let i = item.options.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [item.options[i], item.options[j]] = [item.options[j], item.options[i]];
-            }
-            item.correct = item.options.indexOf(correctText);
-        });
-    }
-
-    window.onload = () => {
-        shuffleOptions();
-        initQuiz();
-    };
-
-    // Close modal on overlay click
-    document.getElementById('overlay').onclick = () => {
-        closeModal();
-        document.getElementById('score-popup').classList.remove('active');
-    };
-</script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ms. Chí Nên - English Quiz</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+
+        :root {
+
+            --primary-bg: linear-gradient(-45deg, #8854C0, #FDCB6E, #00C9A7, #E84393);
+
+            --correct-color: #00D26A;
+
+            --wrong-color: #FF4757;
+
+            --card-bg: rgba(255, 255, 255, 0.95);
+
+            --text-color: #2D3436;
+
+        }
+
+
+
+        * {
+
+            box-sizing: border-box;
+
+            -webkit-tap-highlight-color: transparent;
+
+        }
+
+
+
+        body {
+
+            font-family: 'Quicksand', sans-serif;
+
+            margin: 0;
+
+            padding: 0;
+
+            min-height: 100vh;
+
+            background: var(--primary-bg);
+
+            background-size: 400% 400%;
+
+            animation: gradientBG 15s ease infinite;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            overflow-x: hidden;
+
+        }
+
+
+
+        /* Pattern Background Overlay */
+
+        body::before {
+
+            content: "";
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+
+            z-index: 0;
+
+            pointer-events: none;
+
+        }
+
+
+
+        @keyframes gradientBG {
+
+            0% { background-position: 0% 50%; }
+
+            50% { background-position: 100% 50%; }
+
+            100% { background-position: 0% 50%; }
+
+        }
+
+
+
+        header {
+
+            z-index: 10;
+
+            text-align: center;
+
+            color: white;
+
+            padding: 20px;
+
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+
+        }
+
+
+
+        header h4 { margin: 0; font-weight: 500; opacity: 0.9; }
+
+        header h1 { margin: 5px 0; font-size: 2rem; }
+
+
+
+        #quiz-container {
+
+            width: 95%;
+
+            max-width: 800px;
+
+            z-index: 1;
+
+            margin-bottom: 50px;
+
+        }
+
+
+
+        .question-card {
+
+            background: var(--card-bg);
+
+            border-radius: 30px;
+
+            padding: 30px;
+
+            margin-bottom: 40px;
+
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+
+            position: relative;
+
+            transform: translateY(0);
+
+            transition: all 0.3s ease;
+
+        }
+
+
+
+        .question-text {
+
+            font-size: 1.25rem;
+
+            font-weight: 700;
+
+            color: var(--text-color);
+
+            margin-bottom: 25px;
+
+            line-height: 1.5;
+
+        }
+
+
+
+        .options-grid {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 15px;
+
+        }
+
+
+
+        @media (max-width: 600px) {
+
+            .options-grid { grid-template-columns: 1fr; }
+
+        }
+
+
+
+        .option-btn {
+
+            background: white;
+
+            border: 3px solid #E0E0E0;
+
+            border-radius: 20px;
+
+            padding: 15px 20px;
+
+            font-size: 1.1rem;
+
+            font-family: 'Quicksand', sans-serif;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            box-shadow: 0 6px 0 #E0E0E0;
+
+            color: var(--text-color);
+
+            text-align: left;
+
+            position: relative;
+
+        }
+
+
+
+        .option-btn:hover {
+
+            transform: scale(1.02);
+
+            background: #F8F9FA;
+
+        }
+
+
+
+        .option-btn:active {
+
+            transform: translateY(4px);
+
+            box-shadow: 0 2px 0 #E0E0E0;
+
+        }
+
+
+
+        .option-btn.correct {
+
+            background-color: var(--correct-color) !important;
+
+            border-color: #00B358 !important;
+
+            color: white !important;
+
+            box-shadow: 0 6px 0 #008F46 !important;
+
+        }
+
+
+
+        .option-btn.wrong {
+
+            background-color: var(--wrong-color) !important;
+
+            border-color: #E83E4D !important;
+
+            color: white !important;
+
+            box-shadow: 0 6px 0 #B3313D !important;
+
+            animation: shake 0.5s ease;
+
+        }
+
+
+
+        @keyframes shake {
+
+            0%, 100% { transform: translateX(0); }
+
+            25% { transform: translateX(-10px); }
+
+            75% { transform: translateX(10px); }
+
+        }
+
+
+
+        .explanation-box {
+
+            margin-top: 20px;
+
+            padding: 20px;
+
+            border-radius: 20px;
+
+            background: #F0F7FF;
+
+            border-left: 8px solid #3498DB;
+
+            display: none;
+
+            animation: fadeIn 0.5s ease;
+
+        }
+
+
+
+        .explanation-box h3 {
+
+            margin-top: 0;
+
+            color: #2980B9;
+
+            font-size: 1.1rem;
+
+        }
+
+
+
+        .explanation-content {
+
+            font-size: 0.95rem;
+
+            line-height: 1.6;
+
+            color: #34495E;
+
+        }
+
+
+
+        /* Gap Fill Styles */
+
+        .gap-fill-container {
+
+            line-height: 2.5;
+
+        }
+
+
+
+        .gap-box {
+
+            display: inline-block;
+
+            min-width: 100px;
+
+            height: 40px;
+
+            border-bottom: 3px dashed #8854C0;
+
+            margin: 0 5px;
+
+            padding: 0 10px;
+
+            cursor: pointer;
+
+            text-align: center;
+
+            font-weight: bold;
+
+            color: #8854C0;
+
+            transition: all 0.2s;
+
+        }
+
+
+
+        .gap-box:hover {
+
+            background: rgba(136, 84, 192, 0.1);
+
+        }
+
+
+
+        /* Signage & Phone CSS UI */
+
+        .sale-sign {
+
+            background: #FFD700;
+
+            border: 4px solid #000;
+
+            padding: 10px;
+
+            text-align: center;
+
+            font-weight: bold;
+
+            border-radius: 10px;
+
+            max-width: 250px;
+
+            margin: 10px auto;
+
+            box-shadow: 5px 5px 0px #000;
+
+        }
+
+
+
+        .phone-ui {
+
+            background: #F1F1F1;
+
+            border-radius: 20px;
+
+            border: 8px solid #333;
+
+            padding: 15px;
+
+            max-width: 300px;
+
+            margin: 10px auto;
+
+        }
+
+
+
+        .chat-bubble {
+
+            background: #0084FF;
+
+            color: white;
+
+            padding: 10px 15px;
+
+            border-radius: 18px;
+
+            margin-bottom: 10px;
+
+            font-size: 0.9rem;
+
+            float: left;
+
+            clear: both;
+
+        }
+
+
+
+        .submit-area {
+
+            text-align: center;
+
+            margin: 40px 0;
+
+        }
+
+
+
+        .submit-btn {
+
+            background: #FF7675;
+
+            color: white;
+
+            border: none;
+
+            padding: 20px 60px;
+
+            font-size: 1.5rem;
+
+            font-weight: bold;
+
+            border-radius: 50px;
+
+            cursor: pointer;
+
+            box-shadow: 0 10px 0 #D63031;
+
+            transition: all 0.2s;
+
+        }
+
+
+
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 13px 0 #D63031; }
+
+        .submit-btn:active { transform: translateY(7px); box-shadow: 0 3px 0 #D63031; }
+
+
+
+        /* Popup Score */
+
+        #score-popup {
+
+            position: fixed;
+
+            top: 50%; left: 50%;
+
+            transform: translate(-50%, -50%) scale(0);
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 30px;
+
+            box-shadow: 0 0 100px rgba(0,0,0,0.5);
+
+            z-index: 1000;
+
+            text-align: center;
+
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            width: 90%;
+
+            max-width: 500px;
+
+        }
+
+
+
+        #score-popup.active { transform: translate(-50%, -50%) scale(1); }
+
+
+
+        .overlay {
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.7);
+
+            z-index: 999;
+
+            display: none;
+
+        }
+
+
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+
+
+        /* Modal for Gap Fill Selection */
+
+        #selection-modal {
+
+            position: fixed;
+
+            bottom: -100%; left: 0; width: 100%;
+
+            background: white;
+
+            z-index: 1001;
+
+            border-radius: 30px 30px 0 0;
+
+            padding: 30px;
+
+            transition: bottom 0.4s ease;
+
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+
+        }
+
+
+
+        #selection-modal.active { bottom: 0; }
+
+        
+
+        .modal-options {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 15px;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+<header>
+
+    <h4>Giáo viên tạo: Ms. Chí Nên</h4>
+
+    <h1>🌈 English Adventure: Energy & Environment 🌟</h1>
+
+</header>
+
+
+
+<div id="quiz-container">
+
+    </div>
+
+
+
+<div class="submit-area">
+
+    <button class="submit-btn" onclick="showFinalResult()">NỘP BÀI 🏆</button>
+
+</div>
+
+
+
+<div class="overlay" id="overlay"></div>
+
+<div id="score-popup">
+
+    <h2 id="compliment">TUYỆT VỜI! 🌟</h2>
+
+    <p style="font-size: 1.5rem;">Bạn đã đạt được:</p>
+
+    <div id="final-score" style="font-size: 3rem; font-weight: bold; color: #8854C0; margin: 20px 0;">0/50</div>
+
+    <button class="option-btn" onclick="location.reload()" style="text-align: center; width: 100%;">LÀM LẠI 🔄</button>
+
+</div>
+
+
+
+<div id="selection-modal">
+
+    <h3 style="text-align: center;">Chọn đáp án đúng:</h3>
+
+    <div class="modal-options" id="modal-options"></div>
+
+</div>
+
+
+
+<script>
+
+    // Audio Context Setup for procedurally generated sounds
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+
+
+    function playSound(type) {
+
+        const osc = audioCtx.createOscillator();
+
+        const gain = audioCtx.createGain();
+
+        osc.connect(gain);
+
+        gain.connect(audioCtx.destination);
+
+
+
+        if (type === 'correct') {
+
+            osc.type = 'sine';
+
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.3);
+
+        } else {
+
+            osc.type = 'sawtooth';
+
+            osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.4);
+
+        }
+
+    }
+
+
+
+    const quizData = [
+
+        // Multiple Choice Questions
+
+        {
+
+            type: "mcq",
+
+            q: "31. Look! The solar panels _______ electricity from the sunlight right now.",
+
+            options: ["produce", "is producing", "are producing", "produces"],
+
+            correct: 2,
+
+            translate: "Nhìn kìa! Những tấm pin mặt trời đang tạo ra điện từ ánh nắng ngay lúc này.",
+
+            vocab: ["A. produce (v): sản xuất (hiện tại đơn)", "B. is producing: đang sản xuất (số ít)", "C. are producing: đang sản xuất (số nhiều)", "D. produces: sản xuất (số ít)"],
+
+            whyCorrect: "Câu có dấu hiệu 'Look!' và 'right now' nên dùng Hiện tại tiếp diễn. Chủ ngữ 'The solar panels' là số nhiều nên dùng 'are producing'.",
+
+            whyWrong: "A và D sai thì (HTĐ). B sai hòa hợp chủ ngữ (số ít)."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "32. At the moment, scientists _______ new ways to save energy in our homes.",
+
+            options: ["are developing", "develops", "is developing", "develop"],
+
+            correct: 0,
+
+            translate: "Vào lúc này, các nhà khoa học đang phát triển những cách mới để tiết kiệm năng lượng trong nhà.",
+
+            vocab: ["A. are developing: đang phát triển (số nhiều)", "B. develops: phát triển (số ít)", "C. is developing: đang phát triển (số ít)", "D. develop: phát triển (số nhiều)"],
+
+            whyCorrect: "Dấu hiệu 'At the moment' dùng Hiện tại tiếp diễn. 'Scientists' số nhiều nên đi với 'are'.",
+
+            whyWrong: "B và D sai thì. C sai vì dùng 'is' cho chủ ngữ số nhiều."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "33. Listen! The wind turbines _______ very loudly because of the strong wind today.",
+
+            options: ["turns", "are turning", "is turning", "turn"],
+
+            correct: 1,
+
+            translate: "Nghe kìa! Những tuabin gió đang quay rất mạnh vì hôm nay gió lớn.",
+
+            vocab: ["A. turns: quay (số ít)", "B. are turning: đang quay (số nhiều)", "C. is turning: đang quay (số ít)", "D. turn: quay (số nhiều)"],
+
+            whyCorrect: "Dấu hiệu 'Listen!' dùng Hiện tại tiếp diễn. 'Wind turbines' số nhiều nên chọn 'are turning'.",
+
+            whyWrong: "A và D sai thì. C sai hòa hợp chủ ngữ."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "34. This week, our school _______ a campaign to reduce electricity use.",
+
+            options: ["run", "runs", "are running", "is running"],
+
+            correct: 3,
+
+            translate: "Tuần này, trường chúng tôi đang thực hiện một chiến dịch giảm sử dụng điện.",
+
+            vocab: ["A. run: chạy/thực hiện (số nhiều)", "B. runs: thực hiện (số ít)", "C. are running: đang thực hiện (số nhiều)", "D. is running: đang thực hiện (số ít)"],
+
+            whyCorrect: "Dấu hiệu 'This week' diễn tả hành động tạm thời trong HTTD. 'Our school' là danh từ số ít nên dùng 'is running'.",
+
+            whyWrong: "A và B sai thì. C sai vì 'School' là số ít."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "35. We _______ coal for heating anymore because it pollutes the air too much.",
+
+            options: ["aren't using", "doesn't use", "isn't using", "don't using"],
+
+            correct: 0,
+
+            translate: "Chúng tôi không còn sử dụng than để sưởi ấm nữa vì nó gây ô nhiễm không khí quá nhiều.",
+
+            vocab: ["A. aren't using: đang không sử dụng (số nhiều)", "B. doesn't use: không sử dụng (số ít)", "C. isn't using: đang không sử dụng (số ít)", "D. don't using: Sai ngữ pháp"],
+
+            whyCorrect: "Dùng Hiện tại tiếp diễn diễn tả sự thay đổi/phát triển. Chủ ngữ 'We' đi với 'are not'.",
+
+            whyWrong: "B và C sai hòa hợp chủ ngữ. D sai cấu trúc (Don't + V-nguyên thể)."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "36. _______ the government _______ new laws about renewable energy this month?",
+
+            options: ["Do / make", "Is / making", "Are / making", "Does / make"],
+
+            correct: 1,
+
+            translate: "Chính phủ có đang đưa ra các luật mới về năng lượng tái tạo trong tháng này không?",
+
+            vocab: ["A. Do/make: HTĐ (số nhiều)", "B. Is/making: HTTD (số ít)", "C. Are/making: HTTD (số nhiều)", "D. Does/make: HTĐ (số ít)"],
+
+            whyCorrect: "'This month' dùng HTTD. 'The government' (chính phủ) được coi là danh từ số ít.",
+
+            whyWrong: "A và D sai thì. C sai hòa hợp chủ ngữ."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "37. Right now, many countries _______ from fossil fuels to solar and wind energy.",
+
+            options: ["changes", "change", "is changing", "are changing"],
+
+            correct: 3,
+
+            translate: "Ngay lúc này, nhiều quốc gia đang chuyển đổi từ nhiên liệu hóa thạch sang năng lượng mặt trời và gió.",
+
+            vocab: ["A. changes (số ít)", "B. change (số nhiều)", "C. is changing (HTTD số ít)", "D. are changing (HTTD số nhiều)"],
+
+            whyCorrect: "'Right now' dùng HTTD. 'Many countries' là số nhiều.",
+
+            whyWrong: "A và B sai thì. C dùng sai trợ động từ 'is'."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "38. My neighbors _______ solar panels on their roof at this moment.",
+
+            options: ["installs", "are installing", "is installing", "install"],
+
+            correct: 1,
+
+            translate: "Hàng xóm của tôi đang lắp đặt các tấm pin mặt trời trên mái nhà của họ ngay lúc này.",
+
+            vocab: ["A. HTĐ (số ít)", "B. HTTD (số nhiều)", "C. HTTD (số ít)", "D. HTĐ (số nhiều)"],
+
+            whyCorrect: "'At this moment' dùng HTTD. 'Neighbors' số nhiều nên dùng 'are'.",
+
+            whyWrong: "A và D sai thì. C sai hòa hợp chủ ngữ."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "39. He _______ always _______ the lights on when he leaves the room! It wastes electricity.",
+
+            options: ["is / leaving", "are / leaving", "does / leave", "do / leave"],
+
+            correct: 0,
+
+            translate: "Anh ấy cứ luôn luôn để điện sáng khi rời phòng! Thật lãng phí điện.",
+
+            vocab: ["A. is leaving: HTTD", "B. are leaving", "C. does leave", "D. do leave"],
+
+            whyCorrect: "Cấu trúc 'Be + always + V-ing' dùng để phàn nàn về một thói quen gây khó chịu.",
+
+            whyWrong: "Các phương án khác không đúng cấu trúc phàn nàn."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "40. Currently, oil prices _______ because there is less supply in the market.",
+
+            options: ["increases", "is increasing", "are increasing", "increase"],
+
+            correct: 2,
+
+            translate: "Hiện tại, giá dầu đang tăng vì nguồn cung trên thị trường ít đi.",
+
+            vocab: ["A. increases (số ít)", "B. is increasing (HTTD số ít)", "C. are increasing (HTTD số nhiều)", "D. increase (HTĐ số nhiều)"],
+
+            whyCorrect: "'Currently' dùng HTTD. 'Oil prices' (giá dầu) là danh từ số nhiều.",
+
+            whyWrong: "A và D sai thì. B sai vì dùng 'is' cho số nhiều."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "41. Which sentence is correct about what's happening now?",
+
+            options: ["The factory produces less pollution these days.", "The factory is producing less pollution right now.", "The factory produce less pollution these days.", "The factory producing less pollution these days."],
+
+            correct: 1,
+
+            translate: "Câu nào đúng về việc đang xảy ra ngay bây giờ?",
+
+            vocab: ["A. Sai thì", "B. Đúng cấu trúc HTTD", "C. Sai hòa hợp chủ ngữ", "D. Thiếu to-be"],
+
+            whyCorrect: "'Right now' đi kèm với 'is producing' là đúng ngữ pháp nhất.",
+
+            whyWrong: "Các câu khác vi phạm quy tắc chia thì hoặc cấu trúc."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "42. They _______ a new hydro power station next month. Everything is already arranged.",
+
+            options: ["build", "builds", "is building", "are building"],
+
+            correct: 3,
+
+            translate: "Họ sẽ xây dựng một nhà máy thủy điện mới vào tháng tới. Mọi thứ đã được sắp xếp xong.",
+
+            vocab: ["A. build (HTĐ)", "B. builds (HTĐ)", "C. is building (số ít)", "D. are building (số nhiều)"],
+
+            whyCorrect: "HTTD dùng để diễn tả một kế hoạch chắc chắn trong tương lai (Everything is already arranged).",
+
+            whyWrong: "A và B sai thì. C dùng sai 'is' cho 'They'."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "43. Find the mistake: 'The engineer are checking the nuclear reactor for safety right now.'",
+
+            options: ["The engineer", "are checking", "nuclear reactor", "right now"],
+
+            correct: 1,
+
+            translate: "Tìm lỗi sai: 'Kỹ sư đang kiểm tra lò phản ứng hạt nhân để đảm bảo an toàn ngay lúc này.'",
+
+            vocab: ["B. are checking -> is checking"],
+
+            whyCorrect: "Chủ ngữ 'The engineer' là số ít nên phải dùng 'is checking'.",
+
+            whyWrong: "Các từ khác đều đúng ngữ cảnh và ngữ pháp."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "44. At the moment, more people _______ public transport to save energy and money.",
+
+            options: ["uses", "is using", "are using", "use"],
+
+            correct: 2,
+
+            translate: "Hiện nay, nhiều người đang sử dụng phương tiện công cộng để tiết kiệm năng lượng và tiền bạc.",
+
+            vocab: ["A. uses (HTĐ số ít)", "B. is using (HTTD số ít)", "C. are using (HTTD số nhiều)", "D. use (HTĐ số nhiều)"],
+
+            whyCorrect: "'At the moment' dùng HTTD. 'More people' là số nhiều nên dùng 'are'.",
+
+            whyWrong: "A và D sai thì. B dùng sai trợ động từ."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "45. Why _______ you _______ so much electricity today? The bill will be very high!",
+
+            options: ["are / using", "do / use", "is / using", "does / use"],
+
+            correct: 0,
+
+            translate: "Tại sao hôm nay bạn lại dùng nhiều điện thế? Hóa đơn sẽ cao lắm đấy!",
+
+            vocab: ["A. are using (HTTD)", "B. do use (HTĐ)"],
+
+            whyCorrect: "Hành động đang diễn ra gây hậu quả trong tương lai gần, dùng HTTD.",
+
+            whyWrong: "B và D sai thì. C sai hòa hợp chủ ngữ với 'You'."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "46. The water level in the dam _______ because there is no rain this month.",
+
+            options: ["drops", "drop", "are dropping", "is dropping"],
+
+            correct: 3,
+
+            translate: "Mực nước trong đập đang giảm vì tháng này không có mưa.",
+
+            vocab: ["A. HTĐ số ít", "B. HTĐ số nhiều", "C. HTTD số nhiều", "D. HTTD số ít"],
+
+            whyCorrect: "Diễn tả một xu hướng đang xảy ra. 'Water level' là số ít.",
+
+            whyWrong: "A và B sai thì. C dùng sai trợ động từ."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "47. Choose the correct response: 'Is your family saving energy at home?' - '_______'",
+
+            options: ["Yes, we do.", "Yes, we are.", "Yes, we is.", "Yes, we does."],
+
+            correct: 1,
+
+            translate: "Gia đình bạn có đang tiết kiệm điện không? - Có, chúng tôi đang làm vậy.",
+
+            vocab: ["A. Trả lời cho Do/Does", "B. Đúng cho câu hỏi HTTD", "C. Sai ngữ pháp", "D. Sai ngữ pháp"],
+
+            whyCorrect: "Câu hỏi bắt đầu bằng 'Is' (HTTD) nên trả lời bằng 'Be'. 'We' đi với 'are'.",
+
+            whyWrong: "Các phương án khác sai trợ động từ."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "48. Find the mistake: 'Natural gas are becoming more expensive in many countries now.'",
+
+            options: ["Natural gas", "are becoming", "more expensive", "many countries"],
+
+            correct: 1,
+
+            translate: "Tìm lỗi sai: 'Khí thiên nhiên đang trở nên đắt đỏ hơn ở nhiều quốc gia.'",
+
+            vocab: ["B. are becoming -> is becoming"],
+
+            whyCorrect: "'Natural gas' là danh từ không đếm được (số ít) nên dùng 'is'.",
+
+            whyWrong: "Các phần khác đúng cấu trúc."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "49. This year, our city _______ all old street lights with low energy light bulbs.",
+
+            options: ["replaces", "replace", "is replacing", "are replacing"],
+
+            correct: 2,
+
+            translate: "Năm nay, thành phố chúng tôi đang thay thế tất cả đèn đường cũ bằng bóng đèn tiết kiệm năng lượng.",
+
+            vocab: ["A. HTĐ", "B. HTĐ", "C. HTTD số ít", "D. HTTD số nhiều"],
+
+            whyCorrect: "'This year' dùng HTTD. 'Our city' là số ít.",
+
+            whyWrong: "A và B sai thì. D dùng sai 'are'."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "50. Look at those workers! They _______ new electrical appliances in the building today.",
+
+            options: ["is fixing", "fixes", "fix", "are fixing"],
+
+            correct: 3,
+
+            translate: "Hãy nhìn những công nhân kia kìa! Họ đang lắp đặt các thiết bị điện mới trong tòa nhà hôm nay.",
+
+            vocab: ["A. HTTD số ít", "B. HTĐ số ít", "C. HTĐ số nhiều", "D. HTTD số nhiều"],
+
+            whyCorrect: "'Look!' dùng HTTD. 'They' là số nhiều.",
+
+            whyWrong: "B và C sai thì. A sai trợ động từ."
+
+        },
+
+        // Closest meaning
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 4.1. Solar panels are <u>easy to use</u> because you just need to put them on your roof.",
+
+            options: ["difficult to operate", "hard to install", "simple to operate", "complex to handle"],
+
+            correct: 2,
+
+            translate: "Các tấm pin mặt trời rất dễ sử dụng vì bạn chỉ cần đặt chúng lên mái nhà.",
+
+            vocab: ["A. khó vận hành", "B. khó lắp đặt", "C. đơn giản để vận hành (đồng nghĩa)", "D. phức tạp để xử lý"],
+
+            whyCorrect: "Easy to use = simple to operate.",
+
+            whyWrong: "A, B, D mang nghĩa trái ngược (khó khăn)."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 4.2. Clean energy sources are becoming <u>harder to find</u> in some developing countries.",
+
+            options: ["simpler to locate", "more difficult to discover", "easier to get", "quicker to obtain"],
+
+            correct: 1,
+
+            translate: "Các nguồn năng lượng sạch đang trở nên khó tìm thấy hơn ở một số nước đang phát triển.",
+
+            vocab: ["A. dễ định vị hơn", "B. khó khám phá/tìm ra hơn (đồng nghĩa)", "C. dễ lấy hơn", "D. nhanh hơn để đạt được"],
+
+            whyCorrect: "harder to find = more difficult to discover.",
+
+            whyWrong: "A, C, D là nghĩa trái ngược."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 4.3. Many students go to school <u>on foot</u> every day to save energy.",
+
+            options: ["ride to school", "drive to school", "fly to school", "walk to school"],
+
+            correct: 3,
+
+            translate: "Nhiều học sinh đi bộ đến trường mỗi ngày để tiết kiệm năng lượng.",
+
+            vocab: ["A. đi bằng xe", "B. lái xe", "C. đi máy bay", "D. đi bộ (đồng nghĩa)"],
+
+            whyCorrect: "on foot = walking (đi bằng chân).",
+
+            whyWrong: "A, B, C là các phương tiện khác."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 4.4. When children <u>walk to school</u> instead of using cars, they help protect the environment.",
+
+            options: ["go to school on foot", "run to school quickly", "travel to school by bus", "cycle to school daily"],
+
+            correct: 0,
+
+            translate: "Khi trẻ em đi bộ đến trường thay vì đi ô tô, các em giúp bảo vệ môi trường.",
+
+            vocab: ["A. đi bộ tới trường (đồng nghĩa)", "B. chạy nhanh", "C. đi bằng xe buýt", "D. đạp xe"],
+
+            whyCorrect: "walk to school = go to school on foot.",
+
+            whyWrong: "B, C, D sai phương thức di chuyển."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 4.5. Our teacher asked us to <u>write an essay</u> about renewable energy.",
+
+            options: ["draw a picture", "compose a paper", "make a poster", "create a video"],
+
+            correct: 1,
+
+            translate: "Giáo viên yêu cầu chúng tôi viết một bài luận về năng lượng tái tạo.",
+
+            vocab: ["A. vẽ tranh", "B. soạn thảo một bài viết (đồng nghĩa)", "C. làm áp phích", "D. tạo video"],
+
+            whyCorrect: "write an essay ≈ compose a paper.",
+
+            whyWrong: "A, C, D là các hình thức làm bài khác."
+
+        },
+
+        // Opposite meaning
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 5.1. The teacher will <u>explain</u> how solar panels work.",
+
+            options: ["describe", "confuse", "clarify", "demonstrate"],
+
+            correct: 1,
+
+            translate: "Giáo viên sẽ giải thích cách pin mặt trời hoạt động.",
+
+            vocab: ["A. mô tả (đồng nghĩa)", "B. làm cho bối rối (trái nghĩa)", "C. làm sáng tỏ (đồng nghĩa)", "D. chứng minh"],
+
+            whyCorrect: "Giải thích rõ ràng trái nghĩa với việc làm cho bối rối, khó hiểu.",
+
+            whyWrong: "A, C, D không phải nghĩa trái ngược."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 5.2. Wind energy is very <u>effective</u> for making electricity.",
+
+            options: ["useful", "helpful", "successful", "useless"],
+
+            correct: 3,
+
+            translate: "Năng lượng gió rất hiệu quả để tạo ra điện.",
+
+            vocab: ["A. hữu ích", "B. giúp ích", "C. thành công", "D. vô dụng (trái nghĩa)"],
+
+            whyCorrect: "Effective (hiệu quả) trái ngược với Useless (vô dụng).",
+
+            whyWrong: "Các từ khác là từ tích cực/đồng nghĩa."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 5.3. Remember to turn off all lights when you <u>leave</u> the classroom.",
+
+            options: ["exit", "depart", "arrive", "go out"],
+
+            correct: 2,
+
+            translate: "Nhớ tắt đèn khi bạn rời khỏi lớp học.",
+
+            vocab: ["A. thoát ra", "B. khởi hành", "C. đến nơi (trái nghĩa)", "D. đi ra ngoài"],
+
+            whyCorrect: "Rời đi (leave) trái nghĩa với Đến nơi (arrive).",
+
+            whyWrong: "Các từ khác là đồng nghĩa."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 5.4. The old coal power plant is <u>not in use</u> anymore.",
+
+            options: ["is working", "is broken", "is closed", "is stopped"],
+
+            correct: 0,
+
+            translate: "Nhà máy điện than cũ không còn được sử dụng nữa.",
+
+            vocab: ["A. đang hoạt động (trái nghĩa)", "B. bị hỏng", "C. bị đóng cửa", "D. bị dừng"],
+
+            whyCorrect: "Không sử dụng trái nghĩa với đang hoạt động/làm việc.",
+
+            whyWrong: "Các từ khác cùng nhóm nghĩa tiêu cực."
+
+        },
+
+        {
+
+            type: "mcq",
+
+            q: "Ex 5.5. Don't forget to <u>turn off</u> the water tap.",
+
+            options: ["turn into", "turn on", "turn away", "turn to"],
+
+            correct: 1,
+
+            translate: "Đừng quên tắt vòi nước.",
+
+            vocab: ["A. biến thành", "B. bật lên (trái nghĩa)", "C. quay đi", "D. quay sang"],
+
+            whyCorrect: "Tắt (turn off) trái nghĩa với Bật (turn on).",
+
+            whyWrong: "Các từ khác không liên quan."
+
+        }
+
+    ];
+
+
+
+    // Gap fill data
+
+    const gapFillData = [
+
+        { q: "1. Look! The workers [gap] solar panels on our school roof right now.", options: ["is installing", "are installing", "installs"], correct: "are installing" },
+
+        { q: "2. At the moment, scientists [gap] new ways to use wind energy more effectively.", options: ["developing", "are developing", "develops"], correct: "are developing" },
+
+        { q: "3. My family [gap] the air conditioner today because we want to save electricity.", options: ["is not using", "are not using", "doesn't use"], correct: "is not using" },
+
+        { q: "4. Listen! The teacher [gap] how hydroelectric power plants work.", options: ["is explaining", "are explaining", "explains"], correct: "is explaining" },
+
+        { q: "5. [gap] you [gap] about renewable energy sources in your science class this week?", options: ["Are/learning", "Do/learn", "Is/learning"], correct: "Are/learning" },
+
+        { q: "6. The old coal factory [gap] today because it is causing too much pollution.", options: ["is not working", "is not work", "doesn't work"], correct: "is not working" },
+
+        { q: "7. These days, many countries [gap] to reduce their use of fossil fuels.", options: ["is trying", "are trying", "tries"], correct: "are trying" },
+
+        { q: "8. Right now, the sun [gap] brightly, so our solar panels [gap] a lot of electricity.", options: ["is shining/are producing", "shines/produce", "is shining/is producing"], correct: "is shining/are producing" },
+
+        { q: "9. We [gap] a wind farm tomorrow morning. It's already arranged.", options: ["is visiting", "are visiting", "visit"], correct: "are visiting" },
+
+        { q: "10. My brother always [gap] the lights on when he goes out. It's so annoying!", options: ["is leaving", "leaves", "are leaving"], correct: "is leaving" }
+
+    ];
+
+
+
+    let userScore = 0;
+
+    const totalQuestions = quizData.length + gapFillData.length;
+
+
+
+    function initQuiz() {
+
+        const container = document.getElementById('quiz-container');
+
+        
+
+        // Render MCQ
+
+        quizData.forEach((item, index) => {
+
+            const card = document.createElement('div');
+
+            card.className = 'question-card';
+
+            card.id = `q-${index}`;
+
+            
+
+            // UI elements for Q29, Q30 equivalent logic
+
+            let extraUI = '';
+
+            if(index === 10) { // Ví dụ minh họa UI đặc biệt
+
+                extraUI = `<div class="sale-sign">☀️ SOLAR SALE! ☀️<br>Easy to use!</div>`;
+
+            }
+
+            
+
+            card.innerHTML = `
+
+                ${extraUI}
+
+                <div class="question-text">${item.q}</div>
+
+                <div class="options-grid">
+
+                    ${item.options.map((opt, i) => `
+
+                        <button class="option-btn" onclick="checkAnswer(${index}, ${i}, this)">${opt}</button>
+
+                    `).join('')}
+
+                </div>
+
+                <div class="explanation-box" id="exp-${index}">
+
+                    <h3>Phân tích chi tiết từ Ms. Chí Nên:</h3>
+
+                    <div class="explanation-content">
+
+                        <b>1. Dịch nghĩa:</b> ${item.translate}<br><br>
+
+                        <b>2. Từ vựng:</b><br>${item.vocab.join('<br>')}<br><br>
+
+                        <b>3. Tại sao đúng?</b><br>${item.whyCorrect}<br><br>
+
+                        <b>4. Tại sao các câu khác sai?</b><br>${item.whyWrong}
+
+                    </div>
+
+                </div>
+
+            `;
+
+            container.appendChild(card);
+
+        });
+
+
+
+        // Render Gap Fill
+
+        const gapHeader = document.createElement('h2');
+
+        gapHeader.innerHTML = "Exercise 6: Fill in the blanks (Present Continuous)";
+
+        gapHeader.style.color = "white";
+
+        gapHeader.style.textAlign = "center";
+
+        container.appendChild(gapHeader);
+
+
+
+        gapFillData.forEach((item, index) => {
+
+            const card = document.createElement('div');
+
+            card.className = 'question-card';
+
+            const gapId = `gap-${index}`;
+
+            const displayQ = item.q.replace('[gap]', `<span class="gap-box" id="${gapId}" onclick="openGapModal('${gapId}', ${index})">_______</span>`);
+
+            
+
+            card.innerHTML = `
+
+                <div class="question-text gap-fill-container">${displayQ}</div>
+
+                <div class="explanation-box" id="exp-gap-${index}">
+
+                    <h3>Giải thích:</h3>
+
+                    <div class="explanation-content">
+
+                        Đáp án đúng là <b>${item.correct}</b>. <br>
+
+                        Vì đây là thì Hiện tại tiếp diễn, ta dùng cấu trúc Be + V-ing. Cần chú ý hòa hợp giữa chủ ngữ và trợ động từ (is/are).
+
+                    </div>
+
+                </div>
+
+            `;
+
+            container.appendChild(card);
+
+        });
+
+    }
+
+
+
+    function checkAnswer(qIdx, optIdx, btn) {
+
+        const item = quizData[qIdx];
+
+        const card = document.getElementById(`q-${qIdx}`);
+
+        const allBtns = card.querySelectorAll('.option-btn');
+
+        
+
+        if (card.classList.contains('answered')) return;
+
+        card.classList.contains('answered', true);
+
+
+
+        if (optIdx === item.correct) {
+
+            btn.classList.add('correct');
+
+            playSound('correct');
+
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+
+            userScore++;
+
+        } else {
+
+            btn.classList.add('wrong');
+
+            allBtns[item.correct].classList.add('correct');
+
+            playSound('wrong');
+
+        }
+
+
+
+        document.getElementById(`exp-${qIdx}`).style.display = 'block';
+
+        card.classList.add('answered');
+
+    }
+
+
+
+    let currentGapId = null;
+
+    let currentGapIdx = null;
+
+
+
+    function openGapModal(gapId, idx) {
+
+        currentGapId = gapId;
+
+        currentGapIdx = idx;
+
+        const modal = document.getElementById('selection-modal');
+
+        const optionsContainer = document.getElementById('modal-options');
+
+        const overlay = document.getElementById('overlay');
+
+
+
+        optionsContainer.innerHTML = '';
+
+        gapFillData[idx].options.forEach(opt => {
+
+            const btn = document.createElement('button');
+
+            btn.className = 'option-btn';
+
+            btn.innerText = opt;
+
+            btn.onclick = () => selectGapOption(opt);
+
+            optionsContainer.appendChild(btn);
+
+        });
+
+
+
+        modal.classList.add('active');
+
+        overlay.style.display = 'block';
+
+    }
+
+
+
+    function selectGapOption(val) {
+
+        const item = gapFillData[currentGapIdx];
+
+        const gapElement = document.getElementById(currentGapId);
+
+        const card = gapElement.closest('.question-card');
+
+        
+
+        gapElement.innerText = val;
+
+        
+
+        if (val === item.correct) {
+
+            gapElement.style.color = 'var(--correct-color)';
+
+            playSound('correct');
+
+            userScore++;
+
+        } else {
+
+            gapElement.style.color = 'var(--wrong-color)';
+
+            playSound('wrong');
+
+        }
+
+
+
+        document.getElementById(`exp-gap-${currentGapIdx}`).style.display = 'block';
+
+        closeModal();
+
+    }
+
+
+
+    function closeModal() {
+
+        document.getElementById('selection-modal').classList.remove('active');
+
+        document.getElementById('overlay').style.display = 'none';
+
+    }
+
+
+
+    function showFinalResult() {
+
+        const popup = document.getElementById('score-popup');
+
+        const overlay = document.getElementById('overlay');
+
+        const finalScore = document.getElementById('final-score');
+
+        const compliment = document.getElementById('compliment');
+
+
+
+        finalScore.innerText = `${userScore}/${totalQuestions}`;
+
+        
+
+        const percent = (userScore / totalQuestions) * 100;
+
+        if (percent >= 90) compliment.innerText = "XUẤT SẮC! Ms. Chí Nên rất tự hào về bạn! 🏆";
+
+        else if (percent >= 70) compliment.innerText = "LÀM TỐT LẮM! Cố gắng thêm chút nữa nhé! 🌟";
+
+        else compliment.innerText = "CỐ GẮNG LÊN! Học kỹ phần giải thích nhé! 💪";
+
+
+
+        overlay.style.display = 'block';
+
+        popup.classList.add('active');
+
+        confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+
+    }
+
+
+
+    // Shuffle ABCD logic
+
+    function shuffleOptions() {
+
+        quizData.forEach(item => {
+
+            const correctText = item.options[item.correct];
+
+            for (let i = item.options.length - 1; i > 0; i--) {
+
+                const j = Math.floor(Math.random() * (i + 1));
+
+                [item.options[i], item.options[j]] = [item.options[j], item.options[i]];
+
+            }
+
+            item.correct = item.options.indexOf(correctText);
+
+        });
+
+    }
+
+
+
+    window.onload = () => {
+
+        shuffleOptions();
+
+        initQuiz();
+
+    };
+
+
+
+    // Close modal on overlay click
+
+    document.getElementById('overlay').onclick = () => {
+
+        closeModal();
+
+        document.getElementById('score-popup').classList.remove('active');
+
+    };
+
+</script>
+
+</body>
+
 </html>

@@ -1,851 +1,1701 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading Quiz - School Boat Festival</title>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        /* --- DYNAMIC THEME & COLOR PALETTE --- */
-        :root {
-            --primary: #8854C0; /* Hồng tím nhạt */
-            --accent: #FDCB6E; /* Vàng sáng */
-            --secondary: #00C9A7; /* Xanh ngọc */
-            --correct: #00D26A; /* Xanh lá */
-            --incorrect: #FF4757; /* Đỏ cam */
-            --text-dark: #2d3436;
-        }
-
-        /* HIỆU ỨNG CHUYỂN MÀU NỀN LOANG MƯỢT MÀ (ANIMATED GRADIENT) */
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Quicksand', sans-serif;
-            color: var(--text-dark);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            
-            background: linear-gradient(-45deg, #8854C0, #FDCB6E, #00C9A7, #ff9a9e);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            position: relative;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* SVG Pattern lơ lửng nằm đè lên nền chuyển màu */
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='150' height='150' viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='20' y='30' font-size='24' opacity='0.4'%3E⛵%3C/text%3E%3Ctext x='100' y='70' font-size='24' opacity='0.4'%3E🌊%3C/text%3E%3Ctext x='40' y='120' font-size='20' opacity='0.4'%3E☁️%3C/text%3E%3Ctext x='110' y='140' font-size='18' opacity='0.4'%3E⭐%3C/text%3E%3Ctext x='70' y='40' font-size='22' opacity='0.4'%3E⚓%3C/text%3E%3C/svg%3E");
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* --- HEADER & TIMER --- */
-        .top-bar {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px 20px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            border-bottom: 4px solid var(--accent);
-        }
-
-        .teacher-title {
-            font-size: 16px;
-            font-weight: 800;
-            color: var(--primary);
-            background: #fff0f5;
-            padding: 8px 15px;
-            border-radius: 20px;
-            border: 2px dashed var(--primary);
-        }
-
-        .timer-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        #timerDisplay {
-            font-size: 26px;
-            font-weight: 800;
-            color: var(--incorrect);
-            background: white;
-            padding: 5px 20px;
-            border-radius: 15px;
-            border: 3px solid var(--accent);
-            box-shadow: 0 4px 0 var(--accent);
-        }
-
-        .btn-timer {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 16px;
-            font-weight: 800;
-            border-radius: 15px;
-            cursor: pointer;
-            box-shadow: 0 6px 0 #5f3a87;
-            transition: all 0.1s;
-            text-transform: uppercase;
-        }
-        .btn-timer:active {
-            transform: translateY(6px);
-            box-shadow: 0 0px 0 #5f3a87;
-        }
-
-        /* --- SPLIT SCREEN LAYOUT --- */
-        .main-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            padding: 15px;
-            gap: 15px;
-        }
-
-        .left-panel, .right-panel {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.92);
-            border-radius: 25px;
-            padding: 25px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border: 3px solid white;
-        }
-
-        /* --- READING CONTENT STYLES --- */
-        .passage-title {
-            font-size: 32px;
-            color: var(--primary);
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 25px;
-            text-transform: uppercase;
-            font-weight: 800;
-            text-shadow: 2px 2px 0px var(--accent);
-        }
-
-        .paragraph-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 0 #e1e5ee;
-            border: 2px solid #f1f2f6;
-            position: relative;
-        }
-
-        .paragraph-card h3 {
-            margin-top: 0;
-            color: var(--secondary);
-            font-size: 24px;
-            border-bottom: 3px dashed var(--accent);
-            padding-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .text-content {
-            font-size: 19px;
-            line-height: 1.7;
-            color: #4a4a4a;
-            font-weight: 600;
-        }
-
-        .btn-translate {
-            background: var(--secondary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 15px;
-            font-weight: 800;
-            border-radius: 12px;
-            cursor: pointer;
-            margin-top: 15px;
-            box-shadow: 0 5px 0 #009688;
-            transition: all 0.1s;
-        }
-        .btn-translate:active {
-            transform: translateY(5px);
-            box-shadow: 0 0px 0 #009688;
-        }
-
-        .translation-text {
-            display: none;
-            margin-top: 15px;
-            padding: 20px;
-            background: #fff9e6;
-            border-radius: 15px;
-            font-size: 17px;
-            color: #2f3640;
-            border-left: 6px solid var(--accent);
-            font-weight: 600;
-        }
-
-        /* --- GLOSSARY TABLE --- */
-        .glossary-container {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-top: 30px;
-            box-shadow: 0 8px 0 #e1e5ee;
-        }
-        .glossary-container h3 {
-            color: var(--primary);
-            text-align: center;
-            font-size: 22px;
-            margin-top: 0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            padding: 15px;
-            border-bottom: 2px solid #f1f2f6;
-            text-align: left;
-            font-size: 17px;
-            font-weight: 600;
-        }
-        th {
-            background: var(--primary);
-            color: white;
-            border-radius: 10px 10px 0 0;
-        }
-        tr:hover { background: #fdfaf6; }
-
-        /* --- QUIZ SECTION STYLES --- */
-        .question-card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 0 #dfe4ea;
-            border: 3px solid #f1f2f6;
-            transition: all 0.3s;
-        }
-
-        .question-text {
-            font-size: 22px;
-            font-weight: 800;
-            margin-bottom: 25px;
-            color: var(--primary);
-            line-height: 1.4;
-        }
-
-        .options-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .option-btn {
-            background: #f8f9fa;
-            border: 3px solid #e9ecef;
-            padding: 18px 25px;
-            font-size: 20px;
-            font-weight: 700;
-            border-radius: 18px;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 6px 0 #ced4da;
-            color: #495057;
-            display: flex;
-            align-items: center;
-        }
-
-        .option-btn .opt-label {
-            display: inline-block;
-            width: 35px;
-            height: 35px;
-            line-height: 35px;
-            background: #e9ecef;
-            border-radius: 50%;
-            text-align: center;
-            margin-right: 15px;
-            color: var(--primary);
-            font-weight: 900;
-        }
-
-        .option-btn:hover:not(:disabled) {
-            transform: scale(1.03) translateY(-4px);
-            background: #fff3cd;
-            border-color: var(--accent);
-            box-shadow: 0 10px 0 #e5b95c;
-            color: #856404;
-        }
-        .option-btn:hover:not(:disabled) .opt-label {
-            background: var(--accent);
-            color: white;
-        }
-
-        .option-btn.correct {
-            background: var(--correct) !important;
-            color: white !important;
-            border-color: #00b894 !important;
-            box-shadow: 0 6px 0 #00b894 !important;
-        }
-        .option-btn.correct .opt-label { background: white; color: var(--correct); }
-
-        .option-btn.wrong {
-            background: var(--incorrect) !important;
-            color: white !important;
-            border-color: #d63031 !important;
-            box-shadow: 0 6px 0 #d63031 !important;
-        }
-        .option-btn.wrong .opt-label { background: white; color: var(--incorrect); }
-
-        .option-btn:disabled {
-            cursor: not-allowed;
-        }
-
-        /* Detailed Explanation Box */
-        .explanation-box {
-            display: none;
-            margin-top: 25px;
-            padding: 20px;
-            background: #f0fdf4;
-            border-radius: 15px;
-            border: 3px solid var(--correct);
-            font-size: 17px;
-            line-height: 1.6;
-            color: #166534;
-            animation: slideDown 0.4s ease;
-        }
-        
-        .exp-title {
-            font-weight: 800;
-            color: var(--correct);
-            margin-bottom: 15px;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 2px dashed #bbf7d0;
-            padding-bottom: 10px;
-        }
-
-        .exp-quote {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            font-style: italic;
-            margin: 15px 0;
-            border-left: 5px solid var(--accent);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            color: #4b5563;
-        }
-
-        /* --- ANIMATIONS --- */
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-3px, 0, 0); }
-            20%, 80% { transform: translate3d(5px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
-            40%, 60% { transform: translate3d(8px, 0, 0); }
-        }
-
-        /* --- CONFETTI CANVAS --- */
-        #confettiCanvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 9999;
-        }
-
-        /* --- SUBMIT & MODAL --- */
-        .submit-btn-container { text-align: center; margin: 40px 0; }
-        .btn-submit {
-            background: var(--accent);
-            color: #d35400;
-            font-size: 26px;
-            font-weight: 900;
-            padding: 18px 50px;
-            border: 4px solid white;
-            border-radius: 30px;
-            cursor: pointer;
-            box-shadow: 0 10px 0 #e5b95c, 0 15px 20px rgba(0,0,0,0.2);
-            transition: all 0.2s;
-            text-transform: uppercase;
-            font-family: 'Quicksand', sans-serif;
-        }
-        .btn-submit:hover { transform: scale(1.08) rotate(-2deg); }
-        .btn-submit:active { transform: translateY(10px); box-shadow: 0 0px 0 #e5b95c; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none; justify-content: center; align-items: center;
-            z-index: 10000; backdrop-filter: blur(8px);
-        }
-        .modal-content {
-            background: white; padding: 50px; border-radius: 30px;
-            text-align: center; max-width: 450px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 5px solid var(--primary);
-        }
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); opacity: 1; }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); }
-        }
-        .score-text { font-size: 60px; font-weight: 900; color: var(--primary); margin: 20px 0; text-shadow: 2px 2px 0 var(--accent); }
-        .feedback-text { font-size: 22px; font-weight: 800; color: #636e72; line-height: 1.5; }
-        .btn-close-modal {
-            margin-top: 30px; background: var(--secondary); color: white;
-            border: none; padding: 15px 35px; font-size: 20px; border-radius: 20px;
-            font-weight: 900; cursor: pointer; box-shadow: 0 8px 0 #009688;
-            font-family: 'Quicksand', sans-serif; transition: 0.2s;
-        }
-        .btn-close-modal:hover { transform: scale(1.05); }
-
-        /* --- SCROLLBAR --- */
-        ::-webkit-scrollbar { width: 12px; }
-        ::-webkit-scrollbar-track { background: #f1f2f6; border-radius: 10px; margin: 10px; }
-        ::-webkit-scrollbar-thumb { background: #b2bec3; border-radius: 10px; border: 3px solid #f1f2f6; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-    </style>
-</head>
-<body>
-
-    <canvas id="confettiCanvas"></canvas>
-
-    <div class="top-bar">
-        <div class="teacher-title">👩‍🏫 Giáo viên tạo: Ms MS Chí Nên</div>
-        <div class="timer-container">
-            <div id="timerDisplay">10:00</div>
-            <button class="btn-timer" id="btnTimerToggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
-        </div>
-    </div>
-
-    <div class="main-container">
-        <div class="left-panel">
-            <h1 class="passage-title">School Boat Festival</h1>
-            
-            <div class="paragraph-card">
-                <h3>👧 Elena</h3>
-                <div class="text-content">
-                    Our class heard about the school boat festival in our science class. Our teacher explained that we had to make several different boats so we could learn what makes boats float on water. First, my group made a sailing boat, but when we sailed it in the school swimming pool, it sank because there were holes in the wood! So, we decided to make a boat from old plastic bottles and that didn’t sink under the water!
-                </div>
-                <button class="btn-translate" onclick="toggleTranslate('trans1')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
-                <div class="translation-text" id="trans1">
-                    Lớp chúng tôi đã nghe về lễ hội thuyền của trường trong tiết Khoa học. Giáo viên giải thích rằng chúng tôi phải làm nhiều chiếc thuyền khác nhau để có thể tìm hiểu điều gì giúp thuyền nổi trên mặt nước. Đầu tiên, nhóm của tôi làm một chiếc thuyền buồm, nhưng khi chúng tôi thả nó trong hồ bơi của trường, nó đã bị chìm vì có những lỗ thủng trên gỗ! Vì vậy, chúng tôi quyết định làm một chiếc thuyền từ những chai nhựa cũ và nó đã không bị chìm dưới nước!
-                </div>
-            </div>
-
-            <div class="paragraph-card">
-                <h3>👱‍♀️ Astrid</h3>
-                <div class="text-content">
-                    The boats our class built for the school boat festival were amazing. Our technology teacher showed us a video about how boats and ships are built. Then she told us to make a model of a ship using wood, plastic and metal. After that, we had to make a short film that explained how we made our model of a ship. Then we took our models to the local park and sailed them on the lake.
-                </div>
-                <button class="btn-translate" onclick="toggleTranslate('trans2')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
-                <div class="translation-text" id="trans2">
-                    Những chiếc thuyền mà lớp chúng tôi chế tạo cho lễ hội thuyền của trường thật tuyệt vời. Giáo viên môn Công nghệ đã cho chúng tôi xem một video về cách người ta chế tạo thuyền và tàu thủy. Sau đó, cô ấy bảo chúng tôi làm một mô hình tàu thủy bằng gỗ, nhựa và kim loại. Tiếp theo, chúng tôi phải làm một đoạn phim ngắn giải thích cách chúng tôi tạo ra mô hình tàu của mình. Cuối cùng, chúng tôi mang mô hình ra công viên địa phương và thả cho chúng chạy trên hồ.
-                </div>
-            </div>
-
-            <div class="paragraph-card">
-                <h3>👩🏻 Kumiko</h3>
-                <div class="text-content">
-                    We were really excited and stopped talking when the headteacher told us about the school boat festival at our whole school morning meeting. We decided to make a model of a Viking long boat and give it to our English teacher because her husband is Danish and she’s leaving at the end of the school year to go and work in his country. We didn’t want to sail it on the river in case it sank!
-                </div>
-                <button class="btn-translate" onclick="toggleTranslate('trans3')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
-                <div class="translation-text" id="trans3">
-                    Chúng tôi thực sự rất hào hứng và đã ngừng nói chuyện ngay khi thầy hiệu trưởng thông báo về lễ hội thuyền của trường trong buổi chào cờ sáng của toàn trường. Chúng tôi quyết định làm một mô hình thuyền dài của người Viking và tặng nó cho cô giáo dạy tiếng Anh vì chồng cô là người Đan Mạch và cô ấy sẽ rời đi vào cuối năm học để sang đất nước của chú ấy làm việc. Chúng tôi không muốn thả nó trên sông phòng trường hợp nó bị chìm!
-                </div>
-            </div>
-
-            <div class="glossary-container">
-                <h3>📚 Bảng Từ Vựng Học Thuật (Glossary)</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Từ vựng (Word)</th>
-                            <th>Loại từ (POS)</th>
-                            <th>Nghĩa Tiếng Việt (Meaning)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>1. Festival</td><td>Noun (n)</td><td>Lễ hội</td></tr>
-                        <tr><td>2. Explain</td><td>Verb (v)</td><td>Giải thích</td></tr>
-                        <tr><td>3. Float</td><td>Verb (v)</td><td>Nổi (trên mặt nước)</td></tr>
-                        <tr><td>4. Sink (Sank)</td><td>Verb (v)</td><td>Chìm</td></tr>
-                        <tr><td>5. Technology</td><td>Noun (n)</td><td>Công nghệ</td></tr>
-                        <tr><td>6. Model</td><td>Noun (n)</td><td>Mô hình</td></tr>
-                        <tr><td>7. Local</td><td>Adjective (adj)</td><td>Địa phương, trong vùng</td></tr>
-                        <tr><td>8. Headteacher</td><td>Noun (n)</td><td>Hiệu trưởng</td></tr>
-                        <tr><td>9. Danish</td><td>Adjective (adj)</td><td>Thuộc về Đan Mạch</td></tr>
-                        <tr><td>10. In case</td><td>Idiom / Noun</td><td>Phòng khi, trong trường hợp</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="right-panel" id="quizContainer">
-            <div class="submit-btn-container">
-                <button class="btn-submit" onclick="submitQuiz()">🚀 NỘP BÀI THÔI 🚀</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="resultModal">
-        <div class="modal-content">
-            <h2>Kết Quả Của Bạn</h2>
-            <div class="score-text" id="finalScoreText">0/7</div>
-            <div class="feedback-text" id="feedbackText">Tuyệt vời!</div>
-            <button class="btn-close-modal" onclick="closeModal()">Xem Lại Bài Chữa</button>
-        </div>
-    </div>
-
-    <script>
-        /* ================= AUDIO GENERATOR ================= */
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playCorrectSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
-            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
-            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
-        }
-
-        function playWrongSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.4);
-            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.4);
-        }
-
-        /* ================= CONFETTI GENERATOR ================= */
-        const canvas = document.getElementById('confettiCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        let particles = [];
-
-        function fireConfetti() {
-            particles = [];
-            const colors = ['#00D26A', '#FDCB6E', '#8854C0', '#00C9A7', '#ff7675'];
-            for(let i=0; i<120; i++) {
-                particles.push({
-                    x: canvas.width/2,
-                    y: canvas.height/2 + 200,
-                    r: Math.random() * 8 + 3,
-                    dx: Math.random() * 14 - 7,
-                    dy: Math.random() * -18 - 5,
-                    color: colors[Math.floor(Math.random() * colors.length)]
-                });
-            }
-            animateConfetti();
-        }
-
-        function animateConfetti() {
-            requestAnimationFrame(animateConfetti);
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            particles.forEach((p, index) => {
-                p.x += p.dx;
-                p.y += p.dy;
-                p.dy += 0.4; 
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
-                if(p.y > canvas.height) particles.splice(index, 1);
-            });
-        }
-
-        /* ================= TIMER LOGIC ================= */
-        let timeRemaining = 600; 
-        let timerInterval;
-        let isTimerRunning = false;
-
-        function updateTimerDisplay() {
-            let m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
-            let s = (timeRemaining % 60).toString().padStart(2, '0');
-            document.getElementById('timerDisplay').innerText = `${m}:${s}`;
-        }
-
-        function toggleTimer() {
-            const btn = document.getElementById('btnTimerToggle');
-            if (isTimerRunning) {
-                clearInterval(timerInterval);
-                btn.innerText = "TIẾP TỤC LÀM BÀI";
-                btn.style.background = "var(--accent)"; // Đã sửa lỗi kỹ thuật ngoặc kép ở đây
-                btn.style.color = "#d35400";
-                isTimerRunning = false;
-            } else {
-                btn.innerText = "TẠM DỪNG";
-                btn.style.background = "#FF4757";
-                btn.style.color = "white";
-                isTimerRunning = true;
-                timerInterval = setInterval(() => {
-                    timeRemaining--;
-                    updateTimerDisplay();
-                    if (timeRemaining <= 0) {
-                        clearInterval(timerInterval);
-                        alert("⏰ Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
-                        btn.innerText = "HẾT GIỜ";
-                        btn.disabled = true;
-                        btn.style.background = "#ccc";
-                    }
-                }, 1000);
-            }
-        }
-
-        /* ================= TRANSLATION TOGGLE ================= */
-        function toggleTranslate(id) {
-            const el = document.getElementById(id);
-            el.style.display = (el.style.display === "block") ? "none" : "block";
-        }
-
-        /* ================= QUIZ DATA & LOGIC ================= */
-        const quizData = [
-            {
-                q: "1. Whose teacher asked the class to make a boat from different things?",
-                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
-                correct: 'B',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 1)</div>
-                    <b>1. Phân tích câu hỏi:</b> Giáo viên của ai đã yêu cầu cả lớp làm một chiếc thuyền từ nhiều vật liệu khác nhau? (different things = wood, plastic and metal).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Astrid):</b> 
-                    <div class="exp-quote">"Then she told us to make a model of a ship <b>using wood, plastic and metal</b>."</div>
-                    <b>3. Tại sao chọn Astrid?</b> Giáo viên công nghệ của Astrid đã yêu cầu làm mô hình tàu bằng "gỗ, nhựa và kim loại" (những thứ khác nhau).
-                `
-            },
-            {
-                q: "2. Whose class was interested when they heard about the boat festival?",
-                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
-                correct: 'C',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 2)</div>
-                    <b>1. Phân tích câu hỏi:</b> Lớp của ai đã cảm thấy thích thú/quan tâm khi họ nghe về lễ hội thuyền? (was interested = were really excited).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Kumiko):</b> 
-                    <div class="exp-quote">"We <b>were really excited</b> and stopped talking when the headteacher told us about the school boat festival..."</div>
-                    <b>3. Tại sao chọn Kumiko?</b> Kumiko miêu tả lớp mình "thực sự hào hứng" (really excited) khi nghe tin về lễ hội thuyền.
-                `
-            },
-            {
-                q: "3. Whose teacher told the students why they had to make boats?",
-                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
-                correct: 'A',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 3)</div>
-                    <b>1. Phân tích câu hỏi:</b> Giáo viên của ai đã nói cho học sinh biết LÝ DO TẠI SAO họ phải làm thuyền? (why = so we could learn...).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Elena):</b> 
-                    <div class="exp-quote">"Our teacher explained that we had to make several different boats <b>so we could learn what makes boats float on water</b>."</div>
-                    <b>3. Tại sao chọn Elena?</b> Giáo viên của Elena đã giải thích lý do làm thuyền là "để chúng tôi có thể học được điều gì làm thuyền nổi".
-                `
-            },
-            {
-                q: "4. Whose class wanted to make a present for their teacher?",
-                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
-                correct: 'C',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 4)</div>
-                    <b>1. Phân tích câu hỏi:</b> Lớp của ai muốn làm một món quà tặng giáo viên của họ? (make a present = give it to our teacher).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Kumiko):</b> 
-                    <div class="exp-quote">"We decided to make a model of a Viking long boat and <b>give it to our English teacher</b>..."</div>
-                    <b>3. Tại sao chọn Kumiko?</b> Lớp của Kumiko quyết định làm mô hình thuyền Viking để "tặng nó cho giáo viên tiếng Anh" như một món quà chia tay.
-                `
-            },
-            {
-                q: "5. Whose class recorded a video showing what they learned?",
-                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
-                correct: 'B',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 5)</div>
-                    <b>1. Phân tích câu hỏi:</b> Lớp của ai đã quay một đoạn video chỉ ra những gì họ đã học được? (recorded a video = make a short film).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Astrid):</b> 
-                    <div class="exp-quote">"After that, we had to <b>make a short film</b> that explained how we made our model of a ship."</div>
-                    <b>3. Tại sao chọn Astrid?</b> Lớp của Astrid được giao nhiệm vụ "làm một đoạn phim ngắn" (tương đương quay video) để giải thích cách họ làm tàu.
-                `
-            },
-            {
-                q: "6. Whose classmates built a boat that didn’t work?",
-                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
-                correct: 'A',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 6)</div>
-                    <b>1. Phân tích câu hỏi:</b> Các bạn cùng lớp của ai đã chế tạo một chiếc thuyền không hoạt động được? (didn't work = it sank).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Elena):</b> 
-                    <div class="exp-quote">"...when we sailed it in the school swimming pool, <b>it sank</b> because there were holes in the wood!"</div>
-                    <b>3. Tại sao chọn Elena?</b> Nhóm của Elena làm chiếc thuyền gỗ đầu tiên nhưng nó "đã bị chìm" (it sank) do có lỗ thủng, tức là nó không hoạt động.
-                `
-            },
-            {
-                q: "7. Whose classmates didn’t test their boat on the water?",
-                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
-                correct: 'C',
-                explanation: `
-                    <div class="exp-title">💡 Giải thích chi tiết (Câu 7)</div>
-                    <b>1. Phân tích câu hỏi:</b> Các bạn cùng lớp của ai ĐÃ KHÔNG thử nghiệm thuyền của họ trên mặt nước? (didn't test = didn't want to sail it).<br>
-                    <b>2. Dẫn chứng trong bài (Đoạn Kumiko):</b> 
-                    <div class="exp-quote">"We <b>didn’t want to sail it on the river</b> in case it sank!"</div>
-                    <b>3. Tại sao chọn Kumiko?</b> Lớp Kumiko định làm quà tặng nên họ "không muốn thả nó trên sông" vì sợ nó chìm, tức là họ hoàn toàn không thử nghiệm nó trên mặt nước.
-                `
-            }
-        ];
-
-        let score = 0;
-        let answeredQuestions = new Set();
-
-        function shuffleArray(array) {
-            let newArr = [...array];
-            for (let i = newArr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
-            }
-            return newArr;
-        }
-
-        function renderQuiz() {
-            const container = document.getElementById('quizContainer');
-            const submitBtn = document.querySelector('.submit-btn-container');
-            container.innerHTML = '';
-
-            quizData.forEach((qObj, qIndex) => {
-                const card = document.createElement('div');
-                card.className = 'question-card';
-                card.id = `q-card-${qIndex}`;
-
-                const qText = document.createElement('div');
-                qText.className = 'question-text';
-                qText.innerHTML = qObj.q;
-                card.appendChild(qText);
-
-                const optionsGrid = document.createElement('div');
-                optionsGrid.className = 'options-grid';
-
-                let shuffledOptions = shuffleArray(qObj.options);
-
-                shuffledOptions.forEach((opt, index) => {
-                    const btn = document.createElement('button');
-                    btn.className = 'option-btn';
-                    
-                    const label = index === 0 ? 'A' : (index === 1 ? 'B' : 'C');
-                    btn.innerHTML = `<span class="opt-label">${label}</span> <span>${opt.text}</span>`;
-                    
-                    // Gắn ID đáp án ngầm vào dataset để check chính xác
-                    btn.dataset.optId = opt.id;
-                    btn.onclick = () => handleAnswer(btn, opt.id, qObj.correct, qIndex, card);
-                    optionsGrid.appendChild(btn);
-                });
-
-                card.appendChild(optionsGrid);
-
-                const expBox = document.createElement('div');
-                expBox.className = 'explanation-box';
-                expBox.id = `exp-${qIndex}`;
-                expBox.innerHTML = qObj.explanation;
-                card.appendChild(expBox);
-
-                container.appendChild(card);
-            });
-            
-            container.appendChild(submitBtn);
-        }
-
-        function handleAnswer(btn, selectedId, correctId, qIndex, card) {
-            const buttons = card.querySelectorAll('.option-btn');
-            const expBox = document.getElementById(`exp-${qIndex}`);
-
-            if (selectedId === correctId) {
-                btn.classList.add('correct');
-                playCorrectSound();
-                fireConfetti();
-                if (!answeredQuestions.has(qIndex)) {
-                    score++;
-                    answeredQuestions.add(qIndex);
-                }
-            } else {
-                btn.classList.add('wrong');
-                btn.classList.add('shake');
-                playWrongSound();
-                setTimeout(() => btn.classList.remove('shake'), 500);
-                answeredQuestions.add(qIndex); 
-                
-                // Tự động tìm và bôi xanh nút có dataset đúng
-                buttons.forEach(b => {
-                    if (b.dataset.optId === correctId) {
-                        b.classList.add('correct');
-                    }
-                });
-            }
-
-            buttons.forEach(b => b.disabled = true);
-            expBox.style.display = 'block';
-        }
-
-        function submitQuiz() {
-            const modal = document.getElementById('resultModal');
-            const scoreText = document.getElementById('finalScoreText');
-            const feedbackText = document.getElementById('feedbackText');
-            
-            scoreText.innerText = `${score} / 7`;
-            
-            let percentage = score / 7;
-            if (percentage === 1) {
-                feedbackText.innerHTML = "🏆 THIÊN TÀI READING!<br>Em không sai một câu nào luôn!";
-                feedbackText.style.color = "#00D26A";
-                fireConfetti();
-                playCorrectSound();
-            } else if (percentage >= 0.7) {
-                feedbackText.innerHTML = "🌟 LÀM TỐT LẮM!<br>Kỹ năng đọc hiểu của em rất xuất sắc!";
-                feedbackText.style.color = "#00C9A7";
-            } else if (percentage >= 0.4) {
-                feedbackText.innerHTML = "👍 KHÁ LẮM!<br>Lần sau em nhớ tìm keyword cẩn thận hơn một xíu nha.";
-                feedbackText.style.color = "#FDCB6E";
-            } else {
-                feedbackText.innerHTML = "💪 CỐ LÊN NHÉ!<br>Hãy đọc kỹ phần giải thích chi tiết để rút kinh nghiệm nào!";
-                feedbackText.style.color = "#FF4757";
-            }
-
-            modal.style.display = "flex";
-            clearInterval(timerInterval);
-        }
-
-        function closeModal() {
-            document.getElementById('resultModal').style.display = "none";
-        }
-
-        // Khởi chạy
-        window.onload = () => {
-            updateTimerDisplay();
-            renderQuiz();
-        };
-    </script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Reading Quiz - School Boat Festival</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+
+        /* --- DYNAMIC THEME & COLOR PALETTE --- */
+
+        :root {
+
+            --primary: #8854C0; /* Hồng tím nhạt */
+
+            --accent: #FDCB6E; /* Vàng sáng */
+
+            --secondary: #00C9A7; /* Xanh ngọc */
+
+            --correct: #00D26A; /* Xanh lá */
+
+            --incorrect: #FF4757; /* Đỏ cam */
+
+            --text-dark: #2d3436;
+
+        }
+
+
+
+        /* HIỆU ỨNG CHUYỂN MÀU NỀN LOANG MƯỢT MÀ (ANIMATED GRADIENT) */
+
+        body {
+
+            margin: 0;
+
+            padding: 0;
+
+            font-family: 'Quicksand', sans-serif;
+
+            color: var(--text-dark);
+
+            height: 100vh;
+
+            display: flex;
+
+            flex-direction: column;
+
+            overflow: hidden;
+
+            
+
+            background: linear-gradient(-45deg, #8854C0, #FDCB6E, #00C9A7, #ff9a9e);
+
+            background-size: 400% 400%;
+
+            animation: gradientBG 15s ease infinite;
+
+            position: relative;
+
+        }
+
+
+
+        @keyframes gradientBG {
+
+            0% { background-position: 0% 50%; }
+
+            50% { background-position: 100% 50%; }
+
+            100% { background-position: 0% 50%; }
+
+        }
+
+
+
+        /* SVG Pattern lơ lửng nằm đè lên nền chuyển màu */
+
+        body::before {
+
+            content: "";
+
+            position: absolute;
+
+            top: 0; left: 0; right: 0; bottom: 0;
+
+            background-image: url("data:image/svg+xml,%3Csvg width='150' height='150' viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='20' y='30' font-size='24' opacity='0.4'%3E⛵%3C/text%3E%3Ctext x='100' y='70' font-size='24' opacity='0.4'%3E🌊%3C/text%3E%3Ctext x='40' y='120' font-size='20' opacity='0.4'%3E☁️%3C/text%3E%3Ctext x='110' y='140' font-size='18' opacity='0.4'%3E⭐%3C/text%3E%3Ctext x='70' y='40' font-size='22' opacity='0.4'%3E⚓%3C/text%3E%3C/svg%3E");
+
+            z-index: -1;
+
+            pointer-events: none;
+
+        }
+
+
+
+        /* --- HEADER & TIMER --- */
+
+        .top-bar {
+
+            background: rgba(255, 255, 255, 0.95);
+
+            padding: 10px 20px;
+
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            z-index: 100;
+
+            border-bottom: 4px solid var(--accent);
+
+        }
+
+
+
+        .teacher-title {
+
+            font-size: 16px;
+
+            font-weight: 800;
+
+            color: var(--primary);
+
+            background: #fff0f5;
+
+            padding: 8px 15px;
+
+            border-radius: 20px;
+
+            border: 2px dashed var(--primary);
+
+        }
+
+
+
+        .timer-container {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+        }
+
+
+
+        #timerDisplay {
+
+            font-size: 26px;
+
+            font-weight: 800;
+
+            color: var(--incorrect);
+
+            background: white;
+
+            padding: 5px 20px;
+
+            border-radius: 15px;
+
+            border: 3px solid var(--accent);
+
+            box-shadow: 0 4px 0 var(--accent);
+
+        }
+
+
+
+        .btn-timer {
+
+            background: var(--primary);
+
+            color: white;
+
+            border: none;
+
+            padding: 12px 25px;
+
+            font-size: 16px;
+
+            font-weight: 800;
+
+            border-radius: 15px;
+
+            cursor: pointer;
+
+            box-shadow: 0 6px 0 #5f3a87;
+
+            transition: all 0.1s;
+
+            text-transform: uppercase;
+
+        }
+
+        .btn-timer:active {
+
+            transform: translateY(6px);
+
+            box-shadow: 0 0px 0 #5f3a87;
+
+        }
+
+
+
+        /* --- SPLIT SCREEN LAYOUT --- */
+
+        .main-container {
+
+            display: flex;
+
+            flex: 1;
+
+            overflow: hidden;
+
+            padding: 15px;
+
+            gap: 15px;
+
+        }
+
+
+
+        .left-panel, .right-panel {
+
+            flex: 1;
+
+            background: rgba(255, 255, 255, 0.92);
+
+            border-radius: 25px;
+
+            padding: 25px;
+
+            overflow-y: auto;
+
+            scroll-behavior: smooth;
+
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+
+            border: 3px solid white;
+
+        }
+
+
+
+        /* --- READING CONTENT STYLES --- */
+
+        .passage-title {
+
+            font-size: 32px;
+
+            color: var(--primary);
+
+            text-align: center;
+
+            margin-top: 0;
+
+            margin-bottom: 25px;
+
+            text-transform: uppercase;
+
+            font-weight: 800;
+
+            text-shadow: 2px 2px 0px var(--accent);
+
+        }
+
+
+
+        .paragraph-card {
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 25px;
+
+            margin-bottom: 25px;
+
+            box-shadow: 0 8px 0 #e1e5ee;
+
+            border: 2px solid #f1f2f6;
+
+            position: relative;
+
+        }
+
+
+
+        .paragraph-card h3 {
+
+            margin-top: 0;
+
+            color: var(--secondary);
+
+            font-size: 24px;
+
+            border-bottom: 3px dashed var(--accent);
+
+            padding-bottom: 10px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+
+        .text-content {
+
+            font-size: 19px;
+
+            line-height: 1.7;
+
+            color: #4a4a4a;
+
+            font-weight: 600;
+
+        }
+
+
+
+        .btn-translate {
+
+            background: var(--secondary);
+
+            color: white;
+
+            border: none;
+
+            padding: 10px 20px;
+
+            font-size: 15px;
+
+            font-weight: 800;
+
+            border-radius: 12px;
+
+            cursor: pointer;
+
+            margin-top: 15px;
+
+            box-shadow: 0 5px 0 #009688;
+
+            transition: all 0.1s;
+
+        }
+
+        .btn-translate:active {
+
+            transform: translateY(5px);
+
+            box-shadow: 0 0px 0 #009688;
+
+        }
+
+
+
+        .translation-text {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 20px;
+
+            background: #fff9e6;
+
+            border-radius: 15px;
+
+            font-size: 17px;
+
+            color: #2f3640;
+
+            border-left: 6px solid var(--accent);
+
+            font-weight: 600;
+
+        }
+
+
+
+        /* --- GLOSSARY TABLE --- */
+
+        .glossary-container {
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 25px;
+
+            margin-top: 30px;
+
+            box-shadow: 0 8px 0 #e1e5ee;
+
+        }
+
+        .glossary-container h3 {
+
+            color: var(--primary);
+
+            text-align: center;
+
+            font-size: 22px;
+
+            margin-top: 0;
+
+        }
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            margin-top: 15px;
+
+        }
+
+        th, td {
+
+            padding: 15px;
+
+            border-bottom: 2px solid #f1f2f6;
+
+            text-align: left;
+
+            font-size: 17px;
+
+            font-weight: 600;
+
+        }
+
+        th {
+
+            background: var(--primary);
+
+            color: white;
+
+            border-radius: 10px 10px 0 0;
+
+        }
+
+        tr:hover { background: #fdfaf6; }
+
+
+
+        /* --- QUIZ SECTION STYLES --- */
+
+        .question-card {
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 30px;
+
+            margin-bottom: 30px;
+
+            box-shadow: 0 10px 0 #dfe4ea;
+
+            border: 3px solid #f1f2f6;
+
+            transition: all 0.3s;
+
+        }
+
+
+
+        .question-text {
+
+            font-size: 22px;
+
+            font-weight: 800;
+
+            margin-bottom: 25px;
+
+            color: var(--primary);
+
+            line-height: 1.4;
+
+        }
+
+
+
+        .options-grid {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 15px;
+
+        }
+
+
+
+        .option-btn {
+
+            background: #f8f9fa;
+
+            border: 3px solid #e9ecef;
+
+            padding: 18px 25px;
+
+            font-size: 20px;
+
+            font-weight: 700;
+
+            border-radius: 18px;
+
+            cursor: pointer;
+
+            text-align: left;
+
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            box-shadow: 0 6px 0 #ced4da;
+
+            color: #495057;
+
+            display: flex;
+
+            align-items: center;
+
+        }
+
+
+
+        .option-btn .opt-label {
+
+            display: inline-block;
+
+            width: 35px;
+
+            height: 35px;
+
+            line-height: 35px;
+
+            background: #e9ecef;
+
+            border-radius: 50%;
+
+            text-align: center;
+
+            margin-right: 15px;
+
+            color: var(--primary);
+
+            font-weight: 900;
+
+        }
+
+
+
+        .option-btn:hover:not(:disabled) {
+
+            transform: scale(1.03) translateY(-4px);
+
+            background: #fff3cd;
+
+            border-color: var(--accent);
+
+            box-shadow: 0 10px 0 #e5b95c;
+
+            color: #856404;
+
+        }
+
+        .option-btn:hover:not(:disabled) .opt-label {
+
+            background: var(--accent);
+
+            color: white;
+
+        }
+
+
+
+        .option-btn.correct {
+
+            background: var(--correct) !important;
+
+            color: white !important;
+
+            border-color: #00b894 !important;
+
+            box-shadow: 0 6px 0 #00b894 !important;
+
+        }
+
+        .option-btn.correct .opt-label { background: white; color: var(--correct); }
+
+
+
+        .option-btn.wrong {
+
+            background: var(--incorrect) !important;
+
+            color: white !important;
+
+            border-color: #d63031 !important;
+
+            box-shadow: 0 6px 0 #d63031 !important;
+
+        }
+
+        .option-btn.wrong .opt-label { background: white; color: var(--incorrect); }
+
+
+
+        .option-btn:disabled {
+
+            cursor: not-allowed;
+
+        }
+
+
+
+        /* Detailed Explanation Box */
+
+        .explanation-box {
+
+            display: none;
+
+            margin-top: 25px;
+
+            padding: 20px;
+
+            background: #f0fdf4;
+
+            border-radius: 15px;
+
+            border: 3px solid var(--correct);
+
+            font-size: 17px;
+
+            line-height: 1.6;
+
+            color: #166534;
+
+            animation: slideDown 0.4s ease;
+
+        }
+
+        
+
+        .exp-title {
+
+            font-weight: 800;
+
+            color: var(--correct);
+
+            margin-bottom: 15px;
+
+            font-size: 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            border-bottom: 2px dashed #bbf7d0;
+
+            padding-bottom: 10px;
+
+        }
+
+
+
+        .exp-quote {
+
+            background: white;
+
+            padding: 15px;
+
+            border-radius: 12px;
+
+            font-style: italic;
+
+            margin: 15px 0;
+
+            border-left: 5px solid var(--accent);
+
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+
+            color: #4b5563;
+
+        }
+
+
+
+        /* --- ANIMATIONS --- */
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+
+        
+
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+
+        @keyframes shake {
+
+            10%, 90% { transform: translate3d(-3px, 0, 0); }
+
+            20%, 80% { transform: translate3d(5px, 0, 0); }
+
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+
+        }
+
+
+
+        /* --- CONFETTI CANVAS --- */
+
+        #confettiCanvas {
+
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+            pointer-events: none; z-index: 9999;
+
+        }
+
+
+
+        /* --- SUBMIT & MODAL --- */
+
+        .submit-btn-container { text-align: center; margin: 40px 0; }
+
+        .btn-submit {
+
+            background: var(--accent);
+
+            color: #d35400;
+
+            font-size: 26px;
+
+            font-weight: 900;
+
+            padding: 18px 50px;
+
+            border: 4px solid white;
+
+            border-radius: 30px;
+
+            cursor: pointer;
+
+            box-shadow: 0 10px 0 #e5b95c, 0 15px 20px rgba(0,0,0,0.2);
+
+            transition: all 0.2s;
+
+            text-transform: uppercase;
+
+            font-family: 'Quicksand', sans-serif;
+
+        }
+
+        .btn-submit:hover { transform: scale(1.08) rotate(-2deg); }
+
+        .btn-submit:active { transform: translateY(10px); box-shadow: 0 0px 0 #e5b95c; }
+
+
+
+        .modal-overlay {
+
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.7);
+
+            display: none; justify-content: center; align-items: center;
+
+            z-index: 10000; backdrop-filter: blur(8px);
+
+        }
+
+        .modal-content {
+
+            background: white; padding: 50px; border-radius: 30px;
+
+            text-align: center; max-width: 450px;
+
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            border: 5px solid var(--primary);
+
+        }
+
+        @keyframes bounceIn {
+
+            0% { transform: scale(0.3); opacity: 0; }
+
+            50% { transform: scale(1.05); opacity: 1; }
+
+            70% { transform: scale(0.9); }
+
+            100% { transform: scale(1); }
+
+        }
+
+        .score-text { font-size: 60px; font-weight: 900; color: var(--primary); margin: 20px 0; text-shadow: 2px 2px 0 var(--accent); }
+
+        .feedback-text { font-size: 22px; font-weight: 800; color: #636e72; line-height: 1.5; }
+
+        .btn-close-modal {
+
+            margin-top: 30px; background: var(--secondary); color: white;
+
+            border: none; padding: 15px 35px; font-size: 20px; border-radius: 20px;
+
+            font-weight: 900; cursor: pointer; box-shadow: 0 8px 0 #009688;
+
+            font-family: 'Quicksand', sans-serif; transition: 0.2s;
+
+        }
+
+        .btn-close-modal:hover { transform: scale(1.05); }
+
+
+
+        /* --- SCROLLBAR --- */
+
+        ::-webkit-scrollbar { width: 12px; }
+
+        ::-webkit-scrollbar-track { background: #f1f2f6; border-radius: 10px; margin: 10px; }
+
+        ::-webkit-scrollbar-thumb { background: #b2bec3; border-radius: 10px; border: 3px solid #f1f2f6; }
+
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <canvas id="confettiCanvas"></canvas>
+
+
+
+    <div class="top-bar">
+
+        <div class="teacher-title">👩‍🏫 Giáo viên tạo: Ms. Chí Nên</div>
+
+        <div class="timer-container">
+
+            <div id="timerDisplay">10:00</div>
+
+            <button class="btn-timer" id="btnTimerToggle" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="main-container">
+
+        <div class="left-panel">
+
+            <h1 class="passage-title">School Boat Festival</h1>
+
+            
+
+            <div class="paragraph-card">
+
+                <h3>👧 Elena</h3>
+
+                <div class="text-content">
+
+                    Our class heard about the school boat festival in our science class. Our teacher explained that we had to make several different boats so we could learn what makes boats float on water. First, my group made a sailing boat, but when we sailed it in the school swimming pool, it sank because there were holes in the wood! So, we decided to make a boat from old plastic bottles and that didn’t sink under the water!
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans1')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
+
+                <div class="translation-text" id="trans1">
+
+                    Lớp chúng tôi đã nghe về lễ hội thuyền của trường trong tiết Khoa học. Giáo viên giải thích rằng chúng tôi phải làm nhiều chiếc thuyền khác nhau để có thể tìm hiểu điều gì giúp thuyền nổi trên mặt nước. Đầu tiên, nhóm của tôi làm một chiếc thuyền buồm, nhưng khi chúng tôi thả nó trong hồ bơi của trường, nó đã bị chìm vì có những lỗ thủng trên gỗ! Vì vậy, chúng tôi quyết định làm một chiếc thuyền từ những chai nhựa cũ và nó đã không bị chìm dưới nước!
+
+                </div>
+
+            </div>
+
+
+
+            <div class="paragraph-card">
+
+                <h3>👱‍♀️ Astrid</h3>
+
+                <div class="text-content">
+
+                    The boats our class built for the school boat festival were amazing. Our technology teacher showed us a video about how boats and ships are built. Then she told us to make a model of a ship using wood, plastic and metal. After that, we had to make a short film that explained how we made our model of a ship. Then we took our models to the local park and sailed them on the lake.
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans2')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
+
+                <div class="translation-text" id="trans2">
+
+                    Những chiếc thuyền mà lớp chúng tôi chế tạo cho lễ hội thuyền của trường thật tuyệt vời. Giáo viên môn Công nghệ đã cho chúng tôi xem một video về cách người ta chế tạo thuyền và tàu thủy. Sau đó, cô ấy bảo chúng tôi làm một mô hình tàu thủy bằng gỗ, nhựa và kim loại. Tiếp theo, chúng tôi phải làm một đoạn phim ngắn giải thích cách chúng tôi tạo ra mô hình tàu của mình. Cuối cùng, chúng tôi mang mô hình ra công viên địa phương và thả cho chúng chạy trên hồ.
+
+                </div>
+
+            </div>
+
+
+
+            <div class="paragraph-card">
+
+                <h3>👩🏻 Kumiko</h3>
+
+                <div class="text-content">
+
+                    We were really excited and stopped talking when the headteacher told us about the school boat festival at our whole school morning meeting. We decided to make a model of a Viking long boat and give it to our English teacher because her husband is Danish and she’s leaving at the end of the school year to go and work in his country. We didn’t want to sail it on the river in case it sank!
+
+                </div>
+
+                <button class="btn-translate" onclick="toggleTranslate('trans3')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
+
+                <div class="translation-text" id="trans3">
+
+                    Chúng tôi thực sự rất hào hứng và đã ngừng nói chuyện ngay khi thầy hiệu trưởng thông báo về lễ hội thuyền của trường trong buổi chào cờ sáng của toàn trường. Chúng tôi quyết định làm một mô hình thuyền dài của người Viking và tặng nó cho cô giáo dạy tiếng Anh vì chồng cô là người Đan Mạch và cô ấy sẽ rời đi vào cuối năm học để sang đất nước của chú ấy làm việc. Chúng tôi không muốn thả nó trên sông phòng trường hợp nó bị chìm!
+
+                </div>
+
+            </div>
+
+
+
+            <div class="glossary-container">
+
+                <h3>📚 Bảng Từ Vựng Học Thuật (Glossary)</h3>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Từ vựng (Word)</th>
+
+                            <th>Loại từ (POS)</th>
+
+                            <th>Nghĩa Tiếng Việt (Meaning)</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr><td>1. Festival</td><td>Noun (n)</td><td>Lễ hội</td></tr>
+
+                        <tr><td>2. Explain</td><td>Verb (v)</td><td>Giải thích</td></tr>
+
+                        <tr><td>3. Float</td><td>Verb (v)</td><td>Nổi (trên mặt nước)</td></tr>
+
+                        <tr><td>4. Sink (Sank)</td><td>Verb (v)</td><td>Chìm</td></tr>
+
+                        <tr><td>5. Technology</td><td>Noun (n)</td><td>Công nghệ</td></tr>
+
+                        <tr><td>6. Model</td><td>Noun (n)</td><td>Mô hình</td></tr>
+
+                        <tr><td>7. Local</td><td>Adjective (adj)</td><td>Địa phương, trong vùng</td></tr>
+
+                        <tr><td>8. Headteacher</td><td>Noun (n)</td><td>Hiệu trưởng</td></tr>
+
+                        <tr><td>9. Danish</td><td>Adjective (adj)</td><td>Thuộc về Đan Mạch</td></tr>
+
+                        <tr><td>10. In case</td><td>Idiom / Noun</td><td>Phòng khi, trong trường hợp</td></tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="right-panel" id="quizContainer">
+
+            <div class="submit-btn-container">
+
+                <button class="btn-submit" onclick="submitQuiz()">🚀 NỘP BÀI THÔI 🚀</button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="resultModal">
+
+        <div class="modal-content">
+
+            <h2>Kết Quả Của Bạn</h2>
+
+            <div class="score-text" id="finalScoreText">0/7</div>
+
+            <div class="feedback-text" id="feedbackText">Tuyệt vời!</div>
+
+            <button class="btn-close-modal" onclick="closeModal()">Xem Lại Bài Chữa</button>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        /* ================= AUDIO GENERATOR ================= */
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        
+
+        function playCorrectSound() {
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'sine';
+
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
+
+            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            osc.connect(gainNode);
+
+            gainNode.connect(audioCtx.destination);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.5);
+
+        }
+
+
+
+        function playWrongSound() {
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'triangle';
+
+            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+
+            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+            osc.connect(gainNode);
+
+            gainNode.connect(audioCtx.destination);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.4);
+
+        }
+
+
+
+        /* ================= CONFETTI GENERATOR ================= */
+
+        const canvas = document.getElementById('confettiCanvas');
+
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+
+
+
+        function fireConfetti() {
+
+            particles = [];
+
+            const colors = ['#00D26A', '#FDCB6E', '#8854C0', '#00C9A7', '#ff7675'];
+
+            for(let i=0; i<120; i++) {
+
+                particles.push({
+
+                    x: canvas.width/2,
+
+                    y: canvas.height/2 + 200,
+
+                    r: Math.random() * 8 + 3,
+
+                    dx: Math.random() * 14 - 7,
+
+                    dy: Math.random() * -18 - 5,
+
+                    color: colors[Math.floor(Math.random() * colors.length)]
+
+                });
+
+            }
+
+            animateConfetti();
+
+        }
+
+
+
+        function animateConfetti() {
+
+            requestAnimationFrame(animateConfetti);
+
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+
+            particles.forEach((p, index) => {
+
+                p.x += p.dx;
+
+                p.y += p.dy;
+
+                p.dy += 0.4; 
+
+                ctx.beginPath();
+
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+
+                ctx.fillStyle = p.color;
+
+                ctx.fill();
+
+                if(p.y > canvas.height) particles.splice(index, 1);
+
+            });
+
+        }
+
+
+
+        /* ================= TIMER LOGIC ================= */
+
+        let timeRemaining = 600; 
+
+        let timerInterval;
+
+        let isTimerRunning = false;
+
+
+
+        function updateTimerDisplay() {
+
+            let m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+
+            let s = (timeRemaining % 60).toString().padStart(2, '0');
+
+            document.getElementById('timerDisplay').innerText = `${m}:${s}`;
+
+        }
+
+
+
+        function toggleTimer() {
+
+            const btn = document.getElementById('btnTimerToggle');
+
+            if (isTimerRunning) {
+
+                clearInterval(timerInterval);
+
+                btn.innerText = "TIẾP TỤC LÀM BÀI";
+
+                btn.style.background = "var(--accent)"; // Đã sửa lỗi kỹ thuật ngoặc kép ở đây
+
+                btn.style.color = "#d35400";
+
+                isTimerRunning = false;
+
+            } else {
+
+                btn.innerText = "TẠM DỪNG";
+
+                btn.style.background = "#FF4757";
+
+                btn.style.color = "white";
+
+                isTimerRunning = true;
+
+                timerInterval = setInterval(() => {
+
+                    timeRemaining--;
+
+                    updateTimerDisplay();
+
+                    if (timeRemaining <= 0) {
+
+                        clearInterval(timerInterval);
+
+                        alert("⏰ Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+
+                        btn.innerText = "HẾT GIỜ";
+
+                        btn.disabled = true;
+
+                        btn.style.background = "#ccc";
+
+                    }
+
+                }, 1000);
+
+            }
+
+        }
+
+
+
+        /* ================= TRANSLATION TOGGLE ================= */
+
+        function toggleTranslate(id) {
+
+            const el = document.getElementById(id);
+
+            el.style.display = (el.style.display === "block") ? "none" : "block";
+
+        }
+
+
+
+        /* ================= QUIZ DATA & LOGIC ================= */
+
+        const quizData = [
+
+            {
+
+                q: "1. Whose teacher asked the class to make a boat from different things?",
+
+                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
+
+                correct: 'B',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 1)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Giáo viên của ai đã yêu cầu cả lớp làm một chiếc thuyền từ nhiều vật liệu khác nhau? (different things = wood, plastic and metal).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Astrid):</b> 
+
+                    <div class="exp-quote">"Then she told us to make a model of a ship <b>using wood, plastic and metal</b>."</div>
+
+                    <b>3. Tại sao chọn Astrid?</b> Giáo viên công nghệ của Astrid đã yêu cầu làm mô hình tàu bằng "gỗ, nhựa và kim loại" (những thứ khác nhau).
+
+                `
+
+            },
+
+            {
+
+                q: "2. Whose class was interested when they heard about the boat festival?",
+
+                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
+
+                correct: 'C',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 2)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Lớp của ai đã cảm thấy thích thú/quan tâm khi họ nghe về lễ hội thuyền? (was interested = were really excited).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Kumiko):</b> 
+
+                    <div class="exp-quote">"We <b>were really excited</b> and stopped talking when the headteacher told us about the school boat festival..."</div>
+
+                    <b>3. Tại sao chọn Kumiko?</b> Kumiko miêu tả lớp mình "thực sự hào hứng" (really excited) khi nghe tin về lễ hội thuyền.
+
+                `
+
+            },
+
+            {
+
+                q: "3. Whose teacher told the students why they had to make boats?",
+
+                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
+
+                correct: 'A',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 3)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Giáo viên của ai đã nói cho học sinh biết LÝ DO TẠI SAO họ phải làm thuyền? (why = so we could learn...).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Elena):</b> 
+
+                    <div class="exp-quote">"Our teacher explained that we had to make several different boats <b>so we could learn what makes boats float on water</b>."</div>
+
+                    <b>3. Tại sao chọn Elena?</b> Giáo viên của Elena đã giải thích lý do làm thuyền là "để chúng tôi có thể học được điều gì làm thuyền nổi".
+
+                `
+
+            },
+
+            {
+
+                q: "4. Whose class wanted to make a present for their teacher?",
+
+                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
+
+                correct: 'C',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 4)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Lớp của ai muốn làm một món quà tặng giáo viên của họ? (make a present = give it to our teacher).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Kumiko):</b> 
+
+                    <div class="exp-quote">"We decided to make a model of a Viking long boat and <b>give it to our English teacher</b>..."</div>
+
+                    <b>3. Tại sao chọn Kumiko?</b> Lớp của Kumiko quyết định làm mô hình thuyền Viking để "tặng nó cho giáo viên tiếng Anh" như một món quà chia tay.
+
+                `
+
+            },
+
+            {
+
+                q: "5. Whose class recorded a video showing what they learned?",
+
+                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
+
+                correct: 'B',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 5)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Lớp của ai đã quay một đoạn video chỉ ra những gì họ đã học được? (recorded a video = make a short film).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Astrid):</b> 
+
+                    <div class="exp-quote">"After that, we had to <b>make a short film</b> that explained how we made our model of a ship."</div>
+
+                    <b>3. Tại sao chọn Astrid?</b> Lớp của Astrid được giao nhiệm vụ "làm một đoạn phim ngắn" (tương đương quay video) để giải thích cách họ làm tàu.
+
+                `
+
+            },
+
+            {
+
+                q: "6. Whose classmates built a boat that didn’t work?",
+
+                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
+
+                correct: 'A',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 6)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Các bạn cùng lớp của ai đã chế tạo một chiếc thuyền không hoạt động được? (didn't work = it sank).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Elena):</b> 
+
+                    <div class="exp-quote">"...when we sailed it in the school swimming pool, <b>it sank</b> because there were holes in the wood!"</div>
+
+                    <b>3. Tại sao chọn Elena?</b> Nhóm của Elena làm chiếc thuyền gỗ đầu tiên nhưng nó "đã bị chìm" (it sank) do có lỗ thủng, tức là nó không hoạt động.
+
+                `
+
+            },
+
+            {
+
+                q: "7. Whose classmates didn’t test their boat on the water?",
+
+                options: [{id:'A', text:'Elena'}, {id:'B', text:'Astrid'}, {id:'C', text:'Kumiko'}],
+
+                correct: 'C',
+
+                explanation: `
+
+                    <div class="exp-title">💡 Giải thích chi tiết (Câu 7)</div>
+
+                    <b>1. Phân tích câu hỏi:</b> Các bạn cùng lớp của ai ĐÃ KHÔNG thử nghiệm thuyền của họ trên mặt nước? (didn't test = didn't want to sail it).<br>
+
+                    <b>2. Dẫn chứng trong bài (Đoạn Kumiko):</b> 
+
+                    <div class="exp-quote">"We <b>didn’t want to sail it on the river</b> in case it sank!"</div>
+
+                    <b>3. Tại sao chọn Kumiko?</b> Lớp Kumiko định làm quà tặng nên họ "không muốn thả nó trên sông" vì sợ nó chìm, tức là họ hoàn toàn không thử nghiệm nó trên mặt nước.
+
+                `
+
+            }
+
+        ];
+
+
+
+        let score = 0;
+
+        let answeredQuestions = new Set();
+
+
+
+        function shuffleArray(array) {
+
+            let newArr = [...array];
+
+            for (let i = newArr.length - 1; i > 0; i--) {
+
+                const j = Math.floor(Math.random() * (i + 1));
+
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+
+            }
+
+            return newArr;
+
+        }
+
+
+
+        function renderQuiz() {
+
+            const container = document.getElementById('quizContainer');
+
+            const submitBtn = document.querySelector('.submit-btn-container');
+
+            container.innerHTML = '';
+
+
+
+            quizData.forEach((qObj, qIndex) => {
+
+                const card = document.createElement('div');
+
+                card.className = 'question-card';
+
+                card.id = `q-card-${qIndex}`;
+
+
+
+                const qText = document.createElement('div');
+
+                qText.className = 'question-text';
+
+                qText.innerHTML = qObj.q;
+
+                card.appendChild(qText);
+
+
+
+                const optionsGrid = document.createElement('div');
+
+                optionsGrid.className = 'options-grid';
+
+
+
+                let shuffledOptions = shuffleArray(qObj.options);
+
+
+
+                shuffledOptions.forEach((opt, index) => {
+
+                    const btn = document.createElement('button');
+
+                    btn.className = 'option-btn';
+
+                    
+
+                    const label = index === 0 ? 'A' : (index === 1 ? 'B' : 'C');
+
+                    btn.innerHTML = `<span class="opt-label">${label}</span> <span>${opt.text}</span>`;
+
+                    
+
+                    // Gắn ID đáp án ngầm vào dataset để check chính xác
+
+                    btn.dataset.optId = opt.id;
+
+                    btn.onclick = () => handleAnswer(btn, opt.id, qObj.correct, qIndex, card);
+
+                    optionsGrid.appendChild(btn);
+
+                });
+
+
+
+                card.appendChild(optionsGrid);
+
+
+
+                const expBox = document.createElement('div');
+
+                expBox.className = 'explanation-box';
+
+                expBox.id = `exp-${qIndex}`;
+
+                expBox.innerHTML = qObj.explanation;
+
+                card.appendChild(expBox);
+
+
+
+                container.appendChild(card);
+
+            });
+
+            
+
+            container.appendChild(submitBtn);
+
+        }
+
+
+
+        function handleAnswer(btn, selectedId, correctId, qIndex, card) {
+
+            const buttons = card.querySelectorAll('.option-btn');
+
+            const expBox = document.getElementById(`exp-${qIndex}`);
+
+
+
+            if (selectedId === correctId) {
+
+                btn.classList.add('correct');
+
+                playCorrectSound();
+
+                fireConfetti();
+
+                if (!answeredQuestions.has(qIndex)) {
+
+                    score++;
+
+                    answeredQuestions.add(qIndex);
+
+                }
+
+            } else {
+
+                btn.classList.add('wrong');
+
+                btn.classList.add('shake');
+
+                playWrongSound();
+
+                setTimeout(() => btn.classList.remove('shake'), 500);
+
+                answeredQuestions.add(qIndex); 
+
+                
+
+                // Tự động tìm và bôi xanh nút có dataset đúng
+
+                buttons.forEach(b => {
+
+                    if (b.dataset.optId === correctId) {
+
+                        b.classList.add('correct');
+
+                    }
+
+                });
+
+            }
+
+
+
+            buttons.forEach(b => b.disabled = true);
+
+            expBox.style.display = 'block';
+
+        }
+
+
+
+        function submitQuiz() {
+
+            const modal = document.getElementById('resultModal');
+
+            const scoreText = document.getElementById('finalScoreText');
+
+            const feedbackText = document.getElementById('feedbackText');
+
+            
+
+            scoreText.innerText = `${score} / 7`;
+
+            
+
+            let percentage = score / 7;
+
+            if (percentage === 1) {
+
+                feedbackText.innerHTML = "🏆 THIÊN TÀI READING!<br>Em không sai một câu nào luôn!";
+
+                feedbackText.style.color = "#00D26A";
+
+                fireConfetti();
+
+                playCorrectSound();
+
+            } else if (percentage >= 0.7) {
+
+                feedbackText.innerHTML = "🌟 LÀM TỐT LẮM!<br>Kỹ năng đọc hiểu của em rất xuất sắc!";
+
+                feedbackText.style.color = "#00C9A7";
+
+            } else if (percentage >= 0.4) {
+
+                feedbackText.innerHTML = "👍 KHÁ LẮM!<br>Lần sau em nhớ tìm keyword cẩn thận hơn một xíu nha.";
+
+                feedbackText.style.color = "#FDCB6E";
+
+            } else {
+
+                feedbackText.innerHTML = "💪 CỐ LÊN NHÉ!<br>Hãy đọc kỹ phần giải thích chi tiết để rút kinh nghiệm nào!";
+
+                feedbackText.style.color = "#FF4757";
+
+            }
+
+
+
+            modal.style.display = "flex";
+
+            clearInterval(timerInterval);
+
+        }
+
+
+
+        function closeModal() {
+
+            document.getElementById('resultModal').style.display = "none";
+
+        }
+
+
+
+        // Khởi chạy
+
+        window.onload = () => {
+
+            updateTimerDisplay();
+
+            renderQuiz();
+
+        };
+
+    </script>
+
+</body>
+
 </html>

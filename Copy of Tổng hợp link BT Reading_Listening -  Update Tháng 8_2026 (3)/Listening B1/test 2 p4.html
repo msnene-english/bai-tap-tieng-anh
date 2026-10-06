@@ -1,571 +1,1141 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listening Practice - Ms MS Chí Nên</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
-    <style>
-        /* Tự động thiết lập màu sắc dựa trên chủ đề */
-        :root {
-            --primary: #8854C0; /* Màu chủ đạo: Hồng nhạt/Tím pastel */
-            --secondary: #00C9A7; /* Xanh ngọc */
-            --accent: #FDCB6E; /* Vàng sáng */
-            --correct: #00D26A; /* Xanh lá */
-            --wrong: #FF4757; /* Đỏ cam */
-            --text-dark: #2d3436;
-        }
-
-        * { box-sizing: border-box; font-family: 'Nunito', sans-serif; }
-
-        body {
-            margin: 0; padding: 20px;
-            background-color: #f8f0fc;
-            /* Tự động tạo hình nền SVG dựa trên chủ đề: Phòng ngủ, Anh chị em */
-            background-image: 
-                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" opacity="0.15"><text x="10" y="40" font-size="30">🛏️</text><text x="80" y="90" font-size="30">🧸</text><text x="20" y="130" font-size="30">🏠</text><text x="100" y="30" font-size="25">💬</text></svg>'),
-                radial-gradient(circle at top right, rgba(136, 84, 192, 0.2), transparent 50%),
-                radial-gradient(circle at bottom left, rgba(0, 201, 167, 0.2), transparent 50%);
-            background-attachment: fixed;
-            color: var(--text-dark);
-            min-height: 100vh;
-        }
-
-        .header { text-align: center; margin-bottom: 40px; }
-        
-        .header h4 {
-            color: var(--primary); margin: 0; font-size: 1.1rem; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8;
-        }
-
-        .header h1 {
-            color: var(--primary); margin: 10px 0; font-size: 2.5rem;
-            text-shadow: 2px 2px 0px white;
-        }
-
-        .audio-card {
-            background: white; padding: 15px 30px; border-radius: 50px;
-            display: inline-flex; align-items: center; justify-content: center;
-            box-shadow: 0 10px 25px rgba(136, 84, 192, 0.15); margin-bottom: 20px;
-            border: 4px solid var(--secondary);
-            position: relative;
-            z-index: 10;
-        }
-        
-        audio { outline: none; border-radius: 30px; height: 45px; width: 300px; }
-
-        .quiz-container { max-width: 850px; margin: 0 auto; }
-
-        .question-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 25px; padding: 30px; margin-bottom: 40px;
-            box-shadow: 0 15px 35px rgba(136, 84, 192, 0.1);
-            border: 3px solid transparent;
-            transition: transform 0.3s ease;
-        }
-
-        .question-text {
-            font-size: 1.35rem; font-weight: 800; color: var(--text-dark);
-            margin-bottom: 25px; border-bottom: 2px dashed #e0e0e0; padding-bottom: 15px;
-            line-height: 1.5;
-        }
-
-        .options-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;
-        }
-
-        .option-btn {
-            background: #ffffff; border: 3px solid #e9ecef; border-radius: 20px;
-            padding: 20px; cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 8px 0 #e9ecef;
-            display: flex; flex-direction: row; align-items: center; justify-content: center;
-            gap: 15px;
-        }
-
-        .option-btn:hover:not(.locked) {
-            transform: translateY(-5px) scale(1.02);
-            border-color: var(--secondary);
-            box-shadow: 0 13px 0 var(--secondary);
-        }
-
-        .option-btn:active:not(.locked) {
-            transform: translateY(3px);
-            box-shadow: 0 0 0 var(--secondary);
-        }
-
-        .option-svg { width: 45px; height: 45px; }
-        .option-label { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
-
-        /* Trạng thái */
-        .option-btn.locked { cursor: not-allowed; opacity: 0.6; }
-        .option-btn.correct {
-            background: #eafff2; border-color: var(--correct);
-            box-shadow: 0 8px 0 var(--correct); opacity: 1; transform: scale(1.03); z-index: 2;
-        }
-        .option-btn.wrong {
-            background: #fff0f1; border-color: var(--wrong);
-            box-shadow: 0 8px 0 var(--wrong); opacity: 1;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-10px); }
-            40%, 80% { transform: translateX(10px); }
-        }
-        .shake { animation: shake 0.4s ease-in-out; }
-
-        /* Hộp giải thích chi tiết */
-        .explanation-box {
-            margin-top: 25px; padding: 25px; background: #f8f9fc;
-            border-radius: 15px; border-left: 8px solid var(--secondary);
-            display: none; font-size: 1.05rem; line-height: 1.6;
-            animation: slideDown 0.4s ease-out;
-            color: #333;
-        }
-        
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .exp-step { margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px dashed #ddd; }
-        .exp-step:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .exp-title { font-weight: 800; color: var(--primary); font-size: 1.15rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;}
-        
-        .keyword-red { color: white; background: var(--wrong); font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 0 #cc3945;}
-        .highlight-green { color: white; background: var(--correct); font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 0 #00a854;}
-        .eng-quote { font-style: italic; background: #fff; padding: 8px 12px; border-radius: 8px; border: 1px solid #eee; display: inline-block; margin-bottom: 5px;}
-        .viet-trans { color: #555; }
-
-        /* Nút Nộp Bài */
-        .submit-area { text-align: center; margin: 50px 0; }
-        .btn-submit {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white; border: none; padding: 18px 50px;
-            font-size: 1.6rem; font-weight: 800; border-radius: 40px;
-            box-shadow: 0 10px 0 rgba(136, 84, 192, 0.8); cursor: pointer; transition: 0.2s;
-            text-transform: uppercase; letter-spacing: 2px;
-        }
-        .btn-submit:hover { transform: translateY(-4px); box-shadow: 0 14px 0 rgba(136, 84, 192, 0.8); }
-        .btn-submit:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(136, 84, 192, 0.8); }
-
-        /* Cửa sổ Popup (Modal) */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center;
-            z-index: 1000; backdrop-filter: blur(8px);
-        }
-        .modal-content {
-            background: white; padding: 40px; border-radius: 30px; text-align: center;
-            max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            border: 6px solid var(--primary); position: relative;
-            animation: popUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes popUp {
-            from { transform: scale(0.5); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        .modal-content h2 { font-size: 2.5rem; margin: 0 0 10px; color: var(--primary); }
-        .score-text { font-size: 2rem; font-weight: 900; margin-bottom: 20px; color: var(--text-dark);}
-        .meme-img { width: 100%; height: 250px; object-fit: cover; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);}
-        .btn-restart {
-            background: var(--secondary); color: white; border: none; padding: 15px 35px;
-            font-size: 1.3rem; font-weight: bold; border-radius: 25px; cursor: pointer;
-            box-shadow: 0 6px 0 #00997f; transition: 0.2s; width: 100%;
-        }
-        .btn-restart:active { transform: translateY(4px); box-shadow: 0 2px 0 #00997f; }
-
-        /* Canvas cho Pháo giấy */
-        #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
-
-        @media (max-width: 768px) {
-            .options-grid { grid-template-columns: 1fr; }
-            .option-btn { justify-content: flex-start; padding-left: 30px;}
-        }
-    </style>
-</head>
-<body>
-
-    <canvas id="confetti"></canvas>
-
-    <div class="header">
-        <h4>Giáo viên tạo: Ms MS Chí Nên</h4>
-        <h1>🎧 B1 PET Listening - Part 4 🎧</h1>
-        <div class="audio-card">
-            <audio controls>
-                <source src="https://englishpracticetest.net/wp-content/uploads/2022/11/b1-test-2-4.mp3" type="audio/mpeg">
-                Trình duyệt của bạn không hỗ trợ thẻ audio.
-            </audio>
-        </div>
-    </div>
-
-    <div class="quiz-container" id="quiz-container">
-        </div>
-
-    <div class="submit-area">
-        <button class="btn-submit" onclick="submitQuiz()">🚀 NỘP BÀI TỔNG KẾT 🚀</button>
-    </div>
-
-    <div class="modal-overlay" id="result-modal">
-        <div class="modal-content">
-            <h2 id="modal-title">Hoàn thành!</h2>
-            <div class="score-text">Đúng: <span id="score-display" style="color:var(--correct)">0</span>/6</div>
-            <img id="meme-image" class="meme-img" src="" alt="Meme cảm xúc">
-            <p id="modal-message" style="font-size:1.15rem; color:#555; margin-bottom:20px; font-weight:600;"></p>
-            <button class="btn-restart" onclick="location.reload()">🔄 LÀM LẠI BÀI 🔄</button>
-        </div>
-    </div>
-
-<script>
-    // --- BỘ SVG ICON CHO ĐÁP ÁN YES/NO ---
-    const svgYes = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#eafff2" stroke="#00D26A" stroke-width="4"/><path d="M30,50 L45,65 L75,35" fill="none" stroke="#00D26A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    const svgNo = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#fff0f1" stroke="#FF4757" stroke-width="4"/><path d="M35,35 L65,65 M65,35 L35,65" fill="none" stroke="#FF4757" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-    // --- BỘ DỮ LIỆU CÂU HỎI VÀ GIẢI THÍCH CHI TIẾT CỦA MS MS Chí Nên ---
-    const quizData = [
-        {
-            id: 20,
-            question: "20. Miranda accepts what her sister’s side of the room looks like.",
-            correct: "A",
-            options: [
-                { id: "A", label: "YES", svg: svgYes },
-                { id: "B", label: "NO", svg: svgNo }
-            ],
-            explanation: `
-                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
-                Miranda chấp nhận diện mạo/cách trang trí phần phòng của em gái cô ấy.</div>
-                
-                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
-                <div class="eng-quote">"Not my thing at all really, but as I said, she is younger than me – and <span class="highlight-green">it looks OK, I guess.</span>"</div>
-                <div class="viet-trans"><i>(Thật sự không phải gu của tớ chút nào, nhưng như tớ đã nói, em ấy nhỏ tuổi hơn tớ - và <span class="highlight-green">tớ đoán là trông cũng ổn.</span>)</i></div></div>
-                
-                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án YES)</div>
-                Cụm từ <span class="highlight-green">"it looks OK, I guess"</span> (trông cũng ổn đấy chứ) là cách diễn đạt thể hiện sự nhượng bộ và <b>chấp nhận (accepts)</b> của Miranda đối với sở thích của em gái.</div>
-                
-                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
-                Bẫy rất tinh vi khi lúc đầu Miranda phàn nàn rằng phần phòng của em gái toàn là màu hồng và búp bê <span class="keyword-red">("pink, with dolls")</span>, hoàn toàn không phải sở thích của cô <span class="keyword-red">("Not my thing")</span>. Nếu chỉ nghe đoạn đầu sẽ dễ vội vàng chọn NO. Tuy nhiên, vế chốt lại phía sau mới quyết định đáp án!</div>
-            `
-        },
-        {
-            id: 21,
-            question: "21. Jamie complains that his brother refuses to share his electronic equipment.",
-            correct: "B",
-            options: [
-                { id: "A", label: "YES", svg: svgYes },
-                { id: "B", label: "NO", svg: svgNo }
-            ],
-            explanation: `
-                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
-                Jamie phàn nàn rằng anh trai cậu <b>từ chối chia sẻ</b> các thiết bị điện tử.</div>
-                
-                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
-                <div class="eng-quote">"But <span class="highlight-green">he lets me use his laptop, music player … everything!</span>"</div>
-                <div class="viet-trans"><i>(Nhưng <span class="highlight-green">anh ấy cho tớ dùng laptop, máy nghe nhạc... mọi thứ của anh ấy!</span>)</i></div></div>
-                
-                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án NO)</div>
-                Đề bài dùng từ <span class="keyword-red">"refuses to share"</span> (từ chối chia sẻ). Tuy nhiên, Jamie tự hào khoe rằng anh trai cho mượn "everything" (mọi thứ) bao gồm cả máy tính và máy nghe nhạc. Nội dung bài nghe trái ngược hoàn toàn với câu hỏi!</div>
-                
-                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
-                Trong bài có nhắc đến cụm từ <span class="keyword-red">"my parents don't really want me to have, because they say I'm not old enough"</span> (Bố mẹ không muốn tớ dùng vì tớ chưa đủ tuổi). Sự cấm cản này đến từ BỐ MẸ, chứ không phải do người anh trai ích kỷ "từ chối" cho mượn.</div>
-            `
-        },
-        {
-            id: 22,
-            question: "22. Miranda is annoyed about some things that her sister tells their mother.",
-            correct: "A",
-            options: [
-                { id: "A", label: "YES", svg: svgYes },
-                { id: "B", label: "NO", svg: svgNo }
-            ],
-            explanation: `
-                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
-                Miranda <b>bực mình (annoyed)</b> về một vài chuyện mà em gái cô ấy mách lại với mẹ.</div>
-                
-                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
-                <div class="eng-quote">"Now, if that was my little sister, <span class="highlight-green">she’d probably go and report it to our mum, and I’d get into trouble!</span> That happens sometimes. Then <span class="highlight-green">my sister and I have an argument!</span>"</div>
-                <div class="viet-trans"><i>(Nếu đó là em gái tớ, <span class="highlight-green">em ấy có thể sẽ đi mách mẹ, và tớ sẽ gặp rắc rối!</span> Điều đó thỉnh thoảng hay xảy ra. Sau đó <span class="highlight-green">tớ và em gái sẽ cãi nhau!</span>)</i></div></div>
-                
-                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án YES)</div>
-                Cụm từ <span class="highlight-green">"report it to our mum"</span> chính là paraphrase của "tells their mother" (kể với mẹ/mách mẹ). Hậu quả là Miranda gặp rắc rối ("get into trouble") và hai chị em cãi nhau ("have an argument"), điều này minh chứng rõ ràng cho thái độ <b>bực mình (annoyed)</b> của cô.</div>
-                
-                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
-                Đoạn này Miranda đang giả định về việc mượn lén đồ điện tử (như Jamie đang làm). Cô bé nói rắc rối này thỉnh thoảng đã xảy ra ("happens sometimes"). Không có bẫy phủ định trực tiếp nào, người nghe chỉ cần bắt được đúng cặp từ đồng nghĩa report = tells là sẽ chọn được YES.</div>
-            `
-        },
-        {
-            id: 23,
-            question: "23. Miranda was surprised that she felt lonely when her sister was away.",
-            correct: "A",
-            options: [
-                { id: "A", label: "YES", svg: svgYes },
-                { id: "B", label: "NO", svg: svgNo }
-            ],
-            explanation: `
-                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
-                Miranda <b>đã ngạc nhiên (surprised)</b> khi thấy mình cảm thấy cô đơn lúc em gái đi vắng.</div>
-                
-                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
-                <div class="eng-quote">"I found it wasn’t so nice being in our room on my own. <span class="highlight-green">I hadn’t expected that.</span>"</div>
-                <div class="viet-trans"><i>(Tớ nhận ra việc ở trong phòng một mình chẳng vui chút nào. <span class="highlight-green">Tớ đã không ngờ tới điều đó.</span>)</i></div></div>
-                
-                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án YES)</div>
-                Việc ở một mình không vui ("wasn't nice being on my own") tương đương với cảm giác cô đơn ("lonely"). Quan trọng nhất, câu chốt <span class="highlight-green">"I hadn't expected that"</span> (Tớ không mong đợi/chưa từng ngờ tới điều đó) diễn tả hoàn hảo cho từ khóa <b>"surprised"</b> (ngạc nhiên) trong câu hỏi.</div>
-                
-                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
-                Miranda mào đầu bằng câu <span class="keyword-red">"I get on OK with my sister"</span> (Tớ hòa thuận với em gái) có thể khiến bạn nghĩ rằng cô ấy vốn rất thích ở cùng em nên việc nhớ nhung là điều hiển nhiên (chẳng có gì ngạc nhiên). Tuy nhiên keyword chốt lại nằm ở đúng cụm "I hadn't expected that". Đừng vội bỏ qua câu cuối!</div>
-            `
-        },
-        {
-            id: 24,
-            question: "24. Despite sharing a bedroom, Jamie finds he can still easily do his homework.",
-            correct: "B",
-            options: [
-                { id: "A", label: "YES", svg: svgYes },
-                { id: "B", label: "NO", svg: svgNo }
-            ],
-            explanation: `
-                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
-                Mặc dù ở chung phòng ngủ, Jamie thấy cậu vẫn có thể làm bài tập về nhà <b>một cách dễ dàng (easily)</b>.</div>
-                
-                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
-                <div class="eng-quote">"Still, at least I’ll be able to get on with my homework in peace – <span class="highlight-green">it’s hard at the moment, as he’s often in the room, too.</span>"</div>
-                <div class="viet-trans"><i>(Ít nhất thì tớ sẽ có thể yên tâm làm bài tập về nhà - <span class="highlight-green">hiện tại thì rất khó khăn, vì anh ấy cũng thường xuyên ở trong phòng.</span>)</i></div></div>
-                
-                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án NO)</div>
-                Câu hỏi nói Jamie có thể làm bài tập "easily" (dễ dàng). Tuy nhiên Jamie lại than thở rõ ràng rằng <span class="highlight-green">"it's hard at the moment"</span> (hiện tại thì rất khó). Nghĩa của bài nghe hoàn toàn trái ngược với câu hỏi!</div>
-                
-                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
-                Bẫy cực "hiểm" nằm ở câu trước đó: <span class="keyword-red">"I'll be able to get on with my homework in peace"</span> (Tớ sẽ có thể yên tâm làm bài). Đây là dự định TƯƠNG LAI khi người anh trai chuyển đi học đại học ("going to university soon"), chứ không phải hoàn cảnh "hiện tại đang chia sẻ phòng" ("Despite sharing...").</div>
-            `
-        },
-        {
-            id: 25,
-            question: "25. Jamie and Miranda can both share problems with their brother or sister.",
-            correct: "A",
-            options: [
-                { id: "A", label: "YES", svg: svgYes },
-                { id: "B", label: "NO", svg: svgNo }
-            ],
-            explanation: `
-                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
-                <b>Cả Jamie và Miranda</b> đều có thể chia sẻ những rắc rối (problems) của họ với anh/em mình.</div>
-                
-                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
-                <div class="eng-quote">Miranda: "She’s really good at listening if <span class="highlight-green">she knows I’m worried about something...</span>"<br>
-                Jamie: "<span class="highlight-green">Mmm, my brother’s the same.</span>"</div>
-                <div class="viet-trans"><i>(Miranda: "Em ấy lắng nghe rất giỏi nếu <span class="highlight-green">biết tớ đang lo lắng về chuyện gì đó...</span>"<br>
-                Jamie: "<span class="highlight-green">Ừm, anh trai tớ cũng y như vậy.</span>")</i></div></div>
-                
-                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án YES)</div>
-                Cả hai đều xác nhận điều này. Miranda nói em gái rất giỏi lắng nghe khi cô có chuyện lo lắng ("worried about something" = problems), và Jamie ngay lập tức đồng tình bằng câu chốt <span class="highlight-green">"my brother's the same"</span> (anh trai tớ cũng thế).</div>
-                
-                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
-                Bẫy nhỏ của đoạn này là cụm từ Miranda thêm vào: <span class="keyword-red">"even though she can't help"</span> (mặc dù em ấy không thể giúp gì/không giải quyết được rắc rối). Người nghe vội vàng có thể nhầm tưởng việc "không giúp được" đồng nghĩa với "không thể chia sẻ". Nhưng mấu chốt là em ấy vẫn "really good at listening" (lắng nghe tốt) nên họ vẫn có thể chia sẻ!</div>
-            `
-        }
-    ];
-
-    // --- WEB AUDIO API CHO HIỆU ỨNG ÂM THANH ---
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = new AudioContext();
-
-    function playSound(type) {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-
-        if (type === 'correct') {
-            // Tiếng "Ding" vui tai khi chọn Đúng
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
-            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); 
-            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
-        } else if (type === 'wrong') {
-            // Tiếng "Buzz/Téo tèo" khi chọn Sai
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.3); 
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-    }
-
-    // --- THUẬT TOÁN SHUFFLE (Xáo trộn ngẫu nhiên) ---
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
-    // --- RENDER BÀI TẬP ---
-    const container = document.getElementById('quiz-container');
-    let score = 0;
-    let answeredQuestions = 0;
-
-    quizData.forEach((q) => {
-        const card = document.createElement('div');
-        card.className = 'question-card';
-        card.id = `q-card-${q.id}`;
-        
-        let questionHTML = `<div class="question-text">${q.question}</div><div class="options-grid">`;
-        
-        // Clone và xáo trộn vị trí nút YES/NO
-        let shuffledOptions = [...q.options];
-        shuffleArray(shuffledOptions);
-
-        shuffledOptions.forEach(opt => {
-            questionHTML += `
-                <div class="option-btn" id="opt-${q.id}-${opt.id}" onclick="selectAnswer(${q.id}, '${opt.id}', '${q.correct}')">
-                    <div class="option-svg">${opt.svg}</div>
-                    <div class="option-label">${opt.label}</div>
-                </div>
-            `;
-        });
-        
-        questionHTML += `</div>
-            <div class="explanation-box" id="exp-${q.id}">
-                ${q.explanation}
-            </div>
-        `;
-        
-        card.innerHTML = questionHTML;
-        container.appendChild(card);
-    });
-
-    // --- XỬ LÝ KHI CHỌN ĐÁP ÁN ---
-    function selectAnswer(questionId, selectedOptId, correctOptId) {
-        const card = document.getElementById(`q-card-${questionId}`);
-        // Nếu đã trả lời rồi thì khóa lại không cho chọn tiếp
-        if(card.getAttribute('data-answered') === 'true') return;
-        
-        card.setAttribute('data-answered', 'true');
-        answeredQuestions++;
-
-        const isCorrect = selectedOptId === correctOptId;
-        
-        // Disable tất cả các nút
-        const allOpts = card.querySelectorAll('.option-btn');
-        allOpts.forEach(btn => {
-            btn.classList.add('locked');
-            // Gợi ý đáp án đúng nếu học sinh chọn sai
-            if(btn.id === `opt-${questionId}-${correctOptId}` && !isCorrect) {
-                 btn.style.borderColor = "var(--correct)";
-                 btn.style.borderWidth = "4px";
-            }
-        });
-
-        const selectedBtn = document.getElementById(`opt-${questionId}-${selectedOptId}`);
-        if (isCorrect) {
-            selectedBtn.classList.add('correct');
-            playSound('correct');
-            fireConfetti();
-            score++;
-        } else {
-            selectedBtn.classList.add('wrong');
-            selectedBtn.classList.add('shake');
-            playSound('wrong');
-            setTimeout(() => selectedBtn.classList.remove('shake'), 400);
-        }
-
-        // Tự động hiển thị khung giải thích
-        const expBox = document.getElementById(`exp-${questionId}`);
-        expBox.style.display = 'block';
-    }
-
-    // --- XỬ LÝ NỘP BÀI TỔNG KẾT ---
-    function submitQuiz() {
-        if (answeredQuestions < quizData.length) {
-            alert(`Bạn mới hoàn thành ${answeredQuestions}/${quizData.length} câu. Hãy làm đủ các câu trước khi nộp bài để Ms MS Chí Nên chấm nhé!`);
-            return;
-        }
-
-        const percentage = (score / quizData.length) * 100;
-        document.getElementById('score-display').innerText = score;
-        
-        const modal = document.getElementById('result-modal');
-        const memeImg = document.getElementById('meme-image');
-        const message = document.getElementById('modal-message');
-        const title = document.getElementById('modal-title');
-
-        if (percentage === 100) {
-            title.innerText = "Tuyệt Vời Quá Đỉnh! 👑";
-            title.style.color = "var(--correct)";
-            message.innerText = "Ms MS Chí Nên tự hào về bạn! Bạn đã nghe ra toàn bộ các bẫy khó nhất!";
-            memeImg.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif";
-            fireConfetti(120); // Bắn pháo giấy hoành tráng
-        } else if (percentage >= 60) {
-            title.innerText = "Làm Tốt Lắm! 👍";
-            title.style.color = "var(--secondary)";
-            message.innerText = "Rất đáng khen! Hãy đọc kỹ phần Giải Thích Bẫy để rút kinh nghiệm cho các câu sai nhé!";
-            memeImg.src = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif";
-        } else {
-            title.innerText = "Ui da... Cố gắng lên! 😢";
-            title.style.color = "var(--wrong)";
-            message.innerText = "Part 4 này lừa quá nhiều đúng không? Không sao, mở phần Giải thích ra đọc lại Transcript là sẽ giỏi lên ngay!";
-            memeImg.src = "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif";
-        }
-
-        modal.style.display = 'flex';
-    }
-
-    // --- THUẬT TOÁN BẮN PHÁO GIẤY CONFETTI ---
-    const canvas = document.getElementById('confetti');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    let particles = [];
-
-    function fireConfetti(amount = 40) {
-        for (let i = 0; i < amount; i++) {
-            particles.push({
-                x: canvas.width / 2, y: canvas.height / 2 + 100,
-                r: Math.random() * 6 + 4,
-                dx: Math.random() * 20 - 10, dy: Math.random() * -15 - 5,
-                color: `hsl(${Math.random() * 360}, 100%, 50%)`,
-                tilt: Math.floor(Math.random() * 10) - 10,
-                tiltAngle: 0, tiltAngleInc: (Math.random() * 0.07) + 0.05
-            });
-        }
-        if (particles.length === amount) requestAnimationFrame(drawConfetti);
-    }
-
-    function drawConfetti() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        let active = false;
-        particles.forEach((p) => {
-            p.tiltAngle += p.tiltAngleInc;
-            p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2;
-            p.x += Math.sin(p.tiltAngle) * 2;
-            p.dy += 0.2; // Trọng lực rơi
-            p.x += p.dx; p.y += p.dy;
-            
-            ctx.beginPath();
-            ctx.lineWidth = p.r; ctx.strokeStyle = p.color;
-            ctx.moveTo(p.x + p.tilt + p.r, p.y);
-            ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
-            ctx.stroke();
-
-            if (p.y <= canvas.height) active = true;
-        });
-        
-        if (active) { requestAnimationFrame(drawConfetti); } 
-        else { particles = []; ctx.clearRect(0, 0, canvas.width, canvas.height); }
-    }
-
-    // Xử lý khi thu phóng màn hình
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
-
-</script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Listening Practice - Ms. Chí Nên</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+
+    <style>
+
+        /* Tự động thiết lập màu sắc dựa trên chủ đề */
+
+        :root {
+
+            --primary: #8854C0; /* Màu chủ đạo: Hồng nhạt/Tím pastel */
+
+            --secondary: #00C9A7; /* Xanh ngọc */
+
+            --accent: #FDCB6E; /* Vàng sáng */
+
+            --correct: #00D26A; /* Xanh lá */
+
+            --wrong: #FF4757; /* Đỏ cam */
+
+            --text-dark: #2d3436;
+
+        }
+
+
+
+        * { box-sizing: border-box; font-family: 'Nunito', sans-serif; }
+
+
+
+        body {
+
+            margin: 0; padding: 20px;
+
+            background-color: #f8f0fc;
+
+            /* Tự động tạo hình nền SVG dựa trên chủ đề: Phòng ngủ, Anh chị em */
+
+            background-image: 
+
+                url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" opacity="0.15"><text x="10" y="40" font-size="30">🛏️</text><text x="80" y="90" font-size="30">🧸</text><text x="20" y="130" font-size="30">🏠</text><text x="100" y="30" font-size="25">💬</text></svg>'),
+
+                radial-gradient(circle at top right, rgba(136, 84, 192, 0.2), transparent 50%),
+
+                radial-gradient(circle at bottom left, rgba(0, 201, 167, 0.2), transparent 50%);
+
+            background-attachment: fixed;
+
+            color: var(--text-dark);
+
+            min-height: 100vh;
+
+        }
+
+
+
+        .header { text-align: center; margin-bottom: 40px; }
+
+        
+
+        .header h4 {
+
+            color: var(--primary); margin: 0; font-size: 1.1rem; font-weight: 800;
+
+            text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8;
+
+        }
+
+
+
+        .header h1 {
+
+            color: var(--primary); margin: 10px 0; font-size: 2.5rem;
+
+            text-shadow: 2px 2px 0px white;
+
+        }
+
+
+
+        .audio-card {
+
+            background: white; padding: 15px 30px; border-radius: 50px;
+
+            display: inline-flex; align-items: center; justify-content: center;
+
+            box-shadow: 0 10px 25px rgba(136, 84, 192, 0.15); margin-bottom: 20px;
+
+            border: 4px solid var(--secondary);
+
+            position: relative;
+
+            z-index: 10;
+
+        }
+
+        
+
+        audio { outline: none; border-radius: 30px; height: 45px; width: 300px; }
+
+
+
+        .quiz-container { max-width: 850px; margin: 0 auto; }
+
+
+
+        .question-card {
+
+            background: rgba(255, 255, 255, 0.95);
+
+            backdrop-filter: blur(10px);
+
+            border-radius: 25px; padding: 30px; margin-bottom: 40px;
+
+            box-shadow: 0 15px 35px rgba(136, 84, 192, 0.1);
+
+            border: 3px solid transparent;
+
+            transition: transform 0.3s ease;
+
+        }
+
+
+
+        .question-text {
+
+            font-size: 1.35rem; font-weight: 800; color: var(--text-dark);
+
+            margin-bottom: 25px; border-bottom: 2px dashed #e0e0e0; padding-bottom: 15px;
+
+            line-height: 1.5;
+
+        }
+
+
+
+        .options-grid {
+
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;
+
+        }
+
+
+
+        .option-btn {
+
+            background: #ffffff; border: 3px solid #e9ecef; border-radius: 20px;
+
+            padding: 20px; cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            box-shadow: 0 8px 0 #e9ecef;
+
+            display: flex; flex-direction: row; align-items: center; justify-content: center;
+
+            gap: 15px;
+
+        }
+
+
+
+        .option-btn:hover:not(.locked) {
+
+            transform: translateY(-5px) scale(1.02);
+
+            border-color: var(--secondary);
+
+            box-shadow: 0 13px 0 var(--secondary);
+
+        }
+
+
+
+        .option-btn:active:not(.locked) {
+
+            transform: translateY(3px);
+
+            box-shadow: 0 0 0 var(--secondary);
+
+        }
+
+
+
+        .option-svg { width: 45px; height: 45px; }
+
+        .option-label { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+
+
+
+        /* Trạng thái */
+
+        .option-btn.locked { cursor: not-allowed; opacity: 0.6; }
+
+        .option-btn.correct {
+
+            background: #eafff2; border-color: var(--correct);
+
+            box-shadow: 0 8px 0 var(--correct); opacity: 1; transform: scale(1.03); z-index: 2;
+
+        }
+
+        .option-btn.wrong {
+
+            background: #fff0f1; border-color: var(--wrong);
+
+            box-shadow: 0 8px 0 var(--wrong); opacity: 1;
+
+        }
+
+
+
+        @keyframes shake {
+
+            0%, 100% { transform: translateX(0); }
+
+            20%, 60% { transform: translateX(-10px); }
+
+            40%, 80% { transform: translateX(10px); }
+
+        }
+
+        .shake { animation: shake 0.4s ease-in-out; }
+
+
+
+        /* Hộp giải thích chi tiết */
+
+        .explanation-box {
+
+            margin-top: 25px; padding: 25px; background: #f8f9fc;
+
+            border-radius: 15px; border-left: 8px solid var(--secondary);
+
+            display: none; font-size: 1.05rem; line-height: 1.6;
+
+            animation: slideDown 0.4s ease-out;
+
+            color: #333;
+
+        }
+
+        
+
+        @keyframes slideDown {
+
+            from { opacity: 0; transform: translateY(-20px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+        }
+
+
+
+        .exp-step { margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px dashed #ddd; }
+
+        .exp-step:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+        .exp-title { font-weight: 800; color: var(--primary); font-size: 1.15rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;}
+
+        
+
+        .keyword-red { color: white; background: var(--wrong); font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 0 #cc3945;}
+
+        .highlight-green { color: white; background: var(--correct); font-weight: bold; padding: 2px 6px; border-radius: 4px; box-shadow: 0 2px 0 #00a854;}
+
+        .eng-quote { font-style: italic; background: #fff; padding: 8px 12px; border-radius: 8px; border: 1px solid #eee; display: inline-block; margin-bottom: 5px;}
+
+        .viet-trans { color: #555; }
+
+
+
+        /* Nút Nộp Bài */
+
+        .submit-area { text-align: center; margin: 50px 0; }
+
+        .btn-submit {
+
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+
+            color: white; border: none; padding: 18px 50px;
+
+            font-size: 1.6rem; font-weight: 800; border-radius: 40px;
+
+            box-shadow: 0 10px 0 rgba(136, 84, 192, 0.8); cursor: pointer; transition: 0.2s;
+
+            text-transform: uppercase; letter-spacing: 2px;
+
+        }
+
+        .btn-submit:hover { transform: translateY(-4px); box-shadow: 0 14px 0 rgba(136, 84, 192, 0.8); }
+
+        .btn-submit:active { transform: translateY(6px); box-shadow: 0 0 0 rgba(136, 84, 192, 0.8); }
+
+
+
+        /* Cửa sổ Popup (Modal) */
+
+        .modal-overlay {
+
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center;
+
+            z-index: 1000; backdrop-filter: blur(8px);
+
+        }
+
+        .modal-content {
+
+            background: white; padding: 40px; border-radius: 30px; text-align: center;
+
+            max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+
+            border: 6px solid var(--primary); position: relative;
+
+            animation: popUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+        @keyframes popUp {
+
+            from { transform: scale(0.5); opacity: 0; }
+
+            to { transform: scale(1); opacity: 1; }
+
+        }
+
+        .modal-content h2 { font-size: 2.5rem; margin: 0 0 10px; color: var(--primary); }
+
+        .score-text { font-size: 2rem; font-weight: 900; margin-bottom: 20px; color: var(--text-dark);}
+
+        .meme-img { width: 100%; height: 250px; object-fit: cover; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);}
+
+        .btn-restart {
+
+            background: var(--secondary); color: white; border: none; padding: 15px 35px;
+
+            font-size: 1.3rem; font-weight: bold; border-radius: 25px; cursor: pointer;
+
+            box-shadow: 0 6px 0 #00997f; transition: 0.2s; width: 100%;
+
+        }
+
+        .btn-restart:active { transform: translateY(4px); box-shadow: 0 2px 0 #00997f; }
+
+
+
+        /* Canvas cho Pháo giấy */
+
+        #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+
+
+
+        @media (max-width: 768px) {
+
+            .options-grid { grid-template-columns: 1fr; }
+
+            .option-btn { justify-content: flex-start; padding-left: 30px;}
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <canvas id="confetti"></canvas>
+
+
+
+    <div class="header">
+
+        <h4>Giáo viên tạo: Ms. Chí Nên</h4>
+
+        <h1>🎧 B1 PET Listening - Part 4 🎧</h1>
+
+        <div class="audio-card">
+
+            <audio controls>
+
+                <source src="https://englishpracticetest.net/wp-content/uploads/2022/11/b1-test-2-4.mp3" type="audio/mpeg">
+
+                Trình duyệt của bạn không hỗ trợ thẻ audio.
+
+            </audio>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="quiz-container" id="quiz-container">
+
+        </div>
+
+
+
+    <div class="submit-area">
+
+        <button class="btn-submit" onclick="submitQuiz()">🚀 NỘP BÀI TỔNG KẾT 🚀</button>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="result-modal">
+
+        <div class="modal-content">
+
+            <h2 id="modal-title">Hoàn thành!</h2>
+
+            <div class="score-text">Đúng: <span id="score-display" style="color:var(--correct)">0</span>/6</div>
+
+            <img id="meme-image" class="meme-img" src="" alt="Meme cảm xúc">
+
+            <p id="modal-message" style="font-size:1.15rem; color:#555; margin-bottom:20px; font-weight:600;"></p>
+
+            <button class="btn-restart" onclick="location.reload()">🔄 LÀM LẠI BÀI 🔄</button>
+
+        </div>
+
+    </div>
+
+
+
+<script>
+
+    // --- BỘ SVG ICON CHO ĐÁP ÁN YES/NO ---
+
+    const svgYes = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#eafff2" stroke="#00D26A" stroke-width="4"/><path d="M30,50 L45,65 L75,35" fill="none" stroke="#00D26A" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    const svgNo = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#fff0f1" stroke="#FF4757" stroke-width="4"/><path d="M35,35 L65,65 M65,35 L35,65" fill="none" stroke="#FF4757" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+
+
+    // --- BỘ DỮ LIỆU CÂU HỎI VÀ GIẢI THÍCH CHI TIẾT CỦA MS MS Chí Nên ---
+
+    const quizData = [
+
+        {
+
+            id: 20,
+
+            question: "20. Miranda accepts what her sister’s side of the room looks like.",
+
+            correct: "A",
+
+            options: [
+
+                { id: "A", label: "YES", svg: svgYes },
+
+                { id: "B", label: "NO", svg: svgNo }
+
+            ],
+
+            explanation: `
+
+                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
+
+                Miranda chấp nhận diện mạo/cách trang trí phần phòng của em gái cô ấy.</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
+
+                <div class="eng-quote">"Not my thing at all really, but as I said, she is younger than me – and <span class="highlight-green">it looks OK, I guess.</span>"</div>
+
+                <div class="viet-trans"><i>(Thật sự không phải gu của tớ chút nào, nhưng như tớ đã nói, em ấy nhỏ tuổi hơn tớ - và <span class="highlight-green">tớ đoán là trông cũng ổn.</span>)</i></div></div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án YES)</div>
+
+                Cụm từ <span class="highlight-green">"it looks OK, I guess"</span> (trông cũng ổn đấy chứ) là cách diễn đạt thể hiện sự nhượng bộ và <b>chấp nhận (accepts)</b> của Miranda đối với sở thích của em gái.</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
+
+                Bẫy rất tinh vi khi lúc đầu Miranda phàn nàn rằng phần phòng của em gái toàn là màu hồng và búp bê <span class="keyword-red">("pink, with dolls")</span>, hoàn toàn không phải sở thích của cô <span class="keyword-red">("Not my thing")</span>. Nếu chỉ nghe đoạn đầu sẽ dễ vội vàng chọn NO. Tuy nhiên, vế chốt lại phía sau mới quyết định đáp án!</div>
+
+            `
+
+        },
+
+        {
+
+            id: 21,
+
+            question: "21. Jamie complains that his brother refuses to share his electronic equipment.",
+
+            correct: "B",
+
+            options: [
+
+                { id: "A", label: "YES", svg: svgYes },
+
+                { id: "B", label: "NO", svg: svgNo }
+
+            ],
+
+            explanation: `
+
+                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
+
+                Jamie phàn nàn rằng anh trai cậu <b>từ chối chia sẻ</b> các thiết bị điện tử.</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
+
+                <div class="eng-quote">"But <span class="highlight-green">he lets me use his laptop, music player … everything!</span>"</div>
+
+                <div class="viet-trans"><i>(Nhưng <span class="highlight-green">anh ấy cho tớ dùng laptop, máy nghe nhạc... mọi thứ của anh ấy!</span>)</i></div></div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án NO)</div>
+
+                Đề bài dùng từ <span class="keyword-red">"refuses to share"</span> (từ chối chia sẻ). Tuy nhiên, Jamie tự hào khoe rằng anh trai cho mượn "everything" (mọi thứ) bao gồm cả máy tính và máy nghe nhạc. Nội dung bài nghe trái ngược hoàn toàn với câu hỏi!</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
+
+                Trong bài có nhắc đến cụm từ <span class="keyword-red">"my parents don't really want me to have, because they say I'm not old enough"</span> (Bố mẹ không muốn tớ dùng vì tớ chưa đủ tuổi). Sự cấm cản này đến từ BỐ MẸ, chứ không phải do người anh trai ích kỷ "từ chối" cho mượn.</div>
+
+            `
+
+        },
+
+        {
+
+            id: 22,
+
+            question: "22. Miranda is annoyed about some things that her sister tells their mother.",
+
+            correct: "A",
+
+            options: [
+
+                { id: "A", label: "YES", svg: svgYes },
+
+                { id: "B", label: "NO", svg: svgNo }
+
+            ],
+
+            explanation: `
+
+                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
+
+                Miranda <b>bực mình (annoyed)</b> về một vài chuyện mà em gái cô ấy mách lại với mẹ.</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
+
+                <div class="eng-quote">"Now, if that was my little sister, <span class="highlight-green">she’d probably go and report it to our mum, and I’d get into trouble!</span> That happens sometimes. Then <span class="highlight-green">my sister and I have an argument!</span>"</div>
+
+                <div class="viet-trans"><i>(Nếu đó là em gái tớ, <span class="highlight-green">em ấy có thể sẽ đi mách mẹ, và tớ sẽ gặp rắc rối!</span> Điều đó thỉnh thoảng hay xảy ra. Sau đó <span class="highlight-green">tớ và em gái sẽ cãi nhau!</span>)</i></div></div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án YES)</div>
+
+                Cụm từ <span class="highlight-green">"report it to our mum"</span> chính là paraphrase của "tells their mother" (kể với mẹ/mách mẹ). Hậu quả là Miranda gặp rắc rối ("get into trouble") và hai chị em cãi nhau ("have an argument"), điều này minh chứng rõ ràng cho thái độ <b>bực mình (annoyed)</b> của cô.</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
+
+                Đoạn này Miranda đang giả định về việc mượn lén đồ điện tử (như Jamie đang làm). Cô bé nói rắc rối này thỉnh thoảng đã xảy ra ("happens sometimes"). Không có bẫy phủ định trực tiếp nào, người nghe chỉ cần bắt được đúng cặp từ đồng nghĩa report = tells là sẽ chọn được YES.</div>
+
+            `
+
+        },
+
+        {
+
+            id: 23,
+
+            question: "23. Miranda was surprised that she felt lonely when her sister was away.",
+
+            correct: "A",
+
+            options: [
+
+                { id: "A", label: "YES", svg: svgYes },
+
+                { id: "B", label: "NO", svg: svgNo }
+
+            ],
+
+            explanation: `
+
+                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
+
+                Miranda <b>đã ngạc nhiên (surprised)</b> khi thấy mình cảm thấy cô đơn lúc em gái đi vắng.</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
+
+                <div class="eng-quote">"I found it wasn’t so nice being in our room on my own. <span class="highlight-green">I hadn’t expected that.</span>"</div>
+
+                <div class="viet-trans"><i>(Tớ nhận ra việc ở trong phòng một mình chẳng vui chút nào. <span class="highlight-green">Tớ đã không ngờ tới điều đó.</span>)</i></div></div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án YES)</div>
+
+                Việc ở một mình không vui ("wasn't nice being on my own") tương đương với cảm giác cô đơn ("lonely"). Quan trọng nhất, câu chốt <span class="highlight-green">"I hadn't expected that"</span> (Tớ không mong đợi/chưa từng ngờ tới điều đó) diễn tả hoàn hảo cho từ khóa <b>"surprised"</b> (ngạc nhiên) trong câu hỏi.</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
+
+                Miranda mào đầu bằng câu <span class="keyword-red">"I get on OK with my sister"</span> (Tớ hòa thuận với em gái) có thể khiến bạn nghĩ rằng cô ấy vốn rất thích ở cùng em nên việc nhớ nhung là điều hiển nhiên (chẳng có gì ngạc nhiên). Tuy nhiên keyword chốt lại nằm ở đúng cụm "I hadn't expected that". Đừng vội bỏ qua câu cuối!</div>
+
+            `
+
+        },
+
+        {
+
+            id: 24,
+
+            question: "24. Despite sharing a bedroom, Jamie finds he can still easily do his homework.",
+
+            correct: "B",
+
+            options: [
+
+                { id: "A", label: "YES", svg: svgYes },
+
+                { id: "B", label: "NO", svg: svgNo }
+
+            ],
+
+            explanation: `
+
+                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
+
+                Mặc dù ở chung phòng ngủ, Jamie thấy cậu vẫn có thể làm bài tập về nhà <b>một cách dễ dàng (easily)</b>.</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
+
+                <div class="eng-quote">"Still, at least I’ll be able to get on with my homework in peace – <span class="highlight-green">it’s hard at the moment, as he’s often in the room, too.</span>"</div>
+
+                <div class="viet-trans"><i>(Ít nhất thì tớ sẽ có thể yên tâm làm bài tập về nhà - <span class="highlight-green">hiện tại thì rất khó khăn, vì anh ấy cũng thường xuyên ở trong phòng.</span>)</i></div></div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án NO)</div>
+
+                Câu hỏi nói Jamie có thể làm bài tập "easily" (dễ dàng). Tuy nhiên Jamie lại than thở rõ ràng rằng <span class="highlight-green">"it's hard at the moment"</span> (hiện tại thì rất khó). Nghĩa của bài nghe hoàn toàn trái ngược với câu hỏi!</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
+
+                Bẫy cực "hiểm" nằm ở câu trước đó: <span class="keyword-red">"I'll be able to get on with my homework in peace"</span> (Tớ sẽ có thể yên tâm làm bài). Đây là dự định TƯƠNG LAI khi người anh trai chuyển đi học đại học ("going to university soon"), chứ không phải hoàn cảnh "hiện tại đang chia sẻ phòng" ("Despite sharing...").</div>
+
+            `
+
+        },
+
+        {
+
+            id: 25,
+
+            question: "25. Jamie and Miranda can both share problems with their brother or sister.",
+
+            correct: "A",
+
+            options: [
+
+                { id: "A", label: "YES", svg: svgYes },
+
+                { id: "B", label: "NO", svg: svgNo }
+
+            ],
+
+            explanation: `
+
+                <div class="exp-step"><div class="exp-title">📖 Bước 1: Dịch câu hỏi</div>
+
+                <b>Cả Jamie và Miranda</b> đều có thể chia sẻ những rắc rối (problems) của họ với anh/em mình.</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎧 Bước 2: Transcript & Dịch nghĩa</div>
+
+                <div class="eng-quote">Miranda: "She’s really good at listening if <span class="highlight-green">she knows I’m worried about something...</span>"<br>
+
+                Jamie: "<span class="highlight-green">Mmm, my brother’s the same.</span>"</div>
+
+                <div class="viet-trans"><i>(Miranda: "Em ấy lắng nghe rất giỏi nếu <span class="highlight-green">biết tớ đang lo lắng về chuyện gì đó...</span>"<br>
+
+                Jamie: "<span class="highlight-green">Ừm, anh trai tớ cũng y như vậy.</span>")</i></div></div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🎯 Bước 3: Tại sao đúng? (Đáp án YES)</div>
+
+                Cả hai đều xác nhận điều này. Miranda nói em gái rất giỏi lắng nghe khi cô có chuyện lo lắng ("worried about something" = problems), và Jamie ngay lập tức đồng tình bằng câu chốt <span class="highlight-green">"my brother's the same"</span> (anh trai tớ cũng thế).</div>
+
+                
+
+                <div class="exp-step"><div class="exp-title">🚫 Bước 4: Phân tích bẫy (Distractors)</div>
+
+                Bẫy nhỏ của đoạn này là cụm từ Miranda thêm vào: <span class="keyword-red">"even though she can't help"</span> (mặc dù em ấy không thể giúp gì/không giải quyết được rắc rối). Người nghe vội vàng có thể nhầm tưởng việc "không giúp được" đồng nghĩa với "không thể chia sẻ". Nhưng mấu chốt là em ấy vẫn "really good at listening" (lắng nghe tốt) nên họ vẫn có thể chia sẻ!</div>
+
+            `
+
+        }
+
+    ];
+
+
+
+    // --- WEB AUDIO API CHO HIỆU ỨNG ÂM THANH ---
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    const audioCtx = new AudioContext();
+
+
+
+    function playSound(type) {
+
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+
+        const gainNode = audioCtx.createGain();
+
+        osc.connect(gainNode);
+
+        gainNode.connect(audioCtx.destination);
+
+
+
+        if (type === 'correct') {
+
+            // Tiếng "Ding" vui tai khi chọn Đúng
+
+            osc.type = 'sine';
+
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); 
+
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.5);
+
+        } else if (type === 'wrong') {
+
+            // Tiếng "Buzz/Téo tèo" khi chọn Sai
+
+            osc.type = 'sawtooth';
+
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+
+            osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.3); 
+
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            osc.start();
+
+            osc.stop(audioCtx.currentTime + 0.3);
+
+        }
+
+    }
+
+
+
+    // --- THUẬT TOÁN SHUFFLE (Xáo trộn ngẫu nhiên) ---
+
+    function shuffleArray(array) {
+
+        for (let i = array.length - 1; i > 0; i--) {
+
+            const j = Math.floor(Math.random() * (i + 1));
+
+            [array[i], array[j]] = [array[j], array[i]];
+
+        }
+
+    }
+
+
+
+    // --- RENDER BÀI TẬP ---
+
+    const container = document.getElementById('quiz-container');
+
+    let score = 0;
+
+    let answeredQuestions = 0;
+
+
+
+    quizData.forEach((q) => {
+
+        const card = document.createElement('div');
+
+        card.className = 'question-card';
+
+        card.id = `q-card-${q.id}`;
+
+        
+
+        let questionHTML = `<div class="question-text">${q.question}</div><div class="options-grid">`;
+
+        
+
+        // Clone và xáo trộn vị trí nút YES/NO
+
+        let shuffledOptions = [...q.options];
+
+        shuffleArray(shuffledOptions);
+
+
+
+        shuffledOptions.forEach(opt => {
+
+            questionHTML += `
+
+                <div class="option-btn" id="opt-${q.id}-${opt.id}" onclick="selectAnswer(${q.id}, '${opt.id}', '${q.correct}')">
+
+                    <div class="option-svg">${opt.svg}</div>
+
+                    <div class="option-label">${opt.label}</div>
+
+                </div>
+
+            `;
+
+        });
+
+        
+
+        questionHTML += `</div>
+
+            <div class="explanation-box" id="exp-${q.id}">
+
+                ${q.explanation}
+
+            </div>
+
+        `;
+
+        
+
+        card.innerHTML = questionHTML;
+
+        container.appendChild(card);
+
+    });
+
+
+
+    // --- XỬ LÝ KHI CHỌN ĐÁP ÁN ---
+
+    function selectAnswer(questionId, selectedOptId, correctOptId) {
+
+        const card = document.getElementById(`q-card-${questionId}`);
+
+        // Nếu đã trả lời rồi thì khóa lại không cho chọn tiếp
+
+        if(card.getAttribute('data-answered') === 'true') return;
+
+        
+
+        card.setAttribute('data-answered', 'true');
+
+        answeredQuestions++;
+
+
+
+        const isCorrect = selectedOptId === correctOptId;
+
+        
+
+        // Disable tất cả các nút
+
+        const allOpts = card.querySelectorAll('.option-btn');
+
+        allOpts.forEach(btn => {
+
+            btn.classList.add('locked');
+
+            // Gợi ý đáp án đúng nếu học sinh chọn sai
+
+            if(btn.id === `opt-${questionId}-${correctOptId}` && !isCorrect) {
+
+                 btn.style.borderColor = "var(--correct)";
+
+                 btn.style.borderWidth = "4px";
+
+            }
+
+        });
+
+
+
+        const selectedBtn = document.getElementById(`opt-${questionId}-${selectedOptId}`);
+
+        if (isCorrect) {
+
+            selectedBtn.classList.add('correct');
+
+            playSound('correct');
+
+            fireConfetti();
+
+            score++;
+
+        } else {
+
+            selectedBtn.classList.add('wrong');
+
+            selectedBtn.classList.add('shake');
+
+            playSound('wrong');
+
+            setTimeout(() => selectedBtn.classList.remove('shake'), 400);
+
+        }
+
+
+
+        // Tự động hiển thị khung giải thích
+
+        const expBox = document.getElementById(`exp-${questionId}`);
+
+        expBox.style.display = 'block';
+
+    }
+
+
+
+    // --- XỬ LÝ NỘP BÀI TỔNG KẾT ---
+
+    function submitQuiz() {
+
+        if (answeredQuestions < quizData.length) {
+
+            alert(`Bạn mới hoàn thành ${answeredQuestions}/${quizData.length} câu. Hãy làm đủ các câu trước khi nộp bài để Ms. Chí Nên chấm nhé!`);
+
+            return;
+
+        }
+
+
+
+        const percentage = (score / quizData.length) * 100;
+
+        document.getElementById('score-display').innerText = score;
+
+        
+
+        const modal = document.getElementById('result-modal');
+
+        const memeImg = document.getElementById('meme-image');
+
+        const message = document.getElementById('modal-message');
+
+        const title = document.getElementById('modal-title');
+
+
+
+        if (percentage === 100) {
+
+            title.innerText = "Tuyệt Vời Quá Đỉnh! 👑";
+
+            title.style.color = "var(--correct)";
+
+            message.innerText = "Ms. Chí Nên tự hào về bạn! Bạn đã nghe ra toàn bộ các bẫy khó nhất!";
+
+            memeImg.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif";
+
+            fireConfetti(120); // Bắn pháo giấy hoành tráng
+
+        } else if (percentage >= 60) {
+
+            title.innerText = "Làm Tốt Lắm! 👍";
+
+            title.style.color = "var(--secondary)";
+
+            message.innerText = "Rất đáng khen! Hãy đọc kỹ phần Giải Thích Bẫy để rút kinh nghiệm cho các câu sai nhé!";
+
+            memeImg.src = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif";
+
+        } else {
+
+            title.innerText = "Ui da... Cố gắng lên! 😢";
+
+            title.style.color = "var(--wrong)";
+
+            message.innerText = "Part 4 này lừa quá nhiều đúng không? Không sao, mở phần Giải thích ra đọc lại Transcript là sẽ giỏi lên ngay!";
+
+            memeImg.src = "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif";
+
+        }
+
+
+
+        modal.style.display = 'flex';
+
+    }
+
+
+
+    // --- THUẬT TOÁN BẮN PHÁO GIẤY CONFETTI ---
+
+    const canvas = document.getElementById('confetti');
+
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+
+    let particles = [];
+
+
+
+    function fireConfetti(amount = 40) {
+
+        for (let i = 0; i < amount; i++) {
+
+            particles.push({
+
+                x: canvas.width / 2, y: canvas.height / 2 + 100,
+
+                r: Math.random() * 6 + 4,
+
+                dx: Math.random() * 20 - 10, dy: Math.random() * -15 - 5,
+
+                color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+
+                tilt: Math.floor(Math.random() * 10) - 10,
+
+                tiltAngle: 0, tiltAngleInc: (Math.random() * 0.07) + 0.05
+
+            });
+
+        }
+
+        if (particles.length === amount) requestAnimationFrame(drawConfetti);
+
+    }
+
+
+
+    function drawConfetti() {
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let active = false;
+
+        particles.forEach((p) => {
+
+            p.tiltAngle += p.tiltAngleInc;
+
+            p.y += (Math.cos(p.tiltAngle) + 1 + p.r / 2) / 2;
+
+            p.x += Math.sin(p.tiltAngle) * 2;
+
+            p.dy += 0.2; // Trọng lực rơi
+
+            p.x += p.dx; p.y += p.dy;
+
+            
+
+            ctx.beginPath();
+
+            ctx.lineWidth = p.r; ctx.strokeStyle = p.color;
+
+            ctx.moveTo(p.x + p.tilt + p.r, p.y);
+
+            ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+
+            ctx.stroke();
+
+
+
+            if (p.y <= canvas.height) active = true;
+
+        });
+
+        
+
+        if (active) { requestAnimationFrame(drawConfetti); } 
+
+        else { particles = []; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    }
+
+
+
+    // Xử lý khi thu phóng màn hình
+
+    window.addEventListener('resize', () => {
+
+        canvas.width = window.innerWidth;
+
+        canvas.height = window.innerHeight;
+
+    });
+
+
+
+</script>
+
+</body>
+
 </html>

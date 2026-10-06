@@ -1,1188 +1,2375 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gamified English Test by Ms MS Chí Nên</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #8854C0;
-            --secondary: #FDCB6E;
-            --accent: #00C9A7;
-            --correct: #00D26A;
-            --correct-shadow: #00994D;
-            --correct-bg: #E8FBF0;
-            --wrong: #FF4757;
-            --wrong-shadow: #CC3946;
-            --wrong-bg: #FFEBEB;
-            --text-dark: #2D3436;
-            --bg-card: #FFFFFF;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Nunito', sans-serif;
-        }
-
-        body {
-            background: linear-gradient(-45deg, var(--primary), var(--secondary), var(--accent), #FF9A9E);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            min-height: 100vh;
-            color: var(--text-dark);
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Lớp họa tiết lơ lửng */
-        .pattern-layer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-
-        .floating-item {
-            position: absolute;
-            font-size: 2rem;
-            opacity: 0.6;
-            animation: floatUp linear infinite;
-        }
-
-        @keyframes floatUp {
-            0% { transform: translateY(100vh) rotate(0deg) scale(0.8); opacity: 0; }
-            10% { opacity: 0.6; }
-            90% { opacity: 0.6; }
-            100% { transform: translateY(-20vh) rotate(360deg) scale(1.2); opacity: 0; }
-        }
-
-        /* Container chính */
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        header {
-            text-align: center;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 25px;
-            box-shadow: 0 10px 0 rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            backdrop-filter: blur(5px);
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            color: var(--primary);
-            text-transform: uppercase;
-            font-weight: 900;
-            letter-spacing: 2px;
-            margin-bottom: 5px;
-            text-shadow: 2px 2px 0px var(--secondary);
-        }
-
-        h3 {
-            font-size: 1.2rem;
-            color: #636E72;
-            font-weight: 700;
-        }
-
-        /* Thẻ câu hỏi */
-        .instruction-block {
-            background: #FFEAA7;
-            padding: 15px 25px;
-            border-radius: 15px;
-            font-weight: 800;
-            font-size: 1.1rem;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 0 #FDCB6E;
-            color: #D35400;
-            text-align: center;
-        }
-
-        .question-card {
-            background: var(--bg-card);
-            border-radius: 25px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 12px 0 rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-
-        .question-text {
-            font-size: 1.15rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        @media (max-width: 600px) {
-            .options-grid { grid-template-columns: 1fr; }
-        }
-
-        .option-btn {
-            background: #F8F9FA;
-            border: 3px solid #DFE6E9;
-            border-radius: 15px;
-            padding: 15px 20px;
-            font-size: 1.08rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 6px 0 #DFE6E9;
-            text-align: left;
-            position: relative;
-        }
-
-        .option-btn:hover:not(:disabled) {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 11px 0 #DFE6E9;
-            border-color: var(--primary);
-        }
-
-        .option-btn:active:not(:disabled) {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #DFE6E9;
-        }
-
-        .option-btn:disabled {
-            cursor: not-allowed;
-            opacity: 0.8;
-        }
-
-        /* Trạng thái đúng / sai */
-        .option-btn.correct {
-            background: var(--correct-bg);
-            border-color: var(--correct);
-            color: #008B46;
-            box-shadow: 0 6px 0 var(--correct-shadow);
-            animation: popIn 0.5s ease;
-        }
-
-        .option-btn.wrong {
-            background: var(--wrong-bg);
-            border-color: var(--wrong);
-            color: #D12C3A;
-            box-shadow: 0 6px 0 var(--wrong-shadow);
-        }
-
-        .option-btn.fade {
-            opacity: 0.5;
-        }
-
-        /* Khung giải thích */
-        .explanation-box {
-            margin-top: 20px;
-            background: #F0F3F4;
-            border-left: 6px solid var(--accent);
-            padding: 20px;
-            border-radius: 0 15px 15px 0;
-            display: none;
-            font-size: 1rem;
-            line-height: 1.6;
-            animation: slideDown 0.4s ease-out forwards;
-        }
-
-        .explanation-box h4 {
-            color: var(--primary);
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            border-bottom: 2px dashed #ccc;
-            padding-bottom: 5px;
-        }
-
-        .explanation-box p {
-            margin-bottom: 8px;
-        }
-        
-        .explanation-box .step-title {
-            font-weight: 800;
-            color: #E67E22;
-            margin-top: 12px;
-        }
-
-        /* Nút Submit */
-        .submit-btn {
-            display: block;
-            width: 100%;
-            background: #0984E3;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 900;
-            text-align: center;
-            padding: 20px;
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 10px 0 #0652DD;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 40px;
-            margin-bottom: 50px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 0 #0652DD;
-            background: #74B9FF;
-        }
-
-        .submit-btn:active {
-            transform: translateY(5px);
-            box-shadow: 0 0 0 #0652DD;
-        }
-
-        /* CSS Vẽ Biển báo */
-        .css-sign {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #FFEAA7;
-            border: 5px solid #2D3436;
-            padding: 20px;
-            border-radius: 15px;
-            width: fit-content;
-            margin: 15px auto;
-            box-shadow: 5px 5px 0 rgba(0,0,0,0.2);
-            text-align: center;
-        }
-
-        .css-sign-text {
-            font-size: 1.2rem;
-            font-weight: 900;
-            margin-top: 10px;
-            color: #2D3436;
-        }
-
-        .circle-slash {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            border: 12px solid #D63031;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: white;
-        }
-
-        .circle-slash::after {
-            content: '';
-            position: absolute;
-            width: 150px;
-            height: 12px;
-            background: #D63031;
-            transform: rotate(-45deg);
-            z-index: 2;
-        }
-
-        .circle-slash .icon {
-            font-size: 60px;
-            z-index: 1;
-        }
-
-        /* Animations */
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .shake {
-            animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both;
-        }
-
-        @keyframes shakeAnim {
-            10%, 90% { transform: translate3d(-2px, 0, 0); }
-            20%, 80% { transform: translate3d(4px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
-            40%, 60% { transform: translate3d(6px, 0, 0); }
-        }
-
-        /* Confetti */
-        .confetti {
-            position: fixed;
-            width: 15px;
-            height: 15px;
-            background-color: #f2d74e;
-            z-index: 9999;
-            pointer-events: none;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 30px;
-            text-align: center;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 20px 0 rgba(0,0,0,0.2);
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .modal-content h2 {
-            font-size: 2.5rem;
-            color: var(--primary);
-            margin-bottom: 20px;
-        }
-
-        .modal-content .score-text {
-            font-size: 4rem;
-            font-weight: 900;
-            color: var(--correct);
-            margin-bottom: 20px;
-            text-shadow: 3px 3px 0 #E8FBF0;
-        }
-
-        .modal-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-radius: 15px;
-            box-shadow: 0 6px 0 #00A388;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="pattern-layer" id="patternLayer"></div>
-
-    <div class="container">
-        <header>
-            <h1>SAMPLE TEST 1</h1>
-            <h3>Giáo viên tạo: Ms MS Chí Nên</h3>
-        </header>
-
-        <div id="quiz-container">
-            </div>
-
-        <button class="submit-btn" onclick="showFinalScore()">Nộp Bài Thôi! 🎉</button>
-    </div>
-
-    <div class="modal-overlay" id="scoreModal">
-        <div class="modal-content">
-            <h2>Kết Quả Của Em!</h2>
-            <div class="score-text" id="finalScoreText">0/0</div>
-            <p id="feedbackText" style="font-size: 1.2rem; font-weight: bold; color: #636E72;"></p>
-            <button class="modal-btn" onclick="location.reload()">Làm Lại Lần Nữa 🚀</button>
-        </div>
-    </div>
-
-<script>
-    // --- WEB AUDIO API CHO ÂM THANH GAMIFICATION ---
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    let audioCtx;
-
-    function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new AudioContext();
-        }
-    }
-
-    function playDing() {
-        initAudio();
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
-    }
-
-    function playBuzzer() {
-        initAudio();
-        const osc = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-        osc.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
-    }
-
-    // --- HIỆU ỨNG CONFETTI ---
-    function shootConfetti(x, y) {
-        const colors = ['#00D26A', '#FDCB6E', '#FF4757', '#0984E3', '#8854C0'];
-        for (let i = 0; i < 30; i++) {
-            const confetti = document.createElement('div');
-            confetti.classList.add('confetti');
-            document.body.appendChild(confetti);
-            
-            confetti.style.left = x + 'px';
-            confetti.style.top = y + 'px';
-            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            
-            const angle = Math.random() * Math.PI * 2;
-            const velocity = 5 + Math.random() * 10;
-            let posX = x;
-            let posY = y;
-            let rot = Math.random() * 360;
-            let time = 0;
-
-            const animate = () => {
-                time += 0.1;
-                posX += Math.cos(angle) * velocity;
-                posY += Math.sin(angle) * velocity + (time * time); // Trọng lực
-                rot += 10;
-                
-                confetti.style.transform = `translate(${posX - x}px, ${posY - y}px) rotate(${rot}deg)`;
-                
-                if (posY > window.innerHeight) {
-                    confetti.remove();
-                } else {
-                    requestAnimationFrame(animate);
-                }
-            };
-            requestAnimationFrame(animate);
-        }
-    }
-
-    // --- DỮ LIỆU ĐỀ BÀI SIÊU CHI TIẾT ---
-    const testData = [
-        {
-            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the word whose underlined part differs from the other three in pronunciation in each of the following questions.",
-            questions: [
-                {
-                    id: 1,
-                    text: "Question 1.",
-                    options: [
-                        { label: "A", text: "<u>th</u>irsty", isCorrect: false },
-                        { label: "B", text: "<u>th</u>row", isCorrect: false },
-                        { label: "C", text: "<u>th</u>eme", isCorrect: false },
-                        { label: "D", text: "<u>th</u>ere", isCorrect: true }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích từ vựng & Phát âm 4 đáp án:</p>
-                        <p>A. thirsty (adj): khát nước. Chữ "th" phát âm là <b>/θ/</b> (vô thanh).</p>
-                        <p>B. throw (v): ném, vứt. Chữ "th" phát âm là <b>/θ/</b> (vô thanh).</p>
-                        <p>C. theme (n): chủ đề. Chữ "th" phát âm là <b>/θ/</b> (vô thanh).</p>
-                        <p>D. there (adv): ở đó. Chữ "th" phát âm là <b>/ð/</b> (hữu thanh).</p>
-                        <p class="step-title">2. Dịch nghĩa câu hỏi:</p>
-                        <p>Chọn từ có phần gạch chân phát âm khác với ba từ còn lại.</p>
-                        <p class="step-title">3. Tại sao chọn D?</p>
-                        <p>Vì chữ "th" trong "there" được phát âm là âm hữu thanh <b>/ð/</b> (khi đọc dây thanh quản rung), tạo sự khác biệt hoàn toàn với phần còn lại.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>Vì các đáp án A, B, C đều có phần gạch chân phát âm giống hệt nhau là âm vô thanh <b>/θ/</b> (đẩy hơi qua kẽ răng, dây thanh quản không rung).</p>
-                    `
-                },
-                {
-                    id: 2,
-                    text: "Question 2.",
-                    options: [
-                        { label: "A", text: "<u>th</u>en", isCorrect: false },
-                        { label: "B", text: "<u>th</u>ing", isCorrect: true },
-                        { label: "C", text: "<u>th</u>em", isCorrect: false },
-                        { label: "D", text: "<u>th</u>eir", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích từ vựng & Phát âm 4 đáp án:</p>
-                        <p>A. then (adv): sau đó. Chữ "th" phát âm là <b>/ð/</b> (hữu thanh).</p>
-                        <p>B. thing (n): đồ vật, thứ. Chữ "th" phát âm là <b>/θ/</b> (vô thanh).</p>
-                        <p>C. them (pronoun): họ, chúng. Chữ "th" phát âm là <b>/ð/</b> (hữu thanh).</p>
-                        <p>D. their (pronoun): của họ. Chữ "th" phát âm là <b>/ð/</b> (hữu thanh).</p>
-                        <p class="step-title">2. Dịch nghĩa câu hỏi:</p>
-                        <p>Chọn từ có phần gạch chân phát âm khác với ba từ còn lại.</p>
-                        <p class="step-title">3. Tại sao chọn B?</p>
-                        <p>Vì chữ "th" trong "thing" là âm vô thanh <b>/θ/</b>, khác biệt hoàn toàn với nhóm còn lại.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>Vì các đáp án A, C, D đều thuộc nhóm từ mang âm hữu thanh <b>/ð/</b>.</p>
-                    `
-                }
-            ]
-        },
-        {
-            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the word that differs from the other three in the position of primary stress in each of the following questions.",
-            questions: [
-                {
-                    id: 3,
-                    text: "Question 3.",
-                    options: [
-                        { label: "A", text: "exciting", isCorrect: false },
-                        { label: "B", text: "entertain", isCorrect: true },
-                        { label: "C", text: "romantic", isCorrect: false },
-                        { label: "D", text: "fantastic", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích từ vựng & Trọng âm 4 đáp án:</p>
-                        <p>A. exciting /ɪkˈsaɪtɪŋ/ (adj): thú vị (Trọng âm rơi vào âm tiết thứ 2).</p>
-                        <p>B. entertain /ˌentəˈteɪn/ (v): giải trí (Trọng âm rơi vào âm tiết thứ 3).</p>
-                        <p>C. romantic /rəʊˈmæntɪk/ (adj): lãng mạn (Trọng âm rơi vào âm tiết thứ 2, đuôi -ic trọng âm rơi vào âm ngay trước nó).</p>
-                        <p>D. fantastic /fænˈtæstɪk/ (adj): tuyệt vời (Trọng âm rơi vào âm tiết thứ 2, quy tắc đuôi -ic).</p>
-                        <p class="step-title">2. Dịch nghĩa câu hỏi:</p>
-                        <p>Chọn từ có vị trí trọng âm chính khác với ba từ còn lại.</p>
-                        <p class="step-title">3. Tại sao chọn B?</p>
-                        <p>Vì "entertain" có trọng âm chính nhấn vào âm tiết thứ 3 (/teɪn/), trong khi các từ khác nhấn vào âm tiết thứ 2.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>Vì A, C, D cùng chia sẻ một quy tắc nhấn trọng âm vào âm tiết số 2.</p>
-                    `
-                },
-                {
-                    id: 4,
-                    text: "Question 4.",
-                    options: [
-                        { label: "A", text: "clever", isCorrect: false },
-                        { label: "B", text: "comedy", isCorrect: false },
-                        { label: "C", text: "educate", isCorrect: false },
-                        { label: "D", text: "compete", isCorrect: true }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích từ vựng & Trọng âm 4 đáp án:</p>
-                        <p>A. clever /ˈklevə(r)/ (adj): thông minh (Động từ/Tính từ 2 âm tiết thường nhấn âm 1 nếu âm 2 là âm nhẹ /ə/). Trọng âm 1.</p>
-                        <p>B. comedy /ˈkɒmədi/ (n): hài kịch. Trọng âm 1.</p>
-                        <p>C. educate /ˈedʒukeɪt/ (v): giáo dục (Đuôi -ate đối với từ 3 âm tiết thì trọng âm lùi về âm tiết thứ 3 từ dưới lên). Trọng âm 1.</p>
-                        <p>D. compete /kəmˈpiːt/ (v): cạnh tranh (Động từ 2 âm tiết thường nhấn âm 2). Trọng âm 2.</p>
-                        <p class="step-title">2. Dịch nghĩa câu hỏi:</p>
-                        <p>Chọn từ có vị trí trọng âm chính khác với ba từ còn lại.</p>
-                        <p class="step-title">3. Tại sao chọn D?</p>
-                        <p>Vì "compete" nhấn trọng âm vào âm tiết số 2, hoàn toàn khác biệt.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>Vì A, B, C đều có trọng âm rơi vào âm tiết thứ nhất.</p>
-                    `
-                }
-            ]
-        },
-        {
-            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions.",
-            questions: [
-                {
-                    id: 5,
-                    text: "Question 5. At the weekend we can play a ______ of badminton or join in a football match.",
-                    options: [
-                        { label: "A", text: "sport", isCorrect: false },
-                        { label: "B", text: "game", isCorrect: true },
-                        { label: "C", text: "match", isCorrect: false },
-                        { label: "D", text: "ball", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích từ vựng 4 đáp án:</p>
-                        <p>A. sport (n): thể thao nói chung.</p>
-                        <p>B. game (n): trò chơi, ván đấu.</p>
-                        <p>C. match (n): trận đấu (thường mang tính tổ chức, quy mô lớn hơn hoặc hai đội thi đấu như football match).</p>
-                        <p>D. ball (n): quả bóng.</p>
-                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
-                        <p>"Vào cuối tuần, chúng ta có thể chơi một ván cầu lông hoặc tham gia vào một trận bóng đá."</p>
-                        <p class="step-title">3. Tại sao chọn B?</p>
-                        <p>Ta có cụm từ diễn đạt tự nhiên (collocation): <b>"play a game of + môn thể thao"</b> (chơi một ván/trận thể thao giải trí). Ở đây là "play a game of badminton".</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- A sai ngữ cảnh, không nói "play a sport of badminton".</p>
-                        <p>- C. "match" thường dùng cho bóng đá/tennis quy mô thi đấu (football match đã dùng ở vế sau). Với các môn như cờ vua, cầu lông giao lưu giải trí dùng "game" hợp lý hơn.</p>
-                        <p>- D. "ball" sai hoàn toàn vì badminton chơi bằng cầu (shuttlecock) chứ không phải bóng.</p>
-                    `
-                },
-                {
-                    id: 6,
-                    text: "Question 6. I _______ born on the first of May.",
-                    options: [
-                        { label: "A", text: "was", isCorrect: true },
-                        { label: "B", text: "were", isCorrect: false },
-                        { label: "C", text: "are", isCorrect: false },
-                        { label: "D", text: "is", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
-                        <p>A. was: động từ to be quá khứ (dành cho I, He, She, It).</p>
-                        <p>B. were: động từ to be quá khứ (dành cho You, We, They).</p>
-                        <p>C. are: động từ to be hiện tại (dành cho You, We, They).</p>
-                        <p>D. is: động từ to be hiện tại (dành cho He, She, It).</p>
-                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
-                        <p>"Tôi được sinh ra vào ngày mùng một tháng Năm."</p>
-                        <p class="step-title">3. Tại sao chọn A?</p>
-                        <p>Hành động "sinh ra" luôn là một sự kiện đã xảy ra và kết thúc trong quá khứ, do đó phải chia thì Quá khứ đơn. Chủ ngữ là "I" (Ngôi thứ nhất số ít) đi kèm với động từ to be quá khứ là <b>"was"</b>. Cấu trúc: <i>I was born...</i></p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- B sai vì "were" dùng cho số nhiều.</p>
-                        <p>- C, D sai vì đây là thì Hiện tại, không dùng để nói về việc sinh ra (đã xảy ra).</p>
-                    `
-                },
-                {
-                    id: 7,
-                    text: "Question 7. ______ in this class!",
-                    options: [
-                        { label: "A", text: "Doesn’t smoke", isCorrect: false },
-                        { label: "B", text: "Not smoke", isCorrect: false },
-                        { label: "C", text: "Smoke", isCorrect: false },
-                        { label: "D", text: "Don’t smoke", isCorrect: true }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
-                        <p>A. Doesn’t smoke: Không hút thuốc (Chia theo chủ ngữ số ít He/She/It ở thì hiện tại).</p>
-                        <p>B. Not smoke: Sai cấu trúc phủ định.</p>
-                        <p>C. Smoke: Hút thuốc (Câu mệnh lệnh khẳng định).</p>
-                        <p>D. Don’t smoke: Đừng hút thuốc (Câu mệnh lệnh phủ định).</p>
-                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
-                        <p>"Đừng hút thuốc trong lớp học này!"</p>
-                        <p class="step-title">3. Tại sao chọn D?</p>
-                        <p>Câu có dấu chấm than "!" ám chỉ đây là một câu Mệnh lệnh. Cấu trúc câu mệnh lệnh phủ định trong tiếng Anh luôn bắt đầu bằng: <b>Don't + Động từ nguyên thể</b> (Đừng làm gì đó).</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- A sai vì câu mệnh lệnh luôn nhắm đến người nghe (ngôi thứ 2 "You"), không dùng "Doesn't".</p>
-                        <p>- B sai hoàn toàn về mặt ngữ pháp.</p>
-                        <p>- C sai về mặt ý nghĩa (không ai lại ra lệnh bảo người khác hãy hút thuốc trong lớp cả!).</p>
-                    `
-                },
-                {
-                    id: 8,
-                    text: "Question 8. The enemy __________ last night.",
-                    options: [
-                        { label: "A", text: "attacked", isCorrect: true },
-                        { label: "B", text: "attacks", isCorrect: false },
-                        { label: "C", text: "attack", isCorrect: false },
-                        { label: "D", text: "did attack", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
-                        <p>A. attacked: Đã tấn công (Thì quá khứ đơn).</p>
-                        <p>B. attacks: Tấn công (Thì hiện tại đơn, số ít).</p>
-                        <p>C. attack: Tấn công (Thì hiện tại đơn, số nhiều / nguyên thể).</p>
-                        <p>D. did attack: Cấu trúc nhấn mạnh ở quá khứ, tuy nhiên không dùng phổ biến trong câu kể bình thường nếu không có mục đích phản bác mạnh mẽ.</p>
-                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
-                        <p>"Kẻ thù đã tấn công vào đêm qua."</p>
-                        <p class="step-title">3. Tại sao chọn A?</p>
-                        <p>Dấu hiệu nhận biết thì Quá khứ đơn rất rõ ràng: <b>"last night"</b> (đêm qua). Do đó động từ phải thêm -ed -> <b>attacked</b>.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- B và C sai vì chia thì Hiện tại đơn.</p>
-                        <p>- D sai vì trong câu khẳng định thông thường thì Quá khứ đơn, ta không dùng trợ động từ "did" trừ phi muốn nhấn mạnh đặc biệt (vd: They DID attack! - Chúng CÓ tấn công thật đấy!). Ở đây câu kể trung tính nên dùng đáp án A là chuẩn xác nhất.</p>
-                    `
-                },
-                {
-                    id: 9,
-                    text: "Question 9. I have never seen such a strange ______. It has green color and big eyes.",
-                    options: [
-                        { label: "A", text: "palace", isCorrect: false },
-                        { label: "B", text: "continent", isCorrect: false },
-                        { label: "C", text: "creature", isCorrect: true },
-                        { label: "D", text: "time", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích từ vựng 4 đáp án:</p>
-                        <p>A. palace (n): cung điện.</p>
-                        <p>B. continent (n): lục địa, châu lục.</p>
-                        <p>C. creature (n): sinh vật, loài vật.</p>
-                        <p>D. time (n): thời gian.</p>
-                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
-                        <p>"Tôi chưa từng thấy một <b>sinh vật</b> nào kỳ lạ như vậy. Nó có màu xanh lá cây và đôi mắt to."</p>
-                        <p class="step-title">3. Tại sao chọn C?</p>
-                        <p>Dựa vào vế thứ hai miêu tả đặc điểm: "It has green color and big eyes" (Nó có màu xanh và đôi mắt to) -> Đây chắc chắn là miêu tả ngoại hình của một sinh vật sống (creature).</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- Lâu đài (A), Lục địa (B), Thời gian (D) đều là những vật vô tri vô giác hoặc khái niệm trừu tượng, không thể có "đôi mắt to".</p>
-                    `
-                },
-                {
-                    id: 10,
-                    text: "Question 10. It’s not coffee, but tea is ________ drink in Britain.",
-                    options: [
-                        { label: "A", text: "more popular", isCorrect: false },
-                        { label: "B", text: "the most popular", isCorrect: true },
-                        { label: "C", text: "more popular than", isCorrect: false },
-                        { label: "D", text: "most popular", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
-                        <p>A. more popular: Phổ biến hơn (So sánh hơn, thiếu "than").</p>
-                        <p>B. the most popular: Phổ biến nhất (So sánh nhất).</p>
-                        <p>C. more popular than: Phổ biến hơn (So sánh hơn, có "than").</p>
-                        <p>D. most popular: Thiếu mạo từ "the" cho so sánh nhất.</p>
-                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
-                        <p>"Không phải cà phê, mà trà mới là thức uống <b>phổ biến nhất</b> ở nước Anh."</p>
-                        <p class="step-title">3. Tại sao chọn B?</p>
-                        <p>Ở đây đang đánh giá mức độ phổ biến của một thức uống trên toàn bộ quy mô một quốc gia ("in Britain"). Do đó phải dùng <b>So sánh nhất</b> (Superlative). Công thức so sánh nhất với tính từ dài: <b>the + most + tính từ dài</b>.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- A và C sai vì đây không phải so sánh giữa 2 đối tượng cụ thể (nếu viết "tea is more popular than coffee" thì đúng, nhưng cuối câu lại là "in Britain" - một phạm vi rộng lớn, nên phải dùng so sánh nhất).</p>
-                        <p>- D sai vì so sánh nhất bắt buộc phải có mạo từ xác định "the".</p>
-                    `
-                },
-                {
-                    id: 11,
-                    text: "Question 11. _____a nice day! Shall we go swimming?",
-                    options: [
-                        { label: "A", text: "How", isCorrect: false },
-                        { label: "B", text: "When", isCorrect: false },
-                        { label: "C", text: "Which", isCorrect: false },
-                        { label: "D", text: "What", isCorrect: true }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
-                        <p>Đây là từ để hỏi được dùng trong câu Cảm thán.</p>
-                        <p>A. How: Dùng cho cấu trúc: How + Tính từ/Trạng từ + S + V!</p>
-                        <p>B, C: When (Khi nào), Which (Cái nào) không dùng trong câu cảm thán kiểu này.</p>
-                        <p>D. What: Dùng cho cấu trúc: What + (a/an) + Tính từ + Danh từ!</p>
-                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
-                        <p>"<b>Thật là</b> một ngày đẹp trời! Chúng ta đi bơi nhé?"</p>
-                        <p class="step-title">3. Tại sao chọn D?</p>
-                        <p>Căn cứ vào cấu trúc phía sau chỗ trống: "a nice day" (a + tính từ + danh từ đếm được số ít). Đây là dấu hiệu nhận biết 100% của cấu trúc câu cảm thán bắt đầu bằng <b>What</b>: <i>What a nice day!</i></p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- A sai vì nếu dùng How, câu phải viết là: "How nice the day is!"</p>
-                        <p>- B và C không có chức năng tạo câu cảm thán trong cấu trúc này.</p>
-                    `
-                },
-                {
-                    id: 12,
-                    text: "Question 12. “Can you tell me the way to Tan Ky House, please?” – “ ________”",
-                    options: [
-                        { label: "A", text: "Certainly", isCorrect: true },
-                        { label: "B", text: "Let’s go", isCorrect: false },
-                        { label: "C", text: "Good idea", isCorrect: false },
-                        { label: "D", text: "My pleasure", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích ngữ cảnh giao tiếp 4 đáp án:</p>
-                        <p>A. Certainly: Chắc chắn rồi / Tất nhiên rồi. (Dùng để đồng ý giúp đỡ).</p>
-                        <p>B. Let’s go: Đi thôi. (Dùng để rủ rê).</p>
-                        <p>C. Good idea: Ý kiến hay đấy. (Dùng để tán thành một lời rủ rê, gợi ý).</p>
-                        <p>D. My pleasure: Rất hân hạnh / Không có chi. (Dùng để đáp lại lời Cảm ơn).</p>
-                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
-                        <p>- Người A: "Bạn làm ơn chỉ cho tôi đường đến nhà cổ Tân Kỳ được không?"</p>
-                        <p>- Người B: "<b>Chắc chắn rồi.</b>"</p>
-                        <p class="step-title">3. Tại sao chọn A?</p>
-                        <p>Câu hỏi bắt đầu bằng "Can you..." mang tính chất nhờ vả lịch sự. Để đáp lại sự đồng ý giúp đỡ, ta dùng "Certainly" (hoặc Sure, Of course).</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- B và C dùng để đáp lại lời gợi ý rủ rê đi chơi (ví dụ: Shall we go to the cinema?).</p>
-                        <p>- D dùng để đáp lại lời cảm ơn (Thank you!), không hợp lý khi người ta đang nhờ vả.</p>
-                    `
-                }
-            ]
-        },
-        {
-            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions 17.",
-            questions: [
-                {
-                    id: 17,
-                    text: "Question 17. Put the sentences in the correct order to make a lexical text:<br><br>a. They are all interesting.<br>b. One of them is Who Wants To Be A Millionaire?<br>c. In my free time, I often watch TV programmes with my family.<br>d. There are many programmes on different channels.",
-                    options: [
-                        { label: "A", text: "a-b-c-d", isCorrect: false },
-                        { label: "B", text: "c-d-a-b", isCorrect: true },
-                        { label: "C", text: "c-a-b-d", isCorrect: false },
-                        { label: "D", text: "c-b-a-d", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Dịch nghĩa các câu đơn lẻ:</p>
-                        <p>a. Tất cả chúng đều thú vị.</p>
-                        <p>b. Một trong số đó là chương trình Ai Là Triệu Phú.</p>
-                        <p>c. Trong thời gian rảnh rỗi, tôi thường xem các chương trình TV với gia đình.</p>
-                        <p>d. Có rất nhiều chương trình trên các kênh khác nhau.</p>
-                        <p class="step-title">2. Phân tích trật tự Logic (Tại sao chọn B?):</p>
-                        <p>- Đoạn văn thường bắt đầu bằng câu chủ đề giới thiệu hoàn cảnh: Câu <b>(c)</b> phù hợp nhất làm câu mở đoạn (Tôi thích xem TV lúc rảnh).</p>
-                        <p>- Từ khóa "TV programmes" ở cuối câu (c) được nối tiếp logic sang câu <b>(d)</b>: Có rất nhiều <i>programmes</i> (chương trình) trên các kênh.</p>
-                        <p>- Đại từ "They" trong câu <b>(a)</b> thay thế cho "many programmes" ở câu d: Chúng (các chương trình đó) đều rất thú vị.</p>
-                        <p>- Cuối cùng, đưa ra một ví dụ cụ thể "One of them" ở câu <b>(b)</b>: Một trong số chúng là Ai là Triệu phú.</p>
-                        <p>=> Trật tự hoàn hảo: <b>c - d - a - b</b>.</p>
-                        <p class="step-title">3. Tại sao các đáp án còn lại SAI?</p>
-                        <p>- Bắt đầu bằng (a) như đáp án A là sai vì người đọc chưa biết "They" là cái gì.</p>
-                        <p>- C và D sắp xếp lộn xộn, mất đi tính liên kết mạch lạc của đại từ thay thế (many programmes -> They -> One of them).</p>
-                    `
-                },
-                {
-                    id: 18,
-                    text: "Question 18. Choose the sentence that can end the text (in Question 17) most suitably.",
-                    options: [
-                        { label: "A", text: "I spend 3 hours a day watching TV.", isCorrect: false },
-                        { label: "B", text: "Watching TV too much harms our eyes.", isCorrect: false },
-                        { label: "C", text: "Watching these programmes help us relax", isCorrect: true },
-                        { label: "D", text: "Different channels are on at different times.", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Dịch nghĩa 4 câu kết đoạn:</p>
-                        <p>A. Tôi dành 3 tiếng một ngày để xem TV.</p>
-                        <p>B. Xem TV quá nhiều sẽ gây hại cho mắt chúng ta.</p>
-                        <p>C. Việc xem những chương trình này giúp chúng tôi thư giãn.</p>
-                        <p>D. Các kênh khác nhau phát sóng vào các thời điểm khác nhau.</p>
-                        <p class="step-title">2. Dịch câu hỏi:</p>
-                        <p>Chọn câu có thể kết thúc đoạn văn (ở Câu 17) một cách phù hợp nhất.</p>
-                        <p class="step-title">3. Tại sao chọn C?</p>
-                        <p>Đoạn văn ở câu 17 mang giọng điệu rất tích cực: dành thời gian rảnh cùng gia đình, các chương trình đều thú vị, ví dụ như Ai là triệu phú. Do đó, một câu kết đoạn tóm gọn lại lợi ích tích cực của hành động này <b>"giúp chúng tôi thư giãn" (C)</b> là hoàn hảo và trọn vẹn nhất về mặt cảm xúc và logic.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- A làm mạch văn bị cụt, giống một lời tự thuật khô khan hơn là câu chốt.</p>
-                        <p>- B tự dưng chuyển sang giọng điệu tiêu cực, cảnh báo sức khỏe (lạc quẻ với đoạn văn).</p>
-                        <p>- D chỉ là cung cấp thêm thông tin lặt vặt, không có sức nặng để làm câu kết đoạn (Concluding sentence).</p>
-                    `
-                }
-            ]
-        },
-        {
-            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the sentence that is closest in meaning to the original sentence in each of the following questions.",
-            questions: [
-                {
-                    id: 25,
-                    text: "Question 25. Sports and games are very important in children’s lives.",
-                    options: [
-                        { label: "A", text: "Sports and games is an important role for children’s lives.", isCorrect: false },
-                        { label: "B", text: "Sports and games get an important role in children’s lives.", isCorrect: false },
-                        { label: "C", text: "Sports and games make an important role in children’s lives.", isCorrect: false },
-                        { label: "D", text: "Sports and games play an important role in children’s lives.", isCorrect: true }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
-                        <p>A. Sai ngữ pháp cơ bản (dùng "is" cho chủ ngữ số nhiều Sports and games) và sai giới từ (role "for").</p>
-                        <p>B. Dùng sai động từ "get" (không có cụm get an important role).</p>
-                        <p>C. Dùng sai động từ "make" (không có cụm make an important role).</p>
-                        <p>D. Thể thao và trò chơi đóng một vai trò quan trọng trong cuộc sống của trẻ em.</p>
-                        <p class="step-title">2. Dịch câu gốc:</p>
-                        <p>"Thể thao và trò chơi rất quan trọng trong cuộc sống của trẻ em."</p>
-                        <p class="step-title">3. Tại sao chọn D?</p>
-                        <p>Trong tiếng Anh, ta có cụm từ cố định (collocation) cực kỳ phổ biến: <b>play an important role in + N</b> (đóng vai trò quan trọng trong việc gì). Thay vì dùng "are very important", người ta dùng cụm này để câu văn trau chuốt hơn. Do đó D là đáp án chính xác tuyệt đối.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>Vì chúng kết hợp sai động từ đi kèm với từ "role" (vai trò). Ta chỉ dùng "play a role", không dùng get/make/is a role.</p>
-                    `
-                },
-                {
-                    id: 26,
-                    text: "Question 26. My brother plays football very well.",
-                    options: [
-                        { label: "A", text: "My brother is a good football player.", isCorrect: true },
-                        { label: "B", text: "My brother is well football player.", isCorrect: false },
-                        { label: "C", text: "My brother plays football very good.", isCorrect: false },
-                        { label: "D", text: "My brother are good football player.", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
-                        <p>A. Anh trai tôi là một cầu thủ bóng đá giỏi. (S + be + a/an + Adj + Noun).</p>
-                        <p>B. Dùng trạng từ "well" bổ nghĩa cho danh từ "player" là sai ngữ pháp.</p>
-                        <p>C. Dùng tính từ "good" bổ nghĩa cho động từ "plays" là sai ngữ pháp.</p>
-                        <p>D. Sai to be ("are" đi với chủ ngữ số ít "My brother").</p>
-                        <p class="step-title">2. Dịch câu gốc:</p>
-                        <p>"Anh trai tôi chơi bóng đá rất giỏi."</p>
-                        <p class="step-title">3. Tại sao chọn A?</p>
-                        <p>Có một cấu trúc chuyển đổi rất quen thuộc trong tiếng Anh: <b>S + V + Trạng từ (Adv) <---> S + be + a/an + Tính từ (Adj) + Danh từ chỉ người (Noun)</b>. Trạng từ "well" khi chuyển sang tính từ sẽ thành "good". "plays football" chuyển thành danh từ chỉ người là "football player". Vậy A ghép lại chuẩn xác 100%.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- B sai vì trước Danh từ (player) ta phải dùng Tính từ (good), không dùng Trạng từ (well).</p>
-                        <p>- C sai vì bổ nghĩa cho Động từ thường (plays) ta phải dùng Trạng từ (well), không dùng Tính từ (good).</p>
-                        <p>- D sai ngữ pháp trầm trọng ở to be "are".</p>
-                    `
-                }
-            ]
-        },
-        {
-            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the sentence that is made from the given cues in each of the following questions.",
-            questions: [
-                {
-                    id: 27,
-                    text: "Question 27. You/ join/ sports competition/ last week?",
-                    options: [
-                        { label: "A", text: "Were you join sports competition last week?", isCorrect: false },
-                        { label: "B", text: "Did you join in the sports competition last week?", isCorrect: true },
-                        { label: "C", text: "Do you join in the  sports competition last week?", isCorrect: false },
-                        { label: "D", text: "Are you join in the sports competition last week?", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
-                        <p>A. Sai ngữ pháp: Dùng to be "Were" đi với động từ thường "join".</p>
-                        <p>B. Bạn đã tham gia vào cuộc thi thể thao tuần trước phải không? (Đúng cấu trúc câu hỏi Quá khứ đơn).</p>
-                        <p>C. Sai thì: Dùng "Do" (Hiện tại) đi với "last week" (Quá khứ).</p>
-                        <p>D. Sai ngữ pháp và sai thì: Dùng to be "Are" đi với động từ nguyên thể "join".</p>
-                        <p class="step-title">2. Dịch từ gợi ý gốc:</p>
-                        <p>"Bạn / tham gia / cuộc thi thể thao / tuần trước?"</p>
-                        <p class="step-title">3. Tại sao chọn B?</p>
-                        <p>Cụm từ thời gian <b>"last week"</b> báo hiệu đây là thì Quá khứ đơn. Cấu trúc câu nghi vấn với động từ thường ở Quá khứ đơn là: <b>Did + S + V(nguyên thể)...?</b>. Ngoài ra cụm "join in" (tham gia vào) hoàn toàn chính xác. Do đó B là đáp án chuẩn.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- Loại A và D ngay lập tức vì không ai mượn trợ động từ "to be" (Were/Are) đặt trước một động từ nguyên thể (join) cả.</p>
-                        <p>- Loại C vì mâu thuẫn giữa "Do" (hiện tại) và "last week" (quá khứ).</p>
-                    `
-                },
-                {
-                    id: 28,
-                    text: "Question 28. How often/ you/ practise/ play/ table tennis?",
-                    options: [
-                        { label: "A", text: "How often do you practise play table tennis?", isCorrect: false },
-                        { label: "B", text: "How often did you practised play table tennis?", isCorrect: false },
-                        { label: "C", text: "How often do you practise playing table tennis?", isCorrect: true },
-                        { label: "D", text: "How often are you practise playing table tennis?", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
-                        <p>A. Sai cấu trúc sau practise: dùng "play" (nguyên thể) là sai.</p>
-                        <p>B. Sai ngữ pháp: Đã mượn trợ động từ "did" mà "practise" vẫn thêm đuôi -ed. Và sau practise vẫn dùng "play".</p>
-                        <p>C. Bạn luyện tập chơi bóng bàn bao lâu một lần? (Chuẩn xác 100%).</p>
-                        <p>D. Sai ngữ pháp cơ bản: Dùng to be "are" đi chung với động từ thường "practise".</p>
-                        <p class="step-title">2. Dịch từ gợi ý gốc:</p>
-                        <p>"Bao lâu một lần / bạn / luyện tập / chơi / bóng bàn?"</p>
-                        <p class="step-title">3. Tại sao chọn C?</p>
-                        <p>Câu hỏi tần suất "How often" thường đi với thì Hiện tại đơn để hỏi về thói quen. Cấu trúc: <i>How often do you + V?</i>. <br>Đặc biệt quan trọng: Sau động từ <b>practise</b> bắt buộc phải là một Danh động từ <b>(V-ing)</b>. -> <i>practise playing</i>. Do đó C đáp ứng đủ mọi tiêu chí.</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- A và B gục ngã trước quy tắc "practise + V-ing".</p>
-                        <p>- D sai ngữ pháp ngớ ngẩn (Are you practise).</p>
-                    `
-                }
-            ]
-        },
-        {
-            instruction: "Read the following sign or notice and mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions.",
-            questions: [
-                {
-                    id: 29,
-                    text: `Question 29: What is the meaning of the sign below?
-                           <div class="css-sign">
-                               <div class="circle-slash"><span class="icon">📷</span></div>
-                               <div class="css-sign-text">"NO PHOTOS ALLOWED IN THE MUSEUM."</div>
-                           </div>`,
-                    options: [
-                        { label: "A", text: "You can not take pictures inside the museum.", isCorrect: true },
-                        { label: "B", text: "You can take pictures of everything.", isCorrect: false },
-                        { label: "C", text: "You must buy a ticket to take photos.", isCorrect: false },
-                        { label: "D", text: "You can  bring your camera here .", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
-                        <p>A. Bạn không được phép chụp ảnh bên trong bảo tàng.</p>
-                        <p>B. Bạn có thể chụp ảnh mọi thứ.</p>
-                        <p>C. Bạn phải mua vé để chụp ảnh.</p>
-                        <p>D. Bạn có thể mang máy ảnh tới đây.</p>
-                        <p class="step-title">2. Dịch biển báo và câu hỏi:</p>
-                        <p>Câu hỏi: Biển báo dưới đây có ý nghĩa gì?</p>
-                        <p>Biển báo: KHÔNG ĐƯỢC PHÉP CHỤP ẢNH TRONG BẢO TÀNG (Kèm hình máy ảnh bị gạch chéo đỏ).</p>
-                        <p class="step-title">3. Tại sao chọn A?</p>
-                        <p>Dòng chữ "No photos allowed" (Không được phép chụp ảnh) đồng nghĩa hoàn toàn với cấu trúc <b>"You can not take pictures"</b> (Bạn không thể/không được chụp ảnh). Đây là một biển cấm (Prohibition).</p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- B và D mang nghĩa cho phép (can take / can bring), đi ngược lại hoàn toàn với biển cấm.</p>
-                        <p>- C tự bịa thêm thông tin "phải mua vé" (must buy a ticket) không hề có trên biển báo.</p>
-                    `
-                },
-                {
-                    id: 30,
-                    text: `Question 30: What is the meaning of the sign below?
-                           <div class="css-sign" style="flex-direction: row; gap: 20px; border-radius: 50px; border: none; background: transparent; box-shadow: none;">
-                               <div class="circle-slash" style="width: 150px; height: 150px; border-width: 15px;"><span class="icon" style="font-size: 80px;">🎣</span></div>
-                           </div>`,
-                    options: [
-                        { label: "A", text: "You cannot smoke here.", isCorrect: false },
-                        { label: "B", text: "You cannot go fishing here.", isCorrect: true },
-                        { label: "C", text: "You cannot swim here", isCorrect: false },
-                        { label: "D", text: "You can go fishing here.", isCorrect: false }
-                    ],
-                    explanation: `
-                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
-                        <p>A. Bạn không được hút thuốc ở đây.</p>
-                        <p>B. Bạn không được câu cá ở đây.</p>
-                        <p>C. Bạn không được bơi ở đây.</p>
-                        <p>D. Bạn CÓ THỂ câu cá ở đây.</p>
-                        <p class="step-title">2. Dịch câu hỏi:</p>
-                        <p>Biển báo dưới đây có ý nghĩa gì?</p>
-                        <p>(Biển báo hình một chiếc cần câu và con cá bị vòng tròn đỏ gạch chéo).</p>
-                        <p class="step-title">3. Tại sao chọn B?</p>
-                        <p>Vòng tròn đỏ gạch chéo luôn mang ý nghĩa là CẤM (cannot / must not). Hình ảnh bên trong là Cần câu cá (Fishing rod). Ghép lại ta có ý nghĩa: <b>Cấm câu cá = You cannot go fishing here.</b></p>
-                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
-                        <p>- A sai vì hình ảnh không phải là điếu thuốc (smoke).</p>
-                        <p>- C sai vì hình ảnh không phải người bơi (swim).</p>
-                        <p>- D có động từ "go fishing" đúng, nhưng lại thiếu từ "cannot" (đáp án D mang nghĩa cho phép, trái ngược với biển báo cấm).</p>
-                    `
-                }
-            ]
-        }
-    ];
-
-    // --- LOGIC ỨNG DỤNG ---
-    let totalQuestions = 0;
-    let correctCount = 0;
-    let answeredQuestions = new Set();
-
-    // Thuật toán xáo trộn mảng (Fisher-Yates)
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
-    // Render giao diện
-    function renderQuiz() {
-        const container = document.getElementById('quiz-container');
-        
-        testData.forEach((block, blockIndex) => {
-            // Render Instruction Block
-            const instructionDiv = document.createElement('div');
-            instructionDiv.className = 'instruction-block';
-            instructionDiv.innerHTML = block.instruction;
-            container.appendChild(instructionDiv);
-
-            // Render Questions
-            block.questions.forEach(q => {
-                totalQuestions++;
-                
-                const qCard = document.createElement('div');
-                qCard.className = 'question-card';
-                qCard.id = `q-card-${q.id}`;
-                
-                // Shuffle options for this question
-                let shuffledOptions = [...q.options];
-                shuffleArray(shuffledOptions);
-
-                let optionsHTML = '';
-                shuffledOptions.forEach((opt, index) => {
-                    // Mẹo lưu isCorrect vào data attribute
-                    optionsHTML += `
-                        <button class="option-btn" 
-                                onclick="handleAnswer(${q.id}, this, ${opt.isCorrect})"
-                                data-correct="${opt.isCorrect}">
-                            <b>${String.fromCharCode(65 + index)}.</b> ${opt.text}
-                        </button>
-                    `;
-                });
-
-                qCard.innerHTML = `
-                    <div class="question-text">${q.text}</div>
-                    <div class="options-grid" id="options-${q.id}">
-                        ${optionsHTML}
-                    </div>
-                    <div class="explanation-box" id="exp-${q.id}">
-                        <h4>💡 Giải thích siêu chi tiết bởi Ms MS Chí Nên</h4>
-                        ${q.explanation}
-                    </div>
-                `;
-                
-                container.appendChild(qCard);
-            });
-        });
-    }
-
-    // Xử lý khi học sinh chọn đáp án
-    function handleAnswer(qId, btnElement, isCorrect) {
-        // Tránh bấm nhiều lần
-        if (answeredQuestions.has(qId)) return;
-        answeredQuestions.add(qId);
-
-        const optionsContainer = document.getElementById(`options-${qId}`);
-        const allBtns = optionsContainer.querySelectorAll('.option-btn');
-        const expBox = document.getElementById(`exp-${qId}`);
-
-        // Vô hiệu hóa các nút khác
-        allBtns.forEach(btn => {
-            btn.disabled = true;
-            if (btn.dataset.correct === "true" && !isCorrect) {
-                // Nếu chọn sai, bôi xanh đáp án đúng để học sinh biết
-                btn.style.borderColor = "var(--correct)";
-                btn.style.boxShadow = "0 5px 0 var(--correct-shadow)";
-            } else if (btn !== btnElement) {
-                btn.classList.add('fade');
-            }
-        });
-
-        // Xử lý nút được click
-        if (isCorrect) {
-            btnElement.classList.add('correct');
-            playDing();
-            correctCount++;
-            
-            // Lấy tọa độ nút để bắn pháo giấy
-            const rect = btnElement.getBoundingClientRect();
-            shootConfetti(rect.left + rect.width / 2, rect.top);
-        } else {
-            btnElement.classList.add('wrong');
-            btnElement.classList.add('shake');
-            playBuzzer();
-        }
-
-        // Hiện khung giải thích siêu chi tiết ngay lập tức
-        expBox.style.display = 'block';
-    }
-
-    // Hiển thị điểm số cuối cùng
-    function showFinalScore() {
-        if (answeredQuestions.size < totalQuestions) {
-            alert("Oops! Em chưa làm hết bài kìa, hãy hoàn thành các câu hỏi nhé! 🧐");
-            return;
-        }
-
-        const modal = document.getElementById('scoreModal');
-        const scoreText = document.getElementById('finalScoreText');
-        const feedbackText = document.getElementById('feedbackText');
-
-        scoreText.innerText = `${correctCount}/${totalQuestions}`;
-        
-        let percentage = correctCount / totalQuestions;
-        if (percentage === 1) {
-            feedbackText.innerText = "Xuất sắc! Em là một siêu sao tiếng Anh thực thụ! 🌟🏆";
-            shootConfetti(window.innerWidth/2, window.innerHeight/2);
-        } else if (percentage >= 0.7) {
-            feedbackText.innerText = "Giỏi lắm! Em đã rất nỗ lực, cố gắng một chút nữa là hoàn hảo! 🔥";
-        } else if (percentage >= 0.5) {
-            feedbackText.innerText = "Làm tốt! Hãy đọc kỹ phần giải thích của Ms MS Chí Nên để rút kinh nghiệm nhé! 📚";
-        } else {
-            feedbackText.innerText = "Đừng buồn! Thất bại là mẹ thành công, xem kỹ giải thích và làm lại nào! 💪";
-        }
-
-        modal.style.display = 'flex';
-        playDing(); // Phát âm thanh vui nhộn khi nộp bài
-    }
-
-    // --- TẠO HỌA TIẾT LƠ LỬNG TRÊN NỀN ---
-    function initFloatingPatterns() {
-        const emojis = ['⭐', '🌸', '🍎', '☁️', '🐱', '🎵', '☀️', '🚀'];
-        const layer = document.getElementById('patternLayer');
-        
-        for (let i = 0; i < 20; i++) {
-            let el = document.createElement('div');
-            el.className = 'floating-item';
-            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-            
-            // Randomize position and animation delay
-            el.style.left = Math.random() * 100 + 'vw';
-            el.style.animationDuration = (10 + Math.random() * 15) + 's';
-            el.style.animationDelay = (Math.random() * 5) + 's';
-            
-            layer.appendChild(el);
-        }
-    }
-
-    // Khởi chạy khi load trang
-    window.onload = () => {
-        initFloatingPatterns();
-        renderQuiz();
-    };
-
-</script>
-</body>
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Gamified English Test by Ms. Chí Nên</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+
+        :root {
+
+            --primary: #8854C0;
+
+            --secondary: #FDCB6E;
+
+            --accent: #00C9A7;
+
+            --correct: #00D26A;
+
+            --correct-shadow: #00994D;
+
+            --correct-bg: #E8FBF0;
+
+            --wrong: #FF4757;
+
+            --wrong-shadow: #CC3946;
+
+            --wrong-bg: #FFEBEB;
+
+            --text-dark: #2D3436;
+
+            --bg-card: #FFFFFF;
+
+        }
+
+
+
+        * {
+
+            box-sizing: border-box;
+
+            margin: 0;
+
+            padding: 0;
+
+            font-family: 'Nunito', sans-serif;
+
+        }
+
+
+
+        body {
+
+            background: linear-gradient(-45deg, var(--primary), var(--secondary), var(--accent), #FF9A9E);
+
+            background-size: 400% 400%;
+
+            animation: gradientBG 15s ease infinite;
+
+            min-height: 100vh;
+
+            color: var(--text-dark);
+
+            overflow-x: hidden;
+
+            position: relative;
+
+        }
+
+
+
+        @keyframes gradientBG {
+
+            0% { background-position: 0% 50%; }
+
+            50% { background-position: 100% 50%; }
+
+            100% { background-position: 0% 50%; }
+
+        }
+
+
+
+        /* Lớp họa tiết lơ lửng */
+
+        .pattern-layer {
+
+            position: fixed;
+
+            top: 0;
+
+            left: 0;
+
+            width: 100%;
+
+            height: 100%;
+
+            pointer-events: none;
+
+            z-index: 0;
+
+            overflow: hidden;
+
+        }
+
+
+
+        .floating-item {
+
+            position: absolute;
+
+            font-size: 2rem;
+
+            opacity: 0.6;
+
+            animation: floatUp linear infinite;
+
+        }
+
+
+
+        @keyframes floatUp {
+
+            0% { transform: translateY(100vh) rotate(0deg) scale(0.8); opacity: 0; }
+
+            10% { opacity: 0.6; }
+
+            90% { opacity: 0.6; }
+
+            100% { transform: translateY(-20vh) rotate(360deg) scale(1.2); opacity: 0; }
+
+        }
+
+
+
+        /* Container chính */
+
+        .container {
+
+            max-width: 900px;
+
+            margin: 0 auto;
+
+            padding: 20px;
+
+            position: relative;
+
+            z-index: 1;
+
+        }
+
+
+
+        header {
+
+            text-align: center;
+
+            background: rgba(255, 255, 255, 0.9);
+
+            padding: 20px;
+
+            border-radius: 25px;
+
+            box-shadow: 0 10px 0 rgba(0,0,0,0.1);
+
+            margin-bottom: 30px;
+
+            backdrop-filter: blur(5px);
+
+        }
+
+
+
+        h1 {
+
+            font-size: 2.5rem;
+
+            color: var(--primary);
+
+            text-transform: uppercase;
+
+            font-weight: 900;
+
+            letter-spacing: 2px;
+
+            margin-bottom: 5px;
+
+            text-shadow: 2px 2px 0px var(--secondary);
+
+        }
+
+
+
+        h3 {
+
+            font-size: 1.2rem;
+
+            color: #636E72;
+
+            font-weight: 700;
+
+        }
+
+
+
+        /* Thẻ câu hỏi */
+
+        .instruction-block {
+
+            background: #FFEAA7;
+
+            padding: 15px 25px;
+
+            border-radius: 15px;
+
+            font-weight: 800;
+
+            font-size: 1.1rem;
+
+            margin-bottom: 20px;
+
+            box-shadow: 0 5px 0 #FDCB6E;
+
+            color: #D35400;
+
+            text-align: center;
+
+        }
+
+
+
+        .question-card {
+
+            background: var(--bg-card);
+
+            border-radius: 25px;
+
+            padding: 30px;
+
+            margin-bottom: 30px;
+
+            box-shadow: 0 12px 0 rgba(0,0,0,0.1);
+
+            transition: transform 0.3s;
+
+        }
+
+
+
+        .question-text {
+
+            font-size: 1.15rem;
+
+            font-weight: 800;
+
+            margin-bottom: 20px;
+
+            line-height: 1.6;
+
+        }
+
+
+
+        .options-grid {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 15px;
+
+        }
+
+
+
+        @media (max-width: 600px) {
+
+            .options-grid { grid-template-columns: 1fr; }
+
+        }
+
+
+
+        .option-btn {
+
+            background: #F8F9FA;
+
+            border: 3px solid #DFE6E9;
+
+            border-radius: 15px;
+
+            padding: 15px 20px;
+
+            font-size: 1.08rem;
+
+            font-weight: 700;
+
+            color: var(--text-dark);
+
+            cursor: pointer;
+
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+            box-shadow: 0 6px 0 #DFE6E9;
+
+            text-align: left;
+
+            position: relative;
+
+        }
+
+
+
+        .option-btn:hover:not(:disabled) {
+
+            transform: translateY(-5px) scale(1.02);
+
+            box-shadow: 0 11px 0 #DFE6E9;
+
+            border-color: var(--primary);
+
+        }
+
+
+
+        .option-btn:active:not(:disabled) {
+
+            transform: translateY(2px);
+
+            box-shadow: 0 2px 0 #DFE6E9;
+
+        }
+
+
+
+        .option-btn:disabled {
+
+            cursor: not-allowed;
+
+            opacity: 0.8;
+
+        }
+
+
+
+        /* Trạng thái đúng / sai */
+
+        .option-btn.correct {
+
+            background: var(--correct-bg);
+
+            border-color: var(--correct);
+
+            color: #008B46;
+
+            box-shadow: 0 6px 0 var(--correct-shadow);
+
+            animation: popIn 0.5s ease;
+
+        }
+
+
+
+        .option-btn.wrong {
+
+            background: var(--wrong-bg);
+
+            border-color: var(--wrong);
+
+            color: #D12C3A;
+
+            box-shadow: 0 6px 0 var(--wrong-shadow);
+
+        }
+
+
+
+        .option-btn.fade {
+
+            opacity: 0.5;
+
+        }
+
+
+
+        /* Khung giải thích */
+
+        .explanation-box {
+
+            margin-top: 20px;
+
+            background: #F0F3F4;
+
+            border-left: 6px solid var(--accent);
+
+            padding: 20px;
+
+            border-radius: 0 15px 15px 0;
+
+            display: none;
+
+            font-size: 1rem;
+
+            line-height: 1.6;
+
+            animation: slideDown 0.4s ease-out forwards;
+
+        }
+
+
+
+        .explanation-box h4 {
+
+            color: var(--primary);
+
+            font-size: 1.2rem;
+
+            margin-bottom: 10px;
+
+            border-bottom: 2px dashed #ccc;
+
+            padding-bottom: 5px;
+
+        }
+
+
+
+        .explanation-box p {
+
+            margin-bottom: 8px;
+
+        }
+
+        
+
+        .explanation-box .step-title {
+
+            font-weight: 800;
+
+            color: #E67E22;
+
+            margin-top: 12px;
+
+        }
+
+
+
+        /* Nút Submit */
+
+        .submit-btn {
+
+            display: block;
+
+            width: 100%;
+
+            background: #0984E3;
+
+            color: white;
+
+            font-size: 1.5rem;
+
+            font-weight: 900;
+
+            text-align: center;
+
+            padding: 20px;
+
+            border: none;
+
+            border-radius: 20px;
+
+            box-shadow: 0 10px 0 #0652DD;
+
+            cursor: pointer;
+
+            transition: all 0.2s;
+
+            margin-top: 40px;
+
+            margin-bottom: 50px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 2px;
+
+        }
+
+
+
+        .submit-btn:hover {
+
+            transform: translateY(-5px);
+
+            box-shadow: 0 15px 0 #0652DD;
+
+            background: #74B9FF;
+
+        }
+
+
+
+        .submit-btn:active {
+
+            transform: translateY(5px);
+
+            box-shadow: 0 0 0 #0652DD;
+
+        }
+
+
+
+        /* CSS Vẽ Biển báo */
+
+        .css-sign {
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #FFEAA7;
+
+            border: 5px solid #2D3436;
+
+            padding: 20px;
+
+            border-radius: 15px;
+
+            width: fit-content;
+
+            margin: 15px auto;
+
+            box-shadow: 5px 5px 0 rgba(0,0,0,0.2);
+
+            text-align: center;
+
+        }
+
+
+
+        .css-sign-text {
+
+            font-size: 1.2rem;
+
+            font-weight: 900;
+
+            margin-top: 10px;
+
+            color: #2D3436;
+
+        }
+
+
+
+        .circle-slash {
+
+            position: relative;
+
+            width: 120px;
+
+            height: 120px;
+
+            border: 12px solid #D63031;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: white;
+
+        }
+
+
+
+        .circle-slash::after {
+
+            content: '';
+
+            position: absolute;
+
+            width: 150px;
+
+            height: 12px;
+
+            background: #D63031;
+
+            transform: rotate(-45deg);
+
+            z-index: 2;
+
+        }
+
+
+
+        .circle-slash .icon {
+
+            font-size: 60px;
+
+            z-index: 1;
+
+        }
+
+
+
+        /* Animations */
+
+        @keyframes slideDown {
+
+            from { opacity: 0; transform: translateY(-20px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+        }
+
+
+
+        @keyframes popIn {
+
+            0% { transform: scale(1); }
+
+            50% { transform: scale(1.1); }
+
+            100% { transform: scale(1); }
+
+        }
+
+
+
+        .shake {
+
+            animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both;
+
+        }
+
+
+
+        @keyframes shakeAnim {
+
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+
+        }
+
+
+
+        /* Confetti */
+
+        .confetti {
+
+            position: fixed;
+
+            width: 15px;
+
+            height: 15px;
+
+            background-color: #f2d74e;
+
+            z-index: 9999;
+
+            pointer-events: none;
+
+        }
+
+
+
+        /* Modal */
+
+        .modal-overlay {
+
+            position: fixed;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            background: rgba(0,0,0,0.7);
+
+            display: none;
+
+            justify-content: center;
+
+            align-items: center;
+
+            z-index: 1000;
+
+            backdrop-filter: blur(5px);
+
+        }
+
+
+
+        .modal-content {
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 30px;
+
+            text-align: center;
+
+            max-width: 500px;
+
+            width: 90%;
+
+            box-shadow: 0 20px 0 rgba(0,0,0,0.2);
+
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+
+
+        .modal-content h2 {
+
+            font-size: 2.5rem;
+
+            color: var(--primary);
+
+            margin-bottom: 20px;
+
+        }
+
+
+
+        .modal-content .score-text {
+
+            font-size: 4rem;
+
+            font-weight: 900;
+
+            color: var(--correct);
+
+            margin-bottom: 20px;
+
+            text-shadow: 3px 3px 0 #E8FBF0;
+
+        }
+
+
+
+        .modal-btn {
+
+            background: var(--accent);
+
+            color: white;
+
+            border: none;
+
+            padding: 15px 30px;
+
+            font-size: 1.2rem;
+
+            font-weight: bold;
+
+            border-radius: 15px;
+
+            box-shadow: 0 6px 0 #00A388;
+
+            cursor: pointer;
+
+            margin-top: 20px;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <div class="pattern-layer" id="patternLayer"></div>
+
+
+
+    <div class="container">
+
+        <header>
+
+            <h1>SAMPLE TEST 1</h1>
+
+            <h3>Giáo viên tạo: Ms. Chí Nên</h3>
+
+        </header>
+
+
+
+        <div id="quiz-container">
+
+            </div>
+
+
+
+        <button class="submit-btn" onclick="showFinalScore()">Nộp Bài Thôi! 🎉</button>
+
+    </div>
+
+
+
+    <div class="modal-overlay" id="scoreModal">
+
+        <div class="modal-content">
+
+            <h2>Kết Quả Của Em!</h2>
+
+            <div class="score-text" id="finalScoreText">0/0</div>
+
+            <p id="feedbackText" style="font-size: 1.2rem; font-weight: bold; color: #636E72;"></p>
+
+            <button class="modal-btn" onclick="location.reload()">Làm Lại Lần Nữa 🚀</button>
+
+        </div>
+
+    </div>
+
+
+
+<script>
+
+    // --- WEB AUDIO API CHO ÂM THANH GAMIFICATION ---
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+    let audioCtx;
+
+
+
+    function initAudio() {
+
+        if (!audioCtx) {
+
+            audioCtx = new AudioContext();
+
+        }
+
+    }
+
+
+
+    function playDing() {
+
+        initAudio();
+
+        const osc = audioCtx.createOscillator();
+
+        const gainNode = audioCtx.createGain();
+
+        osc.type = 'sine';
+
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+        osc.connect(gainNode);
+
+        gainNode.connect(audioCtx.destination);
+
+        osc.start();
+
+        osc.stop(audioCtx.currentTime + 0.5);
+
+    }
+
+
+
+    function playBuzzer() {
+
+        initAudio();
+
+        const osc = audioCtx.createOscillator();
+
+        const gainNode = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+
+        osc.connect(gainNode);
+
+        gainNode.connect(audioCtx.destination);
+
+        osc.start();
+
+        osc.stop(audioCtx.currentTime + 0.4);
+
+    }
+
+
+
+    // --- HIỆU ỨNG CONFETTI ---
+
+    function shootConfetti(x, y) {
+
+        const colors = ['#00D26A', '#FDCB6E', '#FF4757', '#0984E3', '#8854C0'];
+
+        for (let i = 0; i < 30; i++) {
+
+            const confetti = document.createElement('div');
+
+            confetti.classList.add('confetti');
+
+            document.body.appendChild(confetti);
+
+            
+
+            confetti.style.left = x + 'px';
+
+            confetti.style.top = y + 'px';
+
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+            
+
+            const angle = Math.random() * Math.PI * 2;
+
+            const velocity = 5 + Math.random() * 10;
+
+            let posX = x;
+
+            let posY = y;
+
+            let rot = Math.random() * 360;
+
+            let time = 0;
+
+
+
+            const animate = () => {
+
+                time += 0.1;
+
+                posX += Math.cos(angle) * velocity;
+
+                posY += Math.sin(angle) * velocity + (time * time); // Trọng lực
+
+                rot += 10;
+
+                
+
+                confetti.style.transform = `translate(${posX - x}px, ${posY - y}px) rotate(${rot}deg)`;
+
+                
+
+                if (posY > window.innerHeight) {
+
+                    confetti.remove();
+
+                } else {
+
+                    requestAnimationFrame(animate);
+
+                }
+
+            };
+
+            requestAnimationFrame(animate);
+
+        }
+
+    }
+
+
+
+    // --- DỮ LIỆU ĐỀ BÀI SIÊU CHI TIẾT ---
+
+    const testData = [
+
+        {
+
+            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the word whose underlined part differs from the other three in pronunciation in each of the following questions.",
+
+            questions: [
+
+                {
+
+                    id: 1,
+
+                    text: "Question 1.",
+
+                    options: [
+
+                        { label: "A", text: "<u>th</u>irsty", isCorrect: false },
+
+                        { label: "B", text: "<u>th</u>row", isCorrect: false },
+
+                        { label: "C", text: "<u>th</u>eme", isCorrect: false },
+
+                        { label: "D", text: "<u>th</u>ere", isCorrect: true }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích từ vựng & Phát âm 4 đáp án:</p>
+
+                        <p>A. thirsty (adj): khát nước. Chữ "th" phát âm là <b>/θ/</b> (vô thanh).</p>
+
+                        <p>B. throw (v): ném, vứt. Chữ "th" phát âm là <b>/θ/</b> (vô thanh).</p>
+
+                        <p>C. theme (n): chủ đề. Chữ "th" phát âm là <b>/θ/</b> (vô thanh).</p>
+
+                        <p>D. there (adv): ở đó. Chữ "th" phát âm là <b>/ð/</b> (hữu thanh).</p>
+
+                        <p class="step-title">2. Dịch nghĩa câu hỏi:</p>
+
+                        <p>Chọn từ có phần gạch chân phát âm khác với ba từ còn lại.</p>
+
+                        <p class="step-title">3. Tại sao chọn D?</p>
+
+                        <p>Vì chữ "th" trong "there" được phát âm là âm hữu thanh <b>/ð/</b> (khi đọc dây thanh quản rung), tạo sự khác biệt hoàn toàn với phần còn lại.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>Vì các đáp án A, B, C đều có phần gạch chân phát âm giống hệt nhau là âm vô thanh <b>/θ/</b> (đẩy hơi qua kẽ răng, dây thanh quản không rung).</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 2,
+
+                    text: "Question 2.",
+
+                    options: [
+
+                        { label: "A", text: "<u>th</u>en", isCorrect: false },
+
+                        { label: "B", text: "<u>th</u>ing", isCorrect: true },
+
+                        { label: "C", text: "<u>th</u>em", isCorrect: false },
+
+                        { label: "D", text: "<u>th</u>eir", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích từ vựng & Phát âm 4 đáp án:</p>
+
+                        <p>A. then (adv): sau đó. Chữ "th" phát âm là <b>/ð/</b> (hữu thanh).</p>
+
+                        <p>B. thing (n): đồ vật, thứ. Chữ "th" phát âm là <b>/θ/</b> (vô thanh).</p>
+
+                        <p>C. them (pronoun): họ, chúng. Chữ "th" phát âm là <b>/ð/</b> (hữu thanh).</p>
+
+                        <p>D. their (pronoun): của họ. Chữ "th" phát âm là <b>/ð/</b> (hữu thanh).</p>
+
+                        <p class="step-title">2. Dịch nghĩa câu hỏi:</p>
+
+                        <p>Chọn từ có phần gạch chân phát âm khác với ba từ còn lại.</p>
+
+                        <p class="step-title">3. Tại sao chọn B?</p>
+
+                        <p>Vì chữ "th" trong "thing" là âm vô thanh <b>/θ/</b>, khác biệt hoàn toàn với nhóm còn lại.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>Vì các đáp án A, C, D đều thuộc nhóm từ mang âm hữu thanh <b>/ð/</b>.</p>
+
+                    `
+
+                }
+
+            ]
+
+        },
+
+        {
+
+            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the word that differs from the other three in the position of primary stress in each of the following questions.",
+
+            questions: [
+
+                {
+
+                    id: 3,
+
+                    text: "Question 3.",
+
+                    options: [
+
+                        { label: "A", text: "exciting", isCorrect: false },
+
+                        { label: "B", text: "entertain", isCorrect: true },
+
+                        { label: "C", text: "romantic", isCorrect: false },
+
+                        { label: "D", text: "fantastic", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích từ vựng & Trọng âm 4 đáp án:</p>
+
+                        <p>A. exciting /ɪkˈsaɪtɪŋ/ (adj): thú vị (Trọng âm rơi vào âm tiết thứ 2).</p>
+
+                        <p>B. entertain /ˌentəˈteɪn/ (v): giải trí (Trọng âm rơi vào âm tiết thứ 3).</p>
+
+                        <p>C. romantic /rəʊˈmæntɪk/ (adj): lãng mạn (Trọng âm rơi vào âm tiết thứ 2, đuôi -ic trọng âm rơi vào âm ngay trước nó).</p>
+
+                        <p>D. fantastic /fænˈtæstɪk/ (adj): tuyệt vời (Trọng âm rơi vào âm tiết thứ 2, quy tắc đuôi -ic).</p>
+
+                        <p class="step-title">2. Dịch nghĩa câu hỏi:</p>
+
+                        <p>Chọn từ có vị trí trọng âm chính khác với ba từ còn lại.</p>
+
+                        <p class="step-title">3. Tại sao chọn B?</p>
+
+                        <p>Vì "entertain" có trọng âm chính nhấn vào âm tiết thứ 3 (/teɪn/), trong khi các từ khác nhấn vào âm tiết thứ 2.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>Vì A, C, D cùng chia sẻ một quy tắc nhấn trọng âm vào âm tiết số 2.</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 4,
+
+                    text: "Question 4.",
+
+                    options: [
+
+                        { label: "A", text: "clever", isCorrect: false },
+
+                        { label: "B", text: "comedy", isCorrect: false },
+
+                        { label: "C", text: "educate", isCorrect: false },
+
+                        { label: "D", text: "compete", isCorrect: true }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích từ vựng & Trọng âm 4 đáp án:</p>
+
+                        <p>A. clever /ˈklevə(r)/ (adj): thông minh (Động từ/Tính từ 2 âm tiết thường nhấn âm 1 nếu âm 2 là âm nhẹ /ə/). Trọng âm 1.</p>
+
+                        <p>B. comedy /ˈkɒmədi/ (n): hài kịch. Trọng âm 1.</p>
+
+                        <p>C. educate /ˈedʒukeɪt/ (v): giáo dục (Đuôi -ate đối với từ 3 âm tiết thì trọng âm lùi về âm tiết thứ 3 từ dưới lên). Trọng âm 1.</p>
+
+                        <p>D. compete /kəmˈpiːt/ (v): cạnh tranh (Động từ 2 âm tiết thường nhấn âm 2). Trọng âm 2.</p>
+
+                        <p class="step-title">2. Dịch nghĩa câu hỏi:</p>
+
+                        <p>Chọn từ có vị trí trọng âm chính khác với ba từ còn lại.</p>
+
+                        <p class="step-title">3. Tại sao chọn D?</p>
+
+                        <p>Vì "compete" nhấn trọng âm vào âm tiết số 2, hoàn toàn khác biệt.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>Vì A, B, C đều có trọng âm rơi vào âm tiết thứ nhất.</p>
+
+                    `
+
+                }
+
+            ]
+
+        },
+
+        {
+
+            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions.",
+
+            questions: [
+
+                {
+
+                    id: 5,
+
+                    text: "Question 5. At the weekend we can play a ______ of badminton or join in a football match.",
+
+                    options: [
+
+                        { label: "A", text: "sport", isCorrect: false },
+
+                        { label: "B", text: "game", isCorrect: true },
+
+                        { label: "C", text: "match", isCorrect: false },
+
+                        { label: "D", text: "ball", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích từ vựng 4 đáp án:</p>
+
+                        <p>A. sport (n): thể thao nói chung.</p>
+
+                        <p>B. game (n): trò chơi, ván đấu.</p>
+
+                        <p>C. match (n): trận đấu (thường mang tính tổ chức, quy mô lớn hơn hoặc hai đội thi đấu như football match).</p>
+
+                        <p>D. ball (n): quả bóng.</p>
+
+                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
+
+                        <p>"Vào cuối tuần, chúng ta có thể chơi một ván cầu lông hoặc tham gia vào một trận bóng đá."</p>
+
+                        <p class="step-title">3. Tại sao chọn B?</p>
+
+                        <p>Ta có cụm từ diễn đạt tự nhiên (collocation): <b>"play a game of + môn thể thao"</b> (chơi một ván/trận thể thao giải trí). Ở đây là "play a game of badminton".</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- A sai ngữ cảnh, không nói "play a sport of badminton".</p>
+
+                        <p>- C. "match" thường dùng cho bóng đá/tennis quy mô thi đấu (football match đã dùng ở vế sau). Với các môn như cờ vua, cầu lông giao lưu giải trí dùng "game" hợp lý hơn.</p>
+
+                        <p>- D. "ball" sai hoàn toàn vì badminton chơi bằng cầu (shuttlecock) chứ không phải bóng.</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 6,
+
+                    text: "Question 6. I _______ born on the first of May.",
+
+                    options: [
+
+                        { label: "A", text: "was", isCorrect: true },
+
+                        { label: "B", text: "were", isCorrect: false },
+
+                        { label: "C", text: "are", isCorrect: false },
+
+                        { label: "D", text: "is", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
+
+                        <p>A. was: động từ to be quá khứ (dành cho I, He, She, It).</p>
+
+                        <p>B. were: động từ to be quá khứ (dành cho You, We, They).</p>
+
+                        <p>C. are: động từ to be hiện tại (dành cho You, We, They).</p>
+
+                        <p>D. is: động từ to be hiện tại (dành cho He, She, It).</p>
+
+                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
+
+                        <p>"Tôi được sinh ra vào ngày mùng một tháng Năm."</p>
+
+                        <p class="step-title">3. Tại sao chọn A?</p>
+
+                        <p>Hành động "sinh ra" luôn là một sự kiện đã xảy ra và kết thúc trong quá khứ, do đó phải chia thì Quá khứ đơn. Chủ ngữ là "I" (Ngôi thứ nhất số ít) đi kèm với động từ to be quá khứ là <b>"was"</b>. Cấu trúc: <i>I was born...</i></p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- B sai vì "were" dùng cho số nhiều.</p>
+
+                        <p>- C, D sai vì đây là thì Hiện tại, không dùng để nói về việc sinh ra (đã xảy ra).</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 7,
+
+                    text: "Question 7. ______ in this class!",
+
+                    options: [
+
+                        { label: "A", text: "Doesn’t smoke", isCorrect: false },
+
+                        { label: "B", text: "Not smoke", isCorrect: false },
+
+                        { label: "C", text: "Smoke", isCorrect: false },
+
+                        { label: "D", text: "Don’t smoke", isCorrect: true }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
+
+                        <p>A. Doesn’t smoke: Không hút thuốc (Chia theo chủ ngữ số ít He/She/It ở thì hiện tại).</p>
+
+                        <p>B. Not smoke: Sai cấu trúc phủ định.</p>
+
+                        <p>C. Smoke: Hút thuốc (Câu mệnh lệnh khẳng định).</p>
+
+                        <p>D. Don’t smoke: Đừng hút thuốc (Câu mệnh lệnh phủ định).</p>
+
+                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
+
+                        <p>"Đừng hút thuốc trong lớp học này!"</p>
+
+                        <p class="step-title">3. Tại sao chọn D?</p>
+
+                        <p>Câu có dấu chấm than "!" ám chỉ đây là một câu Mệnh lệnh. Cấu trúc câu mệnh lệnh phủ định trong tiếng Anh luôn bắt đầu bằng: <b>Don't + Động từ nguyên thể</b> (Đừng làm gì đó).</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- A sai vì câu mệnh lệnh luôn nhắm đến người nghe (ngôi thứ 2 "You"), không dùng "Doesn't".</p>
+
+                        <p>- B sai hoàn toàn về mặt ngữ pháp.</p>
+
+                        <p>- C sai về mặt ý nghĩa (không ai lại ra lệnh bảo người khác hãy hút thuốc trong lớp cả!).</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 8,
+
+                    text: "Question 8. The enemy __________ last night.",
+
+                    options: [
+
+                        { label: "A", text: "attacked", isCorrect: true },
+
+                        { label: "B", text: "attacks", isCorrect: false },
+
+                        { label: "C", text: "attack", isCorrect: false },
+
+                        { label: "D", text: "did attack", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
+
+                        <p>A. attacked: Đã tấn công (Thì quá khứ đơn).</p>
+
+                        <p>B. attacks: Tấn công (Thì hiện tại đơn, số ít).</p>
+
+                        <p>C. attack: Tấn công (Thì hiện tại đơn, số nhiều / nguyên thể).</p>
+
+                        <p>D. did attack: Cấu trúc nhấn mạnh ở quá khứ, tuy nhiên không dùng phổ biến trong câu kể bình thường nếu không có mục đích phản bác mạnh mẽ.</p>
+
+                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
+
+                        <p>"Kẻ thù đã tấn công vào đêm qua."</p>
+
+                        <p class="step-title">3. Tại sao chọn A?</p>
+
+                        <p>Dấu hiệu nhận biết thì Quá khứ đơn rất rõ ràng: <b>"last night"</b> (đêm qua). Do đó động từ phải thêm -ed -> <b>attacked</b>.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- B và C sai vì chia thì Hiện tại đơn.</p>
+
+                        <p>- D sai vì trong câu khẳng định thông thường thì Quá khứ đơn, ta không dùng trợ động từ "did" trừ phi muốn nhấn mạnh đặc biệt (vd: They DID attack! - Chúng CÓ tấn công thật đấy!). Ở đây câu kể trung tính nên dùng đáp án A là chuẩn xác nhất.</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 9,
+
+                    text: "Question 9. I have never seen such a strange ______. It has green color and big eyes.",
+
+                    options: [
+
+                        { label: "A", text: "palace", isCorrect: false },
+
+                        { label: "B", text: "continent", isCorrect: false },
+
+                        { label: "C", text: "creature", isCorrect: true },
+
+                        { label: "D", text: "time", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích từ vựng 4 đáp án:</p>
+
+                        <p>A. palace (n): cung điện.</p>
+
+                        <p>B. continent (n): lục địa, châu lục.</p>
+
+                        <p>C. creature (n): sinh vật, loài vật.</p>
+
+                        <p>D. time (n): thời gian.</p>
+
+                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
+
+                        <p>"Tôi chưa từng thấy một <b>sinh vật</b> nào kỳ lạ như vậy. Nó có màu xanh lá cây và đôi mắt to."</p>
+
+                        <p class="step-title">3. Tại sao chọn C?</p>
+
+                        <p>Dựa vào vế thứ hai miêu tả đặc điểm: "It has green color and big eyes" (Nó có màu xanh và đôi mắt to) -> Đây chắc chắn là miêu tả ngoại hình của một sinh vật sống (creature).</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- Lâu đài (A), Lục địa (B), Thời gian (D) đều là những vật vô tri vô giác hoặc khái niệm trừu tượng, không thể có "đôi mắt to".</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 10,
+
+                    text: "Question 10. It’s not coffee, but tea is ________ drink in Britain.",
+
+                    options: [
+
+                        { label: "A", text: "more popular", isCorrect: false },
+
+                        { label: "B", text: "the most popular", isCorrect: true },
+
+                        { label: "C", text: "more popular than", isCorrect: false },
+
+                        { label: "D", text: "most popular", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
+
+                        <p>A. more popular: Phổ biến hơn (So sánh hơn, thiếu "than").</p>
+
+                        <p>B. the most popular: Phổ biến nhất (So sánh nhất).</p>
+
+                        <p>C. more popular than: Phổ biến hơn (So sánh hơn, có "than").</p>
+
+                        <p>D. most popular: Thiếu mạo từ "the" cho so sánh nhất.</p>
+
+                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
+
+                        <p>"Không phải cà phê, mà trà mới là thức uống <b>phổ biến nhất</b> ở nước Anh."</p>
+
+                        <p class="step-title">3. Tại sao chọn B?</p>
+
+                        <p>Ở đây đang đánh giá mức độ phổ biến của một thức uống trên toàn bộ quy mô một quốc gia ("in Britain"). Do đó phải dùng <b>So sánh nhất</b> (Superlative). Công thức so sánh nhất với tính từ dài: <b>the + most + tính từ dài</b>.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- A và C sai vì đây không phải so sánh giữa 2 đối tượng cụ thể (nếu viết "tea is more popular than coffee" thì đúng, nhưng cuối câu lại là "in Britain" - một phạm vi rộng lớn, nên phải dùng so sánh nhất).</p>
+
+                        <p>- D sai vì so sánh nhất bắt buộc phải có mạo từ xác định "the".</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 11,
+
+                    text: "Question 11. _____a nice day! Shall we go swimming?",
+
+                    options: [
+
+                        { label: "A", text: "How", isCorrect: false },
+
+                        { label: "B", text: "When", isCorrect: false },
+
+                        { label: "C", text: "Which", isCorrect: false },
+
+                        { label: "D", text: "What", isCorrect: true }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích ngữ pháp 4 đáp án:</p>
+
+                        <p>Đây là từ để hỏi được dùng trong câu Cảm thán.</p>
+
+                        <p>A. How: Dùng cho cấu trúc: How + Tính từ/Trạng từ + S + V!</p>
+
+                        <p>B, C: When (Khi nào), Which (Cái nào) không dùng trong câu cảm thán kiểu này.</p>
+
+                        <p>D. What: Dùng cho cấu trúc: What + (a/an) + Tính từ + Danh từ!</p>
+
+                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
+
+                        <p>"<b>Thật là</b> một ngày đẹp trời! Chúng ta đi bơi nhé?"</p>
+
+                        <p class="step-title">3. Tại sao chọn D?</p>
+
+                        <p>Căn cứ vào cấu trúc phía sau chỗ trống: "a nice day" (a + tính từ + danh từ đếm được số ít). Đây là dấu hiệu nhận biết 100% của cấu trúc câu cảm thán bắt đầu bằng <b>What</b>: <i>What a nice day!</i></p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- A sai vì nếu dùng How, câu phải viết là: "How nice the day is!"</p>
+
+                        <p>- B và C không có chức năng tạo câu cảm thán trong cấu trúc này.</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 12,
+
+                    text: "Question 12. “Can you tell me the way to Tan Ky House, please?” – “ ________”",
+
+                    options: [
+
+                        { label: "A", text: "Certainly", isCorrect: true },
+
+                        { label: "B", text: "Let’s go", isCorrect: false },
+
+                        { label: "C", text: "Good idea", isCorrect: false },
+
+                        { label: "D", text: "My pleasure", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích ngữ cảnh giao tiếp 4 đáp án:</p>
+
+                        <p>A. Certainly: Chắc chắn rồi / Tất nhiên rồi. (Dùng để đồng ý giúp đỡ).</p>
+
+                        <p>B. Let’s go: Đi thôi. (Dùng để rủ rê).</p>
+
+                        <p>C. Good idea: Ý kiến hay đấy. (Dùng để tán thành một lời rủ rê, gợi ý).</p>
+
+                        <p>D. My pleasure: Rất hân hạnh / Không có chi. (Dùng để đáp lại lời Cảm ơn).</p>
+
+                        <p class="step-title">2. Dịch nghĩa toàn câu:</p>
+
+                        <p>- Người A: "Bạn làm ơn chỉ cho tôi đường đến nhà cổ Tân Kỳ được không?"</p>
+
+                        <p>- Người B: "<b>Chắc chắn rồi.</b>"</p>
+
+                        <p class="step-title">3. Tại sao chọn A?</p>
+
+                        <p>Câu hỏi bắt đầu bằng "Can you..." mang tính chất nhờ vả lịch sự. Để đáp lại sự đồng ý giúp đỡ, ta dùng "Certainly" (hoặc Sure, Of course).</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- B và C dùng để đáp lại lời gợi ý rủ rê đi chơi (ví dụ: Shall we go to the cinema?).</p>
+
+                        <p>- D dùng để đáp lại lời cảm ơn (Thank you!), không hợp lý khi người ta đang nhờ vả.</p>
+
+                    `
+
+                }
+
+            ]
+
+        },
+
+        {
+
+            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions 17.",
+
+            questions: [
+
+                {
+
+                    id: 17,
+
+                    text: "Question 17. Put the sentences in the correct order to make a lexical text:<br><br>a. They are all interesting.<br>b. One of them is Who Wants To Be A Millionaire?<br>c. In my free time, I often watch TV programmes with my family.<br>d. There are many programmes on different channels.",
+
+                    options: [
+
+                        { label: "A", text: "a-b-c-d", isCorrect: false },
+
+                        { label: "B", text: "c-d-a-b", isCorrect: true },
+
+                        { label: "C", text: "c-a-b-d", isCorrect: false },
+
+                        { label: "D", text: "c-b-a-d", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Dịch nghĩa các câu đơn lẻ:</p>
+
+                        <p>a. Tất cả chúng đều thú vị.</p>
+
+                        <p>b. Một trong số đó là chương trình Ai Là Triệu Phú.</p>
+
+                        <p>c. Trong thời gian rảnh rỗi, tôi thường xem các chương trình TV với gia đình.</p>
+
+                        <p>d. Có rất nhiều chương trình trên các kênh khác nhau.</p>
+
+                        <p class="step-title">2. Phân tích trật tự Logic (Tại sao chọn B?):</p>
+
+                        <p>- Đoạn văn thường bắt đầu bằng câu chủ đề giới thiệu hoàn cảnh: Câu <b>(c)</b> phù hợp nhất làm câu mở đoạn (Tôi thích xem TV lúc rảnh).</p>
+
+                        <p>- Từ khóa "TV programmes" ở cuối câu (c) được nối tiếp logic sang câu <b>(d)</b>: Có rất nhiều <i>programmes</i> (chương trình) trên các kênh.</p>
+
+                        <p>- Đại từ "They" trong câu <b>(a)</b> thay thế cho "many programmes" ở câu d: Chúng (các chương trình đó) đều rất thú vị.</p>
+
+                        <p>- Cuối cùng, đưa ra một ví dụ cụ thể "One of them" ở câu <b>(b)</b>: Một trong số chúng là Ai là Triệu phú.</p>
+
+                        <p>=> Trật tự hoàn hảo: <b>c - d - a - b</b>.</p>
+
+                        <p class="step-title">3. Tại sao các đáp án còn lại SAI?</p>
+
+                        <p>- Bắt đầu bằng (a) như đáp án A là sai vì người đọc chưa biết "They" là cái gì.</p>
+
+                        <p>- C và D sắp xếp lộn xộn, mất đi tính liên kết mạch lạc của đại từ thay thế (many programmes -> They -> One of them).</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 18,
+
+                    text: "Question 18. Choose the sentence that can end the text (in Question 17) most suitably.",
+
+                    options: [
+
+                        { label: "A", text: "I spend 3 hours a day watching TV.", isCorrect: false },
+
+                        { label: "B", text: "Watching TV too much harms our eyes.", isCorrect: false },
+
+                        { label: "C", text: "Watching these programmes help us relax", isCorrect: true },
+
+                        { label: "D", text: "Different channels are on at different times.", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Dịch nghĩa 4 câu kết đoạn:</p>
+
+                        <p>A. Tôi dành 3 tiếng một ngày để xem TV.</p>
+
+                        <p>B. Xem TV quá nhiều sẽ gây hại cho mắt chúng ta.</p>
+
+                        <p>C. Việc xem những chương trình này giúp chúng tôi thư giãn.</p>
+
+                        <p>D. Các kênh khác nhau phát sóng vào các thời điểm khác nhau.</p>
+
+                        <p class="step-title">2. Dịch câu hỏi:</p>
+
+                        <p>Chọn câu có thể kết thúc đoạn văn (ở Câu 17) một cách phù hợp nhất.</p>
+
+                        <p class="step-title">3. Tại sao chọn C?</p>
+
+                        <p>Đoạn văn ở câu 17 mang giọng điệu rất tích cực: dành thời gian rảnh cùng gia đình, các chương trình đều thú vị, ví dụ như Ai là triệu phú. Do đó, một câu kết đoạn tóm gọn lại lợi ích tích cực của hành động này <b>"giúp chúng tôi thư giãn" (C)</b> là hoàn hảo và trọn vẹn nhất về mặt cảm xúc và logic.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- A làm mạch văn bị cụt, giống một lời tự thuật khô khan hơn là câu chốt.</p>
+
+                        <p>- B tự dưng chuyển sang giọng điệu tiêu cực, cảnh báo sức khỏe (lạc quẻ với đoạn văn).</p>
+
+                        <p>- D chỉ là cung cấp thêm thông tin lặt vặt, không có sức nặng để làm câu kết đoạn (Concluding sentence).</p>
+
+                    `
+
+                }
+
+            ]
+
+        },
+
+        {
+
+            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the sentence that is closest in meaning to the original sentence in each of the following questions.",
+
+            questions: [
+
+                {
+
+                    id: 25,
+
+                    text: "Question 25. Sports and games are very important in children’s lives.",
+
+                    options: [
+
+                        { label: "A", text: "Sports and games is an important role for children’s lives.", isCorrect: false },
+
+                        { label: "B", text: "Sports and games get an important role in children’s lives.", isCorrect: false },
+
+                        { label: "C", text: "Sports and games make an important role in children’s lives.", isCorrect: false },
+
+                        { label: "D", text: "Sports and games play an important role in children’s lives.", isCorrect: true }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
+
+                        <p>A. Sai ngữ pháp cơ bản (dùng "is" cho chủ ngữ số nhiều Sports and games) và sai giới từ (role "for").</p>
+
+                        <p>B. Dùng sai động từ "get" (không có cụm get an important role).</p>
+
+                        <p>C. Dùng sai động từ "make" (không có cụm make an important role).</p>
+
+                        <p>D. Thể thao và trò chơi đóng một vai trò quan trọng trong cuộc sống của trẻ em.</p>
+
+                        <p class="step-title">2. Dịch câu gốc:</p>
+
+                        <p>"Thể thao và trò chơi rất quan trọng trong cuộc sống của trẻ em."</p>
+
+                        <p class="step-title">3. Tại sao chọn D?</p>
+
+                        <p>Trong tiếng Anh, ta có cụm từ cố định (collocation) cực kỳ phổ biến: <b>play an important role in + N</b> (đóng vai trò quan trọng trong việc gì). Thay vì dùng "are very important", người ta dùng cụm này để câu văn trau chuốt hơn. Do đó D là đáp án chính xác tuyệt đối.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>Vì chúng kết hợp sai động từ đi kèm với từ "role" (vai trò). Ta chỉ dùng "play a role", không dùng get/make/is a role.</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 26,
+
+                    text: "Question 26. My brother plays football very well.",
+
+                    options: [
+
+                        { label: "A", text: "My brother is a good football player.", isCorrect: true },
+
+                        { label: "B", text: "My brother is well football player.", isCorrect: false },
+
+                        { label: "C", text: "My brother plays football very good.", isCorrect: false },
+
+                        { label: "D", text: "My brother are good football player.", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
+
+                        <p>A. Anh trai tôi là một cầu thủ bóng đá giỏi. (S + be + a/an + Adj + Noun).</p>
+
+                        <p>B. Dùng trạng từ "well" bổ nghĩa cho danh từ "player" là sai ngữ pháp.</p>
+
+                        <p>C. Dùng tính từ "good" bổ nghĩa cho động từ "plays" là sai ngữ pháp.</p>
+
+                        <p>D. Sai to be ("are" đi với chủ ngữ số ít "My brother").</p>
+
+                        <p class="step-title">2. Dịch câu gốc:</p>
+
+                        <p>"Anh trai tôi chơi bóng đá rất giỏi."</p>
+
+                        <p class="step-title">3. Tại sao chọn A?</p>
+
+                        <p>Có một cấu trúc chuyển đổi rất quen thuộc trong tiếng Anh: <b>S + V + Trạng từ (Adv) <---> S + be + a/an + Tính từ (Adj) + Danh từ chỉ người (Noun)</b>. Trạng từ "well" khi chuyển sang tính từ sẽ thành "good". "plays football" chuyển thành danh từ chỉ người là "football player". Vậy A ghép lại chuẩn xác 100%.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- B sai vì trước Danh từ (player) ta phải dùng Tính từ (good), không dùng Trạng từ (well).</p>
+
+                        <p>- C sai vì bổ nghĩa cho Động từ thường (plays) ta phải dùng Trạng từ (well), không dùng Tính từ (good).</p>
+
+                        <p>- D sai ngữ pháp trầm trọng ở to be "are".</p>
+
+                    `
+
+                }
+
+            ]
+
+        },
+
+        {
+
+            instruction: "Mark the letter A, B, C or D on your answer sheet to indicate the sentence that is made from the given cues in each of the following questions.",
+
+            questions: [
+
+                {
+
+                    id: 27,
+
+                    text: "Question 27. You/ join/ sports competition/ last week?",
+
+                    options: [
+
+                        { label: "A", text: "Were you join sports competition last week?", isCorrect: false },
+
+                        { label: "B", text: "Did you join in the sports competition last week?", isCorrect: true },
+
+                        { label: "C", text: "Do you join in the  sports competition last week?", isCorrect: false },
+
+                        { label: "D", text: "Are you join in the sports competition last week?", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
+
+                        <p>A. Sai ngữ pháp: Dùng to be "Were" đi với động từ thường "join".</p>
+
+                        <p>B. Bạn đã tham gia vào cuộc thi thể thao tuần trước phải không? (Đúng cấu trúc câu hỏi Quá khứ đơn).</p>
+
+                        <p>C. Sai thì: Dùng "Do" (Hiện tại) đi với "last week" (Quá khứ).</p>
+
+                        <p>D. Sai ngữ pháp và sai thì: Dùng to be "Are" đi với động từ nguyên thể "join".</p>
+
+                        <p class="step-title">2. Dịch từ gợi ý gốc:</p>
+
+                        <p>"Bạn / tham gia / cuộc thi thể thao / tuần trước?"</p>
+
+                        <p class="step-title">3. Tại sao chọn B?</p>
+
+                        <p>Cụm từ thời gian <b>"last week"</b> báo hiệu đây là thì Quá khứ đơn. Cấu trúc câu nghi vấn với động từ thường ở Quá khứ đơn là: <b>Did + S + V(nguyên thể)...?</b>. Ngoài ra cụm "join in" (tham gia vào) hoàn toàn chính xác. Do đó B là đáp án chuẩn.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- Loại A và D ngay lập tức vì không ai mượn trợ động từ "to be" (Were/Are) đặt trước một động từ nguyên thể (join) cả.</p>
+
+                        <p>- Loại C vì mâu thuẫn giữa "Do" (hiện tại) và "last week" (quá khứ).</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 28,
+
+                    text: "Question 28. How often/ you/ practise/ play/ table tennis?",
+
+                    options: [
+
+                        { label: "A", text: "How often do you practise play table tennis?", isCorrect: false },
+
+                        { label: "B", text: "How often did you practised play table tennis?", isCorrect: false },
+
+                        { label: "C", text: "How often do you practise playing table tennis?", isCorrect: true },
+
+                        { label: "D", text: "How often are you practise playing table tennis?", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
+
+                        <p>A. Sai cấu trúc sau practise: dùng "play" (nguyên thể) là sai.</p>
+
+                        <p>B. Sai ngữ pháp: Đã mượn trợ động từ "did" mà "practise" vẫn thêm đuôi -ed. Và sau practise vẫn dùng "play".</p>
+
+                        <p>C. Bạn luyện tập chơi bóng bàn bao lâu một lần? (Chuẩn xác 100%).</p>
+
+                        <p>D. Sai ngữ pháp cơ bản: Dùng to be "are" đi chung với động từ thường "practise".</p>
+
+                        <p class="step-title">2. Dịch từ gợi ý gốc:</p>
+
+                        <p>"Bao lâu một lần / bạn / luyện tập / chơi / bóng bàn?"</p>
+
+                        <p class="step-title">3. Tại sao chọn C?</p>
+
+                        <p>Câu hỏi tần suất "How often" thường đi với thì Hiện tại đơn để hỏi về thói quen. Cấu trúc: <i>How often do you + V?</i>. <br>Đặc biệt quan trọng: Sau động từ <b>practise</b> bắt buộc phải là một Danh động từ <b>(V-ing)</b>. -> <i>practise playing</i>. Do đó C đáp ứng đủ mọi tiêu chí.</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- A và B gục ngã trước quy tắc "practise + V-ing".</p>
+
+                        <p>- D sai ngữ pháp ngớ ngẩn (Are you practise).</p>
+
+                    `
+
+                }
+
+            ]
+
+        },
+
+        {
+
+            instruction: "Read the following sign or notice and mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions.",
+
+            questions: [
+
+                {
+
+                    id: 29,
+
+                    text: `Question 29: What is the meaning of the sign below?
+
+                           <div class="css-sign">
+
+                               <div class="circle-slash"><span class="icon">📷</span></div>
+
+                               <div class="css-sign-text">"NO PHOTOS ALLOWED IN THE MUSEUM."</div>
+
+                           </div>`,
+
+                    options: [
+
+                        { label: "A", text: "You can not take pictures inside the museum.", isCorrect: true },
+
+                        { label: "B", text: "You can take pictures of everything.", isCorrect: false },
+
+                        { label: "C", text: "You must buy a ticket to take photos.", isCorrect: false },
+
+                        { label: "D", text: "You can  bring your camera here .", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
+
+                        <p>A. Bạn không được phép chụp ảnh bên trong bảo tàng.</p>
+
+                        <p>B. Bạn có thể chụp ảnh mọi thứ.</p>
+
+                        <p>C. Bạn phải mua vé để chụp ảnh.</p>
+
+                        <p>D. Bạn có thể mang máy ảnh tới đây.</p>
+
+                        <p class="step-title">2. Dịch biển báo và câu hỏi:</p>
+
+                        <p>Câu hỏi: Biển báo dưới đây có ý nghĩa gì?</p>
+
+                        <p>Biển báo: KHÔNG ĐƯỢC PHÉP CHỤP ẢNH TRONG BẢO TÀNG (Kèm hình máy ảnh bị gạch chéo đỏ).</p>
+
+                        <p class="step-title">3. Tại sao chọn A?</p>
+
+                        <p>Dòng chữ "No photos allowed" (Không được phép chụp ảnh) đồng nghĩa hoàn toàn với cấu trúc <b>"You can not take pictures"</b> (Bạn không thể/không được chụp ảnh). Đây là một biển cấm (Prohibition).</p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- B và D mang nghĩa cho phép (can take / can bring), đi ngược lại hoàn toàn với biển cấm.</p>
+
+                        <p>- C tự bịa thêm thông tin "phải mua vé" (must buy a ticket) không hề có trên biển báo.</p>
+
+                    `
+
+                },
+
+                {
+
+                    id: 30,
+
+                    text: `Question 30: What is the meaning of the sign below?
+
+                           <div class="css-sign" style="flex-direction: row; gap: 20px; border-radius: 50px; border: none; background: transparent; box-shadow: none;">
+
+                               <div class="circle-slash" style="width: 150px; height: 150px; border-width: 15px;"><span class="icon" style="font-size: 80px;">🎣</span></div>
+
+                           </div>`,
+
+                    options: [
+
+                        { label: "A", text: "You cannot smoke here.", isCorrect: false },
+
+                        { label: "B", text: "You cannot go fishing here.", isCorrect: true },
+
+                        { label: "C", text: "You cannot swim here", isCorrect: false },
+
+                        { label: "D", text: "You can go fishing here.", isCorrect: false }
+
+                    ],
+
+                    explanation: `
+
+                        <p class="step-title">1. Phân tích và dịch 4 đáp án:</p>
+
+                        <p>A. Bạn không được hút thuốc ở đây.</p>
+
+                        <p>B. Bạn không được câu cá ở đây.</p>
+
+                        <p>C. Bạn không được bơi ở đây.</p>
+
+                        <p>D. Bạn CÓ THỂ câu cá ở đây.</p>
+
+                        <p class="step-title">2. Dịch câu hỏi:</p>
+
+                        <p>Biển báo dưới đây có ý nghĩa gì?</p>
+
+                        <p>(Biển báo hình một chiếc cần câu và con cá bị vòng tròn đỏ gạch chéo).</p>
+
+                        <p class="step-title">3. Tại sao chọn B?</p>
+
+                        <p>Vòng tròn đỏ gạch chéo luôn mang ý nghĩa là CẤM (cannot / must not). Hình ảnh bên trong là Cần câu cá (Fishing rod). Ghép lại ta có ý nghĩa: <b>Cấm câu cá = You cannot go fishing here.</b></p>
+
+                        <p class="step-title">4. Tại sao 3 đáp án còn lại SAI?</p>
+
+                        <p>- A sai vì hình ảnh không phải là điếu thuốc (smoke).</p>
+
+                        <p>- C sai vì hình ảnh không phải người bơi (swim).</p>
+
+                        <p>- D có động từ "go fishing" đúng, nhưng lại thiếu từ "cannot" (đáp án D mang nghĩa cho phép, trái ngược với biển báo cấm).</p>
+
+                    `
+
+                }
+
+            ]
+
+        }
+
+    ];
+
+
+
+    // --- LOGIC ỨNG DỤNG ---
+
+    let totalQuestions = 0;
+
+    let correctCount = 0;
+
+    let answeredQuestions = new Set();
+
+
+
+    // Thuật toán xáo trộn mảng (Fisher-Yates)
+
+    function shuffleArray(array) {
+
+        for (let i = array.length - 1; i > 0; i--) {
+
+            const j = Math.floor(Math.random() * (i + 1));
+
+            [array[i], array[j]] = [array[j], array[i]];
+
+        }
+
+    }
+
+
+
+    // Render giao diện
+
+    function renderQuiz() {
+
+        const container = document.getElementById('quiz-container');
+
+        
+
+        testData.forEach((block, blockIndex) => {
+
+            // Render Instruction Block
+
+            const instructionDiv = document.createElement('div');
+
+            instructionDiv.className = 'instruction-block';
+
+            instructionDiv.innerHTML = block.instruction;
+
+            container.appendChild(instructionDiv);
+
+
+
+            // Render Questions
+
+            block.questions.forEach(q => {
+
+                totalQuestions++;
+
+                
+
+                const qCard = document.createElement('div');
+
+                qCard.className = 'question-card';
+
+                qCard.id = `q-card-${q.id}`;
+
+                
+
+                // Shuffle options for this question
+
+                let shuffledOptions = [...q.options];
+
+                shuffleArray(shuffledOptions);
+
+
+
+                let optionsHTML = '';
+
+                shuffledOptions.forEach((opt, index) => {
+
+                    // Mẹo lưu isCorrect vào data attribute
+
+                    optionsHTML += `
+
+                        <button class="option-btn" 
+
+                                onclick="handleAnswer(${q.id}, this, ${opt.isCorrect})"
+
+                                data-correct="${opt.isCorrect}">
+
+                            <b>${String.fromCharCode(65 + index)}.</b> ${opt.text}
+
+                        </button>
+
+                    `;
+
+                });
+
+
+
+                qCard.innerHTML = `
+
+                    <div class="question-text">${q.text}</div>
+
+                    <div class="options-grid" id="options-${q.id}">
+
+                        ${optionsHTML}
+
+                    </div>
+
+                    <div class="explanation-box" id="exp-${q.id}">
+
+                        <h4>💡 Giải thích siêu chi tiết bởi Ms. Chí Nên</h4>
+
+                        ${q.explanation}
+
+                    </div>
+
+                `;
+
+                
+
+                container.appendChild(qCard);
+
+            });
+
+        });
+
+    }
+
+
+
+    // Xử lý khi học sinh chọn đáp án
+
+    function handleAnswer(qId, btnElement, isCorrect) {
+
+        // Tránh bấm nhiều lần
+
+        if (answeredQuestions.has(qId)) return;
+
+        answeredQuestions.add(qId);
+
+
+
+        const optionsContainer = document.getElementById(`options-${qId}`);
+
+        const allBtns = optionsContainer.querySelectorAll('.option-btn');
+
+        const expBox = document.getElementById(`exp-${qId}`);
+
+
+
+        // Vô hiệu hóa các nút khác
+
+        allBtns.forEach(btn => {
+
+            btn.disabled = true;
+
+            if (btn.dataset.correct === "true" && !isCorrect) {
+
+                // Nếu chọn sai, bôi xanh đáp án đúng để học sinh biết
+
+                btn.style.borderColor = "var(--correct)";
+
+                btn.style.boxShadow = "0 5px 0 var(--correct-shadow)";
+
+            } else if (btn !== btnElement) {
+
+                btn.classList.add('fade');
+
+            }
+
+        });
+
+
+
+        // Xử lý nút được click
+
+        if (isCorrect) {
+
+            btnElement.classList.add('correct');
+
+            playDing();
+
+            correctCount++;
+
+            
+
+            // Lấy tọa độ nút để bắn pháo giấy
+
+            const rect = btnElement.getBoundingClientRect();
+
+            shootConfetti(rect.left + rect.width / 2, rect.top);
+
+        } else {
+
+            btnElement.classList.add('wrong');
+
+            btnElement.classList.add('shake');
+
+            playBuzzer();
+
+        }
+
+
+
+        // Hiện khung giải thích siêu chi tiết ngay lập tức
+
+        expBox.style.display = 'block';
+
+    }
+
+
+
+    // Hiển thị điểm số cuối cùng
+
+    function showFinalScore() {
+
+        if (answeredQuestions.size < totalQuestions) {
+
+            alert("Oops! Em chưa làm hết bài kìa, hãy hoàn thành các câu hỏi nhé! 🧐");
+
+            return;
+
+        }
+
+
+
+        const modal = document.getElementById('scoreModal');
+
+        const scoreText = document.getElementById('finalScoreText');
+
+        const feedbackText = document.getElementById('feedbackText');
+
+
+
+        scoreText.innerText = `${correctCount}/${totalQuestions}`;
+
+        
+
+        let percentage = correctCount / totalQuestions;
+
+        if (percentage === 1) {
+
+            feedbackText.innerText = "Xuất sắc! Em là một siêu sao tiếng Anh thực thụ! 🌟🏆";
+
+            shootConfetti(window.innerWidth/2, window.innerHeight/2);
+
+        } else if (percentage >= 0.7) {
+
+            feedbackText.innerText = "Giỏi lắm! Em đã rất nỗ lực, cố gắng một chút nữa là hoàn hảo! 🔥";
+
+        } else if (percentage >= 0.5) {
+
+            feedbackText.innerText = "Làm tốt! Hãy đọc kỹ phần giải thích của Ms. Chí Nên để rút kinh nghiệm nhé! 📚";
+
+        } else {
+
+            feedbackText.innerText = "Đừng buồn! Thất bại là mẹ thành công, xem kỹ giải thích và làm lại nào! 💪";
+
+        }
+
+
+
+        modal.style.display = 'flex';
+
+        playDing(); // Phát âm thanh vui nhộn khi nộp bài
+
+    }
+
+
+
+    // --- TẠO HỌA TIẾT LƠ LỬNG TRÊN NỀN ---
+
+    function initFloatingPatterns() {
+
+        const emojis = ['⭐', '🌸', '🍎', '☁️', '🐱', '🎵', '☀️', '🚀'];
+
+        const layer = document.getElementById('patternLayer');
+
+        
+
+        for (let i = 0; i < 20; i++) {
+
+            let el = document.createElement('div');
+
+            el.className = 'floating-item';
+
+            el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+
+            
+
+            // Randomize position and animation delay
+
+            el.style.left = Math.random() * 100 + 'vw';
+
+            el.style.animationDuration = (10 + Math.random() * 15) + 's';
+
+            el.style.animationDelay = (Math.random() * 5) + 's';
+
+            
+
+            layer.appendChild(el);
+
+        }
+
+    }
+
+
+
+    // Khởi chạy khi load trang
+
+    window.onload = () => {
+
+        initFloatingPatterns();
+
+        renderQuiz();
+
+    };
+
+
+
+</script>
+
+</body>
+
 </html>
