@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Gamified Quiz - Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #FDCB6E;
+            --accent: #00C9A7;
+            --correct: #00D26A;
+            --correct-shadow: #00a051;
+            --wrong: #FF4757;
+            --wrong-shadow: #c8303d;
+            --btn-bg: #ffffff;
+            --btn-shadow: #e0e0e0;
+            --text-main: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(-45deg, #8854C0, #FF9A9E, #FDCB6E, #00C9A7);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* SVG Pattern Lơ Lửng */
+        .pattern-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10l5 15 15 5-15 5-5 15-5-15-15-5 15-5z' fill='rgba(255,255,255,0.4)'/%3E%3Ccircle cx='70' cy='70' r='8' fill='rgba(255,255,255,0.3)'/%3E%3Cpath d='M80 20a10 10 0 0 1-20 0 10 10 0 0 1 20 0z' fill='rgba(255,255,255,0.2)'/%3E%3C/svg%3E");
+            animation: floatUp 30s linear infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatUp {
+            0% { background-position: 0px 0px; }
+            100% { background-position: 100px 1000px; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        header {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+            position: relative;
+        }
+
+        h2.teacher-name {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin: 0;
+            font-weight: 800;
+        }
+
+        .section-title {
+            background: #fff;
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            font-weight: 800;
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 20px;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+            transition: transform 0.2s;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+
+        .option-btn {
+            background: var(--btn-bg);
+            border: 2px solid #eee;
+            border-radius: 15px;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
+            box-shadow: 0 6px 0 var(--btn-shadow);
+            transition: all 0.1s ease;
+            text-align: left;
+            position: relative;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02) translateY(-2px);
+            box-shadow: 0 8px 0 var(--btn-shadow);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 var(--btn-shadow);
+        }
+
+        .option-btn.correct {
+            background: var(--correct);
+            color: white;
+            border-color: var(--correct);
+            box-shadow: 0 6px 0 var(--correct-shadow);
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong);
+            color: white;
+            border-color: var(--wrong);
+            box-shadow: 0 6px 0 var(--wrong-shadow);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        /* Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* Giải thích */
+        .explanation {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #F3F4F6;
+            border-left: 5px solid var(--accent);
+            border-radius: 10px;
+            font-size: 1rem;
+            line-height: 1.6;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .explanation h4 { margin-top: 0; color: var(--primary); }
+        .explanation p { margin: 8px 0; }
+        .expl-step { margin-bottom: 12px; }
+        .expl-bold { font-weight: 800; color: #d35400; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Gap Fill / Popup styling */
+        .gap-fill-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .gap-item {
+            background: #fff;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 6px 0 #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+        }
+
+        .gap-btn {
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            padding: 8px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .gap-btn:hover { background: #e0e0e0; }
+        .gap-btn.filled-correct { background: var(--correct); color: white; border: none; box-shadow: 0 4px 0 var(--correct-shadow);}
+        .gap-btn.filled-wrong { background: var(--wrong); color: white; border: none; box-shadow: 0 4px 0 var(--wrong-shadow);}
+
+        /* Popup Chọn Từ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .modal-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .modal-options .option-btn { width: 100%; text-align: center; }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 40px auto;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: #00C9A7;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 8px 0 #00967d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 11px 0 #00967d; }
+        .submit-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #00967d; }
+
+        canvas#confetti {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+
+<div class="pattern-overlay"></div>
+<canvas id="confetti"></canvas>
+
+<div class="container">
+    <header>
+        <h2 class="teacher-name">🌟 Bài thi tiếng Anh - Giáo viên: Ms. Chí Nên  🌟</h2>
+    </header>
+
+    <div id="quiz-container">
+        </div>
+
+    <button class="submit-btn" onclick="submitQuiz()">Nộp bài ngay!</button>
+</div>
+
+<div class="modal-overlay" id="gapModal">
+    <div class="modal-content">
+        <h3 id="modal-title">Chọn từ đúng</h3>
+        <div class="modal-options" id="modal-options"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="resultModal">
+    <div class="modal-content">
+        <h1 style="font-size: 3rem; margin: 10px 0;">🏆</h1>
+        <h2 style="color: var(--primary);">Tuyệt vời! Hoàn thành xuất sắc!</h2>
+        <h3 id="score-text" style="font-size: 1.5rem;">Bạn đúng 0/0 câu</h3>
+        <p id="praise-text" style="font-weight: bold; color: #e67e22;"></p>
+        <button class="submit-btn" style="margin-top: 20px;" onclick="location.reload()">Làm lại bài thi</button>
+    </div>
+</div>
+
+<script>
+    // --- 1. HỆ THỐNG ÂM THANH (WEB AUDIO API) ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playDing() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function playBuzz() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    // --- 2. HỆ THỐNG PHÁO GIẤY (CONFETTI) ---
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    let particles = [];
+    const colors = ['#8854C0', '#FDCB6E', '#00C9A7', '#FF4757', '#00D26A'];
+
+    function triggerConfetti() {
+        for(let i=0; i<50; i++) {
+            particles.push({
+                x: Math.random() * canvas.width, y: canvas.height + 10,
+                r: Math.random() * 6 + 4, dx: Math.random() * 4 - 2, dy: Math.random() * -10 - 10,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                tilt: Math.random() * 10
+            });
+        }
+        animateConfetti();
+    }
+    function animateConfetti() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        let active = false;
+        for(let i=0; i<particles.length; i++) {
+            let p = particles[i];
+            p.dy += 0.3; p.x += p.dx; p.y += p.dy; p.tilt += 0.1;
+            ctx.beginPath(); ctx.lineWidth = p.r; ctx.strokeStyle = p.color;
+            ctx.moveTo(p.x + p.tilt + p.r, p.y); ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r); ctx.stroke();
+            if(p.y < canvas.height + 20) active = true;
+        }
+        if(active) requestAnimationFrame(animateConfetti);
+        else particles = [];
+    }
+    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+    // --- 3. TIỆN ÍCH ---
+    function shuffleArray(array) {
+        let curId = array.length, temp, randId;
+        while (0 !== curId) {
+            randId = Math.floor(Math.random() * curId); curId -= 1;
+            temp = array[curId]; array[curId] = array[randId]; array[randId] = temp;
+        }
+        return array;
+    }
+
+    let score = 0;
+    let totalQuestions = 0;
+
+    // --- 4. DỮ LIỆU ĐỀ BÀI ---
+    const data = [
+        {
+            section: "Exercise 1: Choose the word whose underlined part is pronounced differently from the others.",
+            questions: [
+                {
+                    q: "1. A. mara<u>th</u>on B. thea<u>th</u>re C. bo<u>th</u> D. wea<u>th</u>er",
+                    ans: "D",
+                    options: [
+                        {val: "A", text: "marathon"}, {val: "B", text: "theatre"}, {val: "C", text: "both"}, {val: "D", text: "weather"}
+                    ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch câu hỏi:</b> Chọn từ có phần gạch chân phát âm khác với các từ còn lại.</div>
+                        <div class="expl-step"><b>2. Phân tích 4 đáp án:</b>
+                            <br>- A. marathon /ˈmær.ə.<b>θ</b>ən/ (n): cuộc đua marathon.
+                            <br>- B. theatre /ˈθɪə.tər/ (n): nhà hát (âm <b>θ</b>).
+                            <br>- C. both /bəʊ<b>θ</b>/ (pronoun): cả hai (âm <b>θ</b>).
+                            <br>- D. weather /ˈwe<b>ð</b>.ər/ (n): thời tiết (âm <b>ð</b>).
+                        </div>
+                        <div class="expl-step"><b>3. Tại sao chọn D?</b> Vì chữ "th" trong weather phát âm là âm hữu thanh /ð/, trong khi các từ còn lại là âm vô thanh /θ/.</div>
+                        <div class="expl-step"><b>4. Tại sao A, B, C sai?</b> Vì chúng đều chung một cách phát âm là /θ/.</div>`
+                },
+                {
+                    q: "2. A. <u>th</u>is B. <u>th</u>ere C. <u>th</u>anks D. bro<u>th</u>er",
+                    ans: "C",
+                    options: [ {val: "A", text: "this"}, {val: "B", text: "there"}, {val: "C", text: "thanks"}, {val: "D", text: "brother"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch câu hỏi:</b> Chọn từ có phần gạch chân phát âm khác.</div>
+                        <div class="expl-step"><b>2. Phân tích 4 đáp án:</b>
+                            <br>- A. this /<b>ð</b>ɪs/ (pronoun): cái này.
+                            <br>- B. there /<b>ð</b>eər/ (adv): ở đó.
+                            <br>- C. thanks /<b>θ</b>æŋks/ (n): lời cảm ơn.
+                            <br>- D. brother /ˈbrʌ<b>ð</b>.ər/ (n): anh/em trai.
+                        </div>
+                        <div class="expl-step"><b>3. Tại sao chọn C?</b> "th" trong thanks phát âm là âm vô thanh /θ/.</div>
+                        <div class="expl-step"><b>4. Tại sao A, B, D sai?</b> Vì chúng đều phát âm là âm rung hữu thanh /ð/.</div>`
+                },
+                {
+                    q: "3. A. cl<u>e</u>ver B. comp<u>e</u>te C. <u>e</u>ducate D. h<u>e</u>lpful",
+                    ans: "B",
+                    options: [ {val: "A", text: "clever"}, {val: "B", text: "compete"}, {val: "C", text: "educate"}, {val: "D", text: "helpful"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch câu hỏi:</b> Chọn từ có chữ "e" phát âm khác.</div>
+                        <div class="expl-step"><b>2. Phân tích 4 đáp án:</b>
+                            <br>- A. clever /ˈkl<b>e</b>v.ər/ (adj): thông minh.
+                            <br>- B. compete /kəmˈp<b>iː</b>t/ (v): cạnh tranh.
+                            <br>- C. educate /ˈ<b>e</b>dʒ.u.keɪt/ (v): giáo dục.
+                            <br>- D. helpful /ˈh<b>e</b>lp.fəl/ (adj): hữu ích.
+                        </div>
+                        <div class="expl-step"><b>3. Tại sao chọn B?</b> Chữ "e" trong compete phát âm là /iː/ (âm i dài).</div>
+                        <div class="expl-step"><b>4. Tại sao A, C, D sai?</b> Vì chúng đều phát âm là /e/ (âm e ngắn).</div>`
+                },
+                {
+                    q: "4. A. r<u>a</u>cket B. k<u>a</u>rate C. l<u>a</u>ndmark D. m<u>a</u>rket",
+                    ans: "B",
+                    options: [ {val: "A", text: "racket"}, {val: "B", text: "karate"}, {val: "C", text: "landmark"}, {val: "D", text: "market"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch câu hỏi:</b> Chọn từ có chữ "a" phát âm khác.</div>
+                        <div class="expl-step"><b>2. Phân tích 4 đáp án:</b>
+                            <br>- A. racket /ˈr<b>æ</b>k.ɪt/ (n): cái vợt.
+                            <br>- B. karate /k<b>ə</b>ˈrɑː.ti/ (n): môn võ karate (âm ơ ngắn).
+                            <br>- C. landmark /ˈl<b>æ</b>nd.mɑːk/ (n): địa danh nổi bật.
+                            <br>- D. market /ˈm<b>ɑː</b>.kɪt/ (n): chợ.
+                        </div>
+                        <div class="expl-step"><b>3. Tại sao chọn B?</b> Chữ "a" đầu tiên đọc là /ə/ (âm schwa yếu).</div>
+                        <div class="expl-step"><b>4. Tại sao A, C, D sai?</b> A và C là âm /æ/, D là âm /ɑ:/. B khác biệt hoàn toàn vì nó là âm không nhấn trọng âm.</div>`
+                },
+                {
+                    q: "5. A. pr<u>o</u>gramme B. d<u>o</u>lphin C. p<u>o</u>stcard D. pag<u>o</u>da",
+                    ans: "B",
+                    options: [ {val: "A", text: "programme"}, {val: "B", text: "dolphin"}, {val: "C", text: "postcard"}, {val: "D", text: "pagoda"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch câu hỏi:</b> Chọn từ có chữ "o" phát âm khác.</div>
+                        <div class="expl-step"><b>2. Phân tích 4 đáp án:</b>
+                            <br>- A. programme /ˈpr<b>əʊ</b>.ɡræm/ (n): chương trình.
+                            <br>- B. dolphin /ˈd<b>ɒ</b>l.fɪn/ (n): cá heo.
+                            <br>- C. postcard /ˈp<b>əʊ</b>st.kɑːd/ (n): bưu thiếp.
+                            <br>- D. pagoda /pəˈɡ<b>əʊ</b>.də/ (n): ngôi chùa.
+                        </div>
+                        <div class="expl-step"><b>3. Tại sao chọn B?</b> Phát âm là /ɒ/ (o ngắn).</div>
+                        <div class="expl-step"><b>4. Tại sao A, C, D sai?</b> Vì đều phát âm là âm đôi /əʊ/ (âu).</div>`
+                },
+                {
+                    q: "6. A. badmint<u>o</u>n B. t<u>ow</u>n C. cr<u>ow</u>ded D. t<u>ow</u>er",
+                    ans: "A",
+                    options: [ {val: "A", text: "badminton"}, {val: "B", text: "town"}, {val: "C", text: "crowded"}, {val: "D", text: "tower"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch câu hỏi:</b> Phần này kiểm tra âm /ə/ so với âm /aʊ/.</div>
+                        <div class="expl-step"><b>2. Phân tích 4 đáp án:</b>
+                            <br>- A. badminton /ˈbæd.mɪn.t<b>ə</b>n/ (n): môn cầu lông.
+                            <br>- B. town /t<b>aʊ</b>n/ (n): thị trấn.
+                            <br>- C. crowded /ˈkr<b>aʊ</b>.dɪd/ (adj): đông đúc.
+                            <br>- D. tower /ˈt<b>aʊ</b>.ər/ (n): ngọn tháp.
+                        </div>
+                        <div class="expl-step"><b>3. Tại sao chọn A?</b> Có âm /ə/ không phải âm /aʊ/ như nhóm kia.</div>
+                        <div class="expl-step"><b>4. Tại sao B, C, D sai?</b> Vì đều chứa âm /aʊ/ (ao).</div>`
+                }
+            ]
+        },
+        {
+            section: "Exercise 2: Choose the words whose main stress is placed differently from the others.",
+            questions: [
+                {
+                    q: "1. A. goggle B. cycling C. rainy D. cartoon",
+                    ans: "D",
+                    options: [ {val: "A", text: "goggle"}, {val: "B", text: "cycling"}, {val: "C", text: "rainy"}, {val: "D", text: "cartoon"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch câu hỏi:</b> Chọn từ có trọng âm chính rơi vào vị trí khác.</div>
+                        <div class="expl-step"><b>2. Phân tích:</b>
+                            <br>- A. goggle /ˈɡɒɡ.əl/ (nhấn âm 1)
+                            <br>- B. cycling /ˈsaɪ.klɪŋ/ (nhấn âm 1)
+                            <br>- C. rainy /ˈreɪ.ni/ (nhấn âm 1)
+                            <br>- D. cartoon /kɑːˈtuːn/ (nhấn âm 2 - tận cùng 'oon' thường nhận trọng âm)
+                        </div>
+                        <div class="expl-step"><b>3. Tại sao chọn D?</b> Trọng âm rơi vào âm tiết thứ 2.</div>
+                        <div class="expl-step"><b>4. Tại sao A, B, C sai?</b> Trọng âm rơi vào âm tiết thứ 1.</div>`
+                },
+                {
+                    q: "2. A. delicious B. tournament C. equipment D. possessive",
+                    ans: "B",
+                    options: [ {val: "A", text: "delicious"}, {val: "B", text: "tournament"}, {val: "C", text: "equipment"}, {val: "D", text: "possessive"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Phân tích:</b>
+                            <br>- A. delicious /dɪˈlɪʃ.əs/ (âm 2, tận cùng -ious nhấn ngay trước nó)
+                            <br>- B. tournament /ˈtʊə.nə.mənt/ (âm 1)
+                            <br>- C. equipment /ɪˈkwɪp.mənt/ (âm 2)
+                            <br>- D. possessive /pəˈzes.ɪv/ (âm 2)
+                        </div>
+                        <div class="expl-step"><b>2. Tại sao chọn B?</b> Trọng âm rơi vào âm 1. Ba đáp án kia rơi vào âm 2.</div>`
+                },
+                {
+                    q: "3. A. education B. animated C. favorite D. marathon",
+                    ans: "A",
+                    options: [ {val: "A", text: "education"}, {val: "B", text: "animated"}, {val: "C", text: "favorite"}, {val: "D", text: "marathon"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Phân tích:</b>
+                            <br>- A. education /ˌedʒ.uˈkeɪ.ʃən/ (âm 3, tận cùng -tion nhấn ngay trước nó)
+                            <br>- B. animated /ˈæn.ɪ.meɪ.tɪd/ (âm 1)
+                            <br>- C. favorite /ˈfeɪ.vər.ɪt/ (âm 1)
+                            <br>- D. marathon /ˈmær.ə.θən/ (âm 1)
+                        </div>
+                        <div class="expl-step"><b>2. Tại sao chọn A?</b> Trọng âm rơi vào âm 3. Các từ còn lại rơi vào âm 1.</div>`
+                },
+                {
+                    q: "4. A. popular B. comedy C. champion D. exciting",
+                    ans: "D",
+                    options: [ {val: "A", text: "popular"}, {val: "B", text: "comedy"}, {val: "C", text: "champion"}, {val: "D", text: "exciting"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Phân tích:</b>
+                            <br>- A. popular /ˈpɒp.jə.lər/ (âm 1)
+                            <br>- B. comedy /ˈkɒm.ə.di/ (âm 1)
+                            <br>- C. champion /ˈtʃæm.pi.ən/ (âm 1)
+                            <br>- D. exciting /ɪkˈsaɪ.tɪŋ/ (âm 2)
+                        </div>
+                        <div class="expl-step"><b>2. Tại sao chọn D?</b> Trọng âm rơi vào âm 2.</div>`
+                },
+                {
+                    q: "5. A. career B. famous C. palace D. tasty",
+                    ans: "A",
+                    options: [ {val: "A", text: "career"}, {val: "B", text: "famous"}, {val: "C", text: "palace"}, {val: "D", text: "tasty"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Phân tích:</b>
+                            <br>- A. career /kəˈrɪər/ (âm 2, tận cùng -eer nhận trọng âm)
+                            <br>- B. famous /ˈfeɪ.məs/ (âm 1)
+                            <br>- C. palace /ˈpæl.ɪs/ (âm 1)
+                            <br>- D. tasty /ˈteɪ.sti/ (âm 1)
+                        </div>
+                        <div class="expl-step"><b>2. Tại sao chọn A?</b> Trọng âm rơi vào âm 2.</div>`
+                }
+            ]
+        },
+        {
+            section: "Exercise 3: Choose the correct answers.",
+            questions: [
+                {
+                    q: "1. My favorite programme is ____ VTV3 every weekend.",
+                    ans: "A",
+                    options: [ {val: "A", text: "on"}, {val: "B", text: "in"}, {val: "C", text: "at"}, {val: "D", text: "about"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Chương trình yêu thích của tôi được chiếu trên kênh VTV3 mỗi cuối tuần.</div>
+                        <div class="expl-step"><b>2. Phân tích:</b>
+                            A. on (giới từ): trên (kênh truyền hình). B. in: trong. C. at: tại. D. about: về.
+                        </div>
+                        <div class="expl-step"><b>3. Tại sao chọn A?</b> Quy tắc Collocation: Ta dùng "on" đi trước tên kênh truyền hình hoặc "TV" (on TV, on VTV3).</div>
+                        <div class="expl-step"><b>4. Tại sao sai?</b> Các giới từ còn lại không dùng với kênh truyền hình.</div>`
+                },
+                {
+                    q: "2. ____ anything here! It's a must.",
+                    ans: "B",
+                    options: [ {val: "A", text: "Not touch"}, {val: "B", text: "Don’t touch"}, {val: "C", text: "No touching"}, {val: "D", text: "Touch"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Đừng chạm vào bất cứ thứ gì ở đây! Đó là quy định bắt buộc.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn B?</b> Đây là câu mệnh lệnh phủ định (Negative Imperative), cấu trúc là "Don't + V_nguyên thể".</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> A sai ngữ pháp. C ("No touching") thường dùng trên biển báo chữ ngắn, nhưng xét trong câu có chủ-vị hoàn chỉnh đằng sau "It's a must", B hợp văn cảnh hơn. D mang nghĩa khẳng định (hãy chạm vào), sai nghĩa.</div>`
+                },
+                {
+                    q: "3. The programme for children should be both funny and ____.",
+                    ans: "C",
+                    options: [ {val: "A", text: "horror"}, {val: "B", text: "frightening"}, {val: "C", text: "educational"}, {val: "D", text: "boring"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Chương trình cho trẻ em nên vừa vui nhộn vừa mang tính giáo dục.</div>
+                        <div class="expl-step"><b>2. Phân tích:</b> A. horror (n): kinh dị. B. frightening (adj): đáng sợ. C. educational (adj): mang tính giáo dục. D. boring (adj): nhàm chán.</div>
+                        <div class="expl-step"><b>3. Tại sao chọn C?</b> Liên từ "and" nối 2 tính từ mang ý nghĩa tương đương/bổ trợ. "Funny" (tích cực) nên từ sau cũng phải tích cực -> C.</div>
+                        <div class="expl-step"><b>4. Tại sao sai?</b> A, B, D đều mang nghĩa tiêu cực, không phù hợp cho trẻ em.</div>`
+                },
+                {
+                    q: "4. ____ do you watch T.V? — Every evening.",
+                    ans: "D",
+                    options: [ {val: "A", text: "What"}, {val: "B", text: "How long"}, {val: "C", text: "What time"}, {val: "D", text: "How often"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Bạn có thường xuyên xem TV không? - Mỗi buổi tối.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn D?</b> Câu trả lời "Every evening" (Mỗi tối) chỉ tần suất. Từ để hỏi tần suất là "How often".</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> What (cái gì), How long (bao lâu - hỏi khoảng thời gian), What time (mấy giờ - hỏi giờ cụ thể) không khớp với câu trả lời.</div>`
+                },
+                {
+                    q: "5. ____ character do you like most in this cartoon?",
+                    ans: "B",
+                    options: [ {val: "A", text: "Who"}, {val: "B", text: "Which"}, {val: "C", text: "How many"}, {val: "D", text: "How"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Bạn thích nhân vật NÀO nhất trong bộ phim hoạt hình này?</div>
+                        <div class="expl-step"><b>2. Tại sao chọn B?</b> "Which + Noun" dùng để hỏi sự lựa chọn giữa những thứ/người cụ thể (nhân vật nào).</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> Who không đi liền với danh từ (Who character -> sai cấu trúc). How many hỏi số lượng. How hỏi như thế nào.</div>`
+                },
+                {
+                    q: "6. I enjoy doing sports, ____ my brother just likes staying at home.",
+                    ans: "A",
+                    options: [ {val: "A", text: "but"}, {val: "B", text: "and"}, {val: "C", text: "so"}, {val: "D", text: "however"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Tôi thích chơi thể thao, NHƯNG anh trai tôi chỉ thích ở nhà.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn A?</b> 2 vế câu mang ý nghĩa tương phản (chơi thể thao >< ở nhà). Dùng liên từ "but" (nhưng).</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> "however" cũng nghĩa là "tuy nhiên" nhưng cách dùng dấu câu sai (phải là ; however, ). and (và), so (vì vậy) sai nghĩa.</div>`
+                },
+                {
+                    q: "7. She quickly returns home after work, ____ she can watch her favorite film.",
+                    ans: "D",
+                    options: [ {val: "A", text: "although"}, {val: "B", text: "but"}, {val: "C", text: "because"}, {val: "D", text: "so"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Cô ấy về nhà nhanh chóng sau giờ làm, VÌ VẬY cô ấy có thể xem bộ phim yêu thích.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn D?</b> Vế sau chỉ kết quả của hành động vế trước -> Dùng "so" (vì vậy / để mà - đôi khi dùng thay cho so that trong văn nói).</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> although (mặc dù), but (nhưng), because (bởi vì) ráp vào nghĩa sẽ bị ngược logic.</div>`
+                },
+                {
+                    q: "8. That film is shown on a special ____ for children.",
+                    ans: "A",
+                    options: [ {val: "A", text: "channel"}, {val: "B", text: "character"}, {val: "C", text: "favorite"}, {val: "D", text: "TV guide"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Bộ phim đó được chiếu trên một KÊNH đặc biệt dành cho trẻ em.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn A?</b> Phim được chiếu (shown) trên kênh truyền hình -> channel (n): kênh.</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> character (nhân vật), favorite (yêu thích), TV guide (lịch phát sóng) không hợp logic văn cảnh.</div>`
+                },
+                {
+                    q: "9. Mary loves watching ____ because she loves discovering about animals.",
+                    ans: "B",
+                    options: [ {val: "A", text: "animated films"}, {val: "B", text: "wildlife"}, {val: "C", text: "comedies"}, {val: "D", text: "game shows"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Mary thích xem chương trình thế giới động vật vì cô ấy yêu thích việc khám phá về các loài động vật.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn B?</b> Keyword: "animals" (động vật). Khớp với "wildlife" (thế giới hoang dã/động vật).</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> animated films (phim hoạt hình), comedies (phim hài), game shows (trò chơi truyền hình) không liên quan đến khám phá động vật.</div>`
+                },
+                {
+                    q: "10. You should prepare ____ before joining a badminton club.",
+                    ans: "A",
+                    options: [ {val: "A", text: "a racket"}, {val: "B", text: "a ball"}, {val: "C", text: "goggles"}, {val: "D", text: "boat"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Bạn nên chuẩn bị một CÂY VỢT trước khi tham gia câu lạc bộ cầu lông.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn A?</b> Keyword "badminton" (cầu lông). Chơi cầu lông cần "racket" (cây vợt).</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> ball (quả bóng - dùng cho bóng đá/tennis), goggles (kính bơi), boat (thuyền) không dùng cho cầu lông.</div>`
+                },
+                {
+                    q: "11. Pelé scored more than a thousand ____ in his career.",
+                    ans: "A",
+                    options: [ {val: "A", text: "goals"}, {val: "B", text: "balls"}, {val: "C", text: "winners"}, {val: "D", text: "champions"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Pelé đã ghi hơn một ngàn BÀN THẮNG trong sự nghiệp của ông ấy.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn A?</b> Cụm từ cố định (Collocation): "score a goal" (ghi bàn). Số nhiều là "goals".</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> Không ai nói "score balls/winners/champions".</div>`
+                },
+                {
+                    q: "12. ____ so lazy! ____ more exercise!",
+                    ans: "C",
+                    options: [ {val: "A", text: "Be/ Do"}, {val: "B", text: "Be/ Don’t do"}, {val: "C", text: "Don’t be/ Do"}, {val: "D", text: "Don’t be/ Don’t do"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> ĐỪNG LƯỜI BIẾNG như vậy! HÃY TẬP thể dục nhiều hơn!</div>
+                        <div class="expl-step"><b>2. Tại sao chọn C?</b> Câu mệnh lệnh. Vế 1 khuyên không nên lười (Don't be). Vế 2 khuyên nên làm (Do). Khớp với đáp án C.</div>`
+                },
+                {
+                    q: "13. My father didn't come home ____. He had to go on duty.",
+                    ans: "D",
+                    options: [ {val: "A", text: "tomorrow"}, {val: "B", text: "every day"}, {val: "C", text: "now"}, {val: "D", text: "yesterday"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Bố tôi đã không về nhà HÔM QUA. Ông ấy phải đi trực.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn D?</b> Dấu hiệu nhận biết: "didn't come" (Quá khứ đơn). Trạng từ thời gian duy nhất ở quá khứ là "yesterday".</div>`
+                },
+                {
+                    q: "14. They are from Sydney. Sydney Opera House is a landmark in ____ city.",
+                    ans: "B",
+                    options: [ {val: "A", text: "they"}, {val: "B", text: "their"}, {val: "C", text: "theirs"}, {val: "D", text: "them"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Họ đến từ Sydney. Nhà hát Opera Sydney là một biểu tượng ở thành phố CỦA HỌ.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn B?</b> Cần một tính từ sở hữu đứng trước danh từ "city". "Their" + Noun = Của họ.</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> they (chủ ngữ), theirs (đại từ sở hữu - đứng một mình), them (tân ngữ).</div>`
+                },
+                {
+                    q: "15. ____ house is not as big as ____.",
+                    ans: "C",
+                    options: [ {val: "A", text: "My/ your"}, {val: "B", text: "Mine/ your"}, {val: "C", text: "My/ yours"}, {val: "D", text: "Mine/ yours"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Ngôi nhà CỦA TÔI không to bằng NGÔI NHÀ CỦA BẠN.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn C?</b> Vị trí 1: trước danh từ "house" cần tính từ sở hữu (My). Vị trí 2: Đứng một mình cuối câu thay thế cho "your house", cần Đại từ sở hữu (yours). -> My / yours.</div>`
+                },
+                {
+                    q: "16. A ____ is a place where goods are sold from boats.",
+                    ans: "D",
+                    options: [ {val: "A", text: "stall"}, {val: "B", text: "palace"}, {val: "C", text: "supermarket"}, {val: "D", text: "floating market"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Chợ nổi là nơi hàng hóa được bán từ các con thuyền.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn D?</b> Keyword "sold from boats" (bán từ thuyền) định nghĩa chính xác từ "floating market" (chợ nổi).</div>`
+                },
+                {
+                    q: "17. Hanoi is famous ____ many types of delicious street food.",
+                    ans: "D",
+                    options: [ {val: "A", text: "at"}, {val: "B", text: "in"}, {val: "C", text: "about"}, {val: "D", text: "for"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Hà Nội nổi tiếng về nhiều loại thức ăn đường phố ngon.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn D?</b> Collocation (Cụm từ cố định): "famous for" = nổi tiếng về cái gì đó.</div>`
+                },
+                {
+                    q: "18. People said that it is ____ during summer here.",
+                    ans: "C",
+                    options: [ {val: "A", text: "tasty"}, {val: "B", text: "friendly"}, {val: "C", text: "rainy"}, {val: "D", text: "beautifully"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Mọi người nói rằng trời thường MƯA vào mùa hè ở đây.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn C?</b> Chủ ngữ "it" nói về thời tiết (it is rainy). Các tính từ tasty (ngon), friendly (thân thiện) không dùng chỉ thời tiết. beautifully là trạng từ sai ngữ pháp sau "is".</div>`
+                },
+                {
+                    q: "19. One of the most famous landmarks of London is ____.",
+                    ans: "B",
+                    options: [ {val: "A", text: "Opera House"}, {val: "B", text: "Big Ben Tower"}, {val: "C", text: "One Pillar Pagoda"}, {val: "D", text: "the Statue of Liberty"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Một trong những địa danh nổi tiếng nhất của London là Tháp đồng hồ Big Ben.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn B?</b> Kiến thức thực tế: Big Ben nằm ở London (Anh). Opera House (Úc), One Pillar Pagoda (Chùa Một Cột - Việt Nam), Statue of Liberty (Tượng Nữ thần tự do - Mỹ).</div>`
+                },
+                {
+                    q: "20. Although he tried his best, he ____ the competition yesterday.",
+                    ans: "C",
+                    options: [ {val: "A", text: "doesn’t win"}, {val: "B", text: "didn’t won"}, {val: "C", text: "didn’t win"}, {val: "D", text: "won"} ],
+                    expl: `
+                        <div class="expl-step"><b>1. Dịch:</b> Dù anh ấy đã cố gắng hết sức, anh ấy ĐÃ KHÔNG THẮNG cuộc thi ngày hôm qua.</div>
+                        <div class="expl-step"><b>2. Tại sao chọn C?</b> "yesterday" -> Quá khứ đơn. Dạng phủ định là "didn't + V_nguyên thể" -> didn't win.</div>
+                        <div class="expl-step"><b>3. Tại sao sai?</b> A sai thì. B sai ngữ pháp (đã mượn trợ động từ didn't thì động từ win không chia quá khứ nữa). D sai nghĩa (vì có Although mang nghĩa tương phản).</div>`
+                }
+            ]
+        }
+    ];
+
+    // Dữ liệu cho bài điền từ (Exercise 4)
+    const gapFillData = [
+        { inf: "go", ans: "went", wrong: ["goed", "gone", "going"] },
+        { inf: "see", ans: "saw", wrong: ["seed", "seen", "seeing"] },
+        { inf: "tell", ans: "told", wrong: ["telled", "tolled", "telling"] },
+        { inf: "study", ans: "studied", wrong: ["studyed", "studien", "studying"] },
+        { inf: "draw", ans: "drew", wrong: ["drawed", "drawn", "drawing"] },
+        { inf: "work", ans: "worked", wrong: ["wrought", "worken", "working"] },
+        { inf: "enjoy", ans: "enjoyed", wrong: ["enjoyd", "enjoi", "enjoying"] },
+        { inf: "buy", ans: "bought", wrong: ["buyed", "boughted", "buy"] },
+        { inf: "begin", ans: "began", wrong: ["begun", "begined", "beginned"] },
+        { inf: "drive", ans: "drove", wrong: ["drived", "driven", "droved"] },
+        { inf: "ask", ans: "asked", wrong: ["askt", "ask", "asking"] },
+        { inf: "run", ans: "ran", wrong: ["runned", "run", "running"] },
+        { inf: "get", ans: "got", wrong: ["gotten", "getted", "gat"] },
+        { inf: "eat", ans: "ate", wrong: ["eated", "eaten", "eat"] },
+        { inf: "use", ans: "used", wrong: ["use", "usen", "using"] },
+        { inf: "come", ans: "came", wrong: ["comed", "come", "coming"] },
+        { inf: "meet", ans: "met", wrong: ["meeted", "meet", "meeting"] },
+        { inf: "travel", ans: "travelled", wrong: ["travel", "travelen", "traveling"] },
+        { inf: "write", ans: "wrote", wrong: ["writed", "written", "write"] },
+        { inf: "feel", ans: "felt", wrong: ["feeled", "feelt", "feeling"] }
+    ];
+
+    let currentGapBtn = null;
+    let currentGapWord = null;
+
+    // --- 5. RENDER GIAO DIỆN ---
+    const quizContainer = document.getElementById('quiz-container');
+    let qCounter = 0;
+
+    data.forEach(sec => {
+        const secDiv = document.createElement('div');
+        secDiv.innerHTML = `<div class="section-title">${sec.section}</div>`;
+        
+        sec.questions.forEach((qObj) => {
+            totalQuestions++;
+            const qId = `q_${qCounter++}`;
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const qText = document.createElement('div');
+            qText.className = 'question-text';
+            qText.innerHTML = qObj.q;
+            card.appendChild(qText);
+
+            const optionsGrid = document.createElement('div');
+            optionsGrid.className = 'options-grid';
+
+            // Đảo đáp án ngẫu nhiên trước khi render
+            let shuffledOptions = shuffleArray([...qObj.options]);
+
+            shuffledOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                let cleanText = opt.text.replace(/^[A-D]\.\s*/, '');
+                btn.innerHTML = cleanText; 
+                
+                // Đánh dấu ngầm đáp án đúng
+                if (opt.val === qObj.ans) {
+                    btn.dataset.correct = "true";
+                }
+
+                btn.onclick = () => handleAnswer(btn, optionsGrid, opt.val === qObj.ans, qObj.expl, card);
+                optionsGrid.appendChild(btn);
+            });
+
+            card.appendChild(optionsGrid);
+
+            // Khung giải thích
+            const explDiv = document.createElement('div');
+            explDiv.className = 'explanation';
+            card.appendChild(explDiv);
+
+            secDiv.appendChild(card);
+        });
+        quizContainer.appendChild(secDiv);
+    });
+
+    // RENDER Exercise 4 (Gap Fill - Popup Style)
+    const ex4Div = document.createElement('div');
+    ex4Div.innerHTML = `<div class="section-title">Exercise 4: Change the verbs into Past Simple form. (Bấm vào nút để chọn đáp án)</div>`;
+    const gapContainer = document.createElement('div');
+    gapContainer.className = 'gap-fill-container';
+
+    gapFillData.forEach((item, index) => {
+        totalQuestions++;
+        const gapItem = document.createElement('div');
+        gapItem.className = 'gap-item';
+        
+        const label = document.createElement('span');
+        label.innerText = `${index + 1}. ${item.inf} ➔ `;
+        
+        const btn = document.createElement('button');
+        btn.className = 'gap-btn';
+        btn.innerText = "[ Chọn từ ]";
+        
+        btn.onclick = () => openGapModal(btn, item);
+        
+        gapItem.appendChild(label);
+        gapItem.appendChild(btn);
+        
+        // Khung giải thích nhỏ nằm trong gapItem
+        const explDiv = document.createElement('div');
+        explDiv.className = 'explanation';
+        explDiv.style.gridColumn = "1 / -1";
+        explDiv.style.marginTop = "10px";
+        explDiv.id = `expl_gap_${index}`;
+
+        // Bọc vào một wrapper để giữ bố cục
+        const wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.flexDirection = 'column';
+        wrapper.appendChild(gapItem);
+        wrapper.appendChild(explDiv);
+
+        gapContainer.appendChild(wrapper);
+    });
+    ex4Div.appendChild(gapContainer);
+    quizContainer.appendChild(ex4Div);
+
+    // --- 6. LOGIC XỬ LÝ TRẮC NGHIỆM ĐÃ CẬP NHẬT ---
+    function handleAnswer(btn, grid, isCorrect, explHTML, cardDiv) {
+        // Khóa tất cả nút
+        const buttons = grid.querySelectorAll('.option-btn');
+        buttons.forEach(b => b.disabled = true);
+
+        const explDiv = cardDiv.querySelector('.explanation');
+        explDiv.innerHTML = `<h4>💡 Giải thích chi tiết:</h4>${explHTML}`;
+
+        if (isCorrect) {
+            btn.classList.add('correct');
+            playDing();
+            triggerConfetti();
+            score++;
+        } else {
+            // Nút vừa chọn sai -> Chuyển màu đỏ và rung lắc
+            btn.classList.add('wrong');
+            cardDiv.classList.add('shake');
+            playBuzz();
+            setTimeout(() => cardDiv.classList.remove('shake'), 400);
+            
+            // Tìm đáp án đúng ngầm định và bôi màu xanh
+            const correctBtn = grid.querySelector('[data-correct="true"]');
+            if (correctBtn) {
+                correctBtn.classList.add('correct');
+            }
+        }
+        
+        explDiv.style.display = 'block';
+    }
+
+    // --- 7. LOGIC XỬ LÝ GAP FILL (POPUP) ---
+    const modal = document.getElementById('gapModal');
+    const modalOptions = document.getElementById('modal-options');
+    const modalTitle = document.getElementById('modal-title');
+
+    function openGapModal(btnElement, wordData) {
+        if(btnElement.disabled) return;
+        currentGapBtn = btnElement;
+        currentGapWord = wordData;
+        
+        modalTitle.innerText = `Quá khứ của "${wordData.inf}" là gì?`;
+        modalOptions.innerHTML = '';
+        
+        let opts = shuffleArray([wordData.ans, ...wordData.wrong]);
+        
+        opts.forEach(opt => {
+            const optBtn = document.createElement('button');
+            optBtn.className = 'option-btn';
+            optBtn.innerText = opt;
+            optBtn.onclick = () => selectGapAnswer(opt, wordData.ans);
+            modalOptions.appendChild(optBtn);
+        });
+        
+        modal.style.display = 'flex';
+    }
+
+    function selectGapAnswer(selected, correctAns) {
+        modal.style.display = 'none';
+        currentGapBtn.innerText = selected;
+        currentGapBtn.disabled = true;
+
+        // Tìm explDiv gần nhất
+        const wrapper = currentGapBtn.closest('div').parentElement;
+        const explDiv = wrapper.querySelector('.explanation');
+
+        explDiv.innerHTML = `
+            <div class="expl-step"><b>💡 Giải thích:</b> Động từ nguyên thể là <b>${currentGapWord.inf}</b>. Dạng quá khứ đơn (Past Simple) của nó là <b>${correctAns}</b>.</div>
+        `;
+
+        if(selected === correctAns) {
+            currentGapBtn.classList.add('filled-correct');
+            playDing();
+            triggerConfetti();
+            score++;
+        } else {
+            currentGapBtn.classList.add('filled-wrong');
+            currentGapBtn.closest('.gap-item').classList.add('shake');
+            playBuzz();
+            setTimeout(() => currentGapBtn.closest('.gap-item').classList.remove('shake'), 400);
+            explDiv.innerHTML += `<div class="expl-step" style="color:red;">Lưu ý: "${selected}" là dạng sai. Nhớ học thuộc bảng động từ bất quy tắc nhé!</div>`;
+        }
+        explDiv.style.display = 'block';
+    }
+
+    // Đóng modal khi bấm ra ngoài
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    // --- 8. TỔNG KẾT NỘP BÀI ---
+    function submitQuiz() {
+        const resultModal = document.getElementById('resultModal');
+        const scoreText = document.getElementById('score-text');
+        const praiseText = document.getElementById('praise-text');
+
+        scoreText.innerText = `Bạn đã đúng ${score} / ${totalQuestions} câu!`;
+        
+        let ratio = score / totalQuestions;
+        let praises = [
+            "Xuất sắc! Ms. Chí Nên rất tự hào về bạn! 🌟",
+            "Giỏi lắm! Bạn đã rất cố gắng! 🎉",
+            "Cần ôn tập thêm một chút nhé, cô tin bạn sẽ làm tốt hơn! 💪"
+        ];
+
+        if (ratio > 0.8) praiseText.innerText = praises[0];
+        else if (ratio >= 0.5) praiseText.innerText = praises[1];
+        else praiseText.innerText = praises[2];
+
+        resultModal.style.display = 'flex';
+        triggerConfetti();
+        playDing();
+    }
+</script>
+</body>
+</html>
