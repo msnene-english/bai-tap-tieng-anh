@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Kiểm Tra Full - Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #8854C0; 
+            --secondary: #00C9A7; 
+            --correct: #00D26A; 
+            --incorrect: #FF4757; 
+            --bg-color: #f8f4ff;
+            --text-main: #333333;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; font-family: 'Nunito', sans-serif; }
+
+        body {
+            margin: 0; padding: 20px;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(var(--secondary) 10%, transparent 11%), radial-gradient(var(--secondary) 10%, transparent 11%);
+            background-size: 60px 60px; background-position: 0 0, 30px 30px;
+            background-attachment: fixed; color: var(--text-main);
+        }
+
+        .header-container {
+            background: linear-gradient(135deg, var(--primary), #a675e8);
+            color: white; text-align: center; padding: 20px; border-radius: 20px;
+            box-shadow: 0 8px 0 #6a3a9e; margin: 0 auto 40px auto; max-width: 900px;
+        }
+
+        .header-container h1 { margin: 0; font-family: 'Quicksand', sans-serif; font-weight: 900; font-size: 28px; }
+
+        .quiz-container { max-width: 900px; margin: 0 auto; }
+
+        .part-title {
+            background-color: #FFC312; color: #fff; display: inline-block; padding: 10px 25px;
+            border-radius: 15px; font-weight: 800; font-size: 20px; box-shadow: 0 5px 0 #d9a50b;
+            margin: 30px 0 20px 0; width: 100%; text-align: center; text-transform: uppercase;
+        }
+
+        .question-card {
+            background: var(--card-bg); border-radius: 20px; padding: 25px; margin-bottom: 30px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1); border: 3px solid #eee; transition: transform 0.2s;
+        }
+        .question-card:hover { border-color: var(--secondary); }
+
+        .question-text { font-size: 20px; font-weight: 800; margin-bottom: 20px; line-height: 1.5; color: #2d3436; }
+        .question-text span.blank { display: inline-block; min-width: 80px; border-bottom: 3px dashed var(--primary); text-align: center; color: var(--primary); padding: 0 10px; }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .option-btn {
+            background: #fff; border: 2px solid #e0e0e0; border-radius: 15px; padding: 15px 20px;
+            font-size: 18px; font-weight: 700; color: #555; cursor: pointer; box-shadow: 0 6px 0 #e0e0e0;
+            transition: all 0.1s ease; text-align: left; display: flex; align-items: center;
+        }
+        .option-btn .opt-letter {
+            background: #f1f2f6; width: 30px; height: 30px; display: flex; align-items: center;
+            justify-content: center; border-radius: 50%; margin-right: 15px; font-weight: 900; color: #999;
+        }
+        .option-btn:hover:not(:disabled) { transform: translateY(2px); box-shadow: 0 4px 0 #e0e0e0; border-color: var(--secondary); }
+        .option-btn:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0px 0 #e0e0e0; }
+        
+        .option-btn.correct { background: var(--correct); border-color: var(--correct); color: white; box-shadow: 0 6px 0 #00a653; }
+        .option-btn.correct .opt-letter { background: rgba(255,255,255,0.3); color: white;}
+        .option-btn.incorrect { background: var(--incorrect); border-color: var(--incorrect); color: white; box-shadow: 0 6px 0 #cc3945; }
+        .option-btn.incorrect .opt-letter { background: rgba(255,255,255,0.3); color: white;}
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; }
+
+        .explanation-box {
+            display: none; margin-top: 20px; background: #fdf2f8; border: 2px dashed var(--primary);
+            border-radius: 15px; padding: 20px; animation: fadeIn 0.5s ease-in-out;
+        }
+        .explanation-box h4 { margin-top: 0; color: var(--primary); font-family: 'Quicksand', sans-serif; font-size: 20px; }
+        .explanation-box p { margin: 10px 0; font-size: 16px; line-height: 1.6; }
+        .tag-correct { color: var(--correct); font-weight: 800; }
+        .tag-incorrect { color: var(--incorrect); font-weight: 800; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25%, 75% { transform: translateX(-8px) rotate(-1deg); }
+            50% { transform: translateX(8px) rotate(1deg); }
+        }
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+        .submit-area { text-align: center; margin: 50px 0; }
+        .btn-submit {
+            background: linear-gradient(135deg, #FF6B6B, #FF4757); color: white; font-size: 24px; font-weight: 900;
+            padding: 15px 50px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 8px 0 #cc3945;
+            text-transform: uppercase; transition: all 0.2s;
+        }
+        .btn-submit:hover { transform: translateY(3px); box-shadow: 0 5px 0 #cc3945; }
+        .btn-submit:active { transform: translateY(8px); box-shadow: 0 0 0 #cc3945; }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .score-modal {
+            background: white; padding: 40px; border-radius: 30px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 400px; width: 90%; animation: fadeIn 0.3s;
+        }
+        .score-modal h2 { color: var(--primary); font-size: 32px; margin-bottom: 10px; }
+        .score-number { font-size: 60px; font-weight: 900; color: var(--correct); margin: 20px 0; }
+
+        @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1><i class="fas fa-graduation-cap"></i> Ms. Chí Nên  - Full Master Quiz</h1>
+        <p>Phiên bản Đầy đủ 45 Câu - Không thiếu 1 chữ!</p>
+    </div>
+
+    <div class="quiz-container" id="quiz-container"></div>
+
+    <div class="submit-area">
+        <button class="btn-submit" onclick="showScore()"><i class="fas fa-paper-plane"></i> Nộp Bài Ngay</button>
+    </div>
+
+    <div class="modal-overlay" id="scoreModal">
+        <div class="score-modal">
+            <h2>Kết Quả Của Bạn!</h2>
+            <p id="score-message"></p>
+            <div class="score-number" id="score-display">0/0</div>
+            <button class="btn-submit" style="font-size: 18px; padding: 10px 30px;" onclick="location.reload()">Làm Lại</button>
+        </div>
+    </div>
+
+<script>
+// --- AUDIO ENGINE ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); }
+function playSound(type) {
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+    if (type === 'correct') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    } else {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.3);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    }
+}
+
+// --- FULL DATABASE ---
+const quizData = [
+    { type: 'title', text: "Part 7: Complete the sentences with the correct form of the verbs" },
+    {
+        id: 1, q: "(You/ often/ skip) ________ when you were little kids?",
+        opts: ["Did you often skip", "Do you often skip", "Were you often skip", "Have you often skipped"], ans: 0,
+        trans: "Bạn có thường xuyên nhảy dây khi còn là những đứa trẻ không?",
+        optTrans: "A. Did you often skip (Quá khứ đơn) | B. Do you often skip (Hiện tại đơn) | C. Were you often skip (Sai ngữ pháp) | D. Have you often skipped (HTHT)",
+        right: "Có 'when you were little kids' (khi còn nhỏ) -> Sự việc đã kết thúc ở quá khứ -> Dùng Quá khứ đơn (Did + S + V).",
+        wrong: "B sai thì hiện tại. C sai vì to be 'were' không đi với V-nguyên thể. D sai vì hành động không kéo dài đến hiện tại."
+    },
+    {
+        id: 2, q: "When there is traffic jam, it (take) ________ me a very long time to go home.",
+        opts: ["takes", "took", "is taking", "take"], ans: 0,
+        trans: "Khi có tắc đường, nó khiến tôi mất một thời gian rất dài để về nhà.",
+        optTrans: "A. takes (HTĐ - số ít) | B. took (QKĐ) | C. is taking (HTTD) | D. take (HTĐ - số nhiều)",
+        right: "Diễn tả sự thật hiển nhiên (When there IS...). Cấu trúc: It takes sb + time + to V. Chủ ngữ 'it' nên động từ thêm 's'.",
+        wrong: "B sai thì quá khứ. C sai vì không phải hành động tạm thời. D sai vì thiếu 's' cho ngôi thứ 3 số ít."
+    },
+    {
+        id: 3, q: "Hurry up or we (miss) ________ the last bus.",
+        opts: ["will miss", "miss", "missed", "are missing"], ans: 0,
+        trans: "Nhanh lên nếu không chúng ta sẽ lỡ chuyến xe buýt cuối cùng đấy.",
+        optTrans: "A. will miss (TLĐ) | B. miss (HTĐ) | C. missed (QKĐ) | D. are missing (HTTD)",
+        right: "Câu mệnh lệnh + 'or' (nếu không thì) + Tương lai đơn (will V) để chỉ hậu quả sẽ xảy ra.",
+        wrong: "Các đáp án còn lại sai thì, không thể hiện được sự việc chưa xảy ra ở tương lai."
+    },
+    {
+        id: 4, q: "I'd like (tell) ________ you some funny stories.",
+        opts: ["to tell", "telling", "tell", "told"], ans: 0,
+        trans: "Tôi muốn kể cho bạn nghe một vài câu chuyện vui.",
+        optTrans: "A. to tell | B. telling | C. tell | D. told",
+        right: "Cấu trúc cố định: 'would like + to V' (muốn làm gì). 'I'd like' = 'I would like'.",
+        wrong: "Sau 'would like' bắt buộc dùng 'to V', không dùng V-ing hay V nguyên thể."
+    },
+    {
+        id: 5, q: "She got the highest score in her class despite (not study) ________ so hard.",
+        opts: ["not studying", "not to study", "didn't study", "not studied"], ans: 0,
+        trans: "Cô ấy đạt điểm cao nhất lớp mặc dù không học hành quá chăm chỉ.",
+        optTrans: "A. not studying | B. not to study | C. didn't study | D. not studied",
+        right: "Sau 'despite' (mặc dù) phải là Cụm danh từ hoặc V-ing. Phủ định thì thêm 'not' trước V-ing -> not studying.",
+        wrong: "C sai vì sau despite không đi với Mệnh đề (S+V). B và D sai ngữ pháp cơ bản."
+    },
+    {
+        id: 6, q: "Drivers have to (fasten) ________ seatbelt whenever they drive.",
+        opts: ["fasten", "to fasten", "fastening", "fastened"], ans: 0,
+        trans: "Tài xế phải thắt dây an toàn bất cứ khi nào họ lái xe.",
+        optTrans: "A. fasten (V-bare) | B. to fasten | C. fastening | D. fastened",
+        right: "Cấu trúc: 'have to + V nguyên thể' (phải làm gì do quy định, bắt buộc).",
+        wrong: "Từ 'to' đã nằm trong 'have to' rồi nên động từ theo sau phải giữ nguyên, không thêm gì cả."
+    },
+    {
+        id: 7, q: "It sometimes may be difficult (get) ________ a taxi during rush-hours.",
+        opts: ["to get", "getting", "get", "got"], ans: 0,
+        trans: "Đôi khi có thể rất khó để bắt một chiếc taxi trong giờ cao điểm.",
+        optTrans: "A. to get | B. getting | C. get | D. got",
+        right: "Cấu trúc: It is + adj (difficult/easy...) + to V (Rất khó/dễ để làm gì).",
+        wrong: "Sau tính từ thường đi kèm 'to V', không dùng V-ing hay V nguyên thể trong cấu trúc chủ ngữ giả 'It'."
+    },
+    {
+        id: 8, q: "(Thousands of tourists/ visit) ________ Black Pool each year?",
+        opts: ["Do thousands of tourists visit", "Did thousands of tourists visit", "Are thousands of tourists visiting", "Have thousands of tourists visited"], ans: 0,
+        trans: "Có hàng ngàn du khách đến thăm Black Pool mỗi năm không?",
+        optTrans: "A. Do... visit (HTĐ) | B. Did... visit (QKĐ) | C. Are... visiting (HTTD) | D. Have... visited (HTHT)",
+        right: "Dấu hiệu 'each year' (mỗi năm) chỉ một sự việc lặp đi lặp lại thường xuyên -> Dùng Hiện tại đơn. Trợ động từ số nhiều là 'Do'.",
+        wrong: "Sai thì. B chỉ quá khứ, C chỉ việc đang xảy ra lúc nói, D chỉ việc tính đến hiện tại."
+    },
+    {
+        id: 9, q: "It's difficult (get) ________ used to (eat) ________ with chopsticks.",
+        opts: ["to get / eating", "getting / to eat", "get / eat", "to get / eat"], ans: 0,
+        trans: "Rất khó để làm quen với việc ăn bằng đũa.",
+        optTrans: "A. to get / eating | B. getting / to eat | C. get / eat | D. to get / eat",
+        right: "Vế 1: It's + adj + to V -> to get. Vế 2: get used to + V-ing (làm quen với việc gì) -> eating.",
+        wrong: "Cần nhớ kỹ 'used to V' (từng làm gì) nhưng 'get/be used to + V-ing' (quen với việc gì). Đáp án A kết hợp đúng nhất."
+    },
+    {
+        id: 10, q: "Mr. Smith (pay) ________ all his bills at the end of the month.",
+        opts: ["pays", "pay", "paid", "is paying"], ans: 0,
+        trans: "Ông Smith thanh toán tất cả các hóa đơn của mình vào cuối mỗi tháng.",
+        optTrans: "A. pays | B. pay | C. paid | D. is paying",
+        right: "Dấu hiệu 'at the end of the month' chỉ thói quen/lịch trình lặp lại -> Hiện tại đơn. Mr. Smith (ngôi 3 số ít) -> thêm 's'.",
+        wrong: "B thiếu 's'. C sai vì không có dấu hiệu quá khứ. D sai vì không diễn tả hành động tạm thời lúc nói."
+    },
+    {
+        id: 11, q: "Don't talk to me. I (try) ________ to learn this page by heart.",
+        opts: ["am trying", "try", "tried", "have tried"], ans: 0,
+        trans: "Đừng nói chuyện với tôi. Tôi đang cố gắng học thuộc lòng trang này.",
+        optTrans: "A. am trying (HTTD) | B. try (HTĐ) | C. tried (QKĐ) | D. have tried (HTHT)",
+        right: "Câu mệnh lệnh 'Don't talk to me' cho thấy hành động 'cố gắng' đang diễn ra NGAY LÚC NÓI -> Dùng Hiện tại tiếp diễn.",
+        wrong: "Các đáp án khác không thể hiện được tính tiếp diễn tạm thời ngay tại thời điểm hiện tại."
+    },
+    {
+        id: 12, q: "(You/ clean) ________ up the dirty streets in your area last Sunday?",
+        opts: ["Did you clean", "Do you clean", "Were you cleaning", "Have you cleaned"], ans: 0,
+        trans: "Bạn đã dọn dẹp những con đường bẩn thỉu trong khu vực của bạn vào Chủ nhật tuần trước phải không?",
+        optTrans: "A. Did you clean (QKĐ) | B. Do you clean (HTĐ) | C. Were you cleaning (QKTD) | D. Have you cleaned (HTHT)",
+        right: "Dấu hiệu 'last Sunday' (Chủ nhật trước) chỉ thời điểm xác định trong quá khứ -> Dùng Quá khứ đơn (Did + S + V).",
+        wrong: "B sai thì hiện tại. C sai vì không nhấn mạnh tính đang tiếp diễn tại một giờ cụ thể trong quá khứ. D sai vì đã có thời gian cụ thể ở quá khứ."
+    },
+    {
+        id: 13, q: "(They/ start) ________ the community garden project in 2012?",
+        opts: ["Did they start", "Do they start", "Were they starting", "Have they started"], ans: 0,
+        trans: "Họ đã bắt đầu dự án vườn cộng đồng vào năm 2012 phải không?",
+        optTrans: "A. Did they start (QKĐ) | B. Do they start (HTĐ) | C. Were they starting (QKTD) | D. Have they started (HTHT)",
+        right: "Dấu hiệu 'in 2012' là một mốc thời gian đã qua trong quá khứ -> Dùng Quá khứ đơn (Did + S + V).",
+        wrong: "Chỉ dùng HTHT (D) nếu có từ 'since 2012'. Ở đây chỉ là 'in 2012' nên chốt QKĐ."
+    },
+    {
+        id: 14, q: "Sit down and watch TV. I (finish) ________ my work soon before I join you.",
+        opts: ["will finish", "finish", "am finishing", "finished"], ans: 0,
+        trans: "Ngồi xuống và xem TV đi. Tôi sẽ hoàn thành công việc sớm trước khi tôi tham gia cùng bạn.",
+        optTrans: "A. will finish (TLĐ) | B. finish (HTĐ) | C. am finishing (HTTD) | D. finished (QKĐ)",
+        right: "Hành động 'finish' sẽ xảy ra trong tương lai (sau khi người kia ngồi xuống). Dấu hiệu 'soon' -> Tương lai đơn.",
+        wrong: "B, C, D sai thì, không diễn tả một lời hứa/dự định tức thời trong tương lai."
+    },
+    {
+        id: 15, q: "(Eating fruit and vegetables every day/ be) ________ healthy?",
+        opts: ["Is eating fruit and vegetables every day", "Are eating fruit and vegetables every day", "Does eating fruit and vegetables every day be", "Do eating fruit and vegetables every day be"], ans: 0,
+        trans: "Ăn trái cây và rau củ mỗi ngày có tốt cho sức khỏe không?",
+        optTrans: "A. Is eating... | B. Are eating... | C. Does eating... be | D. Do eating... be",
+        right: "Chủ ngữ của câu là một Danh động từ V-ing (Eating...), do đó động từ tobe luôn chia ở số ít là 'Is'. Đảo 'Is' lên đầu để làm câu hỏi.",
+        wrong: "B sai vì chia số nhiều (Are). C và D sai ngữ pháp vì 'be' là động từ tobe, không đi mượn trợ động từ Do/Does."
+    },
+
+    { type: 'title', text: "Part 8: Complete the sentences with the correct preposition" },
+    {
+        id: 16, q: "In spite ________ their tiredness, they wanted to watch the film.",
+        opts: ["of", "off", "with", "about"], ans: 0, trans: "Mặc dù họ rất mệt, họ vẫn muốn xem bộ phim.",
+        optTrans: "A. of | B. off | C. with | D. about", right: "Cụm từ cố định: 'In spite of + Noun/V-ing' (Mặc dù).", wrong: "Các giới từ khác không tạo thành cụm từ có nghĩa chuẩn xác."
+    },
+    {
+        id: 17, q: "What time does the post office close? It closes ________ about half past four.",
+        opts: ["at", "on", "in", "to"], ans: 0, trans: "Bưu điện đóng cửa lúc mấy giờ? Nó đóng cửa vào khoảng 4 rưỡi.",
+        optTrans: "A. at | B. on | C. in | D. to", right: "Giờ giấc chính xác trên đồng hồ dùng giới từ 'at' (at 4:30).", wrong: "in (tháng/năm), on (ngày/thứ)."
+    },
+    {
+        id: 18, q: "What's your date ________ birth?",
+        opts: ["of", "on", "in", "at"], ans: 0, trans: "Ngày tháng năm sinh của bạn là gì?",
+        optTrans: "A. of | B. on | C. in | D. at", right: "Cụm danh từ cố định: 'date of birth' (Ngày sinh).", wrong: "Không dùng on, in, at cho cụm từ sở hữu này."
+    },
+    {
+        id: 19, q: "We give each other presents ________ Christmas.",
+        opts: ["at", "on", "in", "for"], ans: 0, trans: "Chúng tôi tặng quà cho nhau vào dịp Lễ Giáng sinh.",
+        optTrans: "A. at | B. on | C. in | D. for", right: "Chỉ một DỊP lễ hội kéo dài nhiều ngày ta dùng 'at' (at Christmas, at Easter).", wrong: "Chỉ dùng 'on' nếu có chữ 'Day' (VD: on Christmas Day)."
+    },
+    {
+        id: 20, q: "Were you disappointed ________ your examination results?",
+        opts: ["with", "of", "on", "for"], ans: 0, trans: "Bạn có thất vọng với kết quả kỳ thi của mình không?",
+        optTrans: "A. with | B. of | C. on | D. for", right: "Tính từ 'disappointed' đi kèm giới từ 'with', 'about', hoặc 'at' (Thất vọng về điều gì).", wrong: "Rất nhiều bạn nhầm dùng 'of', nhưng trong tiếng Anh không có 'disappointed of'."
+    },
+    {
+        id: 21, q: "Your writing is similar ________ mine.",
+        opts: ["to", "with", "of", "as"], ans: 0, trans: "Chữ viết của bạn tương tự như chữ của tôi.",
+        optTrans: "A. to | B. with | C. of | D. as", right: "Collocation: 'be similar to sth' (Tương tự với cái gì).", wrong: "Tiếng Việt nói 'tương tự VỚI' nên hay nhầm thành 'with', nhưng tiếng Anh bắt buộc dùng 'to'."
+    },
+    {
+        id: 22, q: "I was watching TV ________ 9 to 12 o'clock yesterday.",
+        opts: ["from", "between", "at", "in"], ans: 0, trans: "Tôi đã xem TV từ 9 giờ đến 12 giờ hôm qua.",
+        optTrans: "A. from | B. between | C. at | D. in", right: "Cấu trúc khoảng thời gian: 'from [time 1] to [time 2]' (Từ giờ nào đến giờ nào).", wrong: "Nếu dùng 'between' thì phải đi với 'and' (between 9 and 12)."
+    },
+    {
+        id: 23, q: "Are you interested ________ listening to pop music?",
+        opts: ["in", "on", "at", "about"], ans: 0, trans: "Bạn có thích nghe nhạc pop không?",
+        optTrans: "A. in | B. on | C. at | D. about", right: "Cụm tính từ cố định: 'be interested in + N/V-ing' (Thích thú/quan tâm đến việc gì).", wrong: "Không đi với các giới từ khác. 'Keen on', 'Fond of', nhưng 'Interested in'."
+    },
+    {
+        id: 24, q: "My mother has completely made this skirt ________ cotton.",
+        opts: ["of", "from", "by", "with"], ans: 0, trans: "Mẹ tôi đã may chiếc váy này hoàn toàn bằng cotton.",
+        optTrans: "A. of | B. from | C. by | D. with", right: "Make of: làm từ chất liệu gì (vẫn giữ nguyên bản chất chất liệu, nhìn vào váy thấy cotton).", wrong: "Make from dùng khi chất liệu bị biến đổi (Nho -> rượu vang). Ở đây dùng 'of' là chuẩn nhất."
+    },
+    {
+        id: 25, q: "My uncle left our house three years ago, and we haven't seen him ________",
+        opts: ["since", "for", "from", "ago"], ans: 0, trans: "Chú tôi đã rời nhà cách đây 3 năm, và chúng tôi chưa gặp lại chú ấy kể từ đó.",
+        optTrans: "A. since | B. for | C. from | D. ago", right: "Cuối câu HTHT có thể dùng chữ 'since' đứng một mình với nghĩa là 'kể từ đó tới nay'.", wrong: "'for' phải cộng với một khoảng thời gian."
+    },
+    {
+        id: 26, q: "Their son has cleaned the floors ________ three hours.",
+        opts: ["for", "since", "in", "during"], ans: 0, trans: "Con trai họ đã lau sàn được 3 tiếng đồng hồ rồi.",
+        optTrans: "A. for | B. since | C. in | D. during", right: "Trong thì HTHT: 'for' + Khoảng thời gian (three hours).", wrong: "Since + Mốc thời gian (Since 3 o'clock). Ở đây là 3 tiếng nên dùng 'for'."
+    },
+    {
+        id: 27, q: "We are looking forward ________ new possibilities.",
+        opts: ["to", "for", "at", "in"], ans: 0, trans: "Chúng tôi đang mong chờ những cơ hội mới.",
+        optTrans: "A. to | B. for | C. at | D. in", right: "Cụm động từ: 'look forward to + N/V-ing' (Mong ngóng, mong chờ điều gì).", wrong: "Chữ 'to' ở đây là GIỚI TỪ chứ không phải to-infinitive."
+    },
+    {
+        id: 28, q: "We get used ________ living in the dormitory.",
+        opts: ["to", "with", "in", "on"], ans: 0, trans: "Chúng tôi dần quen với việc sống trong ký túc xá.",
+        optTrans: "A. to | B. with | C. in | D. on", right: "Cấu trúc: 'get/be used to + V-ing/N' (Làm quen với việc gì).", wrong: "Đừng nhầm với 'used to V' (từng làm gì). Giới từ bắt buộc là 'to'."
+    },
+    {
+        id: 29, q: "Our students are aware ________ pollution effects on their health.",
+        opts: ["of", "about", "to", "with"], ans: 0, trans: "Học sinh của chúng tôi nhận thức được tác động của ô nhiễm đối với sức khỏe của các em.",
+        optTrans: "A. of | B. about | C. to | D. with", right: "Tính từ: 'be aware of sth' (Nhận thức được về điều gì).", wrong: "Rất dễ nhầm với 'about' (về), nhưng ngữ pháp Anh chuẩn quy định dùng 'of'."
+    },
+    {
+        id: 30, q: "He went there ________ Quynh's car.",
+        opts: ["in", "by", "on", "with"], ans: 0, trans: "Anh ấy đến đó bằng xe hơi của Quỳnh.",
+        optTrans: "A. in | B. by | C. on | D. with", right: "Đi bằng phương tiện có SỞ HỮU CỤ THỂ (Quynh's car, my car, a taxi) ta dùng 'in' cho ô tô, 'on' cho xe máy/buýt.", wrong: "Chỉ dùng 'by' khi nói chung chung: by car, by bus (không có mạo từ/sở hữu cách xen giữa)."
+    },
+
+    { type: 'title', text: "Part 9: Choose the correct answer" },
+    {
+        id: 31, q: "You had better _________ at home until you feel better.",
+        opts: ["stay", "to stay", "staying", "stayed"], ans: 0, trans: "Tốt hơn hết bạn nên ở nhà cho đến khi cảm thấy khỏe hơn.",
+        optTrans: "A. stay | B. to stay | C. staying | D. stayed", right: "Cấu trúc: 'had better + V nguyên thể' (Tốt hơn nên làm gì - Lời khuyên).", wrong: "Tuyệt đối không thêm 'to' hay 'ing' sau had better."
+    },
+    {
+        id: 32, q: "He was offered the job _________ his qualifications were poor.",
+        opts: ["even though", "despite", "in spite of", "whereas"], ans: 0, trans: "Anh ấy được nhận vào làm mặc dù bằng cấp rất kém.",
+        optTrans: "A. even though (+ Mệnh đề) | B. despite (+ N) | C. in spite of (+ N) | D. whereas", right: "Vế sau 'his qualifications were poor' là một MỆNH ĐỀ (có S và V). Nghĩa tương phản -> Even though.", wrong: "B, C cần cụm danh từ. D (trong khi) không hợp ngữ cảnh."
+    },
+    {
+        id: 33, q: "She is hard working. _________, she isn't lucky in examinations.",
+        opts: ["However", "Therefore", "But", "So"], ans: 0, trans: "Cô ấy rất chăm chỉ. Tuy nhiên, cô ấy không may mắn trong thi cử.",
+        optTrans: "A. However | B. Therefore | C. But | D. So", right: "Đứng sau dấu chấm (.) và trước phẩy (,), mang nghĩa tương phản -> However (Tuy nhiên).", wrong: "But và So không đứng độc lập trước dấu phẩy. Therefore mang nghĩa kết quả (Vì vậy)."
+    },
+    {
+        id: 34, q: "_________ she sure that they will find the film entertaining?",
+        opts: ["Is", "Was", "Will", "Should"], ans: 0, trans: "Cô ấy có chắc rằng họ sẽ thấy bộ phim giải trí không?",
+        optTrans: "A. Is | B. Was | C. Will | D. Should", right: "Vế sau là 'will find' (Tương lai/Hiện tại) nên động từ tobe ở đầu câu hỏi phải là Hiện tại -> 'Is'. 'sure' là tính từ nên đi với tobe.", wrong: "Was là quá khứ. Will/Should là trợ động từ, theo sau phải là động từ nguyên thể chứ không đi thẳng với tính từ 'sure'."
+    },
+    {
+        id: 35, q: "_________, he walked to the station.",
+        opts: ["Despite being tired", "Despite tired", "In spite being tired", "Although to be tired"], ans: 0, trans: "Mặc dù rất mệt, anh ấy vẫn đi bộ ra ga.",
+        optTrans: "A. Despite being tired | B. Despite tired | C. In spite being... | D. Although...", right: "Despite + V-ing/Noun. Ở đây dùng V-ing của tobe là 'being' + tính từ 'tired'.", wrong: "B thiếu 'being'. C thiếu 'of' sau In spite. D sai hoàn toàn cấu trúc Although (+ Mệnh đề)."
+    },
+    {
+        id: 36, q: "He used to _________ his mother after a working day.",
+        opts: ["call", "calling", "called", "have called"], ans: 0, trans: "Anh ấy từng có thói quen gọi điện cho mẹ sau một ngày làm việc.",
+        optTrans: "A. call | B. calling | C. called | D. have called", right: "Cấu trúc: 'used to + V nguyên thể' (Từng làm gì trong quá khứ, giờ không làm nữa).", wrong: "Chỉ khi nào có 'be/get used to' mới cộng V-ing. Ở đây chỉ là used to."
+    },
+    {
+        id: 37, q: "Did your mother help you _________ the letter yesterday?",
+        opts: ["to post", "posting", "posts", "posted"], ans: 0, trans: "Mẹ bạn có giúp bạn gửi bức thư ngày hôm qua không?",
+        optTrans: "A. to post | B. posting | C. posts | D. posted", right: "Cấu trúc: 'help sb (to) do sth' (giúp ai đó làm gì). Có thể dùng 'to post' hoặc 'post' (nguyên thể). Ở đây có 'to post'.", wrong: "Tuyệt đối không dùng V-ing hay V-ed sau Help sb."
+    },
+    {
+        id: 38, q: "How old were you when you learnt _________ a bike?",
+        opts: ["how to ride", "which to ride", "what to ride", "where to ride"], ans: 0, trans: "Bạn bao nhiêu tuổi khi học cách đi xe đạp?",
+        optTrans: "A. how to ride | B. which to ride | C. what to ride | D. where to ride", right: "Learn how to do sth: Học CÁCH làm một kỹ năng gì đó.", wrong: "Các từ để hỏi khác không phù hợp ngữ nghĩa."
+    },
+    {
+        id: 39, q: "Did Nick _________ work on a building site?",
+        opts: ["use to", "used to", "get used", "got used"], ans: 0, trans: "Nick đã từng làm việc ở công trường xây dựng phải không?",
+        optTrans: "A. use to | B. used to | C. get used | D. got used", right: "Trong câu nghi vấn có mượn trợ động từ 'Did', động từ chính 'use' phải trả về nguyên thể -> 'use to'.", wrong: "B sai vì vẫn để 'd'. C, D sai cấu trúc thói quen quá khứ."
+    },
+    {
+        id: 40, q: "The children slept deeply _________ the noise.",
+        opts: ["despite", "in spite", "nevertheless", "however"], ans: 0, trans: "Lũ trẻ ngủ rất say mặc cho tiếng ồn.",
+        optTrans: "A. despite | B. in spite | C. nevertheless | D. however", right: "Sau ô trống là 'the noise' (Cụm danh từ). Do đó phải dùng 'despite' (Mặc dù).", wrong: "B thiếu 'of'. C và D phải đứng sau dấu chấm và có dấu phẩy đi kèm (Tuy nhiên)."
+    },
+    {
+        id: 41, q: "_________ hard I pulled, the door wouldn't open.",
+        opts: ["However", "Although", "In spite of", "Though"], ans: 0, trans: "Cho dù tôi có kéo mạnh đến đâu, cánh cửa cũng không chịu mở.",
+        optTrans: "A. However | B. Although | C. In spite of | D. Though", right: "Cấu trúc: 'However + Adj/Adv + S + V' (Cho dù... đến đâu). Phù hợp với 'However hard I pulled'.", wrong: "Although/Though + S + V (không đảo Adj/Adv lên trước). In spite of + N."
+    },
+    {
+        id: 42, q: "He can't lose weight, no matter _________ hard he tries.",
+        opts: ["how", "what", "when", "why"], ans: 0, trans: "Anh ấy không thể giảm cân, cho dù anh ấy có cố gắng đến đâu.",
+        optTrans: "A. how | B. what | C. when | D. why", right: "Cấu trúc tương đương However: 'No matter how + Adj/Adv + S + V'. Ở đây có trạng từ 'hard' -> dùng 'how'.", wrong: "No matter what/when/why không cộng trực tiếp với Tính từ/Trạng từ."
+    },
+    {
+        id: 43, q: "All the aquatics plants and animals may not die _________ the factory keep dumping poison into the lake.",
+        opts: ["unless", "if", "should", "however"], ans: 0, trans: "Tất cả các loài động thực vật thủy sinh có thể KHÔNG chết TRỪ KHI nhà máy cứ tiếp tục xả chất độc xuống hồ.",
+        optTrans: "A. unless | B. if | C. should | D. however", right: "Câu có nghĩa logic: Chúng sẽ SỐNG (không chết) NẾU nhà máy KHÔNG xả. 'Unless' mang nghĩa 'Nếu không' (If not).", wrong: "Nếu điền 'If', câu sẽ vô lý (Chúng không chết NẾU nhà máy tiếp tục xả độc)."
+    },
+    {
+        id: 44, q: "_________ more help, I would call my neighbor.",
+        opts: ["Should I need", "Needed", "I have needed", "I should need"], ans: 0, trans: "Nếu tôi cần thêm sự giúp đỡ, tôi sẽ gọi cho hàng xóm.",
+        optTrans: "A. Should I need | B. Needed | C. I have needed | D. I should need", right: "Đây là câu Đảo ngữ câu điều kiện loại 1/2. Cấu trúc đảo ngữ If: 'Should + S + V (nguyên thể)'. Tương đương: If I should need...", wrong: "Các cấu trúc còn lại sai ngữ pháp cơ bản của câu điều kiện."
+    },
+    {
+        id: 45, q: "You'd better _________ these exercises carefully.",
+        opts: ["do", "did", "to do", "doing"], ans: 0, trans: "Tốt hơn hết bạn nên làm những bài tập này một cách cẩn thận.",
+        optTrans: "A. do | B. did | C. to do | D. doing", right: "'You'd better' = 'You had better' + V(nguyên thể). Khuyên bảo ai nên làm gì.", wrong: "Tuyệt đối không chia V-ed, to-V hay V-ing sau had better."
+    }
+];
+
+// --- RENDER LOGIC ---
+let totalScore = 0; let answeredQuestions = 0;
+const totalQuestions = quizData.filter(q => q.id).length;
+
+function shuffleArray(array) {
+    let arr = array.map((item, index) => ({ item, index }));
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function renderQuiz() {
+    const container = document.getElementById('quiz-container');
+    let html = ''; const letters = ['A', 'B', 'C', 'D'];
+
+    quizData.forEach((data) => {
+        if (data.type === 'title') {
+            html += `<div class="part-title">${data.text}</div>`;
+        } else {
+            const shuffledOpts = shuffleArray(data.opts);
+            let questionHTML = data.q.replace('________', `<span class="blank" id="blank-${data.id}">?</span>`).replace('________', `<span class="blank" id="blank2-${data.id}">?</span>`);
+            
+            html += `
+            <div class="question-card" id="card-${data.id}">
+                <div class="question-text">${data.id}. ${questionHTML}</div>
+                <div class="options-grid">
+            `;
+
+            shuffledOpts.forEach((optObj, idx) => {
+                const isCorrect = optObj.index === data.ans;
+                const safeText = data.opts[data.ans].replace(/'/g, "\\'");
+                html += `
+                    <button class="option-btn" onclick="checkAnswer(${data.id}, this, ${isCorrect}, '${safeText}')">
+                        <span class="opt-letter">${letters[idx]}</span> ${optObj.item}
+                    </button>
+                `;
+            });
+
+            // Tách các option để in đẹp hơn
+            const formattedOpts = data.optTrans.split('|').join('<br>');
+
+            html += `
+                </div>
+                <div class="explanation-box" id="exp-${data.id}">
+                    <h4><i class="fas fa-magic"></i> Ms. Chí Nên giải thích:</h4>
+                    <p><strong><i class="fas fa-language"></i> Dịch:</strong> ${data.trans}</p>
+                    <p><strong><i class="fas fa-search"></i> Phân tích:</strong><br>${formattedOpts}</p>
+                    <p><span class="tag-correct"><i class="fas fa-check-circle"></i> Vì sao ĐÚNG?</span> ${data.right}</p>
+                    <p><span class="tag-incorrect"><i class="fas fa-times-circle"></i> Vì sao SAI?</span> ${data.wrong}</p>
+                </div>
+            </div>`;
+        }
+    });
+    container.innerHTML = html;
+}
+
+function checkAnswer(qId, btnElement, isCorrect, correctText) {
+    const card = document.getElementById(`card-${qId}`);
+    const buttons = card.querySelectorAll('.option-btn');
+    const blank = document.getElementById(`blank-${qId}`);
+    const blank2 = document.getElementById(`blank2-${qId}`);
+    const expBox = document.getElementById(`exp-${qId}`);
+
+    buttons.forEach(btn => btn.disabled = true);
+    answeredQuestions++;
+
+    let answerText = btnElement.innerText.substring(2).trim();
+    if (blank) {
+        if(answerText.includes('/')) {
+            let parts = answerText.split('/');
+            blank.innerText = parts[0].trim();
+            if(blank2) blank2.innerText = parts[1].trim();
+        } else {
+            blank.innerText = answerText;
+        }
+    }
+
+    if (isCorrect) {
+        playSound('correct'); btnElement.classList.add('correct');
+        if(blank) { blank.style.color = 'var(--correct)'; blank.style.borderColor = 'var(--correct)'; }
+        if(blank2) { blank2.style.color = 'var(--correct)'; blank2.style.borderColor = 'var(--correct)'; }
+        totalScore++;
+        const rect = btnElement.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth; const y = (rect.top + rect.height / 2) / window.innerHeight;
+        confetti({ particleCount: 60, spread: 60, origin: { x: x, y: y }, colors: ['#00D26A', '#FFC312', '#8854C0'] });
+    } else {
+        playSound('incorrect'); btnElement.classList.add('incorrect'); card.classList.add('shake');
+        if(blank) { blank.style.color = 'var(--incorrect)'; blank.style.borderColor = 'var(--incorrect)'; }
+        if(blank2) { blank2.style.color = 'var(--incorrect)'; blank2.style.borderColor = 'var(--incorrect)'; }
+        
+        buttons.forEach(btn => { if (btn.innerText.includes(correctText)) btn.classList.add('correct'); });
+        setTimeout(() => card.classList.remove('shake'), 500);
+    }
+    expBox.style.display = 'block';
+}
+
+function showScore() {
+    const modal = document.getElementById('scoreModal');
+    const scoreDisplay = document.getElementById('score-display');
+    const msg = document.getElementById('score-message');
+
+    scoreDisplay.innerText = `${totalScore}/${totalQuestions}`;
+    
+    if (totalScore === totalQuestions) {
+        msg.innerText = "Tuyệt đỉnh! Trọn vẹn 45/45 luôn, em đúng là học trò cưng của Ms. Chí Nên! 🏆";
+        confetti({ particleCount: 300, spread: 150, origin: {y: 0.3}});
+    } else if (totalScore > totalQuestions / 2) {
+        msg.innerText = "Giỏi lắm! Đọc kỹ phần giải thích những câu sai để vươn lên 10 điểm nhé! 🌟";
+        confetti({ particleCount: 100, spread: 70, origin: {y: 0.3}});
+    } else {
+        msg.innerText = "Đừng buồn nhé! Cứ đọc thật kỹ phần 'Ms. Chí Nên giải thích' là em sẽ tiến bộ ngay lập tức! 💪";
+    }
+    modal.style.display = 'flex';
+}
+
+window.onload = renderQuiz;
+</script>
+</body>
+</html>
