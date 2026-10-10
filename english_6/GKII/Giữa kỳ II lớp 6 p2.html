@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Gamified Quiz Part 2 - Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #FDCB6E;
+            --accent: #00C9A7;
+            --correct: #00D26A;
+            --correct-shadow: #00a051;
+            --wrong: #FF4757;
+            --wrong-shadow: #c8303d;
+            --btn-bg: #ffffff;
+            --btn-shadow: #e0e0e0;
+            --text-main: #333333;
+        }
+
+        * { box-sizing: border-box; font-family: 'Nunito', sans-serif; }
+
+        body {
+            margin: 0; padding: 0;
+            background: linear-gradient(-45deg, #00C9A7, #FDCB6E, #FF9A9E, #8854C0);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* SVG Pattern Lơ Lửng */
+        .pattern-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 15 L58 35 L80 35 L62 48 L68 70 L50 55 L32 70 L38 48 L20 35 L42 35 Z' fill='rgba(255,255,255,0.3)'/%3E%3Ccircle cx='20' cy='80' r='6' fill='rgba(255,255,255,0.4)'/%3E%3C/svg%3E");
+            animation: floatUp 25s linear infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatUp {
+            0% { background-position: 0px 0px; }
+            100% { background-position: 100px 1000px; }
+        }
+
+        .container {
+            position: relative; z-index: 1;
+            max-width: 800px; margin: 20px auto; padding: 0 15px;
+        }
+
+        header {
+            text-align: center; background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px; border-radius: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+            margin-bottom: 30px; display: inline-block;
+            left: 50%; transform: translateX(-50%); position: relative;
+        }
+
+        h2.teacher-name {
+            font-size: 1.2rem; color: var(--primary);
+            margin: 0; font-weight: 900;
+        }
+
+        .section-title {
+            background: #fff; padding: 15px 25px; border-radius: 15px;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+            margin-bottom: 20px; font-weight: 800; color: var(--primary); font-size: 1.2rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.97); border-radius: 20px;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.1); padding: 25px;
+            margin-bottom: 30px; transition: transform 0.2s;
+        }
+
+        .question-text {
+            font-size: 1.2rem; font-weight: 800; margin-bottom: 20px; line-height: 1.5;
+        }
+
+        .options-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+        }
+
+        @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+
+        .option-btn {
+            background: var(--btn-bg); border: 2px solid #eee; border-radius: 15px;
+            padding: 15px 20px; font-size: 1.1rem; font-weight: 700;
+            color: var(--text-main); cursor: pointer;
+            box-shadow: 0 6px 0 var(--btn-shadow); transition: all 0.1s ease;
+            text-align: left;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02) translateY(-2px); box-shadow: 0 8px 0 var(--btn-shadow);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(4px); box-shadow: 0 2px 0 var(--btn-shadow);
+        }
+
+        .option-btn.correct { background: var(--correct); color: white; border-color: var(--correct); box-shadow: 0 6px 0 var(--correct-shadow); }
+        .option-btn.wrong { background: var(--wrong); color: white; border-color: var(--wrong); box-shadow: 0 6px 0 var(--wrong-shadow); }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        .explanation {
+            display: none; margin-top: 20px; padding: 20px; background: #F3F4F6;
+            border-left: 5px solid var(--accent); border-radius: 10px;
+            font-size: 1rem; line-height: 1.6; animation: slideDown 0.3s ease-out;
+        }
+
+        .explanation h4 { margin-top: 0; color: var(--primary); font-weight: 900;}
+        .expl-step { margin-bottom: 12px; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Gap Fill Style */
+        .gap-fill-container { display: flex; flex-direction: column; gap: 15px; }
+        .gap-item {
+            background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 6px 0 #eee;
+            font-weight: 700; font-size: 1.1rem; line-height: 1.8;
+        }
+        .gap-btn {
+            background: #f0f0f0; border: 2px dashed #ccc; padding: 5px 15px;
+            border-radius: 10px; cursor: pointer; color: #666; font-weight: bold;
+            font-size: 1.1rem; margin: 0 5px; transition: all 0.2s;
+        }
+        .gap-btn:hover { background: #e0e0e0; transform: scale(1.05); }
+        .gap-btn.filled-correct { background: var(--correct); color: white; border: none; box-shadow: 0 4px 0 var(--correct-shadow);}
+        .gap-btn.filled-wrong { background: var(--wrong); color: white; border: none; box-shadow: 0 4px 0 var(--wrong-shadow);}
+
+        /* Popup Chọn Từ */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px;
+            text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .modal-options { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .modal-options .option-btn { width: 100%; text-align: center; }
+
+        .submit-btn {
+            display: block; width: 100%; max-width: 300px; margin: 40px auto; padding: 20px;
+            font-size: 1.5rem; font-weight: 900; background: #00C9A7; color: white;
+            border: none; border-radius: 20px; box-shadow: 0 8px 0 #00967d; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 11px 0 #00967d; }
+        .submit-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #00967d; }
+
+        canvas#confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+    </style>
+</head>
+<body>
+
+<div class="pattern-overlay"></div>
+<canvas id="confetti"></canvas>
+
+<div class="container">
+    <header>
+        <h2 class="teacher-name">🌟 Bài thi tiếng Anh (Phần 2) - Ms. Chí Nên  🌟</h2>
+    </header>
+
+    <div id="quiz-container"></div>
+
+    <button class="submit-btn" onclick="submitQuiz()">Nộp bài ngay!</button>
+</div>
+
+<div class="modal-overlay" id="gapModal">
+    <div class="modal-content">
+        <h3 id="modal-title">Chọn từ để điền vào chỗ trống</h3>
+        <div class="modal-options" id="modal-options"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="resultModal">
+    <div class="modal-content">
+        <h1 style="font-size: 3rem; margin: 10px 0;">🏆</h1>
+        <h2 style="color: var(--primary);">Hoàn thành xuất sắc!</h2>
+        <h3 id="score-text" style="font-size: 1.5rem;">Bạn đúng 0/0 câu</h3>
+        <p id="praise-text" style="font-weight: bold; color: #e67e22;"></p>
+        <button class="submit-btn" style="margin-top: 20px;" onclick="location.reload()">Làm lại bài thi</button>
+    </div>
+</div>
+
+<script>
+    // --- ÂM THANH & HIỆU ỨNG (Giữ nguyên cấu trúc Web Audio API) ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playDing() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function playBuzz() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    const canvas = document.getElementById('confetti'); const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    let particles = []; const colors = ['#8854C0', '#FDCB6E', '#00C9A7', '#FF4757', '#00D26A'];
+
+    function triggerConfetti() {
+        for(let i=0; i<50; i++) particles.push({ x: Math.random() * canvas.width, y: canvas.height + 10, r: Math.random() * 6 + 4, dx: Math.random() * 4 - 2, dy: Math.random() * -10 - 10, color: colors[Math.floor(Math.random() * colors.length)], tilt: Math.random() * 10 });
+        animateConfetti();
+    }
+    function animateConfetti() {
+        ctx.clearRect(0,0,canvas.width,canvas.height); let active = false;
+        for(let i=0; i<particles.length; i++) {
+            let p = particles[i]; p.dy += 0.3; p.x += p.dx; p.y += p.dy; p.tilt += 0.1;
+            ctx.beginPath(); ctx.lineWidth = p.r; ctx.strokeStyle = p.color;
+            ctx.moveTo(p.x + p.tilt + p.r, p.y); ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r); ctx.stroke();
+            if(p.y < canvas.height + 20) active = true;
+        }
+        if(active) requestAnimationFrame(animateConfetti); else particles = [];
+    }
+
+    function shuffleArray(array) {
+        let curId = array.length, temp, randId;
+        while (0 !== curId) {
+            randId = Math.floor(Math.random() * curId); curId -= 1;
+            temp = array[curId]; array[curId] = array[randId]; array[randId] = temp;
+        }
+        return array;
+    }
+
+    let score = 0; let totalQuestions = 0;
+
+    // --- DỮ LIỆU ĐỀ BÀI MỚI (Từ Ex 5 đến Ex 12) ---
+    // Exercise 5: Gap Fill (Past Simple)
+    const gapFillData = [
+        { 
+            q: "1. Who _gap_ table tennis with yesterday afternoon?", 
+            inf: "(you play)", ans: "did you play", wrong: ["do you play", "you played", "were you play"],
+            expl: `<div class="expl-step"><b>1. Dịch:</b> Bạn đã chơi bóng bàn với ai vào chiều hôm qua?</div>
+                   <div class="expl-step"><b>2. Phân tích:</b> Dấu hiệu "yesterday" -> Quá khứ đơn. Đây là câu hỏi với động từ thường "play", ta phải mượn trợ động từ "did". Công thức: Wh-word + did + S + V(nguyên thể)? -> did you play.</div>`
+        },
+        { 
+            q: "2. Last summer, I _gap_ two weeks on my uncle's farm.", 
+            inf: "(spend)", ans: "spent", wrong: ["spend", "spended", "was spend"],
+            expl: `<div class="expl-step"><b>1. Dịch:</b> Mùa hè năm ngoái, tôi đã dành hai tuần ở nông trại của chú tôi.</div>
+                   <div class="expl-step"><b>2. Phân tích:</b> "Last summer" -> Quá khứ đơn. Động từ "spend" là động từ bất quy tắc, cột 2 (V2) của nó là "spent".</div>`
+        },
+        { 
+            q: "3. Pelé _gap_ born in Brazil in 1949.", 
+            inf: "(be)", ans: "was", wrong: ["were", "is", "be"],
+            expl: `<div class="expl-step"><b>1. Dịch:</b> Pelé được sinh ra ở Brazil vào năm 1949.</div>
+                   <div class="expl-step"><b>2. Phân tích:</b> Cụm từ "be born" (được sinh ra) luôn dùng thì quá khứ cho người đã sinh ra. Pelé là ngôi thứ 3 số ít -> dùng "was".</div>`
+        },
+        { 
+            q: "4. My sister _gap_ part in the singing competition last year.", 
+            inf: "(not take)", ans: "didn't take", wrong: ["don't take", "not took", "didn't took"],
+            expl: `<div class="expl-step"><b>1. Dịch:</b> Chị gái tôi đã không tham gia cuộc thi hát vào năm ngoái.</div>
+                   <div class="expl-step"><b>2. Phân tích:</b> "last year" -> Quá khứ đơn. Dạng phủ định của động từ thường là "didn't + V_nguyên thể" -> didn't take.</div>`
+        },
+        { 
+            q: "5. People _gap_ the first World Cup in 1930.", 
+            inf: "(hold)", ans: "held", wrong: ["holded", "hold", "were hold"],
+            expl: `<div class="expl-step"><b>1. Dịch:</b> Người ta đã tổ chức kỳ World Cup đầu tiên vào năm 1930.</div>
+                   <div class="expl-step"><b>2. Phân tích:</b> "in 1930" -> Quá khứ đơn. Động từ "hold" bất quy tắc, V2 là "held".</div>`
+        },
+        { 
+            q: "6. _gap_ the final match two days ago?", 
+            inf: "(you watch)", ans: "Did you watch", wrong: ["Do you watch", "You watched", "Were you watch"],
+            expl: `<div class="expl-step"><b>1. Dịch:</b> Bạn có xem trận chung kết cách đây 2 ngày không?</div>
+                   <div class="expl-step"><b>2. Phân tích:</b> Dấu hiệu "two days ago" -> Quá khứ đơn. Câu hỏi nghi vấn mượn trợ động từ "Did" đảo lên trước chủ ngữ -> Did you watch.</div>`
+        },
+        { 
+            q: "7. Our teacher _gap_ us to be quiet when we went to the mausoleum.", 
+            inf: "(tell)", ans: "told", wrong: ["telled", "tells", "telling"],
+            expl: `<div class="expl-step"><b>1. Dịch:</b> Giáo viên đã bảo chúng tôi giữ trật tự khi chúng tôi vào thăm lăng.</div>
+                   <div class="expl-step"><b>2. Phân tích:</b> Vế sau có "went" (QKĐ) nên hành động "bảo" cũng ở QKĐ. "tell" là động từ bất quy tắc, V2 là "told".</div>`
+        },
+        { 
+            q: "8. Yesterday, my brother _gap_ to school because his bike was broken.", 
+            inf: "(walk)", ans: "walked", wrong: ["walk", "did walk", "was walk"],
+            expl: `<div class="expl-step"><b>1. Dịch:</b> Hôm qua, anh trai tôi đã đi bộ đến trường vì xe đạp của anh ấy bị hỏng.</div>
+                   <div class="expl-step"><b>2. Phân tích:</b> Dấu hiệu "Yesterday" -> Quá khứ đơn. "walk" là động từ có quy tắc, chỉ cần thêm "-ed" -> "walked".</div>`
+        }
+    ];
+
+    const multipleChoiceData = [
+        {
+            section: "Exercise 6: Choose the word or phrase that CLOSEST in meaning with the underlined one(s).",
+            questions: [
+                {
+                    q: "1. I love watching talent show. It is usually <u>interesting and surprising</u>.", ans: "B",
+                    options: [ {val: "A", text: "boring"}, {val: "B", text: "exciting"}, {val: "C", text: "funny"}, {val: "D", text: "live"} ],
+                    expl: `<div class="expl-step"><b>1. Dịch câu:</b> Tôi thích xem chương trình tìm kiếm tài năng. Nó thường rất thú vị và đầy bất ngờ.</div>
+                           <div class="expl-step"><b>2. Phân tích 4 đáp án:</b><br>- A. boring (adj): nhàm chán.<br>- B. exciting (adj): hào hứng, thú vị.<br>- C. funny (adj): buồn cười.<br>- D. live (adj): trực tiếp.</div>
+                           <div class="expl-step"><b>3. Tại sao chọn B?</b> Cụm gạch chân "interesting and surprising" (thú vị và bất ngờ) mang nghĩa tương đương nhất với "exciting".</div>`
+                },
+                {
+                    q: "2. Finally, she got the highest score and became the <u>champion</u>.", ans: "A",
+                    options: [ {val: "A", text: "winner"}, {val: "B", text: "loser"}, {val: "C", text: "viewer"}, {val: "D", text: "player"} ],
+                    expl: `<div class="expl-step"><b>1. Dịch câu:</b> Cuối cùng, cô ấy đạt điểm cao nhất và trở thành nhà vô địch.</div>
+                           <div class="expl-step"><b>2. Phân tích:</b><br>- A. winner (n): người chiến thắng.<br>- B. loser (n): kẻ thua cuộc.<br>- C. viewer (n): người xem.<br>- D. player (n): người chơi.</div>
+                           <div class="expl-step"><b>3. Tại sao chọn A?</b> "champion" (nhà vô địch) đồng nghĩa với "winner" (người chiến thắng).</div>`
+                },
+                {
+                    q: "3. Many people agree that he is the best golfer <u>of all time</u>.", ans: "C",
+                    options: [ {val: "A", text: "this time"}, {val: "B", text: "nowadays"}, {val: "C", text: "ever"}, {val: "D", text: "in the past"} ],
+                    expl: `<div class="expl-step"><b>1. Dịch câu:</b> Nhiều người đồng ý rằng anh ấy là tay golf giỏi nhất mọi thời đại.</div>
+                           <div class="expl-step"><b>2. Phân tích:</b><br>- A. this time: lần này.<br>- B. nowadays: ngày nay.<br>- C. ever: từ trước đến nay (bao hàm mọi thời gian).<br>- D. in the past: trong quá khứ.</div>
+                           <div class="expl-step"><b>3. Tại sao chọn C?</b> "of all time" (mọi thời đại) đồng nghĩa với "ever".</div>`
+                },
+                {
+                    q: "4. Vietnamese people are <u>friendly and helpful</u>.", ans: "A",
+                    options: [ {val: "A", text: "kind"}, {val: "B", text: "unkind"}, {val: "C", text: "intelligent"}, {val: "D", text: "funny"} ],
+                    expl: `<div class="expl-step"><b>1. Dịch câu:</b> Người Việt Nam rất thân thiện và hay giúp đỡ.</div>
+                           <div class="expl-step"><b>2. Phân tích:</b><br>- A. kind (adj): tốt bụng, tử tế.<br>- B. unkind (adj): không tốt.<br>- C. intelligent (adj): thông minh.<br>- D. funny (adj): vui vẻ.</div>
+                           <div class="expl-step"><b>3. Tại sao chọn A?</b> Một người "friendly" (thân thiện) và "helpful" (hay giúp đỡ) chính là một người "kind" (tử tế, tốt bụng).</div>`
+                },
+                {
+                    q: "5. I love trying street food in that city. People say it's so <u>tasty</u>.", ans: "D",
+                    options: [ {val: "A", text: "delicious"}, {val: "B", text: "yummy"}, {val: "C", text: "good-tasting"}, {val: "D", text: "All are correct."} ],
+                    expl: `<div class="expl-step"><b>1. Dịch câu:</b> Tôi thích thử thức ăn đường phố ở thành phố đó. Mọi người bảo nó rất ngon.</div>
+                           <div class="expl-step"><b>2. Phân tích:</b><br>- A. delicious: ngon miệng.<br>- B. yummy: ngon tuyệt (văn nói).<br>- C. good-tasting: có vị ngon.</div>
+                           <div class="expl-step"><b>3. Tại sao chọn D?</b> Cả 3 từ A, B, C đều đồng nghĩa với từ "tasty" (ngon).</div>`
+                }
+            ]
+        },
+        {
+            section: "Exercise 7: Choose the word or phrase that OPPOSITE in meaning with the underlined one(s).",
+            questions: [
+                {
+                    q: "1. The shops are usually <u>full of people</u> during the holiday season.", ans: "B",
+                    options: [ {val: "A", text: "crowded"}, {val: "B", text: "empty"}, {val: "C", text: "packed"}, {val: "D", text: "No correct answer."} ],
+                    expl: `<div class="expl-step"><b>1. Dịch:</b> Các cửa hàng thường đông nghẹt người vào mùa lễ hội. (Chú ý bài này tìm từ TRÁI NGHĨA).</div>
+                           <div class="expl-step"><b>2. Phân tích:</b><br>- A. crowded: đông đúc (Đồng nghĩa).<br>- B. empty: trống rỗng, vắng vẻ (Trái nghĩa).<br>- C. packed: chật ních (Đồng nghĩa).</div>
+                           <div class="expl-step"><b>3. Kết luận:</b> Trái nghĩa với "full of people" là "empty" (B).</div>`
+                },
+                {
+                    q: "2. Hoi An is famous for its <u>historic</u> buildings.", ans: "A",
+                    options: [ {val: "A", text: "modern"}, {val: "B", text: "old"}, {val: "C", text: "beautiful"}, {val: "D", text: "tall"} ],
+                    expl: `<div class="expl-step"><b>1. Dịch:</b> Hội An nổi tiếng với các tòa nhà mang tính lịch sử (cổ kính).</div>
+                           <div class="expl-step"><b>2. Phân tích:</b><br>- A. modern: hiện đại (Trái nghĩa).<br>- B. old: cũ, cổ (Đồng nghĩa).<br>- C. beautiful: đẹp.<br>- D. tall: cao.</div>
+                           <div class="expl-step"><b>3. Kết luận:</b> Trái nghĩa với "historic" là "modern".</div>`
+                },
+                {
+                    q: "3. VTV3 is a very <u>popular</u> channel in Vietnam.", ans: "B",
+                    options: [ {val: "A", text: "well-known"}, {val: "B", text: "uncommon"}, {val: "C", text: "common"}, {val: "D", text: "famous"} ],
+                    expl: `<div class="expl-step"><b>1. Dịch:</b> VTV3 là một kênh rất phổ biến ở Việt Nam.</div>
+                           <div class="expl-step"><b>2. Phân tích:</b><br>- A. well-known / D. famous / C. common: nổi tiếng, phổ biến (Đồng nghĩa).<br>- B. uncommon: không phổ biến, hiếm thấy (Trái nghĩa).</div>
+                           <div class="expl-step"><b>3. Kết luận:</b> Chọn B.</div>`
+                },
+                {
+                    q: "4. I love staying in this city because it has <u>nice</u> weather during the year.", ans: "D",
+                    options: [ {val: "A", text: "sunny"}, {val: "B", text: "good"}, {val: "C", text: "windy"}, {val: "D", text: "bad"} ],
+                    expl: `<div class="expl-step"><b>1. Dịch:</b> Tôi thích ở lại thành phố này vì nó có thời tiết đẹp quanh năm.</div>
+                           <div class="expl-step"><b>2. Phân tích:</b> Trái nghĩa với "nice" (đẹp/tốt) chắc chắn là "bad" (xấu/tệ).</div>`
+                }
+            ]
+        },
+        {
+            section: "Exercise 8: Choose the word or phrase that needs correcting.",
+            questions: [
+                {
+                    q: "1. Because my sister didn't <u>finished</u> her homework, she <u>stayed up</u> late <u>last night</u>.", ans: "A",
+                    options: [ {val: "A", text: "finished"}, {val: "B", text: "stayed up"}, {val: "C", text: "Because"}, {val: "D", text: "last night"} ],
+                    expl: `<div class="expl-step"><b>1. Phân tích lỗi sai:</b> Trong câu phủ định của thì Quá khứ đơn, khi đã mượn trợ động từ "didn't", động từ chính bắt buộc phải trở về dạng nguyên thể.</div>
+                           <div class="expl-step"><b>2. Sửa lỗi:</b> "finished" phải sửa thành "finish". (Chọn A).</div>`
+                },
+                {
+                    q: "2. <u>This</u> is <u>your</u> room. <u>Our</u> is opposite the <u>hall</u>.", ans: "C",
+                    options: [ {val: "A", text: "This"}, {val: "B", text: "your"}, {val: "C", text: "Our"}, {val: "D", text: "hall"} ],
+                    expl: `<div class="expl-step"><b>1. Phân tích lỗi sai:</b> "Our" là tính từ sở hữu, nó bắt buộc phải đứng trước một danh từ (Ví dụ: Our room). Trong câu này, từ này đang đứng một mình làm chủ ngữ đại diện cho "Phòng của chúng tôi".</div>
+                           <div class="expl-step"><b>2. Sửa lỗi:</b> Phải dùng Đại từ sở hữu: "Our" -> "Ours". (Chọn C).</div>`
+                },
+                {
+                    q: "3. <u>Yesterday</u>, I went to bed <u>when</u> I got home <u>so</u> I was very <u>tired</u>.", ans: "C",
+                    options: [ {val: "A", text: "Yesterday"}, {val: "B", text: "when"}, {val: "C", text: "so"}, {val: "D", text: "tired"} ],
+                    expl: `<div class="expl-step"><b>1. Phân tích lỗi sai về Logic:</b> Dịch nghĩa câu: "Hôm qua, tôi đã đi ngủ khi tôi về nhà NÊN tôi rất mệt." -> Logic bị ngược. Sự thật phải là: Tôi đi ngủ VÌ tôi quá mệt.</div>
+                           <div class="expl-step"><b>2. Sửa lỗi:</b> Chữ "so" (nên/vì vậy) phải đổi thành "because" (bởi vì). Chọn C.</div>`
+                }
+            ]
+        },
+        {
+            section: "Exercise 11: Choose the correct rewritten sentence with the meaning unchanged.",
+            questions: [
+                {
+                    q: "1. Your mom doesn’t want you to play outside when it’s cold.<br>➔ Your mom said: “____”", ans: "B",
+                    options: [ 
+                        {val: "A", text: "Do play outside when it's cold."}, 
+                        {val: "B", text: "Don't play outside when it's cold."}, 
+                        {val: "C", text: "Not playing outside when it's cold."}, 
+                        {val: "D", text: "Didn't play outside when it's cold."} 
+                    ],
+                    expl: `<div class="expl-step"><b>1. Phân tích:</b> Câu gốc: "Mẹ bạn không muốn bạn chơi ngoài trời khi trời lạnh." -> Chuyển sang lời nói trực tiếp (câu mệnh lệnh cấm đoán).</div>
+                           <div class="expl-step"><b>2. Tại sao chọn B?</b> Câu mệnh lệnh phủ định bắt đầu bằng "Don't + V_nguyên thể". (Đừng chơi ngoài trời...).</div>`
+                },
+                {
+                    q: "2. The teacher wants students to stand in line.<br>➔ The teacher said: “Everyone, ____.”", ans: "A",
+                    options: [ 
+                        {val: "A", text: "stand in line, please"}, 
+                        {val: "B", text: "to stand in line"}, 
+                        {val: "C", text: "standing in line"}, 
+                        {val: "D", text: "don't stand in line"} 
+                    ],
+                    expl: `<div class="expl-step"><b>1. Phân tích:</b> Câu gốc: "Giáo viên muốn học sinh xếp hàng." -> Chuyển thành câu ra lệnh trực tiếp.</div>
+                           <div class="expl-step"><b>2. Tại sao chọn A?</b> Câu mệnh lệnh khẳng định bắt đầu bằng Động từ nguyên thể (Stand...). Các đáp án B, C sai ngữ pháp. D sai nghĩa.</div>`
+                },
+                {
+                    q: "3. Linda is a good basketball player.<br>➔ Linda plays ____.", ans: "C",
+                    options: [ 
+                        {val: "A", text: "basketball good"}, 
+                        {val: "B", text: "good basketball"}, 
+                        {val: "C", text: "basketball well"}, 
+                        {val: "D", text: "basketball player"} 
+                    ],
+                    expl: `<div class="expl-step"><b>1. Phân tích:</b> Cấu trúc tương đương: S + be + a/an + Adj + Noun (Chỉ người) <=> S + V_thường + Noun (vật) + Adv.</div>
+                           <div class="expl-step"><b>2. Tại sao chọn C?</b> Động từ "plays" là động từ thường nên ta phải dùng Trạng từ để bổ nghĩa. Trạng từ của "good" là "well".</div>`
+                },
+                {
+                    q: "4. My mom drives her motorbike carefully.<br>➔ My mom is a ____.", ans: "A",
+                    options: [ 
+                        {val: "A", text: "careful motorbike driver"}, 
+                        {val: "B", text: "carefully motorbike driver"}, 
+                        {val: "C", text: "careful motorbike driving"}, 
+                        {val: "D", text: "motorbike driver carefully"} 
+                    ],
+                    expl: `<div class="expl-step"><b>1. Phân tích:</b> Cấu trúc chuyển đổi ngược lại với câu số 3. Từ trạng từ "carefully" đứng sau động từ "drives", ta chuyển thành Tính từ "careful" đứng trước danh từ chỉ người "driver".</div>
+                           <div class="expl-step"><b>2. Tại sao chọn A?</b> "careful motorbike driver" (người lái xe máy cẩn thận).</div>`
+                },
+                {
+                    q: "5. What TV programme do you like best?<br>➔ What's ____?", ans: "D",
+                    options: [ 
+                        {val: "A", text: "your favorite TV programme like"}, 
+                        {val: "B", text: "TV programme you like"}, 
+                        {val: "C", text: "best TV programme"}, 
+                        {val: "D", text: "your favorite TV programme"} 
+                    ],
+                    expl: `<div class="expl-step"><b>1. Phân tích:</b> "like best" (thích nhất) tương đương với tính từ "favorite" (yêu thích).</div>
+                           <div class="expl-step"><b>2. Tại sao chọn D?</b> Dịch: "Chương trình truyền hình yêu thích CỦA BẠN là gì?" (What's your favorite TV programme?). Các đáp án khác sai cấu trúc ngữ pháp.</div>`
+                }
+            ]
+        },
+        {
+            section: "Exercise 12: Choose the meaningful sentence using the words given.",
+            questions: [
+                {
+                    q: "1. How often/ you/ usually/ watch T.V/?", ans: "B",
+                    options: [ 
+                        {val: "A", text: "How often you usually watch T.V?"}, 
+                        {val: "B", text: "How often do you usually watch T.V?"}, 
+                        {val: "C", text: "How often are you usually watch T.V?"}, 
+                        {val: "D", text: "How often do you usually watching T.V?"} 
+                    ],
+                    expl: `<div class="expl-step"><b>Phân tích:</b> Câu hỏi với động từ thường "watch" ở thì Hiện tại đơn, ta phải mượn trợ động từ "do" đứng trước chủ ngữ "you". Chọn B.</div>`
+                },
+                {
+                    q: "2. This morning/ weather/ bad/ we/ not go/ a picnic.", ans: "A",
+                    options: [ 
+                        {val: "A", text: "This morning the weather was bad, so we didn't go for a picnic."}, 
+                        {val: "B", text: "This morning weather bad so we don't go a picnic."}, 
+                        {val: "C", text: "This morning the weather is bad, so we didn't go for a picnic."}, 
+                        {val: "D", text: "Because this morning the weather was bad, so we didn't go for a picnic."} 
+                    ],
+                    expl: `<div class="expl-step"><b>Phân tích:</b> "This morning" (Sáng nay - đã qua) -> Dùng thì Quá khứ đơn. Động từ to be là "was", phủ định của go là "didn't go". Cụm từ: "go for a picnic". Chọn A. (Câu D sai vì đã có Because thì không có so).</div>`
+                },
+                {
+                    q: "3. My friend/ not take/ sport club/ yesterday/ he/ busy.", ans: "C",
+                    options: [ 
+                        {val: "A", text: "My friend not take part in sport club yesterday because he was busy."}, 
+                        {val: "B", text: "My friend didn't take sport club yesterday because he is busy."}, 
+                        {val: "C", text: "My friend didn't take part in the sport club yesterday because he was busy."}, 
+                        {val: "D", text: "My friend doesn't take part in the sport club yesterday because he was busy."} 
+                    ],
+                    expl: `<div class="expl-step"><b>Phân tích:</b> "yesterday" -> Quá khứ đơn. Phủ định là "didn't take". Cụm từ tham gia: "take part in". Hai vế chỉ nguyên nhân kết quả nối bằng "because". Chọn C.</div>`
+                },
+                {
+                    q: "4. This book/ mine/ not yours.", ans: "A",
+                    options: [ 
+                        {val: "A", text: "This book is mine, not yours."}, 
+                        {val: "B", text: "This book is mine, it not yours."}, 
+                        {val: "C", text: "This book are mine, not yours."}, 
+                        {val: "D", text: "This book is mine, doesn't yours."} 
+                    ],
+                    expl: `<div class="expl-step"><b>Phân tích:</b> Cấu trúc sử dụng Đại từ sở hữu (mine / yours). Chủ ngữ "This book" số ít đi với động từ to be "is". Lược bỏ vế sau cho tự nhiên: "...is mine, not yours" (Quyển sách này của tôi, không phải của bạn). Chọn A.</div>`
+                },
+                {
+                    q: "5. What/ your brother/ eat/ dinner/ last night?", ans: "B",
+                    options: [ 
+                        {val: "A", text: "What do your brother eat for dinner last night?"}, 
+                        {val: "B", text: "What did your brother eat for dinner last night?"}, 
+                        {val: "C", text: "What was your brother eat for dinner last night?"}, 
+                        {val: "D", text: "What did your brother ate for dinner last night?"} 
+                    ],
+                    expl: `<div class="expl-step"><b>Phân tích:</b> "last night" -> Quá khứ đơn. Câu hỏi với động từ thường mượn "did", động từ chính (eat) giữ nguyên thể. Giới từ đi với bữa ăn là "for" (eat for dinner). Chọn B.</div>`
+                }
+            ]
+        }
+    ];
+
+    const quizContainer = document.getElementById('quiz-container');
+
+    // --- RENDER EXERCISE 5 (GAP FILL POPUP) ---
+    const ex5Div = document.createElement('div');
+    ex5Div.innerHTML = `<div class="section-title">Exercise 5: Give the correct form of the verbs in Past Simple.</div>`;
+    const gapContainer = document.createElement('div');
+    gapContainer.className = 'gap-fill-container';
+
+    let currentGapBtn = null; let currentGapWord = null;
+
+    gapFillData.forEach((item, index) => {
+        totalQuestions++;
+        const gapItem = document.createElement('div');
+        gapItem.className = 'gap-item';
+        
+        let parts = item.q.split('_gap_');
+        const span1 = document.createElement('span'); span1.innerText = parts[0];
+        const span2 = document.createElement('span'); span2.innerText = parts[1] + ` ${item.inf}`;
+        
+        const btn = document.createElement('button');
+        btn.className = 'gap-btn'; btn.innerText = "[ Chọn ]";
+        btn.onclick = () => openGapModal(btn, item);
+        
+        const qContent = document.createElement('div');
+        qContent.appendChild(span1); qContent.appendChild(btn); qContent.appendChild(span2);
+        gapItem.appendChild(qContent);
+        
+        const explDiv = document.createElement('div');
+        explDiv.className = 'explanation'; explDiv.id = `expl_gap_${index}`;
+
+        const wrapper = document.createElement('div');
+        wrapper.appendChild(gapItem); wrapper.appendChild(explDiv);
+        gapContainer.appendChild(wrapper);
+    });
+    ex5Div.appendChild(gapContainer);
+    quizContainer.appendChild(ex5Div);
+
+    // Xử lý Modal Gap Fill
+    const modal = document.getElementById('gapModal');
+    const modalOptions = document.getElementById('modal-options');
+
+    function openGapModal(btnElement, wordData) {
+        if(btnElement.disabled) return;
+        currentGapBtn = btnElement; currentGapWord = wordData;
+        modalOptions.innerHTML = '';
+        
+        let opts = shuffleArray([wordData.ans, ...wordData.wrong]);
+        opts.forEach(opt => {
+            const optBtn = document.createElement('button');
+            optBtn.className = 'option-btn'; optBtn.innerText = opt;
+            optBtn.onclick = () => selectGapAnswer(opt, wordData.ans);
+            modalOptions.appendChild(optBtn);
+        });
+        modal.style.display = 'flex';
+    }
+
+    function selectGapAnswer(selected, correctAns) {
+        modal.style.display = 'none';
+        currentGapBtn.innerText = selected; currentGapBtn.disabled = true;
+
+        const wrapper = currentGapBtn.closest('div').parentElement.parentElement;
+        const explDiv = wrapper.querySelector('.explanation');
+
+        explDiv.innerHTML = `<h4>💡 Giải thích chi tiết:</h4>${currentGapWord.expl}`;
+
+        if(selected === correctAns) {
+            currentGapBtn.classList.add('filled-correct'); playDing(); triggerConfetti(); score++;
+        } else {
+            currentGapBtn.classList.add('filled-wrong');
+            currentGapBtn.closest('.gap-item').classList.add('shake');
+            playBuzz(); setTimeout(() => currentGapBtn.closest('.gap-item').classList.remove('shake'), 400);
+            explDiv.innerHTML += `<div class="expl-step" style="color:red; font-weight: bold;">Lưu ý: Đáp án đúng là "${correctAns}". Lần sau cẩn thận hơn nhé!</div>`;
+        }
+        explDiv.style.display = 'block';
+    }
+
+    window.onclick = function(event) { if (event.target == modal) modal.style.display = "none"; }
+
+    // --- RENDER MULTIPLE CHOICE EXERCISES ---
+    multipleChoiceData.forEach(sec => {
+        const secDiv = document.createElement('div');
+        secDiv.innerHTML = `<div class="section-title">${sec.section}</div>`;
+        
+        sec.questions.forEach((qObj) => {
+            totalQuestions++;
+            const card = document.createElement('div'); card.className = 'card';
+            
+            const qText = document.createElement('div'); qText.className = 'question-text';
+            qText.innerHTML = qObj.q; card.appendChild(qText);
+
+            const optionsGrid = document.createElement('div'); optionsGrid.className = 'options-grid';
+            let shuffledOptions = shuffleArray([...qObj.options]);
+
+            shuffledOptions.forEach(opt => {
+                const btn = document.createElement('button'); btn.className = 'option-btn';
+                let cleanText = opt.text.replace(/^[A-D]\.\s*/, '');
+                btn.innerHTML = cleanText; 
+                
+                if (opt.val === qObj.ans) btn.dataset.correct = "true";
+
+                btn.onclick = () => handleAnswer(btn, optionsGrid, opt.val === qObj.ans, qObj.expl, card);
+                optionsGrid.appendChild(btn);
+            });
+
+            card.appendChild(optionsGrid);
+            const explDiv = document.createElement('div'); explDiv.className = 'explanation';
+            card.appendChild(explDiv);
+            secDiv.appendChild(card);
+        });
+        quizContainer.appendChild(secDiv);
+    });
+
+    function handleAnswer(btn, grid, isCorrect, explHTML, cardDiv) {
+        const buttons = grid.querySelectorAll('.option-btn');
+        buttons.forEach(b => b.disabled = true);
+
+        const explDiv = cardDiv.querySelector('.explanation');
+        explDiv.innerHTML = `<h4>💡 Giải thích chi tiết:</h4>${explHTML}`;
+
+        if (isCorrect) {
+            btn.classList.add('correct'); playDing(); triggerConfetti(); score++;
+        } else {
+            btn.classList.add('wrong'); cardDiv.classList.add('shake'); playBuzz();
+            setTimeout(() => cardDiv.classList.remove('shake'), 400);
+            const correctBtn = grid.querySelector('[data-correct="true"]');
+            if (correctBtn) correctBtn.classList.add('correct');
+        }
+        explDiv.style.display = 'block';
+    }
+
+    // --- TỔNG KẾT ---
+    function submitQuiz() {
+        const resultModal = document.getElementById('resultModal');
+        const scoreText = document.getElementById('score-text');
+        const praiseText = document.getElementById('praise-text');
+
+        scoreText.innerText = `Bạn đã đúng ${score} / ${totalQuestions} câu!`;
+        
+        let ratio = score / totalQuestions;
+        let praises = [ "Xuất sắc! Ms. Chí Nên rất tự hào về em! 🌟", "Giỏi lắm! Em đã rất nỗ lực! 🎉", "Hãy đọc kỹ phần giải thích để tiến bộ hơn nhé! 💪" ];
+
+        if (ratio > 0.8) praiseText.innerText = praises[0];
+        else if (ratio >= 0.5) praiseText.innerText = praises[1];
+        else praiseText.innerText = praises[2];
+
+        resultModal.style.display = 'flex'; triggerConfetti(); playDing();
+    }
+</script>
+</body>
+</html>
