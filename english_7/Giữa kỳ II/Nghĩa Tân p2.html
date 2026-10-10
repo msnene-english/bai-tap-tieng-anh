@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài kiểm tra: Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Palette theo chủ đề Global Culture: Sakura Pink, Eco Green, Sky Blue */
+            --primary: #FF6B81; /* Sakura Pink */
+            --secondary: #7BED9F; /* Eco Mint */
+            --accent: #70A1FF; /* Sky Blue */
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --bg-card: #ffffff;
+            --text-main: #2F3542;
+        }
+
+        * { box-sizing: border-box; font-family: 'Nunito', sans-serif; }
+
+        body {
+            margin: 0; padding: 0;
+            background: linear-gradient(-45deg, #FF6B81, #FFD32A, #7BED9F, #70A1FF);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Background Pattern động - Emoji Lễ hội & Thành phố */
+        .pattern-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><text x="40" y="80" font-size="50" opacity="0.6">🏮</text><text x="250" y="140" font-size="45" opacity="0.5">🎭</text><text x="100" y="320" font-size="40" opacity="0.7">🏙️</text><text x="320" y="320" font-size="50" opacity="0.6">🌸</text></svg>');
+            animation: floatPattern 40s linear infinite;
+            mix-blend-mode: overlay;
+        }
+
+        @keyframes floatPattern {
+            0% { background-position: 0 0; }
+            100% { background-position: 400px 400px; }
+        }
+
+        /* Top Control Bar */
+        .top-bar {
+            height: 75px; background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-title { font-weight: 900; color: var(--primary); font-size: 24px; margin: 0; }
+        .header-subtitle { font-size: 14px; color: #747d8c; margin: 0; }
+
+        .timer-container { display: flex; align-items: center; gap: 15px; }
+        .timer-display { font-size: 28px; font-weight: 900; color: var(--text-main); min-width: 90px; text-align: center; }
+        .btn-timer {
+            padding: 10px 20px; font-size: 16px; font-weight: bold; cursor: pointer;
+            border: none; border-radius: 15px; background: var(--accent); color: white;
+            box-shadow: 0 5px 0 #537fe6; transition: all 0.1s;
+        }
+        .btn-timer:active { transform: translateY(5px); box-shadow: 0 0 0 #537fe6; }
+
+        /* Progress Bar (Mới thêm) */
+        .progress-container {
+            width: 100%; height: 8px; background: rgba(255,255,255,0.4);
+            position: relative; z-index: 10;
+        }
+        .progress-bar {
+            height: 100%; width: 0%; background: var(--correct);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(0, 210, 106, 0.8);
+        }
+
+        /* Split Screen Layout */
+        .main-container {
+            display: flex; flex: 1; overflow: hidden; position: relative; z-index: 1;
+            padding: 20px; gap: 20px;
+        }
+
+        .pane {
+            flex: 1; background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow-y: auto; padding: 30px;
+            scroll-behavior: smooth;
+        }
+        
+        .pane::-webkit-scrollbar { width: 10px; }
+        .pane::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .pane::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        /* Nội dung Reading */
+        .passage { font-size: 18px; line-height: 1.8; margin-bottom: 20px; text-align: justify; }
+        .gap { display: inline-block; min-width: 40px; border-bottom: 2px solid var(--primary); text-align: center; font-weight: bold; color: var(--primary); }
+        
+        .btn-translate {
+            background: var(--primary); color: white; border: none; padding: 10px 20px;
+            border-radius: 12px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 0 #e0566c; margin-bottom: 10px; transition: 0.2s;
+        }
+        .btn-translate:hover { filter: brightness(1.1); }
+        .btn-translate:active { transform: translateY(4px); box-shadow: none; }
+        .translation-box {
+            background: #fdf0f2; border-left: 5px solid var(--primary);
+            padding: 15px; border-radius: 0 10px 10px 0; margin-bottom: 20px;
+            display: none; font-style: italic; font-size: 16px; line-height: 1.6; color: #2f3542;
+        }
+
+        /* Bảng Glossary */
+        .glossary-table {
+            width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 30px;
+            background: white; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .glossary-table th { background: var(--secondary); padding: 12px; text-align: left; color: #2d3436; }
+        .glossary-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        /* Khu vực bài tập */
+        .question-card {
+            background: white; border: 2px solid #eee; border-radius: 15px;
+            padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .q-text { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .option-btn {
+            background: #f1f2f6; border: 2px solid transparent; padding: 15px;
+            border-radius: 15px; font-size: 16px; font-weight: 600; cursor: pointer;
+            text-align: left; transition: all 0.2s; position: relative;
+            box-shadow: 0 4px 0 #dfe4ea; color: #2d3436;
+        }
+        .option-btn:hover { transform: scale(1.02); background: #fdf0f2; border-color: var(--primary); }
+        .option-btn:active { transform: scale(0.98) translateY(4px); box-shadow: none; }
+        
+        .option-btn.correct { background: var(--correct); color: white; box-shadow: 0 4px 0 #00a854; border-color: #00a854; }
+        .option-btn.wrong { background: var(--wrong); color: white; box-shadow: 0 4px 0 #d63031; border-color: #d63031; animation: shake 0.4s; }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .explanation-box {
+            margin-top: 15px; padding: 15px; background: #eef2f3; border-radius: 12px;
+            border-left: 5px solid var(--accent); font-size: 15px; display: none; line-height: 1.6;
+        }
+        .explanation-box.show { display: block; animation: fadeIn 0.5s; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Submit & Result */
+        .btn-submit {
+            display: block; width: 100%; padding: 20px; font-size: 22px; font-weight: 900;
+            background: var(--primary); color: white; border: none; border-radius: 20px;
+            cursor: pointer; box-shadow: 0 8px 0 #e0566c; margin-top: 30px; transition: 0.2s;
+        }
+        .btn-submit:active { transform: translateY(8px); box-shadow: none; }
+
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 100; display: none;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 30px; text-align: center;
+            max-width: 500px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes scaleUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .score-circle {
+            width: 150px; height: 150px; background: var(--primary); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; margin: 0 auto 20px;
+            font-size: 40px; font-weight: 900; color: white; border: 10px solid #fdf0f2;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Confetti */
+        .confetti { position: fixed; width: 10px; height: 10px; z-index: 99; pointer-events: none; }
+        
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #FF4757; color: white; padding: 15px 30px; border-radius: 30px;
+            font-weight: bold; z-index: 1000; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            text-align: center; max-width: 80%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="pattern-overlay"></div>
+<div id="toast">Đã hết giờ làm bài!</div>
+
+<div class="top-bar">
+    <div>
+        <h1 class="header-title">Global Culture Test 🌏</h1>
+        <p class="header-subtitle">Giáo viên: Ms. Chí Nên </p>
+    </div>
+    <div class="timer-container">
+        <div class="timer-display" id="timer">15:00</div>
+        <button class="btn-timer" id="btn-timer-control" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+    </div>
+</div>
+<div class="progress-container">
+    <div class="progress-bar" id="progress-bar"></div>
+</div>
+
+<div class="main-container">
+    <div class="pane left-pane">
+        <h2 style="color: var(--primary);">Exercise 5: Choose the correct word for each blank.</h2>
+        <div class="passage">
+            Oak city is a great city. There are so <span class="gap">(81)</span> things to do! There are cinemas, parks and discos. It’s got some great clothes and music shops <span class="gap">(82)</span>. Oak city is very modern and beautiful. There aren’t any <span class="gap">(83)</span> buildings and there’s some beautiful <span class="gap">(84)</span> around the city. Is there any pollution in the Oak city? There isn’t much pollution <span class="gap">(85)</span> there isn’t much traffic. Everyone travels <span class="gap">(86)</span> bike and walks, so there aren’t many accidents. No one works, so everyone has got a lot of free time. Are there any unfriendly people in Oak city? – No, so come and spend a little time here.
+        </div>
+        
+        <button class="btn-translate" onclick="toggleTranslation('trans1')">BẢN DỊCH OAK CITY</button>
+        <div id="trans1" class="translation-box">
+            Thành phố Oak là một thành phố tuyệt vời. Có rất nhiều thứ để làm! Có rạp chiếu phim, công viên và các sàn nhảy disco. Nó cũng có một vài cửa hàng quần áo và âm nhạc rất tuyệt. Thành phố Oak rất hiện đại và xinh đẹp. Không có bất kỳ tòa nhà xấu xí nào và có một số phong cảnh tuyệt đẹp xung quanh thành phố. Có ô nhiễm ở thành phố Oak không? Không có nhiều ô nhiễm bởi vì không có nhiều xe cộ đi lại. Mọi người di chuyển bằng xe đạp và đi bộ, vì vậy không có nhiều tai nạn. Không ai làm việc cả, do đó mọi người đều có rất nhiều thời gian rảnh. Có những người không thân thiện ở thành phố Oak không? – Không có đâu, vậy nên hãy đến và dành một chút thời gian ở đây nhé.
+        </div>
+
+        <table class="glossary-table">
+            <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+            <tr><td>1. Modern</td><td>Adj</td><td>Hiện đại</td></tr>
+            <tr><td>2. Ugly</td><td>Adj</td><td>Xấu xí</td></tr>
+            <tr><td>3. Scenery</td><td>Noun</td><td>Phong cảnh (không đếm được)</td></tr>
+            <tr><td>4. Pollution</td><td>Noun</td><td>Sự ô nhiễm</td></tr>
+            <tr><td>5. Traffic</td><td>Noun</td><td>Giao thông, xe cộ đi lại</td></tr>
+            <tr><td>6. Accident</td><td>Noun</td><td>Tai nạn</td></tr>
+        </table>
+
+        <hr style="border:1px dashed #ccc; margin: 40px 0;">
+
+        <h2 style="color: var(--accent);">Exercise 6: Visit the Edinburgh Festival</h2>
+        <div class="passage">
+            Every year, thousands of people come to Edinburgh, the capital city of Scotland, to be part of the Edinburgh Festival. For three weeks every August and September the city is filled with actors and artists from all over the world. They come to Edinburgh for the biggest arts festival in Britain. During this time, the streets of the city are alive with music and dance from early in the morning until late at night. You can even see artists painting pictures on the streets.<br><br>
+            Tens of thousands of tourists come to the festival to see new films and plays and to hear music played by famous musicians. This year, you can see over five hundred performances with actors from more than forty countries.<br><br>
+            The tickets for these performances are quite cheap, and it is usually easier to see your favourite star in Edinburgh than it is in London. So come to Edinburgh next summer!
+        </div>
+
+        <button class="btn-translate" style="background: var(--accent); box-shadow: 0 4px 0 #537fe6;" onclick="toggleTranslation('trans2')">BẢN DỊCH EDINBURGH FESTIVAL</button>
+        <div id="trans2" class="translation-box" style="border-left-color: var(--accent);">
+            Mỗi năm, hàng ngàn người đến Edinburgh, thủ đô của Scotland, để tham gia Lễ hội Edinburgh. Trong ba tuần vào mỗi tháng 8 và tháng 9, thành phố tràn ngập các diễn viên và nghệ sĩ từ khắp nơi trên thế giới. Họ đến Edinburgh để tham dự lễ hội nghệ thuật lớn nhất nước Anh. Trong thời gian này, đường phố của thành phố trở nên sống động với âm nhạc và khiêu vũ từ sáng sớm cho đến tận đêm khuya. Bạn thậm chí có thể thấy các nghệ sĩ vẽ tranh ngay trên đường phố.<br><br>
+            Hàng chục ngàn du khách đến lễ hội để xem các bộ phim và vở kịch mới, cũng như nghe âm nhạc do các nhạc sĩ nổi tiếng biểu diễn. Năm nay, bạn có thể xem hơn năm trăm buổi biểu diễn với các diễn viên đến từ hơn bốn mươi quốc gia.<br><br>
+            Vé cho những buổi biểu diễn này khá rẻ, và thường thì việc gặp gỡ ngôi sao yêu thích của bạn ở Edinburgh sẽ dễ dàng hơn ở London. Vì vậy hãy đến Edinburgh vào mùa hè năm sau nhé!
+        </div>
+
+        <table class="glossary-table">
+            <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+            <tr><td>1. Capital</td><td>Noun</td><td>Thủ đô</td></tr>
+            <tr><td>2. Be filled with</td><td>Phrase</td><td>Đầy ắp, tràn ngập</td></tr>
+            <tr><td>3. Alive</td><td>Adj</td><td>Sống động, náo nhiệt</td></tr>
+            <tr><td>4. Tourist</td><td>Noun</td><td>Khách du lịch</td></tr>
+            <tr><td>5. Performance</td><td>Noun</td><td>Buổi biểu diễn</td></tr>
+        </table>
+
+        <hr style="border:1px dashed #ccc; margin: 40px 0;">
+
+        <h2 style="color: #ff9f43;">Exercise 7: The Shichi-go-san Festival</h2>
+        <div class="passage">
+            Shichi-go-san is a Japanese festival. The Japanese celebrate it on 15 November every year. This is because people believe it is a day of good luck for all Japanese people.<br><br>
+            Shichi-go-san means “seven-five-three” and the festival is for children who are seven, five and three. The Japanese think these ages are very important years. Japanese parents celebrate Shichi-go-san as their boys turn three and five and their girls turn three and seven.<br><br>
+            At the age of seven, a girl wears obi - the piece of cloth worn round the waist over the kimono - for the first time. At the age of five, a boy wears his first hakama pants – the pants that Samurai wore in the past - in public. The age of three is important for the Japanese too. They think it is time children can let their hair grow.<br><br>
+            On this day, children often dress up like the adults in the ancient times and pretend to be grown up.
+        </div>
+
+        <button class="btn-translate" style="background: #ff9f43; box-shadow: 0 4px 0 #cc7e36;" onclick="toggleTranslation('trans3')">BẢN DỊCH SHICHI-GO-SAN</button>
+        <div id="trans3" class="translation-box" style="border-left-color: #ff9f43;">
+            Shichi-go-san là một lễ hội của Nhật Bản. Người Nhật kỷ niệm nó vào ngày 15 tháng 11 hàng năm. Đó là vì mọi người tin rằng đây là một ngày mang lại may mắn cho toàn thể người dân Nhật Bản.<br><br>
+            Shichi-go-san có nghĩa là "bảy-năm-ba" và lễ hội này dành cho trẻ em lên bảy, năm và ba tuổi. Người Nhật cho rằng những độ tuổi này là những năm rất quan trọng. Các bậc cha mẹ Nhật Bản tổ chức lễ hội Shichi-go-san khi các bé trai của họ tròn ba và năm tuổi, và các bé gái tròn ba và bảy tuổi.<br><br>
+            Vào năm bảy tuổi, một bé gái sẽ mặc obi - mảnh vải quấn quanh eo bên ngoài bộ kimono - lần đầu tiên. Vào năm năm tuổi, một bé trai sẽ mặc chiếc quần hakama đầu tiên của mình - loại quần mà các Samurai từng mặc trong quá khứ - ở nơi công cộng. Tuổi lên ba cũng quan trọng đối với người Nhật. Họ nghĩ rằng đó là lúc trẻ em có thể bắt đầu để tóc dài.<br><br>
+            Vào ngày này, trẻ em thường mặc đồ giống như người lớn thời xưa và giả vờ như mình đã trưởng thành.
+        </div>
+
+        <table class="glossary-table">
+            <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+            <tr><td>1. Celebrate</td><td>Verb</td><td>Ăn mừng, kỷ niệm</td></tr>
+            <tr><td>2. Important</td><td>Adj</td><td>Quan trọng</td></tr>
+            <tr><td>3. Waist</td><td>Noun</td><td>Vòng eo</td></tr>
+            <tr><td>4. Public</td><td>Noun</td><td>Nơi công cộng</td></tr>
+            <tr><td>5. Ancient</td><td>Adj</td><td>Cổ xưa</td></tr>
+            <tr><td>6. Pretend</td><td>Verb</td><td>Giả vờ</td></tr>
+        </table>
+    </div>
+
+    <div class="pane right-pane" id="exercise-pane">
+        </div>
+</div>
+
+<div class="modal" id="result-modal">
+    <div class="modal-content">
+        <h2 style="color: var(--primary); font-size: 30px;">KẾT QUẢ CỦA BẠN</h2>
+        <div class="score-circle" id="final-score">0/16</div>
+        <h3 id="feedback-msg" style="color: #636e72;"></h3>
+        <button class="btn-submit" style="margin-top: 20px;" onclick="location.reload()">LÀM LẠI BÀI</button>
+    </div>
+</div>
+
+<script>
+    // --- DỮ LIỆU CÂU HỎI ---
+    const allQuestions = [
+        // Exercise 5 (81-86)
+        {
+            id: 'q81', text: "Question 81: There are so (81) ________ things to do!",
+            options: [
+                { id: 'A', text: 'A. many', isCorrect: true },
+                { id: 'B', text: 'B. much' },
+                { id: 'C', text: 'C. some' },
+                { id: 'D', text: 'D. any' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- 'things' là danh từ đếm được số nhiều.<br>- Ta dùng <b>many</b> đi với danh từ đếm được số nhiều. 'much' đi với danh từ không đếm được. Chọn A."
+        },
+        {
+            id: 'q82', text: "Question 82: It’s got some great clothes and music shops (82) ________.",
+            options: [
+                { id: 'A', text: 'A. neither' },
+                { id: 'B', text: 'B. either' },
+                { id: 'C', text: 'C. too', isCorrect: true },
+                { id: 'D', text: 'D. so' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- Câu này là câu khẳng định mang ý bổ sung (Nó CŨNG có một vài cửa hàng...).<br>- Từ <b>'too'</b> đứng ở cuối câu khẳng định để diễn đạt nghĩa 'cũng vậy'. 'either/neither' dùng trong câu phủ định. Chọn C."
+        },
+        {
+            id: 'q83', text: "Question 83: There aren’t any (83) ________ buildings and there’s some beautiful...",
+            options: [
+                { id: 'A', text: 'A. ugly', isCorrect: true },
+                { id: 'B', text: 'B. beautiful' },
+                { id: 'C', text: 'C. pretty' },
+                { id: 'D', text: 'D. unpleasant' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- Vế trước có từ 'aren't any' (không có bất kỳ...). Vế sau lại khen 'there's some beautiful' (có phong cảnh đẹp).<br>- Theo logic tương phản, vế trước phải là 'Không có tòa nhà nào <b>xấu xí</b> cả'. Chọn A. ugly."
+        },
+        {
+            id: 'q84', text: "Question 84: ...and there’s some beautiful (84) ________ around the city.",
+            options: [
+                { id: 'A', text: 'A. scenery', isCorrect: true },
+                { id: 'B', text: 'B. scene' },
+                { id: 'C', text: 'C. view' },
+                { id: 'D', text: 'D. sight' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Scenery</b> (n): Phong cảnh thiên nhiên nói chung (là danh từ KHÔNG đếm được). Động từ to-be đang chia số ít (there's = there is) đi với 'some' -> chỉ có danh từ không đếm được mới thỏa mãn.<br>- Các từ như scene, view, sight là danh từ đếm được. Chọn A."
+        },
+        {
+            id: 'q85', text: "Question 85: There isn’t much pollution (85) ________ there isn’t much traffic.",
+            options: [
+                { id: 'A', text: 'A. so' },
+                { id: 'B', text: 'B. if' },
+                { id: 'C', text: 'C. because', isCorrect: true },
+                { id: 'D', text: 'D. although' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- Dịch nghĩa: Không có nhiều ô nhiễm <b>BỞI VÌ</b> không có nhiều xe cộ.<br>- Mệnh đề sau chỉ nguyên nhân, nên ta dùng liên từ 'because'. Chọn C."
+        },
+        {
+            id: 'q86', text: "Question 86: Everyone travels (86) ________ bike and walks...",
+            options: [
+                { id: 'A', text: 'A. so' },
+                { id: 'B', text: 'B. with' },
+                { id: 'C', text: 'C. by', isCorrect: true },
+                { id: 'D', text: 'D. in' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- Giới từ đi kèm với phương tiện giao thông nói chung (khi không có mạo từ a/an/the đứng trước) luôn là <b>'by'</b>. Ví dụ: by bike, by car, by bus. Chọn C."
+        },
+
+        // Exercise 6 (87-91)
+        {
+            id: 'q87', text: "Question 87: How many people come to attend the Edinburgh Festival every year?",
+            options: [
+                { id: 'A', text: 'A. Thousand people' },
+                { id: 'B', text: 'B. Few people' },
+                { id: 'C', text: 'C. Some people' },
+                { id: 'D', text: 'D. Thousands of people', isCorrect: true }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Dẫn chứng:</b> Ngay câu đầu tiên: 'Every year, <b>thousands of people</b> come to Edinburgh...'.<br>- Do đó đáp án chính xác là D. Hàng ngàn người."
+        },
+        {
+            id: 'q88', text: "Question 88: How long does the Edinburgh Festival last?",
+            options: [
+                { id: 'A', text: 'A. Three weeks', isCorrect: true },
+                { id: 'B', text: 'B. For 3 weeks every August and September' },
+                { id: 'C', text: 'C. Two months' },
+                { id: 'D', text: 'D. Three months' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Phân tích:</b> Câu hỏi 'How long' (Bao lâu) chuyên dùng để hỏi về KHOẢNG THỜI GIAN (Duration).<br>- Đáp án A (Ba tuần) trả lời trực tiếp và ngắn gọn nhất cho câu hỏi How long. (Đáp án B bị dư thừa phần tần suất 'every August...'). Chọn A."
+        },
+        {
+            id: 'q89', text: "Question 89: What can you even see artists doing on the streets?",
+            options: [
+                { id: 'A', text: 'A. Playing the guitar on the streets' },
+                { id: 'B', text: 'B. Dancing on the streets' },
+                { id: 'C', text: 'C. Singing songs on the streets' },
+                { id: 'D', text: 'D. Painting pictures on the streets', isCorrect: true }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Dẫn chứng:</b> Ở cuối đoạn 1 tác giả viết: 'You can even see artists <b>painting pictures on the streets</b>.' (Bạn thậm chí có thể thấy các nghệ sĩ vẽ tranh ngay trên phố). Chọn D."
+        },
+        {
+            id: 'q90', text: "Question 90: How many performances can people see this year?",
+            options: [
+                { id: 'A', text: 'A. Some people' },
+                { id: 'B', text: 'B. Over five hundreds', isCorrect: true },
+                { id: 'C', text: 'C. Thousands' },
+                { id: 'D', text: 'D. Tens of thousands' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Dẫn chứng:</b> 'This year, you can see <b>over five hundred performances</b>...'<br>- <i>*Lưu ý từ Ms. Chí Nên:</i> Trong tiếng Anh chuẩn, từ 'hundred' đi sau số đếm cụ thể (như five) thì <b>không có s</b>. Đề bài gốc gõ sai thành 'five hundreds', nhưng chúng ta vẫn phải chọn đáp án B vì nó khớp số liệu trong bài nhất nhé!"
+        },
+        {
+            id: 'q91', text: "Question 91: How much are the tickets for these performances?",
+            options: [
+                { id: 'A', text: 'A. Very expensive' },
+                { id: 'B', text: 'B. Very cheap', isCorrect: true },
+                { id: 'C', text: 'C. Not cheap' },
+                { id: 'D', text: 'D. Quite expensive' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Dẫn chứng:</b> 'The tickets for these performances are <b>quite cheap</b>' (vé khá rẻ).<br>- Trong các đáp án đưa ra, 'Very cheap' là lựa chọn gần nghĩa nhất với thông tin trong bài. Chọn B."
+        },
+
+        // Exercise 7 (92-96)
+        {
+            id: 'q92', text: "Question 92: Who will probably celebrate the Shichi-go-san Festival?",
+            options: [
+                { id: 'A', text: 'A. a five-year-old girl' },
+                { id: 'B', text: 'B. a three-year-old boy', isCorrect: true },
+                { id: 'C', text: 'C. a seven-year-old boy' },
+                { id: 'D', text: 'D. None of them' } // Thêm D cho đủ 4
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Dẫn chứng:</b> 'Japanese parents celebrate Shichi-go-san as their boys turn three and five and their girls turn three and seven.' (Con trai lên 3 và 5; con gái lên 3 và 7).<br>- Theo dữ kiện này: bé gái 5 tuổi (Loại); bé trai 7 tuổi (Loại). Bé trai 3 tuổi (Đúng). Chọn B."
+        },
+        {
+            id: 'q93', text: "Question 93: Who will NOT celebrate the Shichi-go-san Festival?",
+            options: [
+                { id: 'A', text: 'A. a five-year-old boy' },
+                { id: 'B', text: 'B. a five-year-old girl', isCorrect: true },
+                { id: 'C', text: 'C. a seven-year-old girl' },
+                { id: 'D', text: 'D. a three-year-old girl' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- Đề hỏi ai <b>KHÔNG</b> tham gia. Như đã phân tích ở trên, con gái chỉ ăn mừng lúc 3 tuổi và 7 tuổi. <br>- Vì vậy, một bé gái 5 tuổi (a five-year-old girl) sẽ KHÔNG ăn mừng lễ hội này. Chọn B."
+        },
+        {
+            id: 'q94', text: "Question 94: Who wears obi for the first time?",
+            options: [
+                { id: 'A', text: 'A. a five year-old girl' },
+                { id: 'B', text: 'B. a seven-year-old boy' },
+                { id: 'C', text: 'C. a seven-year-old girl', isCorrect: true },
+                { id: 'D', text: 'D. a three-year-old boy' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Dẫn chứng:</b> 'At the age of seven, a girl wears obi... for the first time.' (Vào năm bảy tuổi, một bé gái sẽ mặc obi lần đầu tiên).<br>- Rõ ràng đáp án là C (Bé gái 7 tuổi)."
+        },
+        {
+            id: 'q95', text: "Question 95: At what age can a Japanese child let the hair grow?",
+            options: [
+                { id: 'A', text: 'A. three years old', isCorrect: true },
+                { id: 'B', text: 'B. five years old' },
+                { id: 'C', text: 'C. seven years old' },
+                { id: 'D', text: 'D. ten years old' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Dẫn chứng:</b> 'The age of three is important... They think it is time children can let their hair grow.' (Tuổi lên ba rất quan trọng... Họ nghĩ đó là lúc trẻ có thể để tóc dài). Chọn A."
+        },
+        {
+            id: 'q96', text: "Question 96: Why do the Japanese celebrate it on 15 November?",
+            options: [
+                { id: 'A', text: 'A. Because children dress up like the adults...' },
+                { id: 'B', text: 'B. Because the day brings luck to them.' },
+                { id: 'C', text: 'C. Because they think the day brings luck to them.', isCorrect: true },
+                { id: 'D', text: 'D. Because it is an ancient festival.' }
+            ],
+            explanation: "<b>Ms. Chí Nên giải thích:</b><br>- <b>Dẫn chứng:</b> 'This is because people believe it is a day of good luck...' (Bởi vì mọi người <b>TIN RẰNG</b> đó là một ngày may mắn...).<br>- Đáp án C (bởi vì họ nghĩ ngày đó mang lại may mắn) bao hàm sắc thái 'believe/think' (tin tưởng/nghĩ rằng) chính xác tuyệt đối với ý đồ của tác giả hơn là sự khẳng định mang tính hiển nhiên ở đáp án B. Chọn C."
+        }
+    ];
+
+    let score = 0;
+    const totalQuestions = allQuestions.length;
+    let answeredQuestions = {};
+
+    // --- WEB AUDIO API ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playCorrectSound() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    function playWrongSound() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    }
+
+    function shootConfetti(x, y) {
+        const colors = ['#00D26A', '#FF6B81', '#7BED9F', '#70A1FF', '#FFD32A'];
+        for(let i=0; i<30; i++) {
+            const conf = document.createElement('div');
+            conf.className = 'confetti';
+            conf.style.left = x + 'px'; conf.style.top = y + 'px';
+            conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            if(Math.random() > 0.5) conf.style.borderRadius = '50%';
+            document.body.appendChild(conf);
+
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = 5 + Math.random() * 10;
+            let vx = Math.cos(angle) * velocity;
+            let vy = Math.sin(angle) * velocity;
+
+            let tick = 0;
+            function animate() {
+                tick++; vx *= 0.95; vy += 0.5; 
+                conf.style.left = (parseFloat(conf.style.left) + vx) + 'px';
+                conf.style.top = (parseFloat(conf.style.top) + vy) + 'px';
+                conf.style.transform = `rotate(${tick * 15}deg)`;
+                if(tick < 50) requestAnimationFrame(animate);
+                else conf.remove();
+            }
+            animate();
+        }
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function toggleTranslation(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // --- RENDER GIAO DIỆN CÂU HỎI ---
+    const exercisePane = document.getElementById('exercise-pane');
+    let htmlContent = `<h2 style="color: var(--primary); text-align:center; font-weight:900;">BÀI TẬP TRẮC NGHIỆM</h2>`;
+    
+    allQuestions.forEach((q, index) => {
+        const shuffledOptions = shuffleArray([...q.options]);
+        let optionsHtml = '';
+        shuffledOptions.forEach(opt => {
+            optionsHtml += `<button class="option-btn" onclick="checkMCQ('${q.id}', this, ${opt.isCorrect || false}, event)">
+                ${opt.text}
+            </button>`;
+        });
+
+        htmlContent += `
+        <div class="question-card" id="card-${q.id}">
+            <div class="q-text">${q.text}</div>
+            <div class="options-grid">${optionsHtml}</div>
+            <div class="explanation-box" id="exp-${q.id}">${q.explanation}</div>
+        </div>`;
+        
+        // Vách ngăn chia bài
+        if(index === 5 || index === 10) {
+            htmlContent += `<hr style="border:1px dashed #ccc; margin: 30px 0;">`;
+        }
+    });
+
+    htmlContent += `<button class="btn-submit" onclick="submitExam()">NỘP BÀI NHẬN ĐIỂM!</button>`;
+    exercisePane.innerHTML = htmlContent;
+
+    // --- LOGIC XỬ LÝ ĐÁP ÁN & CẬP NHẬT PROGRESS BAR ---
+    function checkMCQ(qId, btnElement, isCorrect, event) {
+        if(answeredQuestions[qId]) return; 
+        answeredQuestions[qId] = true;
+
+        updateProgressBar(); // Gọi hàm update thanh tiến trình
+
+        const parentGrid = btnElement.parentElement;
+        const allBtns = parentGrid.querySelectorAll('.option-btn');
+        const expBox = document.getElementById(`exp-${qId}`);
+
+        if(isCorrect) {
+            btnElement.classList.add('correct');
+            playCorrectSound();
+            shootConfetti(event.clientX, event.clientY);
+            score++;
+        } else {
+            btnElement.classList.add('wrong');
+            playWrongSound();
+        }
+
+        const qData = allQuestions.find(x => x.id === qId);
+        const correctText = qData.options.find(x => x.isCorrect).text;
+        
+        allBtns.forEach(btn => {
+            btn.style.pointerEvents = 'none'; 
+            if(btn.innerText.trim() === correctText) {
+                btn.classList.add('correct'); 
+            }
+        });
+        
+        expBox.classList.add('show');
+    }
+
+    // Hàm cập nhật Progress Bar
+    function updateProgressBar() {
+        const answeredCount = Object.keys(answeredQuestions).length;
+        const percentage = (answeredCount / totalQuestions) * 100;
+        document.getElementById('progress-bar').style.width = percentage + '%';
+    }
+
+    // --- LOGIC TIMER ---
+    let timerInterval;
+    let timeRemaining = 15 * 60; // 15 phút cho 16 câu
+    let isTimerRunning = false;
+
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60); const s = seconds % 60;
+        return `${m < 10 ? '0':''}${m}:${s < 10 ? '0':''}${s}`;
+    }
+
+    function toggleTimer() {
+        const btn = document.getElementById('btn-timer-control');
+        const display = document.getElementById('timer');
+
+        if(isTimerRunning) {
+            clearInterval(timerInterval);
+            btn.innerText = "TIẾP TỤC BÀI THI";
+            btn.style.background = "#FFD32A"; 
+        } else {
+            btn.innerText = "TẠM DỪNG";
+            btn.style.background = "var(--wrong)"; 
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                display.innerText = formatTime(timeRemaining);
+                
+                if(timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    showToast();
+                    btn.innerText = "HẾT GIỜ";
+                    btn.style.pointerEvents = 'none';
+                    btn.style.background = "#747d8c";
+                }
+            }, 1000);
+        }
+        isTimerRunning = !isTimerRunning;
+    }
+
+    function showToast() {
+        const toast = document.getElementById('toast');
+        toast.innerHTML = "Đã hết giờ làm bài! Cố gắng luyện tốc độ hơn nhé!";
+        toast.style.display = 'block';
+        playWrongSound();
+        setTimeout(() => { toast.style.display = 'none'; }, 6000);
+    }
+
+    // --- LOGIC NỘP BÀI ---
+    function submitExam() {
+        const modal = document.getElementById('result-modal');
+        const scoreDisplay = document.getElementById('final-score');
+        const feedback = document.getElementById('feedback-msg');
+
+        scoreDisplay.innerText = `${score}/${totalQuestions}`;
+
+        let ratio = score / totalQuestions;
+        if(ratio === 1) {
+            feedback.innerText = "🏆 Tuyệt vời! Bạn là công dân toàn cầu chính hiệu với số điểm tuyệt đối! 🌏";
+            shootConfetti(window.innerWidth/2, window.innerHeight/2);
+            setTimeout(() => shootConfetti(window.innerWidth/3, window.innerHeight/3), 500);
+            setTimeout(() => shootConfetti(window.innerWidth/1.5, window.innerHeight/1.5), 1000);
+        } else if(ratio >= 0.8) {
+            feedback.innerText = "✨ Quá đỉnh! Kiến thức từ vựng và đọc hiểu của bạn rất vững chắc! ✨";
+        } else if(ratio >= 0.5) {
+            feedback.innerText = "👍 Tốt lắm! Nhớ đọc lại những câu bị sai qua lời giải của Ms. Chí Nên nhé!";
+        } else {
+            feedback.innerText = "💪 Đừng nản chí! Học tiếng Anh giống như đi du lịch vậy, đi nhiều rồi sẽ quen đường thôi!";
+        }
+
+        modal.style.display = 'flex';
+        playCorrectSound();
+    }
+</script>
+
+</body>
+</html>
+
+
