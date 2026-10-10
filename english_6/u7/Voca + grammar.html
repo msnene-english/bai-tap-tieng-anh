@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Quiz - Ms. Chí Nên </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #00C9A7;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --bg-color: #F0F4F8;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#8854c022 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #2D3436;
+            min-height: 100vh;
+        }
+
+        .quiz-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 0 #D1D8E0;
+            transition: transform 0.2s;
+        }
+
+        .btn-3d {
+            position: relative;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 0 6px 0 #CBD5E0;
+            transform: translateY(0);
+        }
+
+        .btn-3d:hover {
+            transform: scale(1.02);
+        }
+
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #CBD5E0;
+        }
+
+        .option-btn {
+            background: #FFFFFF;
+            border: 2px solid #E2E8F0;
+            text-align: left;
+            padding: 1rem 1.5rem;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct);
+            color: white;
+            border-color: #00A352;
+            box-shadow: 0 6px 0 #008141;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong);
+            color: white;
+            border-color: #D63031;
+            box-shadow: 0 6px 0 #A82525;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .explanation-box {
+            background: #F8F9FE;
+            border-left: 5px solid var(--primary);
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #E2E8F0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s ease;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-[#8854C0] mb-1">Exercise II: Choose the correct answers</h1>
+            <p class="text-sm font-semibold text-gray-500 uppercase tracking-widest">Giáo viên tạo: Ms. Chí Nên </p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-8">
+            <div class="flex justify-between text-xs font-bold text-gray-400 mb-2 uppercase">
+                <span id="progress-text">Câu hỏi 1 / 35</span>
+                <span id="score-text">Đúng: 0</span>
+            </div>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill" style="width: 2.8%"></div>
+            </div>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quiz-container">
+            <!-- Question Card -->
+            <div class="quiz-card p-6 md:p-10 mb-8">
+                <h2 id="question-text" class="text-xl md:text-2xl font-bold mb-8 leading-relaxed">
+                    Đang tải câu hỏi...
+                </h2>
+
+                <div id="options-grid" class="grid grid-cols-1 gap-4">
+                    <!-- Options will be here -->
+                </div>
+
+                <!-- Explanation -->
+                <div id="explanation-container" class="explanation-box p-5 animate-fade-in">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-[#8854C0] text-white text-xs px-2 py-1 rounded">Ms. Chí Nên GIẢI THÍCH</span>
+                    </div>
+                    <div id="explanation-content" class="text-gray-700 text-sm leading-loose">
+                        <!-- Content via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between items-center">
+                <button id="prev-btn" class="btn-3d bg-gray-200 px-6 py-3 font-bold text-gray-600 opacity-0 pointer-events-none">
+                    Quay lại
+                </button>
+                <button id="next-btn" class="btn-3d bg-[#00C9A7] px-8 py-3 font-bold text-white">
+                    Câu tiếp theo →
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen (Hidden by default) -->
+        <div id="result-screen" class="hidden text-center quiz-card p-10">
+            <h2 class="text-4xl font-bold text-[#8854C0] mb-4">Hoàn thành! 🎊</h2>
+            <div class="text-6xl font-bold mb-6 text-[#00C9A7]" id="final-score">0/35</div>
+            <p id="praise-text" class="text-xl text-gray-600 mb-8 font-medium italic"></p>
+            <button onclick="location.reload()" class="btn-3d bg-[#8854C0] text-white px-10 py-4 font-bold rounded-full text-xl">
+                Làm lại bài thi
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="audio-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="audio-wrong" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+
+    <script>
+        const quizData = [
+            {
+                q: "The program can be both ______________ and entertaining.",
+                options: ["educated", "education", "educational", "educate"],
+                correct: 2,
+                analysis: [
+                    "educated (adj): có giáo dục/được học hành (thường dùng cho người).",
+                    "education (n): nền giáo dục/sự giáo dục.",
+                    "educational (adj): mang tính giáo dục (dùng cho vật/chương trình).",
+                    "educate (v): giáo dục/dạy dỗ."
+                ],
+                translation: "Chương trình có thể vừa mang tính giáo dục vừa mang tính giải trí.",
+                reason: "Dựa vào cấu trúc song hành với từ 'entertaining' (tính từ), ta cần một tính từ miêu tả tính chất chương trình. 'Educational' là lựa chọn đúng để chỉ tính chất 'mang tính giáo dục' của một chương trình TV."
+            },
+            {
+                q: "The ______________ I like best is Xuan Bac.",
+                options: ["comedy", "comedian", "comedier", "comedience"],
+                correct: 1,
+                analysis: [
+                    "comedy (n): thể loại hài kịch/vở kịch hài.",
+                    "comedian (n): diễn viên hài (chỉ người).",
+                    "comedier: không tồn tại trong tiếng Anh.",
+                    "comedience: không tồn tại trong tiếng Anh."
+                ],
+                translation: "Diễn viên hài tôi thích nhất là Xuân Bắc.",
+                reason: "Vì 'Xuan Bac' là tên một người (diễn viên), nên ta phải dùng danh từ chỉ người 'comedian'."
+            },
+            {
+                q: "Are there any good programmes ______________ teenagers on TV tonight?",
+                options: ["to", "of", "with", "for"],
+                correct: 3,
+                analysis: [
+                    "to (prep): tới/cho.",
+                    "of (prep): của.",
+                    "with (prep): với.",
+                    "for (prep): dành cho."
+                ],
+                translation: "Có chương trình hay nào dành cho thanh thiếu niên trên TV tối nay không?",
+                reason: "Cấu trúc 'programme for somebody' có nghĩa là chương trình dành cho ai đó."
+            },
+            {
+                q: "Children can participate ______________ a TV competition for a game show or quiz show.",
+                options: ["in", "at", "to", "for"],
+                correct: 0,
+                analysis: [
+                    "in (prep): trong.",
+                    "at (prep): tại.",
+                    "to (prep): đến.",
+                    "for (prep): cho."
+                ],
+                translation: "Trẻ em có thể tham gia vào một cuộc thi truyền hình cho trò chơi hoặc chương trình đố vui.",
+                reason: "Cụm động từ cố định: 'participate in' = 'take part in' (tham gia vào)."
+            },
+            {
+                q: "Disney channel is one of the most ______________ channels ______________ children.",
+                options: ["good – for", "exciting – of", "popular – to", "popular – for"],
+                correct: 3,
+                analysis: [
+                    "good – for: tốt cho (nghĩa không sát bằng popular).",
+                    "exciting – of: không dùng giới từ of sau exciting trong ngữ cảnh này.",
+                    "popular – to: sai giới từ đi kèm.",
+                    "popular – for: phổ biến/được yêu thích bởi/dành cho."
+                ],
+                translation: "Kênh Disney là một trong những kênh phổ biến nhất dành cho trẻ em.",
+                reason: "Kênh truyền hình thường được mô tả là 'popular' (phổ biến) và đi kèm giới từ 'for' hoặc 'with' để chỉ đối tượng phục vụ."
+            },
+            {
+                q: "VTV is a ______________ TV channel in Vietnam. It attracts millions of TV viewers.",
+                options: ["national", "international", "local", "wide"],
+                correct: 0,
+                analysis: [
+                    "national (adj): thuộc quốc gia/toàn quốc.",
+                    "international (adj): quốc tế.",
+                    "local (adj): địa phương.",
+                    "wide (adj): rộng lớn."
+                ],
+                translation: "VTV là một kênh truyền hình quốc gia tại Việt Nam. Nó thu hút hàng triệu người xem.",
+                reason: "VTV là Đài truyền hình Việt Nam, phủ sóng toàn quốc nên ta dùng 'national'."
+            },
+            {
+                q: "What’s your ______________ TV programme?",
+                options: ["best", "good", "favourite", "like"],
+                correct: 2,
+                analysis: [
+                    "best (adj): tốt nhất.",
+                    "good (adj): tốt.",
+                    "favourite (adj): yêu thích nhất.",
+                    "like (v): thích."
+                ],
+                translation: "Chương trình TV yêu thích của bạn là gì?",
+                reason: "Để hỏi về sở thích cá nhân đối với một thứ gì đó, ta dùng 'favourite'."
+            },
+            {
+                q: "- ______________ do you like this TV programme? \n- Because it helps me relax.",
+                options: ["What", "Where", "Who", "Why"],
+                correct: 3,
+                analysis: [
+                    "What: Cái gì.",
+                    "Where: Ở đâu.",
+                    "Who: Ai.",
+                    "Why: Tại sao."
+                ],
+                translation: "- Tại sao bạn lại thích chương trình TV này? \n- Bởi vì nó giúp tôi thư giãn.",
+                reason: "Câu trả lời bắt đầu bằng 'Because' (Bởi vì), nên câu hỏi phải bắt đầu bằng từ để hỏi lý do 'Why'."
+            },
+            {
+                q: "My father likes watching sports ______________ on VTV3.",
+                options: ["channels", "events", "athletes", "matches"],
+                correct: 3,
+                analysis: [
+                    "channels (n): kênh.",
+                    "events (n): sự kiện.",
+                    "athletes (n): vận động viên.",
+                    "matches (n): các trận đấu."
+                ],
+                translation: "Bố tôi thích xem các trận đấu thể thao trên VTV3.",
+                reason: "Trên các kênh thể thao, người xem thường xem các 'matches' (trận đấu) bóng đá, quần vợt..."
+            },
+            {
+                q: "TV ______________ can join in some game shows through telephones or by emails.",
+                options: ["weathermen", "people", "viewers", "newsreaders"],
+                correct: 2,
+                analysis: [
+                    "weathermen (n): người dẫn bản tin thời tiết.",
+                    "people (n): mọi người.",
+                    "viewers (n): khán giả xem truyền hình.",
+                    "newsreaders (n): người đọc bản tin."
+                ],
+                translation: "Khán giả truyền hình có thể tham gia vào một số chương trình trò chơi thông qua điện thoại hoặc email.",
+                reason: "Từ chuyên dụng để chỉ những người xem TV là 'viewers'."
+            },
+            {
+                q: "That's the ______________ film I've ever seen.",
+                options: ["fun", "funny", "function", "funly"],
+                correct: 1,
+                analysis: [
+                    "fun (n/adj): niềm vui.",
+                    "funny (adj): hài hước/gây cười.",
+                    "function (n): chức năng.",
+                    "funly: từ không tồn tại."
+                ],
+                translation: "Đó là bộ phim hài hước nhất mà tôi từng xem.",
+                reason: "Ta cần một tính từ miêu tả tính chất của bộ phim, 'funny' là tính từ phù hợp."
+            },
+            {
+                q: "The series can be both ______________ and educational.",
+                options: ["entertain", "entertainment", "entertaining", "entertainingly"],
+                correct: 2,
+                analysis: [
+                    "entertain (v): giải trí.",
+                    "entertainment (n): sự giải trí.",
+                    "entertaining (adj): thú vị/mang tính giải trí.",
+                    "entertainingly (adv): một cách thú vị."
+                ],
+                translation: "Bộ phim dài tập này có thể vừa thú vị/giải trí vừa mang tính giáo dục.",
+                reason: "Song hành với tính từ 'educational' qua từ nối 'and', ta cần một tính từ 'entertaining'."
+            },
+            {
+                q: "The game show this week will test your general ______________ about Amazon jungle.",
+                options: ["knowledgeable", "knowledge", "know", "unknowledge"],
+                correct: 1,
+                analysis: [
+                    "knowledgeable (adj): am hiểu/có kiến thức.",
+                    "knowledge (n): kiến thức.",
+                    "know (v): biết.",
+                    "unknowledge: không tồn tại."
+                ],
+                translation: "Trò chơi truyền hình tuần này sẽ kiểm tra kiến thức chung của bạn về rừng rậm Amazon.",
+                reason: "Cụm danh từ 'general knowledge' có nghĩa là kiến thức phổ thông/kiến thức chung."
+            },
+            {
+                q: "I like Doraemon, ______________ my sister likes it, too.",
+                options: ["and", "but", "or", "so"],
+                correct: 0,
+                analysis: [
+                    "and: và (bổ sung thông tin tương đồng).",
+                    "but: nhưng (đối lập).",
+                    "or: hoặc (lựa chọn).",
+                    "so: vì thế (kết quả)."
+                ],
+                translation: "Tôi thích Doraemon, và em gái tôi cũng thích nó nữa.",
+                reason: "Hai vế câu mang nghĩa tương đồng, bổ sung cho nhau nên dùng 'and'."
+            },
+            {
+                q: "My brother likes talent shows, ______________ he doesn’t like animated films.",
+                options: ["and", "but", "or", "so"],
+                correct: 1,
+                analysis: [
+                    "and: và.",
+                    "but: nhưng.",
+                    "or: hoặc.",
+                    "so: vì thế."
+                ],
+                translation: "Anh trai tôi thích các chương trình tài năng, nhưng anh ấy không thích phim hoạt hình.",
+                reason: "Hai mệnh đề mang nghĩa đối lập (thích cái này nhưng không thích cái kia) -> dùng 'but'."
+            },
+            {
+                q: "When is the weather forecast programme ______________? At 7.30 p.m everyday.",
+                options: ["to", "of", "with", "on"],
+                correct: 3,
+                analysis: [
+                    "on (prep): đang chiếu/lên sóng."
+                ],
+                translation: "Chương trình dự báo thời tiết lên sóng khi nào? Lúc 7h30 tối mỗi ngày.",
+                reason: "Cụm 'to be on' khi nói về chương trình truyền hình có nghĩa là đang được phát sóng."
+            },
+            {
+                q: "Most programmes ______________ TV are interesting.",
+                options: ["on", "of", "with", "for"],
+                correct: 0,
+                analysis: [
+                    "on TV: trên truyền hình."
+                ],
+                translation: "Hầu hết các chương trình trên TV đều thú vị.",
+                reason: "Giới từ đi với TV/Radio luôn là 'on'."
+            },
+            {
+                q: "That TV programme is not only interesting ______________ it also teaches children many things about family and friendship.",
+                options: ["and", "so", "because", "but"],
+                correct: 3,
+                analysis: [
+                    "Cấu trúc: Not only... but also..."
+                ],
+                translation: "Chương trình TV đó không chỉ thú vị mà nó còn dạy trẻ em nhiều điều về gia đình và tình bạn.",
+                reason: "Đây là cặp liên từ tương liên: Not only A but also B (Không những A mà còn B)."
+            },
+            {
+                q: "______________ are you going to invite to your birthday party?",
+                options: ["What", "Who", "Whose", "Where"],
+                correct: 1,
+                analysis: [
+                    "What: cái gì.",
+                    "Who: ai.",
+                    "Whose: của ai.",
+                    "Where: ở đâu."
+                ],
+                translation: "Bạn định mời ai đến bữa tiệc sinh nhật của mình?",
+                reason: "Động từ 'invite' (mời) cần tân ngữ chỉ người, nên dùng 'Who'."
+            },
+            {
+                q: "______________ does the movie start? – At 9 o’clock.",
+                options: ["Where", "What", "Which", "When"],
+                correct: 3,
+                analysis: [
+                    "When: Khi nào."
+                ],
+                translation: "Khi nào bộ phim bắt đầu? - Lúc 9 giờ.",
+                reason: "Câu trả lời chỉ thời gian 'At 9 o'clock', nên dùng từ để hỏi 'When'."
+            },
+            {
+                q: "______________ are you still watching television?",
+                options: ["Why", "What", "Where", "Who"],
+                correct: 0,
+                analysis: [
+                    "Why: Tại sao."
+                ],
+                translation: "Tại sao bạn vẫn đang xem tivi thế?",
+                reason: "Câu hỏi hỏi về lý do vì sao một hành động vẫn đang tiếp diễn."
+            },
+            {
+                q: "______________ did you spend in Hanoi? – One week.",
+                options: ["How many", "How much", "How long", "How often"],
+                correct: 2,
+                analysis: [
+                    "How long: Bao lâu (hỏi về khoảng thời gian)."
+                ],
+                translation: "Bạn đã ở Hà Nội bao lâu? - Một tuần.",
+                reason: "Câu trả lời 'One week' là một khoảng thời gian, dùng 'How long' để hỏi."
+            },
+            {
+                q: "___________ pen is this? Can I borrow it?",
+                options: ["Whose", "Whom", "Who", "Which"],
+                correct: 0,
+                analysis: [
+                    "Whose: của ai (sở hữu).",
+                    "Whom: ai (tân ngữ).",
+                    "Who: ai (chủ ngữ).",
+                    "Which: cái nào (lựa chọn)."
+                ],
+                translation: "Cái bút này của ai vậy? Tớ mượn được không?",
+                reason: "Cấu trúc 'Whose + danh từ' dùng để hỏi về quyền sở hữu."
+            },
+            {
+                q: "______________ is the weather forecast programme on? At 7.30 pm every day.",
+                options: ["what", "how", "when", "where"],
+                correct: 2,
+                translation: "Chương trình dự báo thời tiết chiếu khi nào? Lúc 7h30 tối mỗi ngày.",
+                reason: "Hỏi về thời điểm, dùng 'when'.",
+                analysis: ["what: gì", "how: như thế nào", "when: khi nào", "where: ở đâu"]
+            },
+            {
+                q: "I like watching TV, ______________ I watch it in my free time.",
+                options: ["so", "when", "but", "or"],
+                correct: 0,
+                translation: "Tôi thích xem tivi, vì vậy tôi xem nó vào thời gian rảnh.",
+                reason: "Mệnh đề sau là kết quả của mệnh đề trước -> dùng 'so'.",
+                analysis: ["so: vì thế", "when: khi", "but: nhưng", "or: hoặc"]
+            },
+            {
+                q: "______________ do you watch TV a day? - Twice a day.",
+                options: ["How often", "How far", "How many", "How much"],
+                correct: 0,
+                translation: "Bạn xem tivi mấy lần một ngày? - Hai lần.",
+                reason: "Câu trả lời 'Twice a day' chỉ tần suất -> dùng 'How often'.",
+                analysis: ["How often: thường xuyên thế nào", "How far: bao xa", "How many: bao nhiêu (đếm được)", "How much: bao nhiêu (không đếm được)"]
+            },
+            {
+                q: "______________ hours a day do you watch TV?",
+                options: ["How often", "How far", "How many", "How much"],
+                correct: 2,
+                translation: "Bạn xem tivi bao nhiêu tiếng một ngày?",
+                reason: "'Hours' là danh từ đếm được số nhiều -> dùng 'How many'.",
+                analysis: ["How many: bao nhiêu (số lượng đếm được)"]
+            },
+            {
+                q: "The children watched TV late last night, ______________ with them.",
+                options: ["and", "but", "or", "so"],
+                correct: 0,
+                translation: "Lũ trẻ đã xem tivi muộn tối qua, và (ai đó) đã cùng xem với chúng.",
+                reason: "Bổ sung thông tin cho hành động của lũ trẻ -> dùng 'and'.",
+                analysis: ["and: và"]
+            },
+            {
+                q: "My little brother can draw ______________ colour pictures very well.",
+                options: ["and", "but", "or", "so"],
+                correct: 0,
+                translation: "Em trai tớ có thể vẽ và tô màu tranh rất đẹp.",
+                reason: "Nối hai hành động 'draw' (vẽ) và 'colour' (tô màu) -> dùng 'and'.",
+                analysis: ["and: và"]
+            },
+            {
+                q: "Are you watching TV ______________ are you doing your homework?",
+                options: ["and", "but", "or", "so"],
+                correct: 2,
+                translation: "Con đang xem tivi hay là đang làm bài tập về nhà đấy?",
+                reason: "Câu hỏi mang tính chất lựa chọn giữa hai hành động -> dùng 'or'.",
+                analysis: ["or: hay là"]
+            },
+            {
+                q: "“How many days a week do you go to school?” “___________”",
+                options: ["I go to school very often.", "I go to school five days a week.", "I don't like school.", "School day is long."],
+                correct: 1,
+                translation: "“Con đi học mấy ngày một tuần?” “Con đi học 5 ngày một tuần.”",
+                reason: "Câu hỏi hỏi số ngày cụ thể, nên đáp án B là trả lời đúng trọng tâm nhất.",
+                analysis: ["A: Tần suất chung chung", "B: 5 ngày (đúng số lượng)", "C: Cảm xúc", "D: Tính chất"]
+            },
+            {
+                q: "\"What did you watch on TV last night?\" “______________”",
+                options: ["Tom and Jerry is so interesting.", "I'm sorry I don't like films.", "I watched the talent show.", "I have an interesting film."],
+                correct: 2,
+                translation: "“Tối qua bạn xem gì trên tivi?” “Tớ đã xem chương trình tìm kiếm tài năng.”",
+                reason: "Câu hỏi ở quá khứ 'did you watch', câu trả lời phải dùng động từ cột 2 'watched'.",
+                analysis: ["A: Hiện tại", "B: Hiện tại", "C: Quá khứ (đúng)", "D: Hiện tại"]
+            },
+            {
+                q: "\"Who is your favourite person on TV?\" “______________”",
+                options: ["I like The Seven Kitties a lot.", "I like Quang Thang in Weekend Meeting.", "Ocean Life is on at 7.30.", "VTV3 is a popular channel."],
+                correct: 1,
+                translation: "“Ai là người bạn yêu thích trên tivi?” “Tớ thích Quang Thắng trong Gặp nhau cuối tuần.”",
+                reason: "Câu hỏi 'Who' (Ai) -> Cần trả lời tên một người.",
+                analysis: ["B: Quang Thang (người)"]
+            },
+            {
+                q: "\"Why do you like Explore programme?\" “______________”",
+                options: ["Exploring is fun.", "Because I love the wildlife.", "We need to explore the wildlife.", "Why do you ask me so?"],
+                correct: 1,
+                translation: "“Tại sao bạn thích chương trình Khám phá?” “Bởi vì tớ yêu thế giới động vật hoang dã.”",
+                reason: "Câu hỏi 'Why' (Tại sao) thường trả lời bằng 'Because'.",
+                analysis: ["B: Bởi vì (lý do)"]
+            },
+            {
+                q: "\"What's your favourite TV programme?\" “______________”",
+                options: ["I love The Voice Kids.", "I watch TV three times a week.", "It will be long.", "I am thinking about TV."],
+                correct: 0,
+                translation: "“Chương trình tivi yêu thích của bạn là gì?” “Tớ yêu chương trình Giọng hát Việt nhí.”",
+                reason: "Hỏi về tên chương trình cụ thể.",
+                analysis: ["A: The Voice Kids (tên chương trình)"]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        const questionText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const explanationContainer = document.getElementById('explanation-container');
+        const explanationContent = document.getElementById('explanation-content');
+        const progressText = document.getElementById('progress-text');
+        const scoreText = document.getElementById('score-text');
+        const progressFill = document.getElementById('progress-fill');
+        const nextBtn = document.getElementById('next-btn');
+        const audioCorrect = document.getElementById('audio-correct');
+        const audioWrong = document.getElementById('audio-wrong');
+
+        function initQuiz() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = quizData[currentQuestion];
+            answered = false;
+            questionText.innerHTML = `<span class="text-[#8854C0] mr-2">Q${currentQuestion + 1}:</span> ${q.q}`;
+            optionsGrid.innerHTML = '';
+            explanationContainer.style.display = 'none';
+            
+            progressText.innerText = `Câu hỏi ${currentQuestion + 1} / 35`;
+            progressFill.style.width = `${((currentQuestion + 1) / 35) * 100}%`;
+
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-3d option-btn';
+                btn.innerHTML = `<span class="mr-3 text-gray-400 font-bold">${String.fromCharCode(65 + index)}.</span> ${opt}`;
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsGrid.appendChild(btn);
+            });
+
+            nextBtn.innerText = currentQuestion === quizData.length - 1 ? "Nộp bài & Xem kết quả" : "Câu tiếp theo →";
+        }
+
+        function checkAnswer(selectedIndex, btn) {
+            if (answered) return;
+            answered = true;
+            const q = quizData[currentQuestion];
+            const allBtns = optionsGrid.querySelectorAll('button');
+
+            if (selectedIndex === q.correct) {
+                btn.classList.add('correct');
+                score++;
+                scoreText.innerText = `Đúng: ${score}`;
+                audioCorrect.play();
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#8854C0', '#00C9A7', '#00D26A']
+                });
+            } else {
+                btn.classList.add('wrong');
+                allBtns[q.correct].classList.add('correct');
+                audioWrong.play();
+            }
+
+            // Show Explanation
+            showExplanation(q, selectedIndex === q.correct);
+        }
+
+        function showExplanation(q, isCorrect) {
+            explanationContainer.style.display = 'block';
+            let analysisHTML = '<ul class="list-disc ml-5 mb-3">';
+            q.analysis.forEach(item => {
+                analysisHTML += `<li>${item}</li>`;
+            });
+            analysisHTML += '</ul>';
+
+            explanationContent.innerHTML = `
+                <div class="mb-2 italic text-[#8854C0] font-semibold">
+                    ${isCorrect ? "🌟 Giỏi quá! Chúc mừng con đã chọn đúng." : "💡 Đừng buồn nhé, xem giải thích của cô để nhớ lâu hơn nè:"}
+                </div>
+                <div class="mb-3"><strong>1. Dịch nghĩa câu:</strong> "${q.translation}"</div>
+                <div class="mb-3"><strong>2. Phân tích 4 đáp án:</strong> ${analysisHTML}</div>
+                <div class="mb-3"><strong>3. Tại sao chọn đáp án này?</strong><br>${q.reason}</div>
+            `;
+            
+            explanationContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        nextBtn.onclick = () => {
+            if (!answered) {
+                alert("Vui lòng chọn một đáp án trước khi tiếp tục!");
+                return;
+            }
+
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                showResults();
+            }
+        };
+
+        function showResults() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            const resultScreen = document.getElementById('result-screen');
+            resultScreen.classList.remove('hidden');
+            document.getElementById('final-score').innerText = `${score}/35`;
+
+            const praiseText = document.getElementById('praise-text');
+            if (score >= 30) {
+                praiseText.innerText = "Tuyệt vời! Con là một ngôi sao tiếng Anh thực thụ đấy! 🌟";
+            } else if (score >= 20) {
+                praiseText.innerText = "Rất tốt! Con đã nắm khá vững kiến thức rồi, cố gắng thêm chút nữa nhé! 👍";
+            } else {
+                praiseText.innerText = "Cố gắng lên nào! Hãy xem lại các phần giải thích để làm tốt hơn ở lần sau nhé! 💪";
+            }
+        }
+
+        initQuiz();
+    </script>
+</body>
+</html>
