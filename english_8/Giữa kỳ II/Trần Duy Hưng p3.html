@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Kiểm Tra Tiếng Anh - Gamification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #FDCB6E;
+            --accent: #00C9A7;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --bg-light: #ffffff;
+            --text-main: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            /* Dynamic animated gradient background */
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a18cd1, #fbc2eb);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text-main);
+            position: relative;
+        }
+
+        /* Auto-generated SVG Pattern overlay for gamification feel */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><text x="30" y="50" font-size="40" opacity="0.3">🌪️</text><text x="200" y="150" font-size="30" opacity="0.3">🛒</text><text x="80" y="250" font-size="35" opacity="0.3">🗑️</text><text x="250" y="60" font-size="30" opacity="0.3">✨</text></svg>');
+            background-repeat: repeat;
+            z-index: -1;
+            animation: floatPattern 60s linear infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatPattern {
+            from { background-position: 0 0; }
+            to { background-position: 1000px 1000px; }
+        }
+
+        /* Top Control Bar */
+        .top-bar {
+            height: 70px;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-info h2 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+        
+        .header-info h4 {
+            opacity: 0.7;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .timer-btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #009e83;
+            transition: all 0.2s;
+        }
+
+        .timer-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 #009e83;
+        }
+
+        /* Split Screen Layout */
+        .container {
+            display: flex;
+            height: calc(100vh - 70px);
+            width: 100%;
+        }
+
+        .pane {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .pane::-webkit-scrollbar {
+            width: 10px;
+        }
+        .pane::-webkit-scrollbar-thumb {
+            background-color: rgba(136, 84, 192, 0.5);
+            border-radius: 10px;
+        }
+
+        .left-pane {
+            background-color: rgba(255, 255, 255, 0.85);
+            border-right: 3px dashed var(--primary);
+        }
+
+        .right-pane {
+            background-color: rgba(253, 203, 110, 0.15);
+        }
+
+        /* Content Styling */
+        .reading-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            line-height: 1.8;
+            font-size: 1.1rem;
+            position: relative;
+        }
+
+        .passage-title {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-weight: 800;
+            font-size: 1.4rem;
+            border-bottom: 2px solid var(--secondary);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+
+        .translate-btn {
+            display: block;
+            margin-top: 15px;
+            background-color: var(--secondary);
+            color: #333;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #e1b45f;
+            transition: transform 0.2s;
+        }
+        
+        .translate-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .translation-text {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-left: 5px solid var(--accent);
+            border-radius: 0 10px 10px 0;
+            font-style: italic;
+            color: #444;
+        }
+
+        /* Glossary Table */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .glossary-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .glossary-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .glossary-table tr:last-child td { border-bottom: none; }
+        .glossary-table tr:hover { background-color: #f1f2f6; }
+
+        /* Questions Styling */
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .question-text {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background-color: white;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            box-shadow: 0 6px 0 #e0e0e0;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(.locked) {
+            transform: scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 6px 0 var(--primary);
+        }
+
+        .option-btn:active:not(.locked) {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        .option-btn.correct {
+            background-color: var(--correct);
+            color: white;
+            border-color: var(--correct);
+            box-shadow: 0 6px 0 #00a855;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong);
+            color: white;
+            border-color: var(--wrong);
+            box-shadow: 0 6px 0 #d63031;
+            animation: shake 0.4s;
+        }
+
+        .option-btn.locked {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+            100% { transform: translateX(0); }
+        }
+
+        .explanation {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e8f4fd;
+            border-radius: 15px;
+            border-left: 5px solid #3498db;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .explanation strong {
+            color: #d35400;
+        }
+
+        /* Submit & Modal */
+        .submit-btn {
+            display: block;
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 800;
+            padding: 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #6c5ce7;
+            margin: 40px 0;
+            transition: all 0.2s;
+        }
+        
+        .submit-btn:hover { transform: scale(1.02); }
+        .submit-btn:active { transform: translateY(8px); box-shadow: 0 0 0 transparent; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: var(--secondary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 0 auto 20px;
+            border: 10px solid #ffeaa7;
+        }
+
+        .close-modal-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            box-shadow: 0 5px 0 #009e83;
+        }
+
+        /* Confetti Container */
+        #confetti-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px; height: 10px;
+            background-color: #f00;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="confetti-container"></div>
+
+    <div class="top-bar">
+        <div class="header-info">
+            <h2>Bài Thi Reading Gamification 🏆</h2>
+            <h4>Giáo viên tạo: Ms. Chí Nên </h4>
+        </div>
+        <button class="timer-btn" id="timer-btn" onclick="startTimer()">BẮT ĐẦU TÍNH GIỜ LÀM BÀI ⏰</button>
+    </div>
+
+    <div class="container">
+        <div class="pane left-pane" id="left-pane">
+            <div class="reading-card">
+                <div class="passage-title">Passage 1: Garbage & Smoke 🗑️</div>
+                <p>Garbage is what someone leaves behind that they do not want to use anymore. It can also be called waste or rubbish. A definition of <strong>(1) ...........</strong> garbage is anything left behind at a place where you used to be, but are not anymore. In modern home and businesses, <strong>(2) ...........</strong> garbage is normally separated and put where it can be collected and taken to a place designed to hold, burn, or recycle garbage.</p>
+                <p>Smoke is a cloud of very small, solid parts. It is made when <strong>(3) ...........</strong> something. Smoke can be bad because if it goes into the lungs of a person, it can kill them. <strong>(4) ...........</strong> people think that they are always <strong>(5) ...........</strong> to see smoke, but it can also be invisible (a thing that a person is not able to see).</p>
+                
+                <button class="translate-btn" onclick="toggleTranslation('trans1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="trans1">
+                    <strong>Bản dịch:</strong> Rác là những gì ai đó để lại mà họ không muốn sử dụng nữa. Nó cũng có thể được gọi là chất thải hoặc đồ bỏ đi. Một định nghĩa về rác là bất cứ thứ gì bị bỏ lại ở một nơi mà bạn đã từng ở đó, nhưng nay không còn ở đó nữa. Tuy nhiên, trong các ngôi nhà và doanh nghiệp hiện đại, rác thường được phân loại và đặt ở nơi có thể được thu gom và đưa đến một nơi được thiết kế để chứa, đốt hoặc tái chế rác.<br><br>
+                    Khói là một đám mây gồm các hạt rắn, rất nhỏ. Nó được tạo ra khi đốt cháy một thứ gì đó. Khói có thể có hại vì nếu nó đi vào phổi của một người, nó có thể giết chết họ. Hầu hết mọi người nghĩ rằng họ luôn luôn có thể nhìn thấy khói, nhưng nó cũng có thể vô hình (một thứ mà con người không có khả năng nhìn thấy).
+                </div>
+
+                <table class="glossary-table">
+                    <tr><th>Từ vựng (Vocabulary)</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td>Garbage / Rubbish</td><td>Danh từ</td><td>Rác thải, đồ bỏ đi</td></tr>
+                    <tr><td>Definition</td><td>Danh từ</td><td>Định nghĩa</td></tr>
+                    <tr><td>Separate</td><td>Động từ</td><td>Tách biệt, phân loại</td></tr>
+                    <tr><td>Collect</td><td>Động từ</td><td>Thu gom</td></tr>
+                    <tr><td>Recycle</td><td>Động từ</td><td>Tái chế</td></tr>
+                    <tr><td>Solid</td><td>Tính từ</td><td>Rắn, đặc</td></tr>
+                    <tr><td>Lung</td><td>Danh từ</td><td>Phổi</td></tr>
+                    <tr><td>Invisible</td><td>Tính từ</td><td>Vô hình, không thể nhìn thấy</td></tr>
+                </table>
+            </div>
+
+            <div class="reading-card">
+                <div class="passage-title">Passage 2: Shopping Centers 🛒</div>
+                <p>A traditional supermarket and a modern shopping mall are two different types of shopping centers that have their own unique characteristics. While a traditional supermarket typically offers a limited range of products, mainly groceries, and household items, a modern shopping mall offers a wide variety of products, including clothing, electronics, books, and food. Another key difference between these two shopping centers is the shopping experience they offer. Traditional supermarkets are known for their convenient and easy-to-navigate layout. However, modern shopping malls can provide a more <strong>immersive</strong> and engaging experience, with features such as entertainment facilities and restaurants.</p>
+                <p>In terms of pricing, traditional supermarkets generally offer lower prices than shopping malls. This is because they focus on selling everyday essentials. Modern shopping malls, on the other hand, offer a higher-end shopping experience with premium products, and thus, higher prices. With their own different advantages and disadvantages, both traditional supermarkets and modern shopping malls can satisfy different types of customers and provide suitable shopping experiences for all.</p>
+
+                <button class="translate-btn" onclick="toggleTranslation('trans2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="trans2">
+                    <strong>Bản dịch:</strong> Một siêu thị truyền thống và một trung tâm mua sắm hiện đại là hai loại hình trung tâm mua sắm khác nhau có những đặc điểm độc đáo riêng. Trong khi một siêu thị truyền thống thường cung cấp một phạm vi sản phẩm hạn chế, chủ yếu là hàng tạp hóa và đồ gia dụng, thì một trung tâm mua sắm hiện đại cung cấp nhiều loại sản phẩm đa dạng, bao gồm quần áo, đồ điện tử, sách và thực phẩm. Một điểm khác biệt chính khác giữa hai trung tâm mua sắm này là trải nghiệm mua sắm mà chúng mang lại. Siêu thị truyền thống được biết đến với cách bố trí tiện lợi và dễ tìm đường. Tuy nhiên, các trung tâm mua sắm hiện đại có thể mang lại trải nghiệm đắm chìm và lôi cuốn hơn, với các tiện ích như khu giải trí và nhà hàng.<br><br>
+                    Về giá cả, siêu thị truyền thống nhìn chung cung cấp mức giá thấp hơn so với trung tâm mua sắm. Điều này là do họ tập trung vào việc bán các mặt hàng thiết yếu hàng ngày. Mặt khác, các trung tâm mua sắm hiện đại cung cấp trải nghiệm mua sắm cao cấp hơn với các sản phẩm chất lượng cao, và do đó, giá cả cũng cao hơn. Với những ưu điểm và nhược điểm khác nhau của riêng mình, cả siêu thị truyền thống và trung tâm mua sắm hiện đại đều có thể làm hài lòng các đối tượng khách hàng khác nhau và mang đến những trải nghiệm mua sắm phù hợp cho mọi người.
+                </div>
+
+                <table class="glossary-table">
+                    <tr><th>Từ vựng (Vocabulary)</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td>Traditional</td><td>Tính từ</td><td>Truyền thống</td></tr>
+                    <tr><td>Characteristic</td><td>Danh từ</td><td>Đặc điểm, nét đặc trưng</td></tr>
+                    <tr><td>Limited range</td><td>Cụm N</td><td>Phạm vi giới hạn</td></tr>
+                    <tr><td>Navigate</td><td>Động từ</td><td>Điều hướng, tìm đường</td></tr>
+                    <tr><td>Immersive</td><td>Tính từ</td><td>Đắm chìm, hấp dẫn</td></tr>
+                    <tr><td>Engaging</td><td>Tính từ</td><td>Lôi cuốn, thu hút</td></tr>
+                    <tr><td>Essential</td><td>Danh từ</td><td>Nhu yếu phẩm, đồ thiết yếu</td></tr>
+                    <tr><td>Premium</td><td>Tính từ</td><td>Cao cấp, chất lượng cao</td></tr>
+                </table>
+            </div>
+
+            <div class="reading-card">
+                <div class="passage-title">Passage 3: Tornadoes 🌪️</div>
+                <p>Tornadoes are storms with very <strong>(1) ...........</strong> turning winds and dark clouds. These winds are perhaps the strongest on <strong>(2) ...........</strong>. They reach speeds of 300 miles per hour. The dark clouds are shaped like a funnel - wide at the top and narrow at the bottom. The winds are strongest in <strong>(3) ...........</strong> center of the funnel. Tornadoes are especially common in the United States, but only in certain parts. They occur mainly in the <strong>(4) ...........</strong> states.</p>
+                <p>A hot afternoon in the spring is the most likely time for a tornado. <strong>(5) ...........</strong> become dark. There are thunder, lightning and rain. A cloud forms a funnel and begins to twist. The funnel moves faster and faster. The faster the winds, the louder the noise. Tornadoes always move in a northeastern direction. They never last longer than eight hours.</p>
+
+                <button class="translate-btn" onclick="toggleTranslation('trans3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-text" id="trans3">
+                    <strong>Bản dịch:</strong> Lốc xoáy là những cơn bão có sức gió xoáy rất mạnh và những đám mây đen. Những cơn gió này có lẽ là mạnh nhất trên Trái đất. Chúng đạt tốc độ 300 dặm một giờ. Những đám mây đen có hình dạng giống như một cái phễu - rộng ở trên cùng và hẹp ở phía dưới. Gió mạnh nhất là ở khu vực tâm của cái phễu. Lốc xoáy đặc biệt phổ biến ở Hoa Kỳ, nhưng chỉ ở một số vùng nhất định. Chúng xảy ra chủ yếu ở các bang miền trung.<br><br>
+                    Một buổi chiều nóng nực vào mùa xuân là thời điểm dễ xảy ra lốc xoáy nhất. Những đám mây trở nên đen kịt. Có sấm, chớp và mưa. Một đám mây tạo thành hình phễu và bắt đầu xoắn lại. Cái phễu di chuyển ngày càng nhanh hơn. Gió càng nhanh, tiếng ồn càng lớn. Lốc xoáy luôn di chuyển theo hướng đông bắc. Chúng không bao giờ kéo dài hơn tám giờ.
+                </div>
+
+                <table class="glossary-table">
+                    <tr><th>Từ vựng (Vocabulary)</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    <tr><td>Tornado</td><td>Danh từ</td><td>Lốc xoáy</td></tr>
+                    <tr><td>Funnel</td><td>Danh từ</td><td>Cái phễu</td></tr>
+                    <tr><td>Common</td><td>Tính từ</td><td>Phổ biến, thông thường</td></tr>
+                    <tr><td>Occur</td><td>Động từ</td><td>Xảy ra, xuất hiện</td></tr>
+                    <tr><td>Likely</td><td>Tính từ</td><td>Có khả năng, có lẽ</td></tr>
+                    <tr><td>Twist</td><td>Động từ</td><td>Xoắn, cuộn lại</td></tr>
+                    <tr><td>Northeastern</td><td>Tính từ</td><td>Hướng Đông Bắc</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="pane right-pane" id="right-pane">
+            <h2 style="color: var(--primary); margin-bottom: 20px; font-weight: 800;">📝 PHẦN CÂU HỎI TRẮC NGHIỆM</h2>
+            <div id="questions-container"></div>
+            
+            <button class="submit-btn" onclick="submitTest()">NỘP BÀI TỔNG KẾT 🚀</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="score-modal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary); margin-bottom: 20px; font-size: 2rem;">KẾT QUẢ CỦA BẠN</h2>
+            <div class="score-circle" id="final-score">0/16</div>
+            <h3 id="score-message" style="margin-bottom: 15px; color: #555;"></h3>
+            <button class="close-modal-btn" onclick="document.getElementById('score-modal').style.display='none'">Đóng Lại & Xem Đáp Án</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA NỘI DUNG CÂU HỎI (Trích xuất 100% từ ảnh) ---
+        const questionsData = [
+            // PASSAGE 1
+            {
+                qText: "Passage 1 - Question 1: A definition of _(1)_ garbage is...",
+                options: [
+                    { text: "An", correct: false },
+                    { text: "A", correct: false },
+                    { text: "No article", correct: true },
+                    { text: "The", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn C (No article)?</strong><br>Cô An giải thích: Danh từ 'garbage' (rác thải) là một <strong>danh từ không đếm được</strong> và đang được nói đến mang ý nghĩa chung chung, khái quát ('định nghĩa về rác'). Do đó, ta không dùng mạo từ (a/an/the) ở phía trước."
+            },
+            {
+                qText: "Passage 1 - Question 2: In modern home and businesses, _(2)_ garbage is normally separated...",
+                options: [
+                    { text: "but", correct: false },
+                    { text: "however", correct: true },
+                    { text: "therefore", correct: false },
+                    { text: "moreover", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn B (however)?</strong><br>Cô An giải thích: Câu trước nói về việc rác bị 'bỏ lại'. Câu này mang ý tương phản: '<strong>Tuy nhiên</strong> (however), ở các nhà hiện đại, rác thường được phân loại...'. Các từ khác: but (nhưng - không đứng một mình giữa dấu phẩy kiểu này), therefore (vì vậy), moreover (hơn nữa) đều không hợp ngữ nghĩa."
+            },
+            {
+                qText: "Passage 1 - Question 3: It is made when _(3)_ something.",
+                options: [
+                    { text: "burned", correct: false },
+                    { text: "burn", correct: false },
+                    { text: "burning", correct: true },
+                    { text: "to burn", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn C (burning)?</strong><br>Cô An giải thích: Chỗ này là cấu trúc rút gọn mệnh đề trạng ngữ. Thay vì nói 'when people burn something' (chủ động), ta rút gọn thành <strong>when + V-ing</strong> -> 'when burning something' (khi đốt một thứ gì đó)."
+            },
+            {
+                qText: "Passage 1 - Question 4: _(4)_ people think that they are always...",
+                options: [
+                    { text: "Most of", correct: false },
+                    { text: "Almost", correct: false },
+                    { text: "Most", correct: true },
+                    { text: "The most", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn C (Most)?</strong><br>Cô An giải thích: Cấu trúc <strong>Most + Danh từ số nhiều không xác định</strong> mang nghĩa 'Hầu hết...'. Ở đây 'people' không có 'the' nên không dùng 'Most of' (chỉ dùng Most of + the/tính từ sở hữu + N). Almost là trạng từ (gần như), không đi trực tiếp với N."
+            },
+            {
+                qText: "Passage 1 - Question 5: ...they are always _(5)_ to see smoke...",
+                options: [
+                    { text: "able", correct: true },
+                    { text: "capable", correct: false },
+                    { text: "possible", correct: false },
+                    { text: "could", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn A (able)?</strong><br>Cô An giải thích: Chúng ta có cấu trúc <strong>To be able to + V_inf</strong>: Có khả năng làm gì đó. <br>- Loại B vì 'capable' đi với giới từ 'of' (capable of + V_ing).<br>- Loại C vì 'possible' thường dùng với 'It is possible for sb to V'.<br>- Loại D vì 'could' là động từ khuyết thiếu, không đứng sau 'are' (to be)."
+            },
+            
+            // PASSAGE 2
+            {
+                qText: "Passage 2 - Question 1: What is the main idea of this text?",
+                options: [
+                    { text: "Traditional supermarkets and modern shopping malls are in different locations.", correct: false },
+                    { text: "Traditional supermarkets offer more products than modern shopping malls.", correct: false },
+                    { text: "Traditional supermarkets and modern shopping malls have different features.", correct: true },
+                    { text: "Traditional supermarkets and modern shopping malls both offer expensive products.", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn C?</strong><br>Cô An giải thích: Ngay câu đầu tiên của bài đã nêu chủ đề: 'A traditional supermarket and a modern shopping mall are two different types of shopping centers that have their own <strong>unique characteristics</strong>' (có những đặc điểm độc đáo riêng). Toàn bài đi phân tích sự khác nhau về sản phẩm, trải nghiệm và giá cả của hai nơi này."
+            },
+            {
+                qText: "Passage 2 - Question 2: What type of products do traditional supermarkets typically offer?",
+                options: [
+                    { text: "A wide variety of products", correct: false },
+                    { text: "Clothing and electronics", correct: false },
+                    { text: "Groceries and household items", correct: true },
+                    { text: "Entertainment facilities and restaurants", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn C?</strong><br>Cô An giải thích: Dẫn chứng nằm ở dòng 3 đoạn 1: 'While a traditional supermarket typically offers a limited range of products, mainly <strong>groceries, and household items</strong>...' (chủ yếu là hàng tạp hóa và đồ gia dụng)."
+            },
+            {
+                qText: "Passage 2 - Question 3: What is one feature that modern shopping malls can offer that traditional supermarkets cannot?",
+                options: [
+                    { text: "Lower prices", correct: false },
+                    { text: "Convenient and easy-to-navigate layout", correct: false },
+                    { text: "Entertainment facilities and restaurants", correct: true },
+                    { text: "Basic everyday essentials", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn C?</strong><br>Cô An giải thích: Dẫn chứng ở cuối đoạn 1: '...modern shopping malls can provide a more immersive and engaging experience, with features such as <strong>entertainment facilities and restaurants</strong>.' (các trung tâm mua sắm hiện đại cung cấp... khu giải trí và nhà hàng)."
+            },
+            {
+                qText: "Passage 2 - Question 4: Which of the following is NOT TRUE according to the text?",
+                options: [
+                    { text: "Traditional supermarkets offer a limited range of products.", correct: false },
+                    { text: "Modern shopping malls offer a wide variety of products.", correct: false },
+                    { text: "Traditional supermarkets generally offer lower prices than shopping malls.", correct: false },
+                    { text: "Traditional supermarkets have a more immersive and engaging experience.", correct: true }
+                ],
+                explanation: "<strong>Tại sao chọn D?</strong><br>Cô An giải thích: Câu D nói siêu thị truyền thống có trải nghiệm đắm chìm và lôi cuốn hơn. Điều này là <strong>SAI</strong>. Bài đọc chỉ ra rằng (cuối đoạn 1): 'modern shopping malls can provide a more immersive and engaging experience' (Trung tâm mua sắm hiện đại mới có tính năng này)."
+            },
+            {
+                qText: "Passage 2 - Question 5: What does the word 'immersive' mean?",
+                options: [
+                    { text: "engaging and absorbing", correct: true },
+                    { text: "challenging and difficult", correct: false },
+                    { text: "fun and educational", correct: false },
+                    { text: "authentic and memorable", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn A?</strong><br>Cô An giải thích: Từ 'immersive' có nghĩa là 'đắm chìm', tạo cảm giác bị cuốn hút hoàn toàn vào một thứ gì đó. Từ đồng nghĩa gần nhất trong các đáp án là <strong>engaging and absorbing</strong> (lôi cuốn và hấp dẫn)."
+            },
+            {
+                qText: "Passage 2 - Question 6: According to the text, what is the main reason why traditional supermarkets generally offer lower prices?",
+                options: [
+                    { text: "Because they have a limited range of products.", correct: false },
+                    { text: "Because they have a more convenient layout.", correct: false },
+                    { text: "Because they concentrate on selling basic necessities.", correct: true },
+                    { text: "Because they offer entertainment facilities and restaurants.", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn C?</strong><br>Cô An giải thích: Dẫn chứng nằm ở đoạn 2: 'In terms of pricing, traditional supermarkets generally offer lower prices... This is because they <strong>focus on selling everyday essentials</strong>' (Bởi vì họ tập trung vào việc bán những nhu yếu phẩm thiết yếu hàng ngày = concentrate on selling basic necessities)."
+            },
+
+            // PASSAGE 3
+            {
+                qText: "Passage 3 - Question 1: Tornadoes are storms with very (1) _____ turning winds...",
+                options: [
+                    { text: "angry", correct: false },
+                    { text: "weak", correct: false },
+                    { text: "cruel", correct: false },
+                    { text: "strong", correct: true }
+                ],
+                explanation: "<strong>Tại sao chọn D (strong)?</strong><br>Cô An giải thích: Lốc xoáy là những cơn bão có sức gió xoáy rất <strong>mạnh (strong)</strong>. Các từ như angry (tức giận) hay cruel (độc ác) thường dùng để tả người/con vật. Đi kèm với gió (winds) ta dùng 'strong'."
+            },
+            {
+                qText: "Passage 3 - Question 2: These winds are perhaps the strongest on (2) _____.",
+                options: [
+                    { text: "space", correct: false },
+                    { text: "Earth", correct: true },
+                    { text: "ground", correct: false },
+                    { text: "planet", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn B (Earth)?</strong><br>Cô An giải thích: Cụm từ cố định '<strong>on Earth</strong>' mang nghĩa là 'trên Trái Đất'. Dùng để nhấn mạnh rằng những cơn gió này mạnh nhất trên Trái đất của chúng ta."
+            },
+            {
+                qText: "Passage 3 - Question 3: The winds are strongest in (3) _____ center of the funnel.",
+                options: [
+                    { text: "the", correct: true },
+                    { text: "that", correct: false },
+                    { text: "this", correct: false },
+                    { text: "a", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn A (the)?</strong><br>Cô An giải thích: Chúng ta dùng mạo từ xác định '<strong>the</strong>' trước 'center' vì nó được xác định rõ bởi cụm giới từ phía sau ('of the funnel' - phần trung tâm của cái phễu)."
+            },
+            {
+                qText: "Passage 3 - Question 4: They occur mainly in the (4) _____ states.",
+                options: [
+                    { text: "unknown", correct: false },
+                    { text: "central", correct: true },
+                    { text: "foreign", correct: false },
+                    { text: "farther", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn B (central)?</strong><br>Cô An giải thích: Dựa vào kiến thức và ngữ cảnh, lốc xoáy ở Mỹ chủ yếu xảy ra ở khu vực miền trung. '<strong>Central states</strong>' là các tiểu bang miền trung. Các từ unknown (không biết), foreign (nước ngoài) không phù hợp ngữ cảnh nước Mỹ."
+            },
+            {
+                qText: "Passage 3 - Question 5: (5) _____ become dark. There are thunder, lightning and rain.",
+                options: [
+                    { text: "Sun", correct: false },
+                    { text: "Sky", correct: false },
+                    { text: "Clouds", correct: true },
+                    { text: "Winds", correct: false }
+                ],
+                explanation: "<strong>Tại sao chọn C (Clouds)?</strong><br>Cô An giải thích: Chủ ngữ ở dạng số nhiều vì động từ 'become' không chia s (không có 's' ở đuôi). 'Clouds' (Những đám mây) là danh từ số nhiều, phù hợp ngữ pháp. 'Sun' hay 'Sky' là số ít, nếu dùng thì động từ phải là 'becomes'."
+            }
+        ];
+
+        let score = 0;
+        let totalQuestions = questionsData.length;
+        let answeredQuestions = 0;
+        let timerInterval;
+
+        // --- WEB AUDIO API (Sinh âm thanh tự động) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playCorrectSound() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+            osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+            
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playWrongSound() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // --- Confetti Effect ---
+        function shootConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#fbc531', '#4cd137', '#00a8ff', '#e84118', '#9c88ff'];
+            
+            for(let i=0; i<30; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = Math.random() * 100 + 'vh';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Random animation properties
+                const xMove = (Math.random() - 0.5) * 200;
+                const yMove = (Math.random() - 1) * 200;
+                const rotate = Math.random() * 360;
+                
+                conf.animate([
+                    { transform: `translate(0,0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translate(${xMove}px, ${yMove}px) rotate(${rotate}deg)`, opacity: 0 }
+                ], {
+                    duration: 1000 + Math.random() * 1000,
+                    easing: 'cubic-bezier(.37,0,.63,1)'
+                });
+                
+                container.appendChild(conf);
+                setTimeout(() => conf.remove(), 2000);
+            }
+        }
+
+        // --- Shuffle Array ---
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        // --- Render Questions ---
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            
+            questionsData.forEach((q, index) => {
+                const qCard = document.createElement('div');
+                qCard.className = 'question-card';
+                qCard.id = `qcard-${index}`;
+                
+                const qTitle = document.createElement('div');
+                qTitle.className = 'question-text';
+                qTitle.textContent = q.qText;
+                
+                const grid = document.createElement('div');
+                grid.className = 'options-grid';
+                
+                // Shuffle options
+                const shuffledOptions = shuffleArray([...q.options]);
+                const labels = ['A', 'B', 'C', 'D'];
+                
+                shuffledOptions.forEach((opt, optIndex) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    // Label text like "A. OptionText"
+                    btn.innerHTML = `<strong>${labels[optIndex]}.</strong>&nbsp;&nbsp;${opt.text}`;
+                    
+                    btn.onclick = () => handleAnswer(index, opt.correct, btn, grid, q.explanation);
+                    grid.appendChild(btn);
+                });
+                
+                const expDiv = document.createElement('div');
+                expDiv.className = 'explanation';
+                expDiv.id = `exp-${index}`;
+                expDiv.innerHTML = q.explanation;
+
+                qCard.appendChild(qTitle);
+                qCard.appendChild(grid);
+                qCard.appendChild(expDiv);
+                container.appendChild(qCard);
+            });
+        }
+
+        // --- Handle Answer Click ---
+        function handleAnswer(qIndex, isCorrect, clickedBtn, gridElement, expText) {
+            // Prevent multiple clicks
+            if (gridElement.classList.contains('answered')) return;
+            gridElement.classList.add('answered');
+            
+            answeredQuestions++;
+
+            // Lock all buttons in this grid
+            const allBtns = gridElement.querySelectorAll('.option-btn');
+            allBtns.forEach(btn => btn.classList.add('locked'));
+
+            if (isCorrect) {
+                clickedBtn.classList.add('correct');
+                playCorrectSound();
+                shootConfetti();
+                score++;
+            } else {
+                clickedBtn.classList.add('wrong');
+                playWrongSound();
+                // Find and highlight correct answer
+                const qData = questionsData[qIndex];
+                allBtns.forEach(btn => {
+                    // Cần so sánh text cẩn thận vì đã thêm label A,B,C,D
+                    const btnTextClean = btn.innerText.substring(btn.innerText.indexOf('.') + 1).trim();
+                    const correctOpt = qData.options.find(o => o.correct).text.trim();
+                    if (btnTextClean === correctOpt) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            // Show explanation
+            const expDiv = document.getElementById(`exp-${qIndex}`);
+            expDiv.style.display = 'block';
+            expDiv.animate([
+                { opacity: 0, transform: 'translateY(-10px)' },
+                { opacity: 1, transform: 'translateY(0)' }
+            ], { duration: 400, fill: 'forwards' });
+        }
+
+        // --- Toggle Translation ---
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            if (el.style.display === 'none' || el.style.display === '') {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        }
+
+        // --- Timer Logic ---
+        let timeRemaining = 600; // 10 minutes
+        let timerRunning = false;
+        
+        function startTimer() {
+            const btn = document.getElementById('timer-btn');
+            
+            if(!timerRunning) {
+                timerRunning = true;
+                timerInterval = setInterval(() => {
+                    timeRemaining--;
+                    let m = Math.floor(timeRemaining / 60);
+                    let s = timeRemaining % 60;
+                    btn.textContent = `⏳ ${m}:${s < 10 ? '0'+s : s}`;
+                    
+                    if(timeRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        btn.textContent = "HẾT GIỜ!";
+                        alert("Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                    }
+                }, 1000);
+            } else {
+                // Pause timer
+                clearInterval(timerInterval);
+                timerRunning = false;
+                btn.textContent = "▶️ TIẾP TỤC";
+            }
+        }
+
+        // --- Submit Logic ---
+        function submitTest() {
+            clearInterval(timerInterval); // Stop timer
+            const modal = document.getElementById('score-modal');
+            const scoreDisplay = document.getElementById('final-score');
+            const msgDisplay = document.getElementById('score-message');
+            
+            scoreDisplay.textContent = `${score}/${totalQuestions}`;
+            
+            let percentage = score / totalQuestions;
+            if (percentage === 1) {
+                msgDisplay.innerHTML = "🌟 THIÊN TÀI TIẾNG ANH! Xuất sắc 100%!";
+                shootConfetti(); shootConfetti(); shootConfetti();
+            } else if (percentage >= 0.8) {
+                msgDisplay.innerHTML = "🔥 LÀM TỐT LẮM! Kỹ năng đọc hiểu rất tuyệt!";
+                shootConfetti();
+            } else if (percentage >= 0.5) {
+                msgDisplay.innerHTML = "👍 KHÁ LẮM! Cố gắng luyện tập thêm từ vựng nhé!";
+            } else {
+                msgDisplay.innerHTML = "💪 CỐ LÊN NHÉ! Hãy đọc kỹ phần giải thích của cô An để rút kinh nghiệm.";
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        // Initialize App
+        window.onload = () => {
+            renderQuestions();
+        };
+
+    </script>
+</body>
+</html>
