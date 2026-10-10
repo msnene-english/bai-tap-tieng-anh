@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Thi Tiếng Anh - Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Default Theme (Will be overridden by JS) */
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --accent: #fdcb6e;
+            --text-dark: #2d3436;
+            --text-light: #ffffff;
+            --success: #00b894; /* Green */
+            --error: #d63031;   /* Red */
+            --bg-pattern: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f0f3f5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header --- */
+        header {
+            background: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            height: 70px;
+        }
+        .teacher-brand {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            font-family: 'Quicksand', sans-serif;
+        }
+        .teacher-sub { font-size: 0.8rem; color: #636e72; font-weight: normal; }
+        
+        /* Timer */
+        .timer-box {
+            background: var(--text-dark);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .timer-controls button {
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        /* Passage Selector (Tabs) */
+        .passage-tabs {
+            display: flex;
+            gap: 10px;
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--primary);
+            background: transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--primary);
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* --- Main Layout Split Screen --- */
+        main {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 70px);
+            background-image: var(--bg-pattern);
+            background-size: cover;
+            background-blend-mode: soft-light;
+            transition: background 0.5s;
+        }
+
+        /* Left Panel: Reading */
+        .panel-left {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.95);
+            margin: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-left: 10px solid var(--primary);
+        }
+        .reading-title {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #dfe6e9;
+            padding-bottom: 10px;
+        }
+        .reading-content {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            color: #2d3436;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        
+        /* Tools in Reading */
+        .btn-translate {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+        .translation-box {
+            display: none;
+            background: #f1f2f6;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+            font-style: italic;
+            color: #57606f;
+            margin-bottom: 20px;
+        }
+        .glossary-box {
+            margin-top: 30px;
+            border: 2px solid #dfe6e9;
+            border-radius: 15px;
+            padding: 15px;
+        }
+        .glossary-title { font-weight: 800; color: var(--primary); margin-bottom: 10px; }
+        .glossary-table { width: 100%; border-collapse: collapse; }
+        .glossary-table th, .glossary-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+        .glossary-word { color: #d63031; font-weight: bold; }
+        .glossary-type { font-size: 0.8rem; color: #636e72; font-style: italic; background: #dfe6e9; padding: 2px 6px; border-radius: 4px; }
+
+        /* Right Panel: Exercises */
+        .panel-right {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            margin: 20px 20px 20px 0; /* No left margin */
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            transition: transform 0.2s;
+        }
+        .question-text {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+        }
+        
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid #dfe6e9;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            position: relative;
+            box-shadow: 0 4px 0 #dfe6e9;
+            font-family: 'Nunito', sans-serif;
+            color: #636e72;
+        }
+        .option-btn:hover { transform: scale(1.02); border-color: var(--secondary); }
+        .option-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* State Colors */
+        .option-btn.correct {
+            background: var(--success);
+            color: white;
+            border-color: #009476;
+            box-shadow: 0 4px 0 #009476;
+        }
+        .option-btn.wrong {
+            background: var(--error);
+            color: white;
+            border-color: #b71c1c;
+            box-shadow: 0 4px 0 #b71c1c;
+            animation: shake 0.5s;
+        }
+        .option-btn.disabled { pointer-events: none; opacity: 0.7; }
+
+        /* Ms. Chí Nên Explanation */
+        .explanation {
+            display: none;
+            margin-top: 20px;
+            background: #fff8e1; /* Light yellow */
+            border: 2px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 15px;
+        }
+        .explanation.show { display: block; animation: slideDown 0.4s ease-out; }
+        .exp-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            color: #e17055;
+            margin-bottom: 10px;
+        }
+        .exp-avatar {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            border: 2px solid #e17055;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+        }
+        .exp-content p { margin-bottom: 8px; font-size: 0.95rem; }
+        .exp-content strong { color: #2d3436; }
+
+        /* Footer / Submit */
+        .submit-section {
+            text-align: center;
+            margin-top: 40px;
+            padding-bottom: 50px;
+        }
+        .btn-submit {
+            background: linear-gradient(to bottom, var(--primary), #5541d6);
+            color: white;
+            font-size: 1.5rem;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #3c2bb5;
+            transition: transform 0.2s;
+        }
+        .btn-submit:active { transform: translateY(6px); box-shadow: 0 2px 0 #3c2bb5; }
+
+        /* Result Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            animation: pop 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            position: relative;
+            border: 5px solid var(--primary);
+        }
+        .score-display {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+        .feedback-text { font-size: 1.2rem; color: #636e72; margin-bottom: 20px; }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pop {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            main { flex-direction: column; height: auto; overflow-y: auto; }
+            .panel-left, .panel-right { overflow-y: visible; margin: 10px; }
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="teacher-brand">
+        Ms. Chí Nên  <br>
+        <span class="teacher-sub">Master of English Education</span>
+    </div>
+    
+    <div class="passage-tabs">
+        <button class="tab-btn active" onclick="switchPassage(0)">PART 1: EASTER</button>
+        <button class="tab-btn" onclick="switchPassage(1)">PART 2: DRIVING</button>
+    </div>
+
+    <div class="timer-box">
+        <span id="timer">10:00</span>
+        <div class="timer-controls">
+            <button id="btnPause" onclick="toggleTimer()">⏸</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="panel-left" id="readingPanel">
+        </div>
+
+    <div class="panel-right" id="exercisePanel">
+        </div>
+</main>
+
+<div class="modal-overlay" id="resultModal">
+    <div class="modal-content">
+        <h2>KẾT QUẢ BÀI LÀM</h2>
+        <div class="score-display" id="finalScore">0/0</div>
+        <p class="feedback-text" id="finalFeedback">...</p>
+        <button class="btn-submit" onclick="closeModal()">Xem lại bài</button>
+    </div>
+</div>
+
+<canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;"></canvas>
+
+<script>
+    // --- DATA ---
+    const db = [
+        {
+            id: "easter",
+            topic: "Easter Festival",
+            theme: {
+                primary: "#FF9FF3", // Pink
+                secondary: "#55E6C1", // Mint
+                accent: "#feca57",
+                bgEmojis: ["🥚", "🐰", "🌸", "🍫"]
+            },
+            content: `
+                <div class="reading-title">Topic: Easter Festival</div>
+                <div class="reading-content">
+                    <p>Easter is an important Christian festival and holiday. It is held to celebrate the resurrection of Jesus Christ. Easter is not a fixed holiday. Its date varies between 22nd March and 25th April. People celebrate Easter around the world.</p>
+                    <p>In the UK, Easter is a public holiday. People give Easter chocolate eggs to their friends and family. There are also egg hunts for kids. In the US, Easter is a national holiday. People can go to church and have a special family meal. They also organise egg-hunts and give gifts of coloured eggs.</p>
+                    <p>In Russia, Easter is one of the most important holidays. People celebrate it with an Easter breakfast or meal. They also create very beautiful Easter eggs.</p>
+                </div>
+                <button class="btn-translate" onclick="toggleTrans('trans-easter')">🇻🇳 Bấm để xem bản dịch</button>
+                <div id="trans-easter" class="translation-box">
+                    <strong>Bản dịch:</strong><br>
+                    Lễ Phục sinh là một lễ hội và ngày lễ quan trọng của Kitô giáo. Nó được tổ chức để kỷ niệm sự phục sinh của Chúa Giêsu Kitô. Lễ Phục sinh không phải là một ngày lễ cố định. Ngày của nó thay đổi trong khoảng từ 22/3 đến 25/4. Mọi người ăn mừng lễ Phục sinh trên khắp thế giới.<br><br>
+                    Ở Anh, Lễ Phục sinh là một ngày lễ chung. Mọi người tặng trứng sô cô la Phục sinh cho bạn bè và gia đình. Cũng có những cuộc săn trứng cho trẻ em. Ở Mỹ, Lễ Phục sinh là ngày lễ quốc gia. Mọi người có thể đi nhà thờ và dùng bữa cơm gia đình đặc biệt. Họ cũng tổ chức săn trứng và tặng quà là những quả trứng tô màu.<br><br>
+                    Ở Nga, Lễ Phục sinh là một trong những ngày lễ quan trọng nhất. Mọi người ăn mừng bằng bữa sáng hoặc bữa ăn Phục sinh. Họ cũng tạo ra những quả trứng Phục sinh rất đẹp.
+                </div>
+                <div class="glossary-box">
+                    <div class="glossary-title">📖 Glossary (Từ vựng học thuật)</div>
+                    <table class="glossary-table">
+                        <tr><td><span class="glossary-word">Resurrection</span> <span class="glossary-type">(n)</span></td><td>Sự phục sinh</td></tr>
+                        <tr><td><span class="glossary-word">Varies</span> <span class="glossary-type">(v)</span></td><td>Thay đổi, biến đổi</td></tr>
+                        <tr><td><span class="glossary-word">Fixed</span> <span class="glossary-type">(adj)</span></td><td>Cố định</td></tr>
+                        <tr><td><span class="glossary-word">Celebrate</span> <span class="glossary-type">(v)</span></td><td>Ăn mừng, kỷ niệm</td></tr>
+                        <tr><td><span class="glossary-word">National holiday</span> <span class="glossary-type">(n)</span></td><td>Ngày lễ quốc gia</td></tr>
+                    </table>
+                </div>
+            `,
+            questions: [
+                {
+                    q: "1. What is the passage mainly about?",
+                    options: ["A. The history and meaning of Easter.", "B. The way Easter is celebrated worldwide.", "C. The reason why Easter is important.", "D. The different types of Easter eggs."],
+                    correct: 1, // B (Index start 0)
+                    explain: `
+                        <strong>Phân tích:</strong>
+                        <ul>
+                            <li>Đoạn 1 nói chung về Easter.</li>
+                            <li>Đoạn 2 nói về UK và US.</li>
+                            <li>Đoạn 3 nói về Russia.</li>
+                        </ul>
+                        => Bài viết liệt kê cách ăn mừng ở các nước khác nhau. <br>
+                        <strong>Chọn B.</strong> (Cách lễ Phục sinh được tổ chức trên toàn thế giới).
+                    `
+                },
+                {
+                    q: "2. Which of the following is NOT true about Easter?",
+                    options: ["A. Christian festival.", "B. Celebrated on same date every year.", "C. UK people give chocolate eggs.", "D. Egg hunts for children."],
+                    correct: 1,
+                    explain: `
+                        <strong>Dẫn chứng:</strong> "Easter is not a fixed holiday." (Lễ Phục sinh không phải ngày lễ cố định).<br>
+                        <strong>Chọn B</strong> (Được tổ chức vào cùng một ngày hàng năm) là SAI.
+                    `
+                },
+                {
+                    q: "3. What does the word “varies” mean?",
+                    options: ["A. stays the same", "B. changes over time", "C. happens once a year", "D. is celebrated early"],
+                    correct: 1,
+                    explain: `
+                        <strong>Từ vựng:</strong> Varies = Change (Thay đổi/Biến thiên).<br>
+                        "Its date varies between..." (Ngày thay đổi trong khoảng...).<br>
+                        <strong>Chọn B.</strong>
+                    `
+                },
+                {
+                    q: "4. What is the opposite of “beautiful”?",
+                    options: ["A. ugly", "B. colourful", "C. lovely", "D. pretty"],
+                    correct: 0,
+                    explain: `
+                        Beautiful (Đẹp) >< Ugly (Xấu xí).<br>
+                        Các từ còn lại: Colorful (sặc sỡ), Lovely (đáng yêu), Pretty (xinh) đều mang nghĩa tích cực.
+                    `
+                },
+                {
+                    q: "5. How do people in Russia celebrate Easter?",
+                    options: ["A. Organize egg hunts.", "B. Give chocolate eggs.", "C. Prepare a special Easter meal.", "D. Go to church."],
+                    correct: 2,
+                    explain: `
+                        <strong>Dẫn chứng (Đoạn cuối):</strong> "People celebrate it with an Easter breakfast or meal."<br>
+                        <strong>Chọn C.</strong>
+                    `
+                },
+                {
+                    q: "6. What do people in the US do?",
+                    options: ["A. Decorate houses.", "B. Give gifts of coloured eggs.", "C. Street parade.", "D. Homemade chocolate eggs."],
+                    correct: 1,
+                    explain: `
+                        <strong>Dẫn chứng (Đoạn 2):</strong> "They also organise egg-hunts and give gifts of coloured eggs."<br>
+                        <strong>Chọn B.</strong>
+                    `
+                }
+            ]
+        },
+        {
+            id: "driving",
+            topic: "Safe Driving",
+            theme: {
+                primary: "#4834d4", // Deep Blue
+                secondary: "#eb4d4b", // Red
+                accent: "#f0932b",
+                bgEmojis: ["🚗", "🚦", "🛑", "👮"]
+            },
+            content: `
+                <div class="reading-title">Topic: Driving Safety</div>
+                <div class="reading-content">
+                    <p>Who are the best drivers? Which drivers are the safest on the roads? According to a recent survey, young and inexperienced drivers are the most likely to have an accident. Older drivers are more careful. Young men have the worst accident records of all. They often choose faster cars with bigger engines.</p>
+                    <p>One of the most interesting facts in the survey is that passengers have an effect on the driver. When young male drivers have their friends in the car, their driving becomes worse. When their wife or girlfriend is in the car, however, their driving is better.</p>
+                    <p>But this is not true for women. Their driving is more dangerous when their husband or boyfriend is in the car. However, if their small children are in the car, they drive more slowly and safely.</p>
+                </div>
+                <button class="btn-translate" onclick="toggleTrans('trans-drive')">🇻🇳 Bấm để xem bản dịch</button>
+                <div id="trans-drive" class="translation-box">
+                    <strong>Bản dịch:</strong><br>
+                    Ai là những người lái xe giỏi nhất? Theo một khảo sát gần đây, những người lái xe trẻ và thiếu kinh nghiệm có khả năng gặp tai nạn cao nhất. Người lái xe lớn tuổi cẩn thận hơn. Nam thanh niên có hồ sơ tai nạn tồi tệ nhất. Họ thường chọn xe nhanh hơn với động cơ lớn hơn.<br><br>
+                    Một trong những sự thật thú vị nhất là hành khách có ảnh hưởng đến người lái. Khi nam thanh niên chở bạn bè, họ lái xe tệ hơn. Tuy nhiên, khi có vợ hoặc bạn gái, họ lái tốt hơn.<br><br>
+                    Nhưng điều này không đúng với phụ nữ. Họ lái nguy hiểm hơn khi có chồng/bạn trai đi cùng. Tuy nhiên, nếu có con nhỏ trên xe, họ lái chậm và an toàn hơn.
+                </div>
+                <div class="glossary-box">
+                    <div class="glossary-title">📖 Glossary (Từ vựng học thuật)</div>
+                    <table class="glossary-table">
+                        <tr><td><span class="glossary-word">Inexperienced</span> <span class="glossary-type">(adj)</span></td><td>Thiếu kinh nghiệm</td></tr>
+                        <tr><td><span class="glossary-word">Survey</span> <span class="glossary-type">(n)</span></td><td>Cuộc khảo sát</td></tr>
+                        <tr><td><span class="glossary-word">Passenger</span> <span class="glossary-type">(n)</span></td><td>Hành khách</td></tr>
+                        <tr><td><span class="glossary-word">Records</span> <span class="glossary-type">(n)</span></td><td>Hồ sơ/Ghi chép</td></tr>
+                    </table>
+                </div>
+            `,
+            questions: [
+                {
+                    q: "1. What is the main idea of the passage?",
+                    options: ["A. How different factors affect driving safety.", "B. Types of cars young people drive.", "C. Why accidents happen in cities.", "D. How to improve driving."],
+                    correct: 0,
+                    explain: `
+                        <strong>Phân tích:</strong> Bài viết nói về tuổi tác (giới trẻ vs người già), giới tính (nam vs nữ), và người đi cùng (hành khách) ảnh hưởng đến việc lái xe.<br>
+                        <strong>Chọn A</strong> (Các yếu tố khác nhau ảnh hưởng đến an toàn lái xe).
+                    `
+                },
+                {
+                    q: "2. Which is NOT mentioned?",
+                    options: ["A. Young drivers have more accidents.", "B. Women drive carefully with children.", "C. Young men always follow traffic rules.", "D. Older drivers are careful."],
+                    correct: 2,
+                    explain: `
+                        <strong>Dẫn chứng:</strong> "Young men have the worst accident records of all." -> Họ có hồ sơ tai nạn tệ nhất, nghĩa là họ KHÔNG tuân thủ luật lệ.<br>
+                        <strong>Chọn C</strong> là SAI.
+                    `
+                },
+                {
+                    q: "3. 'Choose' is closest in meaning to:",
+                    options: ["A. select", "B. refuse", "C. change", "D. follow"],
+                    correct: 0,
+                    explain: "Choose = Select (Lựa chọn)."
+                },
+                {
+                    q: "4. Opposite of 'dangerous':",
+                    options: ["A. fast", "B. safe", "C. bad", "D. strict"],
+                    correct: 1,
+                    explain: "Dangerous (Nguy hiểm) >< Safe (An toàn)."
+                },
+                {
+                    q: "5. Why do young male drivers have more accidents?",
+                    options: ["A. Drive bigger/faster cars.", "B. No time to practice.", "C. Drive slowly.", "D. Drive alone."],
+                    correct: 0,
+                    explain: "Dẫn chứng: 'They often choose faster cars with bigger engines.'"
+                },
+                {
+                    q: "6. How do passengers affect male drivers?",
+                    options: ["A. Better with friends.", "B. More dangerously with friends.", "C. Faster with parents.", "D. Carelessly when alone."],
+                    correct: 1,
+                    explain: `
+                        <strong>Dẫn chứng:</strong> "When young male drivers have their friends in the car, their driving becomes worse." (Tệ hơn = nguy hiểm hơn).<br>
+                        <strong>Chọn B.</strong>
+                    `
+                }
+            ]
+        }
+    ];
+
+    // --- LOGIC ---
+    let currentPassageIndex = 0;
+    let scores = [0, 0]; // Score for part 1, part 2
+    let answersStatus = [[], []]; // Track if answered
+
+    // Initialize
+    function init() {
+        startTimer();
+        switchPassage(0);
+    }
+
+    // Switch Tab
+    function switchPassage(index) {
+        currentPassageIndex = index;
+        const data = db[index];
+        
+        // Update Tabs UI
+        document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+
+        // Set Theme CSS Variables
+        const r = document.querySelector(':root');
+        r.style.setProperty('--primary', data.theme.primary);
+        r.style.setProperty('--secondary', data.theme.secondary);
+        r.style.setProperty('--accent', data.theme.accent);
+        
+        // Generate SVG Background
+        const svgString = generateSVG(data.theme.bgEmojis, data.theme.primary);
+        r.style.setProperty('--bg-pattern', `url('${svgString}'), radial-gradient(circle, #ffffff 0%, ${data.theme.secondary}22 100%)`);
+
+        // Render Content
+        document.getElementById('readingPanel').innerHTML = data.content;
+        
+        // Render Questions
+        renderQuestions(index);
+    }
+
+    // Generate Dynamic SVG Background
+    function generateSVG(emojis, color) {
+        let svgContent = '';
+        for(let i=0; i<6; i++) {
+            const x = Math.random() * 100;
+            const y = Math.random() * 100;
+            const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+            svgContent += `<text x='${x}%' y='${y}%' font-size='40' opacity='0.15'>${emoji}</text>`;
+        }
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%'>${svgContent}</svg>`;
+        return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    }
+
+    // Render Questions
+    function renderQuestions(pIndex) {
+        const container = document.getElementById('exercisePanel');
+        const qData = db[pIndex].questions;
+        let html = '';
+
+        qData.forEach((item, qIndex) => {
+            let optionsHtml = '';
+            item.options.forEach((opt, oIndex) => {
+                optionsHtml += `<button class="option-btn" id="btn_${pIndex}_${qIndex}_${oIndex}" onclick="checkAnswer(${pIndex}, ${qIndex}, ${oIndex})">${opt}</button>`;
+            });
+
+            html += `
+                <div class="question-card" id="card_${pIndex}_${qIndex}">
+                    <div class="question-text">${item.q}</div>
+                    <div class="options-grid">
+                        ${optionsHtml}
+                    </div>
+                    <div class="explanation" id="exp_${pIndex}_${qIndex}">
+                        <div class="exp-header">
+                            <div class="exp-avatar">👩‍🏫</div>
+                            <div>Ms. Chí Nên giải thích:</div>
+                        </div>
+                        <div class="exp-content">${item.explain}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        // Add Submit Button at bottom
+        html += `<div class="submit-section"><button class="btn-submit" onclick="finishTest()">NỘP BÀI & XEM ĐIỂM</button></div>`;
+
+        container.innerHTML = html;
+    }
+
+    // Audio Context for Sounds
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        } else {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    // Confetti Effect
+    function fireConfetti(x, y) {
+        // Simple canvas confetti logic placeholder
+        // For single file simplicity, we'll just trigger the main confetti on finish
+    }
+
+    // Check Answer
+    function checkAnswer(pIndex, qIndex, oIndex) {
+        // Prevent re-answering
+        if (answersStatus[pIndex][qIndex]) return;
+        
+        const correctIndex = db[pIndex].questions[qIndex].correct;
+        const btn = document.getElementById(`btn_${pIndex}_${qIndex}_${oIndex}`);
+        const correctBtn = document.getElementById(`btn_${pIndex}_${qIndex}_${correctIndex}`);
+        const exp = document.getElementById(`exp_${pIndex}_${qIndex}`);
+
+        answersStatus[pIndex][qIndex] = true; // Mark as answered
+
+        if (oIndex === correctIndex) {
+            // Correct
+            btn.classList.add('correct');
+            playSound('correct');
+            scores[pIndex]++;
+            fireConfetti();
+        } else {
+            // Wrong
+            btn.classList.add('wrong');
+            correctBtn.classList.add('correct');
+            playSound('wrong');
+        }
+
+        // Disable all buttons in this question
+        const allBtns = document.querySelectorAll(`#card_${pIndex}_${qIndex} .option-btn`);
+        allBtns.forEach(b => b.classList.add('disabled'));
+
+        // Show explanation
+        exp.classList.add('show');
+    }
+
+    // Timer Logic
+    let time = 600; // 10 minutes
+    let timerInterval;
+    let isPaused = false;
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            if(!isPaused) {
+                time--;
+                const m = Math.floor(time / 60);
+                const s = time % 60;
+                document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                if (time <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Đã hết giờ làm bài! Hãy nộp bài nhé.");
+                }
+            }
+        }, 1000);
+    }
+
+    function toggleTimer() {
+        isPaused = !isPaused;
+        document.getElementById('btnPause').innerText = isPaused ? "▶" : "⏸";
+    }
+
+    function toggleTrans(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Finish & Calculate
+    function finishTest() {
+        const totalScore = scores[0] + scores[1];
+        const maxScore = db[0].questions.length + db[1].questions.length;
+        
+        document.getElementById('finalScore').innerText = `${totalScore}/${maxScore}`;
+        
+        let msg = "";
+        const percentage = totalScore / maxScore;
+        if (percentage === 1) msg = "OMG! THIÊN TÀI! 🏆 Xuất sắc quá con ơi!";
+        else if (percentage >= 0.8) msg = "Giỏi lắm! Làm rất tốt! 🌟";
+        else if (percentage >= 0.5) msg = "Khá tốt, nhưng cần cố gắng thêm xíu nha! 💪";
+        else msg = "Cần ôn tập lại từ vựng nhé! Cô tin con làm được! ❤️";
+        
+        document.getElementById('finalFeedback').innerText = msg;
+        document.getElementById('resultModal').style.display = 'flex';
+        
+        playSound('correct');
+        startConfetti();
+    }
+
+    function closeModal() {
+        document.getElementById('resultModal').style.display = 'none';
+    }
+
+    // Lightweight Confetti Implementation
+    function startConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const pieces = [];
+        for(let i=0; i<100; i++) {
+            pieces.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                color: `hsl(${Math.random()*360}, 100%, 50%)`,
+                size: Math.random() * 10 + 5,
+                speed: Math.random() * 5 + 2
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            pieces.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                p.y += p.speed;
+                if(p.y > canvas.height) p.y = -20;
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+        setTimeout(() => ctx.clearRect(0,0,canvas.width,canvas.height), 5000); // Stop after 5s
+    }
+
+    // Start
+    window.onload = init;
+
+</script>
+
+</body>
+</html>
