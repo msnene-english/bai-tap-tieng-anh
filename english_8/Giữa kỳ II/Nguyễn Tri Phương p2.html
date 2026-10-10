@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Quiz – Ms. Chí Nên </title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green1: #22c55e;
+    --green2: #16a34a;
+    --earth: #78350f;
+    --leaf: #84cc16;
+    --sky: #0ea5e9;
+    --sand: #fef9c3;
+    --correct: #00D26A;
+    --wrong: #FF4757;
+    --card-bg: rgba(255,255,255,0.92);
+    --radius: 18px;
+    --shadow: 0 8px 32px rgba(34,197,94,0.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', 'Quicksand', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #d1fae5 0%, #bbf7d0 25%, #a7f3d0 50%, #bef264 75%, #fef9c3 100%);
+    background-size: 300% 300%;
+    animation: gradientShift 10s ease infinite;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  @keyframes gradientShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Floating SVG pattern overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ctext x='10' y='50' font-size='36' opacity='0.13'%3E🌍%3C/text%3E%3Ctext x='100' y='110' font-size='32' opacity='0.11'%3E🌱%3C/text%3E%3Ctext x='50' y='170' font-size='30' opacity='0.10'%3E♻️%3C/text%3E%3Ctext x='150' y='40' font-size='28' opacity='0.09'%3E🛍️%3C/text%3E%3Ctext x='160' y='160' font-size='32' opacity='0.10'%3E🌿%3C/text%3E%3C/svg%3E");
+    background-size: 200px 200px;
+    animation: floatPattern 18s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+    mix-blend-mode: multiply;
+  }
+
+  @keyframes floatPattern {
+    from { background-position: 0 0; }
+    to   { background-position: 200px 200px; }
+  }
+
+  /* ---- HEADER ---- */
+  .site-header {
+    position: relative; z-index: 10;
+    background: linear-gradient(90deg, #15803d, #22c55e, #84cc16);
+    padding: 10px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(21,128,61,0.4);
+  }
+  .site-header h1 {
+    font-size: 1.05rem; font-weight: 900; color: #fff;
+    letter-spacing: 0.5px; text-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .site-header .subtitle { font-size: 0.78rem; color: #d1fae5; font-weight: 600; }
+
+  /* ---- TIMER BAR ---- */
+  .timer-bar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; justify-content: center; align-items: center; gap: 14px;
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(8px);
+    padding: 10px 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    border-bottom: 2px solid #bbf7d0;
+  }
+  .timer-display {
+    font-size: 1.5rem; font-weight: 900;
+    color: #15803d; letter-spacing: 2px;
+    background: #d1fae5; padding: 4px 18px; border-radius: 30px;
+    border: 2px solid #22c55e;
+    min-width: 90px; text-align: center;
+  }
+  .timer-display.danger { color: #dc2626; background: #fee2e2; border-color: #dc2626; animation: pulse 0.8s infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+  .btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800; font-size: 0.92rem;
+    border: none; cursor: pointer; border-radius: 14px;
+    padding: 8px 18px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover { transform: translateY(-2px) scale(1.04); }
+  .btn:active { transform: scale(0.97); }
+  .btn-start { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; box-shadow: 0 4px 14px rgba(34,197,94,0.4); }
+  .btn-pause { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 4px 14px rgba(245,158,11,0.4); }
+  .btn-submit { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; box-shadow: 0 4px 14px rgba(14,165,233,0.4); font-size: 1rem; padding: 10px 28px; }
+
+  /* ---- MAIN CONTENT ---- */
+  .main-wrap { position: relative; z-index: 5; padding: 18px 16px 40px; }
+
+  .exercise-label {
+    font-size: 1.1rem; font-weight: 900;
+    color: #15803d;
+    background: linear-gradient(90deg, #d1fae5, #bbf7d0);
+    border-left: 5px solid #22c55e;
+    padding: 8px 18px; border-radius: 0 12px 12px 0;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(34,197,94,0.15);
+    display: inline-block;
+  }
+
+  /* ---- SPLIT SCREEN (Ex6) ---- */
+  .split-screen {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    max-width: 1400px; margin: 0 auto 30px;
+  }
+  .split-left, .split-right {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 2px solid #bbf7d0;
+    overflow-y: auto;
+    max-height: 78vh;
+    padding: 20px;
+    position: relative;
+  }
+  .split-left { border-top: 5px solid #22c55e; }
+  .split-right { border-top: 5px solid #0ea5e9; }
+
+  .panel-title {
+    font-size: 0.88rem; font-weight: 900;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: #fff; background: linear-gradient(90deg, #22c55e, #16a34a);
+    padding: 5px 14px; border-radius: 8px; display: inline-block;
+    margin-bottom: 14px;
+  }
+  .panel-title.blue { background: linear-gradient(90deg, #0ea5e9, #0284c7); }
+
+  .passage-paragraph {
+    font-size: 0.97rem; line-height: 1.8;
+    color: #1c1917; margin-bottom: 14px;
+    padding: 14px; border-radius: 12px;
+    background: rgba(240,253,244,0.7);
+    border: 1px solid #bbf7d0;
+  }
+  .passage-paragraph strong { color: #15803d; }
+
+  .btn-translate {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem; font-weight: 700;
+    background: linear-gradient(135deg, #fef9c3, #fde68a);
+    border: 2px solid #f59e0b;
+    color: #92400e; border-radius: 10px;
+    padding: 5px 14px; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-top: 6px;
+    box-shadow: 0 3px 8px rgba(245,158,11,0.25);
+  }
+  .btn-translate:hover { transform: scale(1.04); box-shadow: 0 4px 12px rgba(245,158,11,0.4); }
+
+  .translation-box {
+    display: none; margin-top: 10px;
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 2px dashed #f59e0b;
+    border-radius: 10px; padding: 12px 14px;
+    font-size: 0.93rem; line-height: 1.7;
+    color: #78350f; font-style: italic;
+  }
+  .translation-box.show { display: block; animation: fadeIn 0.3s ease; }
+
+  /* ---- GLOSSARY ---- */
+  .glossary-wrap {
+    margin-top: 18px; border-radius: 14px;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 2px solid #86efac; padding: 16px;
+  }
+  .glossary-title {
+    font-size: 0.95rem; font-weight: 900; color: #15803d;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .glossary-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .glossary-table th {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    color: #fff; padding: 7px 10px; text-align: left; font-weight: 800;
+  }
+  .glossary-table th:first-child { border-radius: 8px 0 0 0; }
+  .glossary-table th:last-child { border-radius: 0 8px 0 0; }
+  .glossary-table td { padding: 6px 10px; border-bottom: 1px solid #bbf7d0; color: #1c1917; }
+  .glossary-table tr:hover td { background: rgba(34,197,94,0.07); }
+  .word-badge { font-weight: 800; color: #15803d; }
+  .pos-badge {
+    background: #dcfce7; color: #15803d; border-radius: 6px;
+    padding: 1px 7px; font-size: 0.78rem; font-weight: 700;
+    border: 1px solid #86efac;
+  }
+
+  /* ---- QUESTIONS ---- */
+  .question-card {
+    background: #fff; border-radius: 14px;
+    border: 2px solid #e2e8f0; padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s;
+  }
+  .question-card:hover { box-shadow: 0 5px 20px rgba(34,197,94,0.15); }
+  .q-number {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff; font-weight: 900; font-size: 0.85rem;
+    margin-right: 8px; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(34,197,94,0.4);
+  }
+  .q-text {
+    font-size: 1rem; font-weight: 700; color: #1c1917; line-height: 1.6;
+    display: flex; align-items: flex-start; gap: 2px; margin-bottom: 12px;
+  }
+  .q-text em { font-style: normal; font-weight: 900; color: #15803d; }
+
+  .options-grid { display: grid; gap: 8px; }
+  .option-btn {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem; font-weight: 600;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border: 2.5px solid #cbd5e1; color: #1e293b;
+    border-radius: 14px; padding: 10px 16px;
+    cursor: pointer; text-align: left;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.07), 0 1px 0 #e2e8f0 inset;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .option-btn:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 18px rgba(34,197,94,0.22);
+    border-color: #22c55e;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  }
+  .option-btn .opt-label {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 26px; height: 26px;
+    background: #e2e8f0; border-radius: 8px;
+    font-weight: 900; font-size: 0.85rem; color: #475569;
+    flex-shrink: 0;
+  }
+  .option-btn.correct {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
+    border-color: var(--correct) !important; color: #15803d !important;
+  }
+  .option-btn.correct .opt-label { background: var(--correct); color: #fff; }
+  .option-btn.wrong {
+    background: linear-gradient(135deg, #fee2e2, #fecaca) !important;
+    border-color: var(--wrong) !important; color: #dc2626 !important;
+    animation: shake 0.4s ease;
+  }
+  .option-btn.wrong .opt-label { background: var(--wrong); color: #fff; }
+  .option-btn:disabled { cursor: default; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-7px); }
+    40%      { transform: translateX(7px); }
+    60%      { transform: translateX(-5px); }
+    80%      { transform: translateX(5px); }
+  }
+
+  /* ---- EXPLANATION BOX ---- */
+  .explanation {
+    display: none; margin-top: 12px;
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    border: 2px solid #7dd3fc; border-radius: 12px;
+    padding: 14px 16px; font-size: 0.95rem; line-height: 1.75; color: #0c4a6e;
+  }
+  .explanation.show { display: block; animation: fadeIn 0.3s ease; }
+  .explanation h4 { font-size: 0.9rem; font-weight: 900; color: #0369a1; margin-bottom: 8px; }
+  .explanation ul { padding-left: 18px; }
+  .explanation li { margin-bottom: 5px; }
+  .exp-correct { color: #15803d; font-weight: 800; }
+  .exp-wrong { color: #dc2626; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---- CLOZE PASSAGE (Ex7) ---- */
+  .cloze-wrap {
+    max-width: 900px; margin: 0 auto 30px;
+    background: var(--card-bg); border-radius: var(--radius);
+    box-shadow: var(--shadow); border: 2px solid #bbf7d0;
+    border-top: 5px solid #0ea5e9; padding: 22px 24px;
+    position: relative; z-index: 5;
+  }
+  .cloze-passage {
+    font-size: 1.02rem; line-height: 2;
+    color: #1c1917; padding: 16px; border-radius: 12px;
+    background: rgba(240,249,255,0.7); border: 1.5px solid #bae6fd;
+    margin-bottom: 18px;
+  }
+  .blank-slot {
+    display: inline-flex; align-items: center;
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    border: 2px solid #0ea5e9; border-radius: 8px;
+    padding: 1px 10px; font-weight: 900; color: #0369a1;
+    font-size: 0.95rem; cursor: default; margin: 0 2px;
+    min-width: 28px; justify-content: center;
+    transition: background 0.2s;
+  }
+  .blank-slot.answered-correct { background: linear-gradient(135deg, #dcfce7, #bbf7d0); border-color: #22c55e; color: #15803d; }
+  .blank-slot.answered-wrong   { background: linear-gradient(135deg, #fee2e2, #fecaca); border-color: #ef4444; color: #dc2626; }
+
+  .cloze-questions { display: grid; gap: 12px; }
+
+  /* ---- SCORE PANEL ---- */
+  .score-overlay {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+  }
+  .score-overlay.show { display: flex; animation: fadeIn 0.4s ease; }
+  .score-card {
+    background: #fff; border-radius: 24px;
+    padding: 36px 40px; text-align: center; max-width: 480px; width: 92%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    border-top: 8px solid #22c55e;
+    position: relative; overflow: hidden;
+  }
+  .score-card::before {
+    content: '';
+    position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .score-emoji { font-size: 4rem; margin-bottom: 10px; display: block; }
+  .score-title { font-size: 1.8rem; font-weight: 900; color: #15803d; margin-bottom: 6px; }
+  .score-fraction { font-size: 3.2rem; font-weight: 900; color: #0369a1; letter-spacing: 2px; }
+  .score-msg { font-size: 1.1rem; color: #475569; margin: 10px 0 20px; font-weight: 600; line-height: 1.5; }
+  .score-breakdown {
+    background: #f0fdf4; border-radius: 14px; padding: 14px;
+    font-size: 0.92rem; color: #1c1917; text-align: left;
+    border: 1.5px solid #86efac; margin-bottom: 20px;
+  }
+  .score-breakdown div { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #bbf7d0; }
+  .score-breakdown div:last-child { border-bottom: none; }
+  .btn-retry { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; font-size: 1rem; padding: 12px 30px; border-radius: 14px; box-shadow: 0 4px 16px rgba(34,197,94,0.4); }
+
+  /* ---- CONFETTI ---- */
+  .confetti-piece {
+    position: fixed; top: -10px; border-radius: 3px;
+    pointer-events: none; z-index: 200;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 768px) {
+    .split-screen { grid-template-columns: 1fr; }
+    .split-left, .split-right { max-height: none; }
+    .score-card { padding: 24px 20px; }
+  }
+
+  /* ---- SUBMIT ROW ---- */
+  .submit-row {
+    display: flex; justify-content: center; padding: 10px 0 20px;
+    position: relative; z-index: 5;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div>
+    <div class="site-header h1" style="font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:900;color:#fff;">🌍 English Quiz – Environment</div>
+    <div class="subtitle">Giáo viên tạo: Ms. Chí Nên </div>
+  </div>
+  <div style="font-size:1.6rem;">🌱♻️🌍</div>
+</header>
+
+<!-- TIMER BAR -->
+<div class="timer-bar">
+  <span style="font-size:0.92rem;font-weight:700;color:#15803d;">⏱ Thời gian:</span>
+  <div class="timer-display" id="timerDisplay">10:00</div>
+  <button class="btn btn-start" id="timerBtn" onclick="toggleTimer()">▶ BẮT ĐẦU TÍNH GIỜ</button>
+  <button class="btn btn-submit" onclick="submitAll()">📋 NỘP BÀI</button>
+</div>
+
+<div class="main-wrap">
+
+<!-- =================== EXERCISE 6 =================== -->
+<div style="position:relative;z-index:5;max-width:1400px;margin:0 auto 10px;">
+  <div class="exercise-label">📖 Exercise 6: Read the passage and choose the correct answer A, B, C or D</div>
+</div>
+
+<div class="split-screen">
+  <!-- LEFT: Reading Passage -->
+  <div class="split-left">
+    <div class="panel-title">📰 Reading Passage</div>
+
+    <!-- Paragraph 1 -->
+    <div class="passage-paragraph" id="p1">
+      Black Friday and Cyber Monday promote mindless consumption, excessive packaging and shipping waste, especially with the <strong>rise</strong> of online shopping. The sales produce massive waste not just from the unwanted single-use plastic and cardboard packaging, but also from the return of unwanted items. This mindset also ensures that the earth overshoot day keeps moving back.
+    </div>
+    <button class="btn-translate" onclick="toggleTrans('t1',this)">🌟 Mở dịch đoạn này</button>
+    <div id="t1" class="translation-box">
+      Black Friday và Cyber Monday thúc đẩy lối tiêu dùng vô ý thức, bao bì đóng gói và rác thải vận chuyển quá mức, đặc biệt là với sự <strong>gia tăng</strong> của mua sắm trực tuyến. Các đợt giảm giá này tạo ra lượng rác thải khổng lồ, không chỉ từ bao bì nhựa dùng một lần và bao bì giấy bìa cứng không mong muốn, mà còn từ việc trả lại các mặt hàng không cần dùng đến. Tư duy này cũng khiến cho "ngày vượt ngưỡng trái đất" (Earth Overshoot Day) cứ liên tục đẩy lùi về trước.
+    </div>
+
+    <!-- Paragraph 2 -->
+    <div class="passage-paragraph" id="p2" style="margin-top:12px;">
+      This is especially true of the clothing industry, where much of the online returns are tossed into the landfill because the logistics and cost of putting the item back on the shelf are much too complicated. Britons throw away approximately 300,000 tonnes of clothes every year and many of them are only worn a handful of times.
+    </div>
+    <button class="btn-translate" onclick="toggleTrans('t2',this)">🌟 Mở dịch đoạn này</button>
+    <div id="t2" class="translation-box">
+      Điều này đặc biệt đúng với ngành thời trang, nơi phần lớn hàng trả lại trực tuyến bị ném thẳng vào bãi rác vì việc đưa sản phẩm trở lại quầy kệ quá phức tạp và tốn kém về mặt logistics. Người Anh vứt đi khoảng 300.000 tấn quần áo mỗi năm và nhiều trong số đó chỉ được mặc vài lần.
+    </div>
+
+    <!-- Paragraph 3 -->
+    <div class="passage-paragraph" id="p3" style="margin-top:12px;">
+      The negative impact of Black Friday is also significant from non-recyclable, mostly plastic toys, to e-waste, to fast fashion that is only used for one season. In fact, in France, the government is considering <strong>banning</strong> Black Friday due to the impact on the planet and the promotion of unsustainable consumption habits.
+    </div>
+    <button class="btn-translate" onclick="toggleTrans('t3',this)">🌟 Mở dịch đoạn này</button>
+    <div id="t3" class="translation-box">
+      Tác động tiêu cực của Black Friday còn đáng kể từ đồ chơi nhựa không thể tái chế, đến rác thải điện tử, đến thời trang nhanh chỉ được dùng một mùa. Thực tế, ở Pháp, chính phủ đang cân nhắc <strong>cấm</strong> Black Friday vì tác động của nó đến hành tinh và việc khuyến khích những thói quen tiêu dùng thiếu bền vững.
+    </div>
+
+    <!-- GLOSSARY -->
+    <div class="glossary-wrap">
+      <div class="glossary-title">📚 Glossary – Từ vựng quan trọng (B1–C2)</div>
+      <table class="glossary-table">
+        <thead><tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr></thead>
+        <tbody>
+          <tr><td><span class="word-badge">mindless</span></td><td><span class="pos-badge">adj</span></td><td>thiếu suy nghĩ, vô ý thức</td></tr>
+          <tr><td><span class="word-badge">consumption</span></td><td><span class="pos-badge">n</span></td><td>sự tiêu thụ, tiêu dùng</td></tr>
+          <tr><td><span class="word-badge">excessive</span></td><td><span class="pos-badge">adj</span></td><td>quá mức, thái quá</td></tr>
+          <tr><td><span class="word-badge">single-use</span></td><td><span class="pos-badge">adj</span></td><td>dùng một lần</td></tr>
+          <tr><td><span class="word-badge">overshoot</span></td><td><span class="pos-badge">n/v</span></td><td>vượt ngưỡng, vượt quá giới hạn</td></tr>
+          <tr><td><span class="word-badge">landfill</span></td><td><span class="pos-badge">n</span></td><td>bãi rác, bãi chôn lấp</td></tr>
+          <tr><td><span class="word-badge">logistics</span></td><td><span class="pos-badge">n</span></td><td>hậu cần, quản lý vận chuyển</td></tr>
+          <tr><td><span class="word-badge">approximately</span></td><td><span class="pos-badge">adv</span></td><td>khoảng, xấp xỉ</td></tr>
+          <tr><td><span class="word-badge">non-recyclable</span></td><td><span class="pos-badge">adj</span></td><td>không thể tái chế</td></tr>
+          <tr><td><span class="word-badge">e-waste</span></td><td><span class="pos-badge">n</span></td><td>rác thải điện tử</td></tr>
+          <tr><td><span class="word-badge">fast fashion</span></td><td><span class="pos-badge">n</span></td><td>thời trang nhanh (mua nhiều, dùng ít)</td></tr>
+          <tr><td><span class="word-badge">unsustainable</span></td><td><span class="pos-badge">adj</span></td><td>không bền vững</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RIGHT: Questions -->
+  <div class="split-right">
+    <div class="panel-title blue">✏️ Exercises – Câu hỏi</div>
+    <div id="ex6-questions"></div>
+  </div>
+</div>
+
+<!-- =================== EXERCISE 7 =================== -->
+<div style="position:relative;z-index:5;max-width:900px;margin:0 auto 10px;">
+  <div class="exercise-label">✍️ Exercise 7: Choose the correct answer A, B, C or D to complete the passage</div>
+</div>
+
+<div class="cloze-wrap">
+  <div class="panel-title blue">📝 Cloze Passage – Điền vào chỗ trống</div>
+  <div class="cloze-passage" id="clozePassage">
+    Air pollution is a <span class="blank-slot" id="slot1">(1)</span> problem in many cities. Motor vehicles, factories and other sources create so much air pollution that it may hang in the <span class="blank-slot" id="slot2">(2)</span> like dirty fog. Air pollution threatens the health of the people who live in cities. City wastes cause water pollution when they are poured into the waterways. These wastes kill fish and make some areas unfit for swimming. <span class="blank-slot" id="slot3">(3)</span>, many large cities have difficulties in disposing of their garbage. The amount of garbage grows each year, but places to put it are quickly filling up. Citizens, governments, industries, <span class="blank-slot" id="slot4">(4)</span>, and business people must work together in different ways to <span class="blank-slot" id="slot5">(5)</span> reduce pollution. For example, most cities have introduced recycling programmes.
+  </div>
+  <div class="cloze-questions" id="ex7-questions"></div>
+</div>
+
+</div><!-- /main-wrap -->
+
+<!-- SUBMIT ROW -->
+<div class="submit-row">
+  <button class="btn btn-submit" onclick="submitAll()">🎯 NỘP BÀI & XEM KẾT QUẢ</button>
+</div>
+
+<!-- SCORE OVERLAY -->
+<div class="score-overlay" id="scoreOverlay">
+  <div class="score-card">
+    <span class="score-emoji" id="scoreEmoji">🏆</span>
+    <div class="score-title" id="scoreTitle">Kết quả</div>
+    <div class="score-fraction" id="scoreFraction">0/10</div>
+    <div class="score-msg" id="scoreMsg">Cố lên nhé!</div>
+    <div class="score-breakdown" id="scoreBreakdown"></div>
+    <button class="btn btn-retry" onclick="location.reload()">🔄 Làm lại từ đầu</button>
+  </div>
+</div>
+
+<!-- CONFETTI CONTAINER -->
+<div id="confettiContainer"></div>
+
+<script>
+// ==================== DATA ====================
+const ex6Data = [
+  {
+    q: "1. The passage mainly ______.",
+    opts: [
+      { label:"A", text:"explains why Black Friday sales are bad for the environment" },
+      { label:"B", text:"describes shopping activities on Black Friday and Cyber Monday" },
+      { label:"C", text:"criticizes the unwanted single-use plastic and cardboard packaging" },
+      { label:"D", text:"concerns about the impact of non-recyclable products" }
+    ],
+    correct: 0,
+    explain: `<h4>🔍 Phân tích chi tiết</h4>
+    <p><strong>Dịch câu hỏi:</strong> "Đoạn văn chủ yếu nói về điều gì?"</p>
+    <ul>
+      <li><span class="exp-correct">✅ A – Đúng:</span> Toàn bộ 3 đoạn đều tập trung giải thích vì sao Black Friday gây hại cho môi trường: rác thải bao bì, hàng trả lại, đồ chơi nhựa, rác điện tử, thời trang nhanh… → Đây là <em>ý chính toàn bài</em>.</li>
+      <li><span class="exp-wrong">❌ B:</span> Bài KHÔNG mô tả hoạt động mua sắm, chỉ đề cập đến tác hại.</li>
+      <li><span class="exp-wrong">❌ C:</span> Bao bì nhựa chỉ là <em>một chi tiết nhỏ</em> trong đoạn 1, không phải ý chính toàn bài.</li>
+      <li><span class="exp-wrong">❌ D:</span> Sản phẩm không thể tái chế cũng chỉ được đề cập thoáng qua ở đoạn 3.</li>
+    </ul>`
+  },
+  {
+    q: `2. The word "rise" in the first paragraph is CLOSEST in meaning to ______.`,
+    opts: [
+      { label:"A", text:"drop" },
+      { label:"B", text:"improvement" },
+      { label:"C", text:"increase" },
+      { label:"D", text:"fall" }
+    ],
+    correct: 2,
+    explain: `<h4>🔍 Phân tích chi tiết</h4>
+    <p><strong>Câu gốc:</strong> "…especially with the <em>rise</em> of online shopping."</p>
+    <p><strong>Dịch:</strong> "…đặc biệt là với sự <em>gia tăng</em> của mua sắm trực tuyến."</p>
+    <ul>
+      <li><span class="exp-wrong">❌ A – drop:</span> giảm xuống → nghĩa đối lập.</li>
+      <li><span class="exp-wrong">❌ B – improvement:</span> cải thiện → không phù hợp ngữ cảnh số lượng/quy mô.</li>
+      <li><span class="exp-correct">✅ C – increase:</span> sự gia tăng → đồng nghĩa chính xác với "rise" (danh từ: sự tăng lên).</li>
+      <li><span class="exp-wrong">❌ D – fall:</span> sự giảm xuống → nghĩa đối lập hoàn toàn.</li>
+    </ul>`
+  },
+  {
+    q: "3. According to the second paragraph, what do people do with much of the online returns?",
+    opts: [
+      { label:"A", text:"People carefully put the online returns on the shelf." },
+      { label:"B", text:"People resend the online returns to the logistics agent." },
+      { label:"C", text:"People have to pay more for the online returns." },
+      { label:"D", text:"People throw the online returns to the landfill." }
+    ],
+    correct: 3,
+    explain: `<h4>🔍 Phân tích chi tiết</h4>
+    <p><strong>Dẫn chứng trong bài:</strong> "…much of the online returns are <em>tossed into the landfill</em> because the logistics and cost of putting the item back on the shelf are much too complicated."</p>
+    <p><strong>Dịch:</strong> "…phần lớn hàng trả lại trực tuyến bị <em>ném vào bãi rác</em> vì việc đưa hàng lên kệ lại quá phức tạp và tốn kém."</p>
+    <ul>
+      <li><span class="exp-wrong">❌ A:</span> Trái ngược – bài nói đặt lại hàng lên kệ là <em>quá khó</em>, không ai làm điều này.</li>
+      <li><span class="exp-wrong">❌ B:</span> Không có thông tin nào về việc gửi lại cho đơn vị logistics.</li>
+      <li><span class="exp-wrong">❌ C:</span> Không có thông tin về việc trả thêm tiền.</li>
+      <li><span class="exp-correct">✅ D:</span> Khớp trực tiếp: "tossed into the landfill" = "throw to the landfill".</li>
+    </ul>`
+  },
+  {
+    q: `4. The word "banning" in the third paragraph is OPPOSITE in meaning to ______.`,
+    opts: [
+      { label:"A", text:"permit" },
+      { label:"B", text:"stopping" },
+      { label:"C", text:"disallowing" },
+      { label:"D", text:"forbidding" }
+    ],
+    correct: 0,
+    explain: `<h4>🔍 Phân tích chi tiết</h4>
+    <p><strong>Câu gốc:</strong> "…the government is considering <em>banning</em> Black Friday…"</p>
+    <p><strong>"banning" = cấm đoán</strong> → từ TRÁI NGHĨA cần tìm là từ mang nghĩa "cho phép".</p>
+    <ul>
+      <li><span class="exp-correct">✅ A – permit:</span> cho phép → TRÁI NGHĨA hoàn toàn với "ban" (cấm).</li>
+      <li><span class="exp-wrong">❌ B – stopping:</span> ngăn chặn, dừng lại → gần nghĩa với "banning".</li>
+      <li><span class="exp-wrong">❌ C – disallowing:</span> không cho phép → đồng nghĩa với "banning".</li>
+      <li><span class="exp-wrong">❌ D – forbidding:</span> cấm đoán → đồng nghĩa với "banning".</li>
+    </ul>`
+  },
+  {
+    q: "5. Which of the following statements is NOT TRUE according to the passage?",
+    opts: [
+      { label:"A", text:"Cardboard packaging contributes to produce massive waste." },
+      { label:"B", text:"Britons don't throw away their clothes." },
+      { label:"C", text:"Returning online items is really complicated." },
+      { label:"D", text:"The French government is considering banning Black Friday." }
+    ],
+    correct: 1,
+    explain: `<h4>🔍 Phân tích chi tiết – Câu hỏi "NOT TRUE"</h4>
+    <p>Cần tìm câu <strong>SAI</strong> so với nội dung bài đọc:</p>
+    <ul>
+      <li><span class="exp-wrong">❌ A (TRUE – đúng trong bài):</span> Đoạn 1: "massive waste…from…cardboard packaging" → bao bì giấy gây rác thải lớn → Đúng.</li>
+      <li><span class="exp-correct">✅ B – SAI (đây là đáp án cần chọn):</span> Đoạn 2 nói: "<em>Britons throw away approximately 300,000 tonnes of clothes every year</em>" → Người Anh vứt bỏ rất nhiều quần áo → Câu B nói "không vứt" là SAI sự thật.</li>
+      <li><span class="exp-wrong">❌ C (TRUE):</span> Đoạn 2: "logistics and cost of putting the item back on the shelf are much too complicated" → Đúng.</li>
+      <li><span class="exp-wrong">❌ D (TRUE):</span> Đoạn 3: "government is considering banning Black Friday" → Đúng.</li>
+    </ul>`
+  }
+];
+
+const ex7Data = [
+  {
+    q: "1. Air pollution is a (1)______ problem in many cities.",
+    opts: [
+      { label:"A", text:"normal" },
+      { label:"B", text:"serious" },
+      { label:"C", text:"famous" },
+      { label:"D", text:"positive" }
+    ],
+    correct: 1,
+    slotId: "slot1",
+    explain: `<h4>🔍 Phân tích chi tiết</h4>
+    <p><strong>Ngữ cảnh:</strong> "Air pollution is a (1)______ problem in many cities." Tiếp theo, bài nêu nhiều hậu quả nghiêm trọng của ô nhiễm không khí.</p>
+    <ul>
+      <li><span class="exp-wrong">❌ A – normal:</span> bình thường → không hợp lý vì bài đang nhấn mạnh tính nguy hiểm.</li>
+      <li><span class="exp-correct">✅ B – serious:</span> nghiêm trọng → phù hợp nhất với ngữ cảnh nói về hậu quả lớn của ô nhiễm.</li>
+      <li><span class="exp-wrong">❌ C – famous:</span> nổi tiếng → không phù hợp với "problem".</li>
+      <li><span class="exp-wrong">❌ D – positive:</span> tích cực → nghĩa trái chiều hoàn toàn.</li>
+    </ul>`
+  },
+  {
+    q: "2. …it may hang in the (2)______ like dirty fog.",
+    opts: [
+      { label:"A", text:"air" },
+      { label:"B", text:"soil" },
+      { label:"C", text:"water" },
+      { label:"D", text:"light" }
+    ],
+    correct: 0,
+    slotId: "slot2",
+    explain: `<h4>🔍 Phân tích chi tiết</h4>
+    <p><strong>Câu gốc:</strong> "…it may hang in the (2)______ like dirty fog."</p>
+    <p><strong>Dịch:</strong> "…nó có thể lơ lửng trong (2)______ như sương mù bẩn."</p>
+    <ul>
+      <li><span class="exp-correct">✅ A – air:</span> không khí → <em>air pollution</em> lơ lửng trong <em>air</em> như fog là logic hoàn toàn đúng. Cụm "hang in the air like dirty fog" là thành ngữ phổ biến về smog.</li>
+      <li><span class="exp-wrong">❌ B – soil:</span> đất → không thể "lơ lửng" trong đất.</li>
+      <li><span class="exp-wrong">❌ C – water:</span> nước → câu tiếp theo mới nói về ô nhiễm nước.</li>
+      <li><span class="exp-wrong">❌ D – light:</span> ánh sáng → không hợp lý.</li>
+    </ul>`
+  },
+  {
+    q: "3. (3)______, many large cities have difficulties in disposing of their garbage.",
+    opts: [
+      { label:"A", text:"Therefore" },
+      { label:"B", text:"However" },
+      { label:"C", text:"Nevertheless" },
+      { label:"D", text:"In addition" }
+    ],
+    correct: 3,
+    slotId: "slot3",
+    explain: `<h4>🔍 Phân tích chi tiết – Liên từ nối (Discourse Markers)</h4>
+    <p><strong>Câu trước:</strong> Nói về ô nhiễm nước (nước thải đô thị, cá chết…)</p>
+    <p><strong>Câu sau (3):</strong> Nói về khó khăn trong xử lý rác thải rắn.</p>
+    <p>→ Đây là thêm một vấn đề môi trường <em>bổ sung</em> (không đối lập, không nhân quả).</p>
+    <ul>
+      <li><span class="exp-wrong">❌ A – Therefore:</span> do đó → chỉ quan hệ nhân quả, không phù hợp.</li>
+      <li><span class="exp-wrong">❌ B – However:</span> tuy nhiên → chỉ sự đối lập, không phù hợp.</li>
+      <li><span class="exp-wrong">❌ C – Nevertheless:</span> dù vậy → cũng chỉ sự đối lập/nhượng bộ.</li>
+      <li><span class="exp-correct">✅ D – In addition:</span> ngoài ra, thêm vào đó → đúng! Bổ sung thêm vấn đề mới (rác thải rắn) vào danh sách vấn đề môi trường đã nêu.</li>
+    </ul>`
+  },
+  {
+    q: "4. Citizens, governments, industries, (4)______, and business people must work together…",
+    opts: [
+      { label:"A", text:"scientists" },
+      { label:"B", text:"science" },
+      { label:"C", text:"scientific" },
+      { label:"D", text:"scientifically" }
+    ],
+    correct: 0,
+    slotId: "slot4",
+    explain: `<h4>🔍 Phân tích chi tiết – Từ loại (Word Form)</h4>
+    <p><strong>Cấu trúc câu:</strong> "Citizens, governments, industries, (4)______, and business people must work together…"</p>
+    <p>→ Tất cả các từ trước và sau đều là <strong>danh từ chỉ người/tổ chức</strong> (citizens, governments, industries, business people). Ô trống cần một <strong>danh từ chỉ người</strong>.</p>
+    <ul>
+      <li><span class="exp-correct">✅ A – scientists (n):</span> các nhà khoa học → đúng loại từ (danh từ chỉ người), phù hợp ngữ cảnh giải quyết ô nhiễm.</li>
+      <li><span class="exp-wrong">❌ B – science (n):</span> khoa học (ngành học) → không phải "người", không phù hợp liệt kê với citizens/governments.</li>
+      <li><span class="exp-wrong">❌ C – scientific (adj):</span> thuộc về khoa học → tính từ, không điền vào vị trí danh từ trong liệt kê.</li>
+      <li><span class="exp-wrong">❌ D – scientifically (adv):</span> về mặt khoa học → trạng từ, sai hoàn toàn.</li>
+    </ul>`
+  },
+  {
+    q: "5. …must work together in different ways to (5)______ reduce pollution.",
+    opts: [
+      { label:"A", text:"gradual" },
+      { label:"B", text:"gradually" },
+      { label:"C", text:"graduality" },
+      { label:"D", text:"slow" }
+    ],
+    correct: 1,
+    slotId: "slot5",
+    explain: `<h4>🔍 Phân tích chi tiết – Từ loại (Word Form)</h4>
+    <p><strong>Cấu trúc:</strong> "…in different ways to (5)______ <em>reduce</em> pollution."</p>
+    <p>→ Ô trống đứng trước động từ "reduce". Cần một <strong>trạng từ (adverb)</strong> để bổ nghĩa cho động từ này.</p>
+    <ul>
+      <li><span class="exp-wrong">❌ A – gradual (adj):</span> từ từ, dần dần (tính từ) → không bổ nghĩa được cho động từ "reduce".</li>
+      <li><span class="exp-correct">✅ B – gradually (adv):</span> một cách từ từ, dần dần → đúng! Trạng từ, bổ nghĩa cho động từ "reduce". Nghĩa: "dần dần giảm ô nhiễm".</li>
+      <li><span class="exp-wrong">❌ C – graduality (n):</span> tính từ từ, từng bước (danh từ) → không phổ biến, sai vị trí ngữ pháp.</li>
+      <li><span class="exp-wrong">❌ D – slow (adj/adv):</span> chậm chạp → không phù hợp nghĩa trong ngữ cảnh cố gắng giảm ô nhiễm, không tự nhiên.</li>
+    </ul>`
+  }
+];
+
+// ==================== STATE ====================
+const state6 = Array(ex6Data.length).fill(null);
+const state7 = Array(ex7Data.length).fill(null);
+
+// ==================== SHUFFLE ====================
+function shuffleArray(arr) {
+  const a = arr.map((item,i)=>({...item, origIdx:i}));
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+// ==================== RENDER ====================
+function renderQuestions(data, containerId, stateArr, prefix) {
+  const container = document.getElementById(containerId);
+  data.forEach((item, qi) => {
+    const shuffled = shuffleArray(item.opts);
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = `${prefix}_card_${qi}`;
+
+    let optsHtml = shuffled.map((opt, si) => `
+      <button class="option-btn" id="${prefix}_opt_${qi}_${si}"
+        onclick="handleAnswer('${prefix}',${qi},${si},${opt.origIdx},${item.correct})">
+        <span class="opt-label">${opt.label}</span> ${opt.text}
+      </button>`).join('');
+
+    card.innerHTML = `
+      <div class="q-text"><span class="q-number">${qi+1}</span><span>${item.q}</span></div>
+      <div class="options-grid" id="${prefix}_opts_${qi}">${optsHtml}</div>
+      <div class="explanation" id="${prefix}_exp_${qi}">${item.explain}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ==================== ANSWER HANDLER ====================
+function handleAnswer(prefix, qi, si, origIdx, correctOrigIdx, data) {
+  const stateArr = prefix === 'ex6' ? state6 : state7;
+  if(stateArr[qi] !== null) return; // already answered
+  stateArr[qi] = origIdx;
+
+  const isCorrect = origIdx === correctOrigIdx;
+  const optsContainer = document.getElementById(`${prefix}_opts_${qi}`);
+  const buttons = optsContainer.querySelectorAll('.option-btn');
+
+  buttons.forEach((btn, idx) => {
+    btn.disabled = true;
+  });
+
+  const clickedBtn = document.getElementById(`${prefix}_opt_${qi}_${si}`);
+  if(isCorrect){
+    clickedBtn.classList.add('correct');
+    playCorrect();
+    launchConfetti();
+  } else {
+    clickedBtn.classList.add('wrong');
+    playWrong();
+    // Show correct answer
+    buttons.forEach((btn, idx) => {
+      const dataArr = prefix === 'ex6' ? ex6Data : ex7Data;
+      // find which button has the correct original index
+    });
+    // Find correct button
+    const allBtns = optsContainer.querySelectorAll('.option-btn');
+    allBtns.forEach((btn2, idx2) => {
+      // We need to know origIdx of each button
+      // Re-parse from onclick attribute
+      const oc = btn2.getAttribute('onclick');
+      const match = oc.match(/handleAnswer\('[^']+',\d+,\d+,(\d+),/);
+      if(match && parseInt(match[1]) === correctOrigIdx){
+        btn2.classList.add('correct');
+      }
+    });
+  }
+
+  // Show explanation
+  const expDiv = document.getElementById(`${prefix}_exp_${qi}`);
+  expDiv.classList.add('show');
+
+  // Update cloze slot if ex7
+  if(prefix === 'ex7') {
+    const dataArr = ex7Data;
+    const slot = document.getElementById(dataArr[qi].slotId);
+    if(slot) {
+      const correctText = dataArr[qi].opts[correctOrigIdx].text;
+      slot.textContent = correctText;
+      slot.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+    }
+  }
+}
+
+// ==================== TIMER ====================
+let timerSeconds = 600;
+let timerRunning = false;
+let timerInterval = null;
+let timerStarted = false;
+
+function toggleTimer() {
+  const btn = document.getElementById('timerBtn');
+  if(!timerStarted) {
+    timerStarted = true;
+    timerRunning = true;
+    timerInterval = setInterval(tickTimer, 1000);
+    btn.textContent = '⏸ Tạm dừng';
+    btn.className = 'btn btn-pause';
+    return;
+  }
+  if(timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    btn.textContent = '▶ Tiếp tục';
+    btn.className = 'btn btn-start';
+  } else {
+    timerRunning = true;
+    timerInterval = setInterval(tickTimer, 1000);
+    btn.textContent = '⏸ Tạm dừng';
+    btn.className = 'btn btn-pause';
+  }
+}
+
+function tickTimer() {
+  timerSeconds--;
+  const m = Math.floor(timerSeconds/60).toString().padStart(2,'0');
+  const s = (timerSeconds%60).toString().padStart(2,'0');
+  const disp = document.getElementById('timerDisplay');
+  disp.textContent = `${m}:${s}`;
+  if(timerSeconds <= 30) disp.classList.add('danger');
+  if(timerSeconds <= 0) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    disp.textContent = '00:00';
+    setTimeout(()=>{
+      alert('⏰ Đã hết giờ làm bài!\n\nBạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha. 😊');
+    }, 200);
+  }
+}
+
+// ==================== TRANSLATION TOGGLE ====================
+function toggleTrans(id, btn) {
+  const box = document.getElementById(id);
+  box.classList.toggle('show');
+  btn.textContent = box.classList.contains('show') ? '🔒 Ẩn bản dịch' : '🌟 Mở dịch đoạn này';
+}
+
+// ==================== AUDIO ====================
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function getAudioCtx() {
+  if(!audioCtx) audioCtx = new AudioContext();
+  return audioCtx;
+}
+
+function playCorrect() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime+0.15);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime+0.4);
+  } catch(e){}
+}
+
+function playWrong() {
+  try {
+    const ctx = getAudioCtx();
+    [400,300,250].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sawtooth'; osc.frequency.setValueAtTime(freq, ctx.currentTime + i*0.12);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime + i*0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.12 + 0.15);
+      osc.start(ctx.currentTime + i*0.12);
+      osc.stop(ctx.currentTime + i*0.12 + 0.15);
+    });
+  } catch(e){}
+}
+
+// ==================== CONFETTI ====================
+function launchConfetti() {
+  const colors = ['#22c55e','#0ea5e9','#f59e0b','#ec4899','#8b5cf6','#ef4444'];
+  const container = document.getElementById('confettiContainer');
+  for(let i=0;i<22;i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const size = Math.random()*8+6;
+    piece.style.cssText = `
+      width:${size}px; height:${size*1.4}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      left:${Math.random()*100}vw;
+      animation-duration:${Math.random()*1.5+1}s;
+      animation-delay:${Math.random()*0.4}s;
+      transform:rotate(${Math.random()*360}deg);
+    `;
+    container.appendChild(piece);
+    setTimeout(()=>piece.remove(), 3000);
+  }
+}
+
+// ==================== SUBMIT ====================
+function submitAll() {
+  let correct6 = 0, correct7 = 0;
+  ex6Data.forEach((item, qi) => {
+    if(state6[qi] === item.correct) correct6++;
+  });
+  ex7Data.forEach((item, qi) => {
+    if(state7[qi] === item.correct) correct7++;
+  });
+  const total = correct6 + correct7;
+  const max = ex6Data.length + ex7Data.length;
+  const pct = total/max;
+
+  let emoji, title, msg;
+  if(pct === 1)      { emoji='🏆'; title='Thiên tài!'; msg='Xuất sắc! Bạn trả lời đúng tất cả! Bạn đúng là siêu sao của lớp rồi 🌟'; }
+  else if(pct >= .8) { emoji='🥇'; title='Làm tốt lắm!'; msg='Rất giỏi! Chỉ còn vài câu nữa là hoàn hảo rồi. Tiếp tục cố gắng nhé! 💪'; }
+  else if(pct >= .6) { emoji='😊'; title='Khá tốt!'; msg='Bạn hiểu bài khá tốt rồi! Hãy xem lại phần giải thích để nắm chắc hơn nhé!'; }
+  else if(pct >= .4) { emoji='😅'; title='Cố lên nhé!'; msg='Không sao! Đọc kỹ lại bài và các phần giải thích, bạn sẽ làm tốt hơn ở lần sau! 📚'; }
+  else               { emoji='😢'; title='Cần ôn thêm!'; msg='Đừng nản lòng nhé! Đọc kỹ bài đọc và ôn lại từ vựng, bạn sẽ tiến bộ nhanh thôi! 🌱'; }
+
+  document.getElementById('scoreEmoji').textContent = emoji;
+  document.getElementById('scoreTitle').textContent = title;
+  document.getElementById('scoreFraction').textContent = `${total}/${max}`;
+  document.getElementById('scoreMsg').textContent = msg;
+  document.getElementById('scoreBreakdown').innerHTML = `
+    <div><span>📖 Exercise 6 (Reading)</span><span style="font-weight:900;color:#15803d">${correct6}/${ex6Data.length}</span></div>
+    <div><span>✍️ Exercise 7 (Cloze)</span><span style="font-weight:900;color:#0369a1">${correct7}/${ex7Data.length}</span></div>
+    <div><span><strong>🎯 Tổng điểm</strong></span><span style="font-weight:900;color:#7c3aed;font-size:1.1rem">${total}/${max} (${Math.round(pct*100)}%)</span></div>
+  `;
+  document.getElementById('scoreOverlay').classList.add('show');
+  if(pct >= 0.8) { launchConfetti(); setTimeout(launchConfetti,500); setTimeout(launchConfetti,1000); }
+}
+
+// ==================== INIT ====================
+renderQuestions(ex6Data, 'ex6-questions', state6, 'ex6');
+renderQuestions(ex7Data, 'ex7-questions', state7, 'ex7');
+</script>
+</body>
+</html>
