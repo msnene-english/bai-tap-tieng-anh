@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Tập Liên Từ - Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #8854C0; /* Hồng nhạt / Tím Pastel */
+            --secondary: #00C9A7; /* Xanh ngọc */
+            --correct: #00D26A; /* Xanh lá */
+            --incorrect: #FF4757; /* Đỏ cam */
+            --bg-color: #f8f4ff;
+            --text-main: #333333;
+            --card-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; font-family: 'Nunito', sans-serif; }
+
+        body {
+            margin: 0; padding: 20px; background-color: var(--bg-color);
+            background-image: radial-gradient(var(--secondary) 10%, transparent 11%), radial-gradient(var(--secondary) 10%, transparent 11%);
+            background-size: 60px 60px; background-position: 0 0, 30px 30px;
+            background-attachment: fixed; color: var(--text-main);
+        }
+
+        .header-container {
+            background: linear-gradient(135deg, var(--primary), #a675e8);
+            color: white; text-align: center; padding: 20px; border-radius: 20px;
+            box-shadow: 0 8px 0 #6a3a9e; margin: 0 auto 40px auto; max-width: 900px;
+        }
+        .header-container h1 { margin: 0; font-family: 'Quicksand', sans-serif; font-weight: 900; font-size: 28px; }
+
+        .quiz-container { max-width: 900px; margin: 0 auto; }
+        .part-title {
+            background-color: var(--secondary); color: #fff; display: inline-block; padding: 10px 25px;
+            border-radius: 15px; font-weight: 800; font-size: 20px; box-shadow: 0 5px 0 #009e83;
+            margin: 30px 0 20px 0; width: 100%; text-align: center; text-transform: uppercase;
+        }
+
+        .question-card {
+            background: var(--card-bg); border-radius: 20px; padding: 25px; margin-bottom: 30px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1); border: 3px solid #eee; transition: transform 0.2s;
+        }
+        .question-card:hover { border-color: var(--secondary); }
+
+        .question-text { font-size: 20px; font-weight: 800; margin-bottom: 20px; line-height: 1.5; color: #2d3436; }
+        .question-text span.blank { display: inline-block; min-width: 80px; border-bottom: 3px dashed var(--primary); text-align: center; color: var(--primary); padding: 0 10px; font-weight: 900;}
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .option-btn {
+            background: #fff; border: 2px solid #e0e0e0; border-radius: 15px; padding: 15px 20px;
+            font-size: 18px; font-weight: 700; color: #555; cursor: pointer; box-shadow: 0 6px 0 #e0e0e0;
+            transition: all 0.1s ease; text-align: left; display: flex; align-items: center; line-height: 1.4;
+        }
+        .option-btn .opt-letter {
+            background: #f1f2f6; min-width: 30px; height: 30px; display: flex; align-items: center;
+            justify-content: center; border-radius: 50%; margin-right: 15px; font-weight: 900; color: #999; flex-shrink: 0;
+        }
+        .option-btn:hover:not(:disabled) { transform: translateY(2px); box-shadow: 0 4px 0 #e0e0e0; border-color: var(--secondary); }
+        .option-btn:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0px 0 #e0e0e0; }
+        
+        .option-btn.correct { background: var(--correct); border-color: var(--correct); color: white; box-shadow: 0 6px 0 #00a653; }
+        .option-btn.correct .opt-letter { background: rgba(255,255,255,0.3); color: white;}
+        .option-btn.incorrect { background: var(--incorrect); border-color: var(--incorrect); color: white; box-shadow: 0 6px 0 #cc3945; }
+        .option-btn.incorrect .opt-letter { background: rgba(255,255,255,0.3); color: white;}
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.9; }
+
+        .explanation-box {
+            display: none; margin-top: 20px; background: #fdf2f8; border: 2px dashed var(--primary);
+            border-radius: 15px; padding: 20px; animation: fadeIn 0.5s ease-in-out;
+        }
+        .explanation-box h4 { margin-top: 0; color: var(--primary); font-family: 'Quicksand', sans-serif; font-size: 20px; }
+        .explanation-box p { margin: 10px 0; font-size: 16px; line-height: 1.6; }
+        .tag-correct { color: var(--correct); font-weight: 800; }
+        .tag-incorrect { color: var(--incorrect); font-weight: 800; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25%, 75% { transform: translateX(-8px) rotate(-1deg); }
+            50% { transform: translateX(8px) rotate(1deg); }
+        }
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+        .submit-area { text-align: center; margin: 50px 0; }
+        .btn-submit {
+            background: linear-gradient(135deg, var(--secondary), #009e83); color: white; font-size: 24px; font-weight: 900;
+            padding: 15px 50px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 0 8px 0 #007a65;
+            text-transform: uppercase; transition: all 0.2s;
+        }
+        .btn-submit:hover { transform: translateY(3px); box-shadow: 0 5px 0 #007a65; }
+        .btn-submit:active { transform: translateY(8px); box-shadow: 0 0 0 #007a65; }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .score-modal {
+            background: white; padding: 40px; border-radius: 30px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 500px; width: 90%; animation: fadeIn 0.3s;
+        }
+        .score-modal h2 { color: var(--primary); font-size: 32px; margin-bottom: 10px; }
+        .score-number { font-size: 60px; font-weight: 900; color: var(--correct); margin: 20px 0; }
+        
+        @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1><i class="fas fa-link"></i> Ms. Chí Nên  - Connectors Quiz</h1>
+        <p>Thành thạo Although, However, Despite, In spite of</p>
+    </div>
+
+    <div class="quiz-container" id="quiz-container"></div>
+
+    <div class="submit-area">
+        <button class="btn-submit" onclick="showScore()"><i class="fas fa-flag-checkered"></i> Nộp Bài Ngay</button>
+    </div>
+
+    <div class="modal-overlay" id="scoreModal">
+        <div class="score-modal">
+            <h2>Kết Quả Của Bạn!</h2>
+            <p id="score-message"></p>
+            <div class="score-number" id="score-display">0/0</div>
+            <button class="btn-submit" style="font-size: 18px; padding: 10px 30px;" onclick="location.reload()">Luyện Tập Lại</button>
+        </div>
+    </div>
+
+<script>
+// --- AUDIO ENGINE ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function initAudio() { if (!audioCtx) audioCtx = new AudioContext(); }
+function playSound(type) {
+    initAudio(); if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
+    osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+    if (type === 'correct') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+    } else {
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.3);
+        gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+    }
+}
+
+// --- FULL DATABASE (30 CÂU HỎI SIÊU CHI TIẾT) ---
+const quizData = [
+    { type: 'title', text: "Part 4: Connectors (although/though vs however/nevertheless)" },
+    {
+        id: 1, q: "I am going shopping. ________, It rains.",
+        opts: ["However", "Although", "Despite", "Because"], ans: 0,
+        trans: "Tôi sẽ đi mua sắm. Tuy nhiên, trời lại mưa.",
+        optTrans: "A. However: Tuy nhiên | B. Although: Mặc dù (+ Mệnh đề) | C. Despite: Mặc dù (+ N/V-ing) | D. Because: Bởi vì",
+        right: "Chỗ trống đứng sau dấu chấm (.) và trước dấu phẩy (,), kết nối 2 câu độc lập mang nghĩa tương phản. Chỉ có <b>However</b> (hoặc Nevertheless) là phù hợp luật dấu câu này.",
+        wrong: "Although và Because dùng để nối 2 mệnh đề trong cùng một câu, không đứng đầu câu thứ hai rồi phẩy một cái. Despite phải đi với Cụm danh từ."
+    },
+    {
+        id: 2, q: "I have studied hard for the exam. I, ________, failed.",
+        opts: ["however", "although", "despite", "therefore"], ans: 0,
+        trans: "Tôi đã học rất chăm chỉ cho kỳ thi. Tuy nhiên, tôi đã trượt.",
+        optTrans: "A. however: Tuy nhiên | B. although: Mặc dù | C. despite: Mặc dù | D. therefore: Vì vậy",
+        right: "Đây là cấu trúc chêm xen (Parenthetical insertion). <b>However</b> có thể đứng kẹp giữa chủ ngữ 'I' và động từ 'failed', được ngăn cách bởi hai dấu phẩy (, however,). Ý nghĩa tương phản.",
+        wrong: "Although và Despite tuyệt đối không được chèn vào giữa chủ ngữ và động từ như thế này. Therefore sai nghĩa (Học chăm -> Vì vậy trượt? Vô lý!)."
+    },
+    {
+        id: 3, q: "________ Aylin knew the post office's address, he didn't tell me.",
+        opts: ["Although", "However", "In spite of", "Nevertheless"], ans: 0,
+        trans: "Mặc dù Aylin biết địa chỉ bưu điện, anh ấy đã không nói cho tôi.",
+        optTrans: "A. Although: Mặc dù | B. However: Tuy nhiên | C. In spite of: Mặc dù (+ N/V-ing) | D. Nevertheless: Tuy nhiên",
+        right: "Chỗ trống đứng ở đầu câu, theo sau là một MỆNH ĐỀ hoàn chỉnh có Chủ ngữ (Aylin) + Động từ (knew). Do đó ta chọn <b>Although</b> (hoặc Though).",
+        wrong: "However/Nevertheless không đứng đầu câu nối 2 mệnh đề bằng dấu phẩy. In spite of phải đi kèm Cụm danh từ hoặc V-ing, không đi kèm mệnh đề."
+    },
+    {
+        id: 4, q: "Hakan drank two cups of coffee ________ he drank a cup of coffee before.",
+        opts: ["although", "however", "despite", "therefore"], ans: 0,
+        trans: "Hakan đã uống 2 tách cà phê mặc dù anh ấy đã uống 1 tách trước đó.",
+        optTrans: "A. although: Mặc dù | B. however: Tuy nhiên | C. despite: Mặc dù | D. therefore: Vì vậy",
+        right: "Nối 2 mệnh đề (S+V) mang nghĩa tương phản trong cùng một câu (không có dấu chấm) -> Chọn <b>although</b> (hoặc though).",
+        wrong: "However và Therefore cần dấu chấm phẩy (;) phía trước và dấu phẩy (,) phía sau. Despite đi với danh từ/V-ing."
+    },
+    {
+        id: 5, q: "Sevgi went to school ________ she was ill.",
+        opts: ["though", "however", "in spite of", "nevertheless"], ans: 0,
+        trans: "Sevgi vẫn đi học mặc dù cô ấy bị ốm.",
+        optTrans: "A. though: Mặc dù | B. however: Tuy nhiên | C. in spite of: Mặc dù | D. nevertheless: Tuy nhiên",
+        right: "Tương tự câu trên, theo sau là Mệnh đề 'she (S) was (V) ill' -> Chọn <b>though</b> (hoặc although).",
+        wrong: "In spite of không cộng Mệnh đề. However/Nevertheless sai luật dấu câu."
+    },
+    {
+        id: 6, q: "________ the exam is so difficult, I had good mark.",
+        opts: ["Although", "However", "Despite", "Nevertheless"], ans: 0,
+        trans: "Mặc dù bài thi rất khó, tôi vẫn đạt điểm cao.",
+        optTrans: "A. Although: Mặc dù | B. However: Tuy nhiên | C. Despite: Mặc dù (+ N) | D. Nevertheless: Tuy nhiên",
+        right: "Đứng đầu câu, phía sau là Mệnh đề 'the exam (S) is (V)...' mang nghĩa nhượng bộ -> Chọn <b>Although</b>.",
+        wrong: "Despite cộng danh từ/V-ing. However không nối 2 vế bằng dấu phẩy kiểu này."
+    },
+    {
+        id: 7, q: "I missed the bus. ________, I wasn't late for school.",
+        opts: ["However", "Although", "In spite of", "Though"], ans: 0,
+        trans: "Tôi bị lỡ xe buýt. Tuy nhiên, tôi không bị muộn học.",
+        optTrans: "A. However: Tuy nhiên | B. Although: Mặc dù | C. In spite of: Mặc dù | D. Though: Mặc dù",
+        right: "Đứng sau dấu chấm, trước dấu phẩy -> Chắc chắn là <b>However</b> hoặc <b>Nevertheless</b>.",
+        wrong: "Although, Though không bao giờ đứng độc lập trước dấu phẩy."
+    },
+    {
+        id: 8, q: "We don't like camping. We, ________, love fishing.",
+        opts: ["nevertheless", "although", "despite", "because"], ans: 0,
+        trans: "Chúng tôi không thích cắm trại. Tuy nhiên, chúng tôi lại yêu câu cá.",
+        optTrans: "A. nevertheless: Tuy nhiên | B. although: Mặc dù | C. despite: Mặc dù | D. because: Bởi vì",
+        right: "Cấu trúc chêm xen giữa Chủ ngữ 'We' và Động từ 'love'. Chỉ có <b>nevertheless</b> (hoặc however) mới được phép kẹp giữa 2 dấu phẩy như vậy.",
+        wrong: "Although, Despite, Because không được phép đứng chêm vào giữa câu."
+    },
+    {
+        id: 9, q: "We still fed the cat ________ it wasn't hungry.",
+        opts: ["although", "however", "despite", "so"], ans: 0,
+        trans: "Chúng tôi vẫn cho con mèo ăn mặc dù nó không đói.",
+        optTrans: "A. although: Mặc dù | B. however: Tuy nhiên | C. despite: Mặc dù | D. so: Vì vậy",
+        right: "Theo sau là Mệnh đề 'it (S) wasn't (V) hungry' mang nghĩa trái ngược -> <b>although</b>.",
+        wrong: "Despite + V-ing/N. However sai dấu câu. So sai nghĩa (Nó không đói nên cho ăn?)."
+    },
+    {
+        id: 10, q: "He decided to buy that car ________ it was so expensive.",
+        opts: ["though", "however", "in spite of", "therefore"], ans: 0,
+        trans: "Anh ấy quyết định mua chiếc ô tô đó mặc dù nó rất đắt.",
+        optTrans: "A. though: Mặc dù | B. however: Tuy nhiên | C. in spite of: Mặc dù | D. therefore: Vì vậy",
+        right: "Theo sau là Mệnh đề 'it (S) was (V) so expensive' -> Chọn <b>though</b> (hoặc although).",
+        wrong: "In spite of không cộng Mệnh đề. However/Therefore cần chấm phẩy (;)."
+    },
+    {
+        id: 11, q: "________ he is 30 already, he doesn't want to work to earn money.",
+        opts: ["Although", "However", "Despite", "Nevertheless"], ans: 0,
+        trans: "Mặc dù anh ấy đã 30 tuổi, anh ấy vẫn không muốn làm việc kiếm tiền.",
+        optTrans: "A. Although: Mặc dù | B. However: Tuy nhiên | C. Despite: Mặc dù (+ N) | D. Nevertheless: Tuy nhiên",
+        right: "Theo sau là Mệnh đề 'he is 30 already' -> Chọn <b>Although</b>.",
+        wrong: "Despite cộng danh từ. However/Nevertheless đứng sau dấu chấm hoặc kẹp giữa 2 mệnh đề với dấu chấm phẩy."
+    },
+    {
+        id: 12, q: "I don't know how to play chess. ________, I really want to learn it.",
+        opts: ["However", "Although", "Despite", "Because"], ans: 0,
+        trans: "Tôi không biết chơi cờ. Tuy nhiên, tôi thực sự muốn học nó.",
+        optTrans: "A. However: Tuy nhiên | B. Although: Mặc dù | C. Despite: Mặc dù | D. Because: Bởi vì",
+        right: "Đứng sau dấu chấm câu và trước dấu phẩy -> Chắc chắn 100% là <b>However</b>.",
+        wrong: "Although, Despite, Because không dùng cấu trúc chấm rồi phẩy như vậy."
+    },
+    {
+        id: 13, q: "________ it was late, we still went out for a while.",
+        opts: ["Though", "However", "In spite of", "Nevertheless"], ans: 0,
+        trans: "Mặc dù đã muộn, chúng tôi vẫn đi chơi một lát.",
+        optTrans: "A. Though: Mặc dù | B. However: Tuy nhiên | C. In spite of: Mặc dù (+ N) | D. Nevertheless: Tuy nhiên",
+        right: "Theo sau là Mệnh đề 'it was late' -> Chọn <b>Though</b>.",
+        wrong: "In spite of cộng cụm danh từ. However không dùng phẩy nối 2 vế."
+    },
+    {
+        id: 14, q: "________ we didn't have much money, we went shopping very often.",
+        opts: ["Although", "However", "Despite", "Therefore"], ans: 0,
+        trans: "Mặc dù chúng tôi không có nhiều tiền, chúng tôi vẫn đi mua sắm rất thường xuyên.",
+        optTrans: "A. Although: Mặc dù | B. However: Tuy nhiên | C. Despite: Mặc dù (+ N) | D. Therefore: Vì vậy",
+        right: "Mệnh đề 'we didn't have much money' mang nghĩa nhượng bộ -> Chọn <b>Although</b>.",
+        wrong: "Despite + Danh từ. However/Therefore sai luật dấu câu."
+    },
+    {
+        id: 15, q: "We managed to do it ________ he is absent from work.",
+        opts: ["although", "however", "in spite of", "nevertheless"], ans: 0,
+        trans: "Chúng tôi đã xoay sở để làm được điều đó mặc dù anh ấy vắng mặt.",
+        optTrans: "A. although: Mặc dù | B. however: Tuy nhiên | C. in spite of: Mặc dù (+ N) | D. nevertheless: Tuy nhiên",
+        right: "Mệnh đề 'he is absent' -> Dùng <b>although</b>.",
+        wrong: "In spite of không đi với mệnh đề. However sai dấu câu."
+    },
+
+    { type: 'title', text: "Part 6: Connectors (although, in spite of, however...)" },
+    {
+        id: 16, q: "She went on walking ________ she was terribly tired.",
+        opts: ["although", "in spite of", "however", "despite"], ans: 0,
+        trans: "Cô ấy vẫn tiếp tục đi bộ mặc dù cô ấy vô cùng mệt mỏi.",
+        optTrans: "A. although: Mặc dù (+ S+V) | B. in spite of: Mặc dù (+ N/V-ing) | C. however: Tuy nhiên | D. despite: Mặc dù (+ N/V-ing)",
+        right: "Phía sau là mệnh đề (S = she, V = was) -> Dùng <b>although</b>.",
+        wrong: "In spite of và Despite chỉ cộng danh từ hoặc V-ing, không cộng mệnh đề. However sai dấu câu."
+    },
+    {
+        id: 17, q: "It is raining; ________, we went out.",
+        opts: ["however", "although", "despite", "because"], ans: 0,
+        trans: "Trời đang mưa; tuy nhiên, chúng tôi vẫn ra ngoài.",
+        optTrans: "A. however: Tuy nhiên | B. although: Mặc dù | C. despite: Mặc dù | D. because: Bởi vì",
+        right: "Ngữ pháp kinh điển: Nối 2 vế câu bằng <b>dấu chấm phẩy (;)</b> và <b>dấu phẩy (,)</b> thì BẮT BUỘC dùng <b>however</b> hoặc <b>nevertheless</b>.",
+        wrong: "Although, Despite, Because KHÔNG bao giờ đứng sau dấu chấm phẩy để nối câu."
+    },
+    {
+        id: 18, q: "The food of this restaurant isn't delicious. I like the decoration, ________",
+        opts: ["though", "although", "despite", "because"], ans: 0,
+        trans: "Đồ ăn của nhà hàng này không ngon. Tuy nhiên tôi lại thích cách trang trí.",
+        optTrans: "A. though: Tuy nhiên/Mặc dù | B. although | C. despite | D. because",
+        right: "Đây là cấu trúc giao tiếp cực phổ biến: <b>Though</b> đứng ở cuối câu mang nghĩa là 'Tuy nhiên' (giống However).",
+        wrong: "Although, Despite, Because KHÔNG BAO GIỜ được phép đứng một mình ở cuối câu có dấu phẩy chặn trước như thế này."
+    },
+    {
+        id: 19, q: "________ his sickness, he still had to go to school.",
+        opts: ["In spite of", "Although", "Though", "However"], ans: 0,
+        trans: "Mặc dù bị ốm, anh ấy vẫn phải đi học.",
+        optTrans: "A. In spite of (+ N) | B. Although (+ S+V) | C. Though (+ S+V) | D. However: Tuy nhiên",
+        right: "'his sickness' (căn bệnh của anh ấy) là một Cụm Danh Từ -> Chọn <b>In spite of</b> (hoặc Despite).",
+        wrong: "Although/Though phải cộng mệnh đề (S+V)."
+    },
+    {
+        id: 20, q: "I knew what he wanted ________ not understanding the words.",
+        opts: ["despite", "although", "though", "however"], ans: 0,
+        trans: "Tôi biết anh ấy muốn gì mặc dù không hiểu từ ngữ anh ấy nói.",
+        optTrans: "A. despite (+ V-ing) | B. although (+ S+V) | C. though (+ S+V) | D. however: Tuy nhiên",
+        right: "Phía sau chỗ trống là V-ing ('not understanding') -> Chọn <b>despite</b> (hoặc in spite of).",
+        wrong: "Although/Though phải đi với Mệnh đề hoàn chỉnh (S+V)."
+    },
+    {
+        id: 21, q: "________ he behaves impolitely, everybody still loves him.",
+        opts: ["Although", "Despite", "In spite of", "However"], ans: 0,
+        trans: "Mặc dù anh ấy cư xử thiếu lịch sự, mọi người vẫn yêu quý anh ấy.",
+        optTrans: "A. Although (+ S+V) | B. Despite (+ N) | C. In spite of (+ N) | D. However: Tuy nhiên",
+        right: "Theo sau là mệnh đề 'he behaves impolitely' -> Chọn <b>Although</b>.",
+        wrong: "Despite / In spite of cộng danh từ. However không nối 2 mệnh đề bằng dấu phẩy."
+    },
+    {
+        id: 22, q: "________ the traffic jam, we went home early.",
+        opts: ["Despite", "Although", "Though", "However"], ans: 0,
+        trans: "Mặc dù tắc đường, chúng tôi đã về nhà sớm.",
+        optTrans: "A. Despite (+ N) | B. Although (+ S+V) | C. Though (+ S+V) | D. However: Tuy nhiên",
+        right: "'the traffic jam' (vụ tắc đường) là Cụm Danh Từ -> Chọn <b>Despite</b> (hoặc In spite of).",
+        wrong: "Although/Though phải cộng mệnh đề."
+    },
+    {
+        id: 23, q: "________ I studied very hard, I failed the placement test.",
+        opts: ["Although", "In spite of", "Despite", "Nevertheless"], ans: 0,
+        trans: "Mặc dù tôi đã học rất chăm chỉ, tôi vẫn thi trượt bài kiểm tra xếp lớp.",
+        optTrans: "A. Although (+ S+V) | B. In spite of (+ N) | C. Despite (+ N) | D. Nevertheless: Tuy nhiên",
+        right: "Theo sau là mệnh đề 'I studied very hard' -> Chọn <b>Although</b>.",
+        wrong: "In spite of/Despite cộng danh từ."
+    },
+    {
+        id: 24, q: "She could not forget him, ________ hard she tried.",
+        opts: ["however", "although", "despite", "no matter"], ans: 0,
+        trans: "Cô ấy không thể quên được anh ấy, cho dù cô ấy có cố gắng đến đâu.",
+        optTrans: "A. however | B. although | C. despite | D. no matter",
+        right: "Cấu trúc kinh điển: <b>However + Adj/Adv + S + V</b> (Cho dù ... đến đâu). Ở đây có trạng từ 'hard' -> dùng <b>however</b>.",
+        wrong: "Although và Despite không đứng trước tính từ/trạng từ như vậy. Nếu dùng 'no matter' thì phải là 'no matter how'."
+    },
+    {
+        id: 25, q: "I knew everything. I, ________, tried to pretend I didn't know.",
+        opts: ["nevertheless", "although", "despite", "because"], ans: 0,
+        trans: "Tôi biết mọi thứ. Tuy nhiên, tôi vẫn cố giả vờ như không biết.",
+        optTrans: "A. nevertheless: Tuy nhiên | B. although | C. despite | D. because",
+        right: "Cấu trúc chêm xen. <b>Nevertheless</b> (hoặc however) kẹp giữa 2 dấu phẩy để nối tiếp mạch văn phản biện.",
+        wrong: "Các liên từ khác không đứng chêm xen giữa chủ ngữ và động từ."
+    },
+    {
+        id: 26, q: "She was really bad at cooking. Everyone is still satisfied with the meal, ________",
+        opts: ["though", "although", "despite", "in spite of"], ans: 0,
+        trans: "Cô ấy nấu ăn rất tệ. Dù vậy, mọi người vẫn hài lòng với bữa ăn.",
+        optTrans: "A. though: Dù vậy | B. although | C. despite | D. in spite of",
+        right: "Nhớ kỹ mẹo của cô: Chỉ có <b>Though</b> mới được phép đứng lẻ loi một mình ở CUỐI CÂU mang nghĩa 'Tuy nhiên / Dù vậy'.",
+        wrong: "Although, Despite tuyệt đối không đứng cuối câu."
+    },
+    {
+        id: 27, q: "I feel a little scared; ________, I will talk to him.",
+        opts: ["however", "although", "despite", "so"], ans: 0,
+        trans: "Tôi cảm thấy hơi sợ; tuy nhiên, tôi sẽ nói chuyện với anh ấy.",
+        optTrans: "A. however: Tuy nhiên | B. although: Mặc dù | C. despite: Mặc dù | D. so: Vì vậy",
+        right: "Dấu <b>chấm phẩy (;)</b> và <b>dấu phẩy (,)</b> -> Chắc chắn là đất diễn của <b>however</b> (hoặc nevertheless).",
+        wrong: "Although, Despite, So không đi với dấu chấm phẩy."
+    },
+    {
+        id: 28, q: "________ Mike drove carefully, Mike couldn't avoid the accident.",
+        opts: ["Although", "In spite of", "Despite", "However"], ans: 0,
+        trans: "Mặc dù Mike lái xe cẩn thận, anh ấy vẫn không thể tránh khỏi tai nạn.",
+        optTrans: "A. Although (+ S+V) | B. In spite of (+ N) | C. Despite (+ N) | D. However: Tuy nhiên",
+        right: "Theo sau là Mệnh đề (Mike drove carefully) -> Chọn <b>Although</b>.",
+        wrong: "In spite of/Despite cộng cụm danh từ."
+    },
+    {
+        id: 29, q: "Lisa finished the cake ________ she said she didn't like sweets.",
+        opts: ["though", "however", "despite", "in spite of"], ans: 0,
+        trans: "Lisa đã ăn hết cái bánh mặc dù cô ấy nói cô ấy không thích đồ ngọt.",
+        optTrans: "A. though (+ S+V) | B. however: Tuy nhiên | C. despite (+ N) | D. in spite of (+ N)",
+        right: "Theo sau là Mệnh đề 'she said...' -> Chọn <b>though</b> (hoặc although).",
+        wrong: "Despite/In spite of cộng danh từ. However sai dấu câu."
+    },
+    {
+        id: 30, q: "The sky was gray and cloudy. ________, we went to the beach.",
+        opts: ["Nevertheless", "Although", "Despite", "In spite of"], ans: 0,
+        trans: "Bầu trời xám xịt và nhiều mây. Tuy nhiên, chúng tôi vẫn đi biển.",
+        optTrans: "A. Nevertheless: Tuy nhiên | B. Although: Mặc dù | C. Despite: Mặc dù | D. In spite of: Mặc dù",
+        right: "Đứng sau dấu chấm (.) và trước dấu phẩy (,) nối 2 câu phản biện logic -> <b>Nevertheless</b> (hoặc However).",
+        wrong: "Although, Despite không dùng cấu trúc chấm phẩy này."
+    }
+];
+
+let totalScore = 0; let answeredQuestions = 0;
+const totalQuestions = quizData.filter(q => q.id).length;
+
+function shuffleArray(array) {
+    let arr = array.map((item, index) => ({ item, index }));
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function renderQuiz() {
+    const container = document.getElementById('quiz-container');
+    let html = ''; const letters = ['A', 'B', 'C', 'D'];
+
+    quizData.forEach((data) => {
+        if (data.type === 'title') {
+            html += `<div class="part-title">${data.text}</div>`;
+        } else {
+            const shuffledOpts = shuffleArray(data.opts);
+            let questionHTML = data.q.replace('________', `<span class="blank" id="blank-${data.id}">?</span>`);
+            
+            html += `
+            <div class="question-card" id="card-${data.id}">
+                <div class="question-text">${data.id}. ${questionHTML}</div>
+                <div class="options-grid">
+            `;
+
+            shuffledOpts.forEach((optObj, idx) => {
+                const isCorrect = optObj.index === data.ans;
+                const safeText = data.opts[data.ans].replace(/'/g, "\\'");
+                html += `
+                    <button class="option-btn" onclick="checkAnswer(${data.id}, this, ${isCorrect}, '${safeText}')">
+                        <span class="opt-letter">${letters[idx]}</span> ${optObj.item}
+                    </button>
+                `;
+            });
+
+            const formattedOpts = data.optTrans.split('|').join('<br>');
+
+            html += `
+                </div>
+                <div class="explanation-box" id="exp-${data.id}">
+                    <h4><i class="fas fa-magic"></i> Ms. Chí Nên giải thích:</h4>
+                    <p><strong><i class="fas fa-language"></i> Dịch:</strong> ${data.trans}</p>
+                    <p><strong><i class="fas fa-search"></i> Phân tích:</strong><br>${formattedOpts}</p>
+                    <p><span class="tag-correct"><i class="fas fa-check-circle"></i> Vì sao ĐÚNG?</span> ${data.right}</p>
+                    <p><span class="tag-incorrect"><i class="fas fa-times-circle"></i> Vì sao SAI?</span> ${data.wrong}</p>
+                </div>
+            </div>`;
+        }
+    });
+    container.innerHTML = html;
+}
+
+function checkAnswer(qId, btnElement, isCorrect, correctText) {
+    const card = document.getElementById(`card-${qId}`);
+    const buttons = card.querySelectorAll('.option-btn');
+    const blank = document.getElementById(`blank-${qId}`);
+    const expBox = document.getElementById(`exp-${qId}`);
+
+    buttons.forEach(btn => btn.disabled = true);
+    answeredQuestions++;
+
+    let answerText = btnElement.innerText.substring(2).trim();
+    if (blank) blank.innerText = answerText;
+
+    if (isCorrect) {
+        playSound('correct'); btnElement.classList.add('correct');
+        if(blank) { blank.style.color = 'var(--correct)'; blank.style.borderColor = 'var(--correct)'; }
+        totalScore++;
+        const rect = btnElement.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth; const y = (rect.top + rect.height / 2) / window.innerHeight;
+        confetti({ particleCount: 60, spread: 60, origin: { x: x, y: y }, colors: ['#00D26A', '#FFC312', '#00C9A7'] });
+    } else {
+        playSound('incorrect'); btnElement.classList.add('incorrect'); card.classList.add('shake');
+        if(blank) { blank.style.color = 'var(--incorrect)'; blank.style.borderColor = 'var(--incorrect)'; }
+        
+        buttons.forEach(btn => { if (btn.innerText.includes(correctText)) btn.classList.add('correct'); });
+        setTimeout(() => card.classList.remove('shake'), 500);
+    }
+    expBox.style.display = 'block';
+}
+
+function showScore() {
+    const modal = document.getElementById('scoreModal');
+    const scoreDisplay = document.getElementById('score-display');
+    const msg = document.getElementById('score-message');
+
+    scoreDisplay.innerText = `${totalScore}/${totalQuestions}`;
+    if (totalScore === totalQuestions) {
+        msg.innerText = "Đỉnh của chóp! Trọn vẹn 30/30 câu. Em nắm quá vững kiến thức Liên từ rồi! 🏆";
+        confetti({ particleCount: 300, spread: 150, origin: {y: 0.3}});
+    } else if (totalScore > totalQuestions / 2) {
+        msg.innerText = "Giỏi lắm! Phần liên từ rất hay bẫy dấu câu. Em đọc kỹ giải thích của cô để lấy 10 điểm tuyệt đối nhé! 🌟";
+        confetti({ particleCount: 100, spread: 70, origin: {y: 0.3}});
+    } else {
+        msg.innerText = "Dạng bài này bẫy ngữ pháp khá nhiều. Cứ bình tĩnh đọc kỹ 'Ms. Chí Nên giải thích' là sẽ hiểu ngay thôi! 💪";
+    }
+    modal.style.display = 'flex';
+}
+
+window.onload = renderQuiz;
+</script>
+</body>
+</html>
