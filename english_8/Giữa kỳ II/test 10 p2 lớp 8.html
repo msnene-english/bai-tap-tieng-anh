@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified English Quiz - Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Eco-friendly Theme Colors */
+            --primary: #00b894; /* Mint Green */
+            --secondary: #0984e3; /* Ocean Blue */
+            --tertiary: #fdcb6e; /* Sun Yellow */
+            --success: #00D26A;
+            --danger: #FF4757;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --border-glass: rgba(255, 255, 255, 0.6);
+            --text-main: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            color: var(--text-main);
+            background: linear-gradient(45deg, var(--primary), var(--secondary), #81ecec, var(--tertiary));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            /* SVG Pattern with Environment & Shopping Emojis */
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'><text x='50' y='100' font-size='35' opacity='0.4'>🌍</text><text x='700' y='80' font-size='40' opacity='0.3'>♻️</text><text x='150' y='500' font-size='35' opacity='0.4'>📱</text><text x='400' y='300' font-size='30' opacity='0.3'>🌳</text><text x='600' y='450' font-size='35' opacity='0.4'>💧</text><text x='300' y='150' font-size='40' opacity='0.3'>🛒</text></svg>");
+            background-size: cover;
+            opacity: 0.8;
+            animation: floatSVG 25s linear infinite alternate;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatSVG {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-40px) scale(1.05); }
+        }
+
+        .top-bar {
+            height: 70px;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 2px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #006266;
+            background: rgba(255,255,255,0.7);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #d63031;
+            background: #fff;
+            padding: 5px 20px;
+            border-radius: 25px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            min-width: 110px;
+            text-align: center;
+        }
+
+        .btn-timer {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #009432;
+            transition: all 0.2s;
+        }
+
+        .btn-timer:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0 #009432;
+        }
+
+        .split-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 70px);
+            z-index: 10;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .pane {
+            flex: 1;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 2px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 25px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        ::-webkit-scrollbar { width: 12px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 184, 148, 0.4); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 184, 148, 0.8); }
+
+        .passage-block {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.9);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .paragraph {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            text-align: justify;
+            color: #2d3436;
+        }
+
+        .btn-translate {
+            background: #ffeaa7;
+            color: #d35400;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #f39c12;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-translate:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #f39c12;
+        }
+
+        .translation-box {
+            display: none;
+            background: #e0f7fa;
+            border-left: 5px solid #00bcd4;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            color: #006064;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .glossary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 15px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .glossary-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            font-size: 1rem;
+        }
+        .glossary-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95rem;
+        }
+        .glossary-table tr:last-child td { border-bottom: none; }
+        .glossary-table tr:hover { background-color: #f1f8e9; }
+
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+            border: 2px solid #f1f2f6;
+            transition: transform 0.2s;
+        }
+        .question-card:hover { transform: translateY(-2px); }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: #f1f2f6;
+            border: 2px solid #dfe4ea;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2f3542;
+            cursor: pointer;
+            text-align: left;
+            box-shadow: 0 5px 0 #dfe4ea;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            transform: translateY(-3px) scale(1.02);
+            background: #eccc68;
+            border-color: #ffa502;
+            box-shadow: 0 8px 0 #ffa502;
+        }
+
+        .option-btn:active:not(.disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 #ffa502;
+        }
+
+        .option-btn.correct {
+            background: var(--success) !important;
+            color: white;
+            border-color: #00b85c !important;
+            box-shadow: 0 5px 0 #00b85c !important;
+        }
+
+        .option-btn.wrong {
+            background: var(--danger) !important;
+            color: white;
+            border-color: #ff3838 !important;
+            box-shadow: 0 5px 0 #ff3838 !important;
+        }
+
+        .option-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            background: #f8f9fa;
+            border: 2px dashed #0984e3;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: #2d3436;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .explanation-box.show { display: block; }
+
+        .explain-title {
+            color: var(--secondary);
+            font-weight: 800;
+            margin-bottom: 10px;
+            font-size: 1.15rem;
+            text-transform: uppercase;
+        }
+
+        .submit-container {
+            text-align: center;
+            margin-top: 30px;
+            padding-bottom: 20px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(45deg, #0984e3, #00b894);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #027a62;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover { transform: scale(1.05) translateY(-3px); }
+        .btn-submit:active { transform: scale(1) translateY(5px); box-shadow: 0 3px 0 #027a62; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-title { font-size: 2.5rem; color: var(--primary); margin-bottom: 10px; }
+        .modal-score { font-size: 4rem; font-weight: 800; color: var(--success); margin: 20px 0; }
+        .modal-message { font-size: 1.2rem; color: #576574; margin-bottom: 30px; }
+        .btn-restart {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #075eab;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .shake { animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shakeAnim {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        #confetti-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;
+        }
+        .confetti {
+            position: absolute; width: 10px; height: 10px; background-color: #f00; animation: fall 2s linear forwards;
+        }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="header-title">✨ Ms. Chí Nên  ✨</div>
+        <div class="timer-container">
+            <button class="btn-timer" id="startTimerBtn" onclick="startTimer()">🚀 BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
+            <div class="timer-display" id="timerDisplay">10:00</div>
+        </div>
+    </div>
+
+    <div class="split-container">
+        <div class="pane" id="readingPane"></div>
+        <div class="pane" id="exercisePane">
+            <div id="questionsContainer"></div>
+            <div class="submit-container">
+                <button class="btn-submit" onclick="submitQuiz()">🏆 NỘP BÀI</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confetti-container"></div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modalTitle">Hoàn Thành! 🎉</h2>
+            <div class="modal-score" id="modalScore">0/0</div>
+            <p class="modal-message" id="modalMessage">Tuyệt vời!</p>
+            <button class="btn-restart" onclick="location.reload()">Làm Lại Bài 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                passageId: 1,
+                instruction: "Read the following announcement and mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each of the numbered blanks from 13 to 16.",
+                paragraphs: [
+                    {
+                        text: "FUTURE ENGLISH TUITION<br>Do you want to (13) ........... your English?<br>Do you enjoy speaking with foreigners?<br>So you fancy getting (14) ........... at school?<br>Come here and get your great (15) ........... .<br>(16) ........... 0989,08.14.65 (Mr. Glory) or visit our campus at 50 Highway 80, Ha Noi.",
+                        translation: "GIA SƯ TIẾNG ANH TƯƠNG LAI<br>Bạn có muốn cải thiện (13) tiếng Anh của mình không?<br>Bạn có thích giao tiếp với người nước ngoài không?<br>Bạn có mong muốn đạt được điểm số cao hơn (14) ở trường không?<br>Hãy đến đây và nhận được sự hài lòng (15) tuyệt vời của bạn.<br>Liên hệ với chúng tôi qua số (16) 0989,08.14.65 (Thầy Glory) hoặc ghé thăm cơ sở của chúng tôi tại số 50 Quốc lộ 80, Hà Nội."
+                    }
+                ],
+                glossary: [
+                    { word: "Tuition", type: "n.", meaning: "Sự giảng dạy, tiền học phí" },
+                    { word: "Foreigner", type: "n.", meaning: "Người nước ngoài" },
+                    { word: "Fancy", type: "v.", meaning: "Mong muốn, thích thú" },
+                    { word: "Campus", type: "n.", meaning: "Khuôn viên, cơ sở trường" },
+                    { word: "Highway", type: "n.", meaning: "Quốc lộ, đường cao tốc" },
+                    { word: "Satisfaction", type: "n.", meaning: "Sự hài lòng, thỏa mãn" },
+                    { word: "Contact", type: "v.", meaning: "Liên hệ, liên lạc" },
+                    { word: "Improve", type: "v.", meaning: "Cải thiện, làm cho tốt hơn" },
+                    { word: "Master", type: "v.", meaning: "Nắm vững, làm chủ" },
+                    { word: "Better", type: "v.", meaning: "Làm cho tốt hơn (động từ)" }
+                ],
+                questions: [
+                    {
+                        qNum: 13,
+                        text: "Question 13: Do you want to (13) ........... your English?",
+                        options: [
+                            { id: "A", text: "better", isCorrect: true },
+                            { id: "B", text: "improving", isCorrect: false },
+                            { id: "C", text: "mastering", isCorrect: false },
+                            { id: "D", text: "increase", isCorrect: false }
+                        ],
+                        explanation: "<b>Phân tích cấu trúc ngữ pháp và từ vựng:</b><br><br>Cấu trúc của câu hỏi là <b>'want to + Động từ nguyên thể'</b> (muốn làm việc gì đó). Do vậy, ô trống bắt buộc phải là một động từ ở dạng nguyên thể không chia.<br><br><b>B. improving</b> và <b>C. mastering:</b> Đang chia ở dạng V-ing, vi phạm ngay quy tắc ngữ pháp đứng sau 'to'. Loại ngay lập tức.<br><b>D. increase:</b> Là động từ nguyên thể mang ý nghĩa 'làm gia tăng (về số lượng hoặc kích cỡ)'. Chúng ta không dùng từ này để nói về việc gia tăng ngôn ngữ ('increase your English' là sai hoàn toàn về ngữ cảnh).<br><b>A. better:</b> Đa số học sinh chỉ biết 'better' là tính từ so sánh hơn của 'good'. Tuy nhiên, trong tiếng Anh cao cấp, <b>'better' còn đóng vai trò là một ĐỘNG TỪ nguyên thể</b>, mang ý nghĩa là 'cải thiện, làm cho cái gì đó trở nên tốt hơn' (to make something better). Cụm 'to better your English' hoàn toàn đồng nghĩa với 'to improve your English'.<br><br>👉 Do đó, chọn đáp án A là phương án đúng nhất về cả ngữ pháp lẫn ngữ nghĩa."
+                    },
+                    {
+                        qNum: 14,
+                        text: "Question 14: So you fancy getting (14) ........... at school?",
+                        options: [
+                            { id: "A", text: "higher games", isCorrect: false },
+                            { id: "B", text: "higher marks", isCorrect: true },
+                            { id: "C", text: "higher presents", isCorrect: false },
+                            { id: "D", text: "higher friends", isCorrect: false }
+                        ],
+                        explanation: "<b>Phân tích ngữ cảnh đoạn quảng cáo học tập:</b><br><br>Câu này hỏi về những mong muốn của học sinh khi đi học tại trường học ('at school'). Động từ 'get' đi kèm với tính từ 'higher' (cao hơn) đòi hỏi một danh từ phù hợp với thành tích học tập.<br><br><b>A. higher games:</b> Trò chơi cao hơn. (Vô nghĩa).<br><b>C. higher presents:</b> Những món quà cao hơn. (Sai logic thực tế).<br><b>D. higher friends:</b> Những người bạn cao hơn. (Không liên quan đến mục đích của việc đi học thêm tiếng Anh).<br><b>B. higher marks:</b> Điểm số cao hơn. Cụm từ 'getting higher marks at school' (đạt điểm số cao hơn ở trường) là một mục tiêu hoàn toàn thực tế và chính xác với ngữ cảnh của một tờ rơi quảng cáo lớp học gia sư.<br><br>👉 Chúng ta chọn đáp án B."
+                    },
+                    {
+                        qNum: 15,
+                        text: "Question 15: Come here and get your great (15) ........... .",
+                        options: [
+                            { id: "A", text: "satisfied", isCorrect: false },
+                            { id: "B", text: "satisfy", isCorrect: false },
+                            { id: "C", text: "satisfaction", isCorrect: true },
+                            { id: "D", text: "satifying", isCorrect: false }
+                        ],
+                        explanation: "<b>Xét về loại từ (Parts of Speech) cần điền vào ô trống:</b><br><br>Nhìn vào cụm từ 'your great _______'. Chúng ta có 'your' là tính từ sở hữu, 'great' là tính từ miêu tả (tuyệt vời). Theo quy tắc ngữ pháp tiếng Anh cơ bản, sau tính từ sở hữu và tính từ miêu tả bắt buộc phải là một <b>Danh từ (Noun)</b> để tạo thành một Cụm danh từ hoàn chỉnh.<br><br><b>A. satisfied:</b> Tính từ (cảm thấy hài lòng) hoặc Động từ đuôi -ed. Bị loại.<br><b>B. satisfy:</b> Động từ nguyên thể (làm hài lòng). Bị loại.<br><b>D. satifying:</b> Tính từ đuôi -ing (gây ra sự hài lòng) - bị viết sai chính tả gốc là satisfying. Bị loại.<br><b>C. satisfaction:</b> Đây là Danh từ duy nhất trong 4 đáp án, mang ý nghĩa là 'sự hài lòng, sự thỏa mãn'.<br><br>👉 Ghép vào câu ta được: <b>'Come here and get your great satisfaction.'</b> (Hãy đến đây và nhận được sự hài lòng tuyệt vời của bạn). Chọn đáp án C."
+                    },
+                    {
+                        qNum: 16,
+                        text: "Question 16: (16) ........... 0989,08.14.65 (Mr. Glory) or visit our campus...",
+                        options: [
+                            { id: "A", text: "call us", isCorrect: false },
+                            { id: "B", text: "Phone us", isCorrect: false },
+                            { id: "C", text: "Visit us", isCorrect: false },
+                            { id: "D", text: "Contact us at", isCorrect: true }
+                        ],
+                        explanation: "<b>Phân tích cách sử dụng giới từ đi kèm số điện thoại:</b><br><br>Đứng ngay sau ô trống là một số điện thoại cụ thể: '0989,08.14.65'. Chúng ta cần một động từ chỉ sự liên lạc kết nối phù hợp.<br><br><b>C. Visit us:</b> Mang nghĩa 'đến thăm chúng tôi'. Không ai dùng động từ thăm hỏi đi trực tiếp với số điện thoại. Bị loại.<br><b>A. call us</b> và <b>B. Phone us:</b> Đều mang nghĩa 'gọi cho chúng tôi'. Tuy nhiên, trong văn phong tiếng Anh chuẩn, nếu muốn dùng từ 'call' hoặc 'phone' với một dãy số điện thoại, người ta thường phải thêm giới từ 'at' hoặc 'on' (Ví dụ: Call us on 0989...). Việc ghép trực tiếp 'Call us 0989...' nghe rất cụt lủn và thiếu chính xác về ngữ pháp.<br><b>D. Contact us at:</b> Mang ý nghĩa 'Hãy liên hệ với chúng tôi tại số...'. Đáp án này cung cấp đầy đủ cả động từ (Contact) và giới từ (at) cần thiết để dẫn dắt vào số điện thoại một cách chuẩn chỉnh nhất về mặt ngữ pháp.<br><br>👉 Chọn đáp án D là phương án an toàn và chính xác tuyệt đối."
+                    }
+                ]
+            },
+            {
+                passageId: 2,
+                instruction: "Read the following passage and mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each numbered blank from 19 to 24.",
+                paragraphs: [
+                    {
+                        text: "If you have some favorite stores or online retailers, you may already have their shopping apps on your phone. Or, you might (19) ........... an app to get a discount on your first purchase with a business, or early access to sales. Some shopping apps do several things. They might let you (20) ........... a shopping list and will send you sale alerts, (21) ........... codes, coupons, special promotions, or other rewards based on how much you (22) ........... .",
+                        translation: "Nếu bạn có một số cửa hàng hoặc nhà bán lẻ trực tuyến yêu thích, bạn có thể đã có ứng dụng mua sắm của họ trên điện thoại của mình. Hoặc, bạn có thể tải xuống (19) một ứng dụng để được giảm giá cho lần mua hàng đầu tiên của bạn với một doanh nghiệp hoặc quyền truy cập sớm vào các đợt giảm giá. Một số ứng dụng mua sắm làm được nhiều việc. Chúng có thể cho phép bạn lưu trữ (20) danh sách mua sắm và sẽ gửi cho bạn thông báo giảm giá, mã giảm giá (21), phiếu giảm giá, khuyến mãi đặc biệt hoặc phần thưởng khác dựa trên mức độ bạn mua sắm (22)."
+                    },
+                    {
+                        text: "When you set up your profile or buy something with a shopping app for the first time, it will likely ask you to link or store your (23) ........... information. Some apps charge your credit or debit card or your bank account each time you buy something. (24) ........... apps let you store value with the app and spend down the stored value every time you buy something. Before you install an app, check its description or user agreement to see if it tells you how the payment system works and what to do if there is a billing problem.",
+                        translation: "Khi bạn thiết lập hồ sơ của mình hoặc mua thứ gì đó bằng ứng dụng mua sắm lần đầu tiên, ứng dụng đó có thể sẽ yêu cầu bạn liên kết hoặc lưu trữ thông tin thanh toán (23) của bạn. Một số ứng dụng tính phí vào thẻ tín dụng, thẻ ghi nợ hoặc tài khoản ngân hàng của bạn mỗi khi bạn mua thứ gì đó. Các ứng dụng khác (24) cho phép bạn lưu trữ giá trị tiền bằng ứng dụng và chi tiêu dần giá trị được lưu trữ đó mỗi khi bạn mua thứ gì đó. Trước khi bạn cài đặt một ứng dụng, hãy kiểm tra mô tả hoặc thỏa thuận người dùng của ứng dụng đó để xem liệu nó có cho bạn biết hệ thống thanh toán hoạt động như thế nào và phải làm gì nếu có sự cố thanh toán."
+                    }
+                ],
+                glossary: [
+                    { word: "Retailer", type: "n.", meaning: "Nhà bán lẻ" },
+                    { word: "Purchase", type: "n./v.", meaning: "Sự mua hàng, mua sắm" },
+                    { word: "Access", type: "n.", meaning: "Quyền truy cập, sự tiếp cận" },
+                    { word: "Alert", type: "n.", meaning: "Sự báo động, thông báo" },
+                    { word: "Coupon", type: "n.", meaning: "Phiếu giảm giá" },
+                    { word: "Promotion", type: "n.", meaning: "Sự khuyến mãi, thăng tiến" },
+                    { word: "Reward", type: "n.", meaning: "Phần thưởng" },
+                    { word: "Debit card", type: "n. phr.", meaning: "Thẻ ghi nợ" },
+                    { word: "Install", type: "v.", meaning: "Cài đặt (phần mềm)" },
+                    { word: "Agreement", type: "n.", meaning: "Thỏa thuận, hợp đồng" },
+                    { word: "Billing", type: "n.", meaning: "Việc lập hóa đơn, thanh toán" }
+                ],
+                questions: [
+                    {
+                        qNum: 19, text: "Question 19: Or, you might (19) ........... an app to get a discount...",
+                        options: [{id: "A", text: "upload", isCorrect: false}, {id: "B", text: "download", isCorrect: true}, {id: "C", text: "report", isCorrect: false}, {id: "D", text: "uninstall", isCorrect: false}],
+                        explanation: "<b>Phân tích hành động đối với ứng dụng điện thoại (app):</b><br><br>Câu trước đang nói về việc có sẵn ứng dụng mua sắm trên điện thoại. Câu này tiếp nối bằng việc đưa ra một khả năng khác để nhận ưu đãi (get a discount).<br><b>A. upload:</b> Tải lên (đưa dữ liệu từ máy lên mạng). Không ai tải app lên mạng để được giảm giá cá nhân cả.<br><b>C. report:</b> Báo cáo. (Không liên quan đến việc nhận ưu đãi mua sắm).<br><b>D. uninstall:</b> Gỡ cài đặt. Nếu bạn gỡ cài đặt ứng dụng thì không thể nào nhận được thông báo giảm giá hay dùng app để mua hàng được nữa.<br><b>B. download:</b> Tải xuống. Hành động tải xuống một ứng dụng mới từ cửa hàng ứng dụng để lấy mã giảm giá cho khách hàng mới là một thực tế rất phổ biến hiện nay.<br><br>👉 Ghép vào câu hoàn chỉnh: <b>'Or, you might download an app to get a discount on your first purchase with a business...'</b> (Hoặc, bạn có thể tải xuống một ứng dụng để được giảm giá cho lần mua hàng đầu tiên...). Chọn đáp án B."
+                    },
+                    {
+                        qNum: 20, text: "Question 20: They might let you (20) ........... a shopping list...",
+                        options: [{id: "A", text: "store", isCorrect: true}, {id: "B", text: "to store", isCorrect: false}, {id: "C", text: "storing", isCorrect: false}, {id: "D", text: "stored", isCorrect: false}],
+                        explanation: "<b>Phân tích ngữ pháp của cấu trúc 'let':</b><br><br>Trong tiếng Anh, cấu trúc của động từ 'let' (cho phép ai đó làm gì) được viết dưới dạng: <b>'let somebody + Động từ nguyên thể không to'</b> (let somebody do something).<br><br>Đối chiếu với các đáp án:<br><b>B. to store:</b> Có giới từ 'to', vi phạm cấu trúc.<br><b>C. storing:</b> Chia ở dạng V-ing, vi phạm cấu trúc.<br><b>D. stored:</b> Chia ở quá khứ hoặc phân từ hai, vi phạm cấu trúc.<br><b>A. store:</b> Động từ ở dạng nguyên thể, mang ý nghĩa là 'lưu trữ'. Thỏa mãn hoàn toàn yêu cầu của ngữ pháp.<br><br>👉 Ghép vào câu ta được: <b>'They might let you store a shopping list...'</b> (Chúng có thể cho phép bạn lưu trữ danh sách mua sắm...). Chọn đáp án A."
+                    },
+                    {
+                        qNum: 21, text: "Question 21: ...and will send you sale alerts, (21) ........... codes, coupons, special promotions...",
+                        options: [{id: "A", text: "password", isCorrect: false}, {id: "B", text: "recovery", isCorrect: false}, {id: "C", text: "account", isCorrect: false}, {id: "D", text: "discount", isCorrect: true}],
+                        explanation: "<b>Tìm từ ghép phù hợp với chữ 'codes' trong ngữ cảnh mua sắm:</b><br><br>Tác giả đang liệt kê các tính năng mang lại lợi ích cho người tiêu dùng trên ứng dụng: 'sale alerts' (thông báo giảm giá), 'coupons' (phiếu ưu đãi), 'special promotions' (khuyến mãi đặc biệt). Danh từ điền vào ô trống để ghép với chữ 'codes' cũng phải nằm trong trường từ vựng về khuyến mãi mua sắm.<br><br><b>A. password codes:</b> Mã mật khẩu. Không phải thứ app sẽ gửi để thu hút bạn mua hàng.<br><b>B. recovery codes:</b> Mã khôi phục. Dùng khi mất tài khoản, không liên quan đến mua sắm.<br><b>C. account codes:</b> Mã tài khoản. Không phù hợp ngữ cảnh.<br><b>D. discount codes:</b> Mã giảm giá. Đây là một cụm từ (collocation) cực kỳ thông dụng và hoàn toàn ăn khớp với chuỗi từ vựng nói về các chương trình khuyến mãi đang được liệt kê.<br><br>👉 Chọn đáp án D."
+                    },
+                    {
+                        qNum: 22, text: "Question 22: ...or other rewards based on how much you (22) ........... .",
+                        options: [{id: "A", text: "buy", isCorrect: true}, {id: "B", text: "make", isCorrect: false}, {id: "C", text: "sell", isCorrect: false}, {id: "D", text: "take", isCorrect: false}],
+                        explanation: "<b>Phân tích ý nghĩa dựa theo đối tượng đoạn văn hướng tới:</b><br><br>Đoạn văn này đang được viết trực tiếp để hướng tới <b>người tiêu dùng</b> (khách hàng), những người sử dụng các ứng dụng mua sắm (shopping apps). Việc các ứng dụng này trao phần thưởng ('other rewards') sẽ phụ thuộc vào hành vi của khách hàng trên ứng dụng đó.<br><br><b>B. make:</b> Làm ra. (Không phù hợp).<br><b>C. sell:</b> Bán đi. Khách hàng sử dụng app để mua sắm chứ không phải để bán hàng.<br><b>D. take:</b> Lấy đi. (Không phù hợp).<br><b>A. buy:</b> Mua. Ứng dụng sẽ tích điểm và tặng phần thưởng dựa trên số lượng hàng hóa mà bạn mua ('how much you buy').<br><br>👉 Chọn đáp án A là chính xác nhất về logic thương mại."
+                    },
+                    {
+                        qNum: 23, text: "Question 23: ...it will likely ask you to link or store your (23) ........... information.",
+                        options: [{id: "A", text: "paid", isCorrect: false}, {id: "B", text: "payment", isCorrect: true}, {id: "C", text: "paying", isCorrect: false}, {id: "D", text: "payer", isCorrect: false}],
+                        explanation: "<b>Phân tích loại từ kết hợp thành Cụm danh từ ghép (Compound Noun):</b><br><br>Chữ đứng sau ô trống là 'information' (thông tin - Danh từ). Chúng ta cần tạo ra một danh từ ghép chỉ loại thông tin liên quan đến việc trả tiền khi sử dụng thẻ tín dụng, ngân hàng (như đã giải thích ở câu ngay phía sau).<br><br><b>A. paid:</b> Động từ chia quá khứ/phân từ (đã thanh toán). Không tạo thành cụm danh từ chuẩn ở đây.<br><b>C. paying:</b> Dạng V-ing. 'Paying information' không phải là thuật ngữ được sử dụng phổ biến.<br><b>D. payer:</b> Danh từ chỉ người (người thanh toán). Thông tin của người thanh toán không sát nghĩa bằng thông tin của phương thức thanh toán.<br><b>B. payment:</b> Danh từ (sự thanh toán). Trong tiếng Anh thương mại, cụm danh từ ghép <b>'payment information'</b> (thông tin thanh toán, ví dụ như số thẻ, số tài khoản) là một thuật ngữ cố định và chuẩn xác tuyệt đối.<br><br>👉 Chọn đáp án B."
+                    },
+                    {
+                        qNum: 24, text: "Question 24: (24) ........... apps let you store value with the app and spend down the stored value...",
+                        options: [{id: "A", text: "Other", isCorrect: true}, {id: "B", text: "Another", isCorrect: false}, {id: "C", text: "Others", isCorrect: false}, {id: "D", text: "One another", isCorrect: false}],
+                        explanation: "<b>Phân tích ngữ pháp về từ chỉ định số lượng:</b><br><br>Danh từ đứng ngay phía sau ô trống là 'apps' (những ứng dụng - đang ở dạng danh từ số nhiều).<br>Câu phía trước tác giả đang nói: '<b>Some</b> apps charge your credit...' (<b>Một số</b> ứng dụng tính phí vào thẻ...). Do đó, câu này tác giả muốn liệt kê nốt phần còn lại: '<b>Các</b> ứng dụng <b>khác</b> thì...'<br><br><b>B. Another:</b> Có nghĩa là 'một cái khác'. Chỉ được phép đứng trước Danh từ ĐẾM ĐƯỢC SỐ ÍT. Không thể đi cùng với 'apps'.<br><b>C. Others:</b> Đóng vai trò là đại từ, bản thân chữ 'Others' đã mang nghĩa là 'những thứ khác' nên nó KHÔNG BAO GIỜ có danh từ đứng liền kề phía sau nó. (Nếu viết là 'Others let you store...' thì đúng, nhưng viết 'Others apps' là sai hoàn toàn).<br><b>D. One another:</b> Có nghĩa là 'lẫn nhau' (dùng cho 3 đối tượng trở lên). Ví dụ 'help one another'. Không đóng vai trò tính từ đứng trước danh từ.<br><b>A. Other:</b> Đóng vai trò là tính từ, bắt buộc phải có Danh từ SỐ NHIỀU (hoặc không đếm được) đứng ngay phía sau nó. Cụm 'Other apps' (những ứng dụng khác) là hoàn toàn chuẩn xác về mặt ngữ pháp.<br><br>👉 Chọn đáp án A."
+                    }
+                ]
+            },
+            {
+                passageId: 3,
+                instruction: "Read the following passage and mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions from 31 to 36.",
+                paragraphs: [
+                    {
+                        text: "Pollution can be seen not only throughout the world, but also in our own homes. It comes from household chemicals, the amount of water people use and the waste people produce and throw away. What can be done to stop this pollution? Surprisingly, a person can help save the environment by doing simple things.",
+                        translation: "Ô nhiễm có thể được nhìn thấy không chỉ trên toàn thế giới mà còn ngay trong chính ngôi nhà của chúng ta. Nó bắt nguồn từ các hóa chất gia dụng, lượng nước mà con người sử dụng và lượng rác thải con người tạo ra và vứt bỏ. Có thể làm gì để ngăn chặn sự ô nhiễm này? Đáng ngạc nhiên là, một người có thể giúp cứu lấy môi trường bằng cách làm những việc đơn giản."
+                    },
+                    {
+                        text: "First, we need to recycle, which allows products to be used over and over again. Recycling can also reduce the number of trees cut down to produce paper products. It takes very little effort. It is not hard to place plastic and glass bottles, aluminum cans and paper in a bin. Anyone can do it.",
+                        translation: "Đầu tiên, chúng ta cần tái chế, điều này cho phép các sản phẩm được sử dụng đi sử dụng lại nhiều lần. Tái chế cũng có thể làm giảm số lượng cây bị chặt hạ để sản xuất các sản phẩm giấy. Việc này tốn rất ít công sức. Sẽ không khó để đặt những chai nhựa và thủy tinh, lon nhôm và giấy vào một thùng rác. Bất cứ ai cũng có thể làm được."
+                    },
+                    {
+                        text: "Second, we need to control the amount of water used at home. It can be conserved by taking short showers instead of baths, repairing leaky faucets, using the dishwasher or washing machine only when fully loaded, or simply turning the faucet off while brushing your teeth.",
+                        translation: "Thứ hai, chúng ta cần kiểm soát lượng nước sử dụng tại nhà. Nước có thể được bảo tồn bằng cách tắm vòi hoa sen ngắn thay vì tắm bồn, sửa chữa các vòi nước bị rò rỉ, chỉ sử dụng máy rửa chén hoặc máy giặt khi đã chứa đầy đồ, hoặc đơn giản là tắt vòi nước trong khi đánh răng."
+                    },
+                    {
+                        text: "Third, we need to reduce waste. We need to recycle whenever possible, but should also try to use this waste effectively. For example, grass clippings and food scraps can be made into compost for plants. The average person produces 4.3 pounds of waste every day, but we can reduce that amount by recycling and reusing.<br>If we do our part in our own homes, we can help keep the planet from becoming more polluted.",
+                        translation: "Thứ ba, chúng ta cần giảm thiểu chất thải. Chúng ta cần tái chế bất cứ khi nào có thể, nhưng cũng nên cố gắng sử dụng chất thải này một cách hiệu quả. Ví dụ, cỏ cắt vụn và thức ăn thừa có thể được ủ thành phân xanh cho cây trồng. Trung bình mỗi người tạo ra 4,3 pound rác thải mỗi ngày, nhưng chúng ta có thể giảm lượng rác đó bằng cách tái chế và tái sử dụng.<br>Nếu chúng ta làm tròn bổn phận của mình ngay trong chính ngôi nhà của mình, chúng ta có thể giúp giữ cho hành tinh không trở nên ô nhiễm hơn."
+                    }
+                ],
+                glossary: [
+                    { word: "Pollution", type: "n.", meaning: "Sự ô nhiễm" },
+                    { word: "Household", type: "adj./n.", meaning: "Thuộc về gia đình, hộ gia đình" },
+                    { word: "Chemical", type: "n.", meaning: "Chất hóa học" },
+                    { word: "Recycle", type: "v.", meaning: "Tái chế" },
+                    { word: "Aluminum", type: "n.", meaning: "Chất nhôm" },
+                    { word: "Conserve", type: "v.", meaning: "Bảo tồn, giữ gìn" },
+                    { word: "Faucet", type: "n.", meaning: "Vòi nước" },
+                    { word: "Dishwasher", type: "n.", meaning: "Máy rửa bát" },
+                    { word: "Compost", type: "n.", meaning: "Phân xanh, phân hữu cơ" },
+                    { word: "Effort", type: "n.", meaning: "Sự nỗ lực, công sức" },
+                    { word: "Effectively", type: "adv.", meaning: "Một cách hiệu quả" }
+                ],
+                questions: [
+                    {
+                        qNum: 31, text: "Question 31. What is the main idea of the passage?",
+                        options: [
+                            {id: "A", text: "Recycling is the only way to help the environment.", isCorrect: false},
+                            {id: "B", text: "Reducing water usage and waste are more important than recycling.", isCorrect: false},
+                            {id: "C", text: "Individuals can help reduce pollution through simple actions at home", isCorrect: true},
+                            {id: "D", text: "Pollution in homes is caused only by household chemicals", isCorrect: false}
+                        ],
+                        explanation: "<b>Cô phân tích ý nghĩa tổng quát toàn bài nhé:</b><br><br><b>A. Recycling is the only way...</b> (Tái chế là cách duy nhất...): Sai, bài viết liệt kê đến 3 cách (tái chế, tiết kiệm nước, giảm rác) chứ không chỉ có một cách duy nhất.<br><b>B. Reducing water usage and waste are more important than recycling.</b> (Giảm sử dụng nước và rác quan trọng hơn tái chế): Tác giả liệt kê ba hành động song song (First, Second, Third), không hề so sánh cái nào quan trọng hơn cái nào.<br><b>D. Pollution in homes is caused only by household chemicals</b> (Ô nhiễm tại nhà chỉ do hóa chất gây ra): Sai, đoạn 1 ghi rõ 'It comes from household chemicals, the amount of water people use and the waste...' (Đến từ hóa chất, nước, và rác). Từ 'only' làm câu này sai.<br><b>C. Individuals can help reduce pollution through simple actions at home</b> (Các cá nhân có thể giúp giảm ô nhiễm thông qua những hành động đơn giản tại nhà): Đây chính xác là ý chính được bao trùm trong câu chốt đoạn 1 'a person can help save the environment by doing simple things' và câu kết bài 'If we do our part in our own homes...'.<br><br>👉 Chọn đáp án C."
+                    },
+                    {
+                        qNum: 32, text: "Question 32: Why does recycling help to reduce waste?",
+                        options: [
+                            {id: "A", text: "Plants need to develop", isCorrect: false},
+                            {id: "B", text: "Waste can be recycled and reused", isCorrect: true},
+                            {id: "C", text: "A person can do it in his home", isCorrect: false},
+                            {id: "D", text: "An average man produces compost for plants.", isCorrect: false}
+                        ],
+                        explanation: "<b>Dựa vào thông tin cụ thể trong đoạn văn số 4:</b><br><br>Câu hỏi: Tại sao tái chế lại giúp giảm được lượng rác thải?<br>Hãy đối chiếu với câu cuối cùng của đoạn 4: 'The average person produces 4.3 pounds of waste every day, but we can reduce that amount <b>by recycling and reusing</b>.' (Trung bình mỗi người tạo ra 4,3 pound rác thải mỗi ngày, nhưng chúng ta có thể giảm lượng rác đó <b>bằng cách tái chế và tái sử dụng</b>).<br><br>Tức là lý do cốt lõi khiến lượng rác thải (waste) ít đi chính là vì rác đã được chúng ta đem đi tái chế và tái sử dụng lại thành đồ có ích, thay vì vứt ra bãi rác.<br><b>B. Waste can be recycled and reused</b> (Rác thải có thể được tái chế và tái sử dụng). Đáp án này tóm gọn hoàn hảo tinh thần của câu văn trên.<br><br>👉 Chọn đáp án B."
+                    },
+                    {
+                        qNum: 33, text: "Question 33: Recycling can help us ........... .",
+                        options: [
+                            {id: "A", text: "Never cut down trees", isCorrect: false},
+                            {id: "B", text: "Cut down more trees", isCorrect: false},
+                            {id: "C", text: "produce more paper products", isCorrect: false},
+                            {id: "D", text: "use products again and again.", isCorrect: true}
+                        ],
+                        explanation: "<b>Đối chiếu thông tin về lợi ích của việc tái chế trong đoạn 2:</b><br><br>Tác giả viết nguyên văn như sau: 'First, we need to recycle, which allows products <b>to be used over and over again</b>.' (Đầu tiên, chúng ta cần tái chế, điều này cho phép các sản phẩm được <b>sử dụng đi sử dụng lại nhiều lần</b>).<br><br>Bây giờ hãy nhìn vào đáp án D: <b>'use products again and again'</b> (sử dụng sản phẩm lặp đi lặp lại). Cụm từ 'again and again' chính là từ đồng nghĩa trực tiếp với cụm 'over and over again' trong bài đọc.<br>Xét thêm đáp án A: 'Never cut down trees' (Không bao giờ chặt cây). Sai, bài chỉ nói 'reduce the number of trees' (giảm số lượng cây) chứ không hề nói là ngừng chặt cây hoàn toàn (never).<br><br>👉 Do đó, đáp án D là thông tin chính xác tuyệt đối."
+                    },
+                    {
+                        qNum: 34, text: "Question 34: Pollution is caused from the following sources EXCEPT ...........",
+                        options: [
+                            {id: "A", text: "Water in rivers", isCorrect: true},
+                            {id: "B", text: "water from households", isCorrect: false},
+                            {id: "C", text: "wastes", isCorrect: false},
+                            {id: "D", text: "house chemicals", isCorrect: false}
+                        ],
+                        explanation: "<b>Bài yêu cầu tìm nguồn gốc KHÔNG GÂY RA ô nhiễm theo như đề cập trong bài (EXCEPT):</b><br><br>Hãy đọc lại câu số 2 của đoạn văn đầu tiên, tác giả liệt kê nguyên nhân gây ô nhiễm từ các hộ gia đình như sau: 'It comes from <b>household chemicals</b>, the amount of <b>water people use</b> and the <b>waste</b> people produce and throw away.' (Nó bắt nguồn từ các hóa chất gia dụng, lượng nước mà con người sử dụng và lượng rác thải con người tạo ra).<br><br>Đối chiếu với các đáp án:<br>B. water from households (tương đương 'water people use'). CÓ trong bài.<br>C. wastes. CÓ trong bài.<br>D. house chemicals (tương đương 'household chemicals'). CÓ trong bài.<br><b>A. Water in rivers</b> (Nước trên các dòng sông). Yếu tố này HOÀN TOÀN KHÔNG được tác giả nhắc đến như một nguồn tạo ra ô nhiễm trong bài đọc này.<br><br>👉 Vì A không có trong bài, chúng ta chọn đáp án A."
+                    },
+                    {
+                        qNum: 35, text: "Question 35: The word “It” in paragraph 2 refers to ........... .",
+                        options: [
+                            {id: "A", text: "Cutting down", isCorrect: false},
+                            {id: "B", text: "the number", isCorrect: false},
+                            {id: "C", text: "recycling", isCorrect: true},
+                            {id: "D", text: "effort", isCorrect: false}
+                        ],
+                        explanation: "<b>Câu hỏi về Đại từ thay thế: Đại từ 'It' đang thay thế cho từ nào phía trước?</b><br><br>Chúng ta hãy đọc nguyên cả cụm câu trong đoạn 2 để lấy ngữ cảnh: '<b>Recycling</b> can also reduce the number of trees cut down to produce paper products. <b>It</b> takes very little effort.' (<b>Việc tái chế</b> cũng có thể làm giảm số lượng cây bị chặt hạ để sản xuất các sản phẩm giấy. <b>Nó</b> tốn rất ít công sức).<br><br>Đại từ 'It' (Nó) làm chủ ngữ cho câu thứ hai đang đóng vai trò thay thế cho hành động chính yếu được nhắc đến và làm chủ ngữ ở câu phía trước, đó chính là hành động 'Recycling' (Việc tái chế). Chúng ta không thể nói 'việc chặt cây tốn ít công sức' hay 'con số tốn ít công sức' được.<br><br>👉 Do vậy 'It' chính là thay thế cho 'recycling'. Chọn đáp án C."
+                    },
+                    {
+                        qNum: 36, text: "Question 36: The word “effectively” in paragraph 4 OPPOSITE to ........... .",
+                        options: [
+                            {id: "A", text: "Attractively", isCorrect: false},
+                            {id: "B", text: "worthlessly", isCorrect: true},
+                            {id: "C", text: "harmfully", isCorrect: false},
+                            {id: "D", text: "efficiently", isCorrect: false}
+                        ],
+                        explanation: "<b>Lưu ý yêu cầu đề bài là tìm từ TRÁI NGHĨA (OPPOSITE):</b><br><br>Trong đoạn 4 có câu: 'We need to recycle whenever possible, but should also try to use this waste <b>effectively</b>.' (Chúng ta cần tái chế... nhưng cũng nên cố gắng sử dụng chất thải này một cách <b>hiệu quả / có giá trị</b>).<br>Trạng từ <b>'effectively'</b> mang ý nghĩa là làm một việc gì đó mang lại tác dụng tốt, có hiệu quả, có ích lợi thiết thực.<br><br>Xét 4 đáp án cho sẵn:<br><b>A. Attractively:</b> Một cách hấp dẫn, cuốn hút. (Không liên quan).<br><b>D. efficiently:</b> Một cách năng suất, hiệu quả. Đây là từ <b>Đồng nghĩa</b> với effectively, học sinh không cẩn thận rất dễ bị lừa chọn nhầm.<br><b>C. harmfully:</b> Một cách có hại. Việc sử dụng rác hiệu quả (như ủ phân bón) thì trái ngược của nó không hẳn là mang lại sự độc hại, mà là việc tái sử dụng đó không mang lại tác dụng gì.<br><b>B. worthlessly:</b> Từ gốc 'worthless' nghĩa là vô giá trị, vô ích. Trạng từ 'worthlessly' nghĩa là làm một cách vô ích, không mang lại giá trị hay hiệu quả nào cả. Đây là sự đối nghịch chính xác nhất về ý nghĩa với sự 'hiệu quả, có ích' của từ effectively.<br><br>👉 Chọn đáp án B."
+                    }
+                ]
+            },
+            {
+                passageId: 4,
+                instruction: "Four phrases/ sentences have been removed from the text below. For each question, mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each of the numbered blanks from 37 to 40.",
+                paragraphs: [
+                    {
+                        text: "Environmental pollution is one of the impacts of human activities on the Earth. There are four types of pollution, namely, (37) ........... .<br>Most of the air pollution results from the burning of fossil fuels, motor vehicles, factories, aircraft and rockets. (38) ........... . Air pollution also contributes to the greenhouse effect.",
+                        translation: "Ô nhiễm môi trường là một trong những tác động của các hoạt động của con người trên Trái Đất. Có bốn loại ô nhiễm, cụ thể là, (37) ô nhiễm không khí, ô nhiễm đất, ô nhiễm nước và ô nhiễm tiếng ồn.<br>Hầu hết tình trạng ô nhiễm không khí là kết quả của việc đốt nhiên liệu hóa thạch, các loại phương tiện cơ giới, nhà máy, máy bay và tên lửa. (38) Điều này có thể gây ra mưa axit làm hỏng nước, đất và thực vật. Ô nhiễm không khí cũng góp phần gây ra hiệu ứng nhà kính."
+                    },
+                    {
+                        text: "Soil pollution is a result of dumping plastic or other waste in the ground and the overuse of chemicals in growing crops. The long-term effects of soil pollution are contaminated vegetation and the decrease of soil fertility.<br>Water pollution is a result of dumping pollutants such as oil and other chemicals in rivers, (39) ........... . Rubbish blockages in rivers can also cause pollution. The effects of water pollution include the destruction of rivers, lakes and the pollution of groundwater, surface water and seawater.",
+                        translation: "Ô nhiễm đất là kết quả của việc đổ đồ nhựa hoặc chất thải khác xuống đất và việc lạm dụng hóa chất trong việc trồng trọt mùa màng. Tác động lâu dài của ô nhiễm đất là thảm thực vật bị ô nhiễm và sự suy giảm độ phì nhiêu của đất.<br>Ô nhiễm nước là kết quả của việc đổ các chất gây ô nhiễm như dầu và các hóa chất khác xuống sông, (39) điều làm cho nước trở nên không sạch hoặc bị nhiễm bẩn. Sự tắc nghẽn do rác thải ở các con sông cũng có thể gây ô nhiễm. Tác động của ô nhiễm nước bao gồm sự hủy hoại các con sông, hồ chứa và sự ô nhiễm nguồn nước ngầm, nước mặt và nước biển."
+                    },
+                    {
+                        text: "Environmental pollution is becoming an increasingly serious problem or threat that needs to be taken care of as soon as possible, (40) ........... .",
+                        translation: "Ô nhiễm môi trường đang ngày càng trở thành một vấn đề hoặc mối đe dọa nghiêm trọng cần phải được xử lý và quan tâm càng sớm càng tốt, (40) không chỉ vì lợi ích của chính môi trường đó, mà còn vì những con người đang sống trong nó."
+                    }
+                ],
+                glossary: [
+                    { word: "Impact", type: "n.", meaning: "Tác động, ảnh hưởng" },
+                    { word: "Fossil fuel", type: "n. phr.", meaning: "Nhiên liệu hóa thạch" },
+                    { word: "Contribute", type: "v.", meaning: "Đóng góp, góp phần" },
+                    { word: "Greenhouse effect", type: "n. phr.", meaning: "Hiệu ứng nhà kính" },
+                    { word: "Dump", type: "v.", meaning: "Vứt bỏ, đổ rác" },
+                    { word: "Contaminated", type: "adj.", meaning: "Bị ô nhiễm, nhiễm bẩn" },
+                    { word: "Vegetation", type: "n.", meaning: "Thảm thực vật, cây cối" },
+                    { word: "Fertility", type: "n.", meaning: "Sự màu mỡ, độ phì nhiêu" },
+                    { word: "Pollutant", type: "n.", meaning: "Chất gây ô nhiễm" },
+                    { word: "Blockage", type: "n.", meaning: "Sự tắc nghẽn" },
+                    { word: "Threat", type: "n.", meaning: "Mối đe dọa" }
+                ],
+                questions: [
+                    {
+                        qNum: 37, text: "Question 37: There are four types of pollution, namely, (37) ........... .",
+                        options: [
+                            {id: "A", text: "Air pollution, soil pollution, water pollution and noise pollution.", isCorrect: true},
+                            {id: "B", text: "This can cause acid rain which damages water, soil and plants", isCorrect: false},
+                            {id: "C", text: "Not only for the sake of the environment, but also for the people that live in it.", isCorrect: false},
+                            {id: "D", text: "Which makes the water unclean or contaminated.", isCorrect: false}
+                        ],
+                        explanation: "<b>Dấu hiệu nhận biết sự liệt kê:</b><br><br>Câu văn đứng ngay phía trước ô trống viết: 'There are <b>four types of pollution</b>, namely...' (Có <b>bốn loại ô nhiễm</b>, cụ thể là...). Chữ 'namely' mang ý nghĩa là liệt kê tên gọi cụ thể của những thứ vừa được nhắc đến ở trên.<br><br>Do đó, ô trống bắt buộc phải chứa một danh sách liệt kê đúng 4 tên gọi của 4 loại ô nhiễm.<br>Nhìn vào các lựa chọn cho sẵn, chỉ có duy nhất câu A: <b>'Air pollution, soil pollution, water pollution and noise pollution.'</b> (Ô nhiễm không khí, ô nhiễm đất, ô nhiễm nước và ô nhiễm tiếng ồn) là cung cấp một danh sách liệt kê chính xác cấu trúc ngữ pháp và khớp hoàn toàn về số lượng.<br><br>👉 Chọn đáp án A."
+                    },
+                    {
+                        qNum: 38, text: "Question 38: Most of the air pollution results from the burning of fossil fuels... (38) ........... . Air pollution also contributes...",
+                        options: [
+                            {id: "A", text: "Air pollution, soil pollution, water pollution and noise pollution.", isCorrect: false},
+                            {id: "B", text: "This can cause acid rain which damages water, soil and plants", isCorrect: true},
+                            {id: "C", text: "Not only for the sake of the environment, but also for the people that live in it.", isCorrect: false},
+                            {id: "D", text: "Which makes the water unclean or contaminated.", isCorrect: false}
+                        ],
+                        explanation: "<b>Phân tích sự liên kết về hậu quả trong đoạn văn:</b><br><br>Câu trước ô trống nói về nguyên nhân gây ra ô nhiễm không khí: 'Most of the air pollution results from the burning of fossil fuels, motor vehicles, factories...' (Hầu hết ô nhiễm không khí là do đốt nhiên liệu hóa thạch, khói xe, nhà máy...). Đây là những hành động thải ra rất nhiều khí độc lên bầu trời.<br><br>Chúng ta cần một câu văn miêu tả hậu quả trực tiếp của việc xả khí độc này để làm cầu nối sang câu tiếp theo. Câu B viết: <b>'This can cause acid rain which damages water, soil and plants'</b> (Điều này có thể gây ra mưa axit làm hỏng nước, đất và thực vật). Đại từ 'This' thay thế hoàn hảo cho toàn bộ hiện tượng xả khói độc ở câu trước, và 'mưa axit' chính là hậu quả trực tiếp của ô nhiễm không khí do nhà máy, xe cộ gây ra.<br><br>👉 Chọn đáp án B giúp đoạn văn mạch lạc cả về cấu trúc lẫn kiến thức khoa học."
+                    },
+                    {
+                        qNum: 39, text: "Question 39: Water pollution is a result of dumping pollutants such as oil and other chemicals in rivers, (39) ........... .",
+                        options: [
+                            {id: "A", text: "Air pollution, soil pollution, water pollution and noise pollution.", isCorrect: false},
+                            {id: "B", text: "This can cause acid rain which damages water, soil and plants", isCorrect: false},
+                            {id: "C", text: "Not only for the sake of the environment, but also for the people that live in it.", isCorrect: false},
+                            {id: "D", text: "Which makes the water unclean or contaminated.", isCorrect: true}
+                        ],
+                        explanation: "<b>Phân tích Mệnh đề quan hệ không xác định:</b><br><br>Vế câu phía trước là một mệnh đề hoàn chỉnh mang ý nghĩa: 'Water pollution is a result of dumping pollutants such as oil and other chemicals in rivers,' (Ô nhiễm nước là kết quả của việc xả các chất ô nhiễm như dầu và hóa chất xuống sông). Tiếp theo là một DẤU PHẨY (,) trước ô trống.<br><br>Trong ngữ pháp tiếng Anh, sau dấu phẩy để bổ nghĩa bổ sung cho toàn bộ hành động phía trước, chúng ta sử dụng đại từ quan hệ <b>'Which'</b> (mang nghĩa là: điều mà/điều này).<br>Nhìn vào câu D: <b>'Which makes the water unclean or contaminated.'</b> (Điều mà khiến cho nguồn nước trở nên không sạch sẽ hoặc bị nhiễm bẩn). Việc ghép câu D vào đây tạo thành cấu trúc mệnh đề quan hệ hoàn hảo giải thích tác hại của hành động đổ hóa chất xuống sông.<br><br>👉 Chọn đáp án D."
+                    },
+                    {
+                        qNum: 40, text: "Question 40: Environmental pollution is becoming an increasingly serious problem or threat that needs to be taken care of as soon as possible, (40) ........... .",
+                        options: [
+                            {id: "A", text: "Air pollution, soil pollution, water pollution and noise pollution.", isCorrect: false},
+                            {id: "B", text: "This can cause acid rain which damages water, soil and plants", isCorrect: false},
+                            {id: "C", text: "Not only for the sake of the environment, but also for the people that live in it.", isCorrect: true},
+                            {id: "D", text: "Which makes the water unclean or contaminated.", isCorrect: false}
+                        ],
+                        explanation: "<b>Phân tích câu chốt kết luận ý nghĩa toàn bài:</b><br><br>Câu kết của đoạn văn là một lời kêu gọi hành động khẩn cấp: 'Environmental pollution is becoming an increasingly serious problem or threat that needs to be taken care of as soon as possible,' (Ô nhiễm môi trường đang ngày càng trở thành một vấn đề nghiêm trọng cần phải được xử lý càng sớm càng tốt).<br><br>Chúng ta cần một vế câu bổ sung lý do cho việc tại sao chúng ta phải hành động gấp gáp như vậy. Câu C cung cấp cấu trúc <b>'Not only... but also...'</b> (Không những... mà còn...) mang tính chất triết lý, tổng kết cao:<br><b>'Not only for the sake of the environment, but also for the people that live in it.'</b> (Không chỉ vì lợi ích của chính môi trường đó, mà còn vì những con người đang sống bên trong nó).<br><br>Ý nghĩa này chốt lại bài văn vô cùng xuất sắc và nhân văn. 👉 Chọn đáp án C."
+                    }
+                ]
+            }
+        ];
+
+        let totalQuestions = 0;
+        let answeredCorrectly = 0;
+        let hasAnswered = {}; 
+
+        function shuffleArray(array) {
+            let curId = array.length;
+            while (0 !== curId) {
+                let randId = Math.floor(Math.random() * curId);
+                curId -= 1;
+                let tmp = array[curId];
+                array[curId] = array[randId];
+                array[randId] = tmp;
+            }
+            return array;
+        }
+
+        function toggleTranslate(btn) {
+            const transBox = btn.nextElementSibling;
+            if (transBox.style.display === "block") {
+                transBox.style.display = "none";
+                btn.innerHTML = "Mở dịch đoạn này 🌟";
+            } else {
+                transBox.style.display = "block";
+                btn.innerHTML = "Đóng bản dịch 🙈";
+            }
+        }
+
+        function renderQuiz() {
+            const readPane = document.getElementById("readingPane");
+            const exerPane = document.getElementById("questionsContainer");
+            readPane.innerHTML = "";
+            exerPane.innerHTML = "";
+
+            quizData.forEach((passage, pIndex) => {
+                let readHtml = `<div class="passage-block">`;
+                if(passage.instruction) {
+                    readHtml += `<p style="font-style: italic; color: #008080; margin-bottom: 15px;">${passage.instruction}</p>`;
+                }
+                
+                passage.paragraphs.forEach((para, i) => {
+                    readHtml += `
+                        <div class="paragraph">${para.text}</div>
+                        <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                        <div class="translation-box">${para.translation}</div>
+                    `;
+                });
+
+                if(passage.glossary && passage.glossary.length > 0) {
+                    readHtml += `
+                        <h3 style="color: var(--primary); margin-top: 20px; font-size: 1.2rem;">📚 Bảng Từ Vựng Khó (Glossary)</h3>
+                        <table class="glossary-table">
+                            <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    `;
+                    passage.glossary.forEach(item => {
+                        readHtml += `<tr><td><strong>${item.word}</strong></td><td><i>${item.type}</i></td><td>${item.meaning}</td></tr>`;
+                    });
+                    readHtml += `</table>`;
+                }
+                readHtml += `</div>`;
+                readPane.innerHTML += readHtml;
+
+                passage.questions.forEach((q) => {
+                    totalQuestions++;
+                    let shuffledOptions = shuffleArray([...q.options]); 
+                    
+                    let optionsHtml = `<div class="options-grid">`;
+                    shuffledOptions.forEach((opt) => {
+                        optionsHtml += `
+                            <div class="option-btn" id="opt_${q.qNum}_${opt.id}" 
+                                 data-correct="${opt.isCorrect}"
+                                 onclick="handleAnswer(${q.qNum}, '${opt.id}')">
+                                 ${opt.text}
+                            </div>
+                        `;
+                    });
+                    optionsHtml += `</div>`;
+
+                    let qHtml = `
+                        <div class="question-card" id="card_${q.qNum}">
+                            <div class="question-text">${q.text}</div>
+                            ${optionsHtml}
+                            <div class="explanation-box" id="exp_${q.qNum}">
+                                <div class="explain-title">💡 Phân tích đáp án cùng Ms. Chí Nên:</div>
+                                ${q.explanation}
+                            </div>
+                        </div>
+                    `;
+                    exerPane.innerHTML += qHtml;
+                });
+            });
+        }
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if(type === 'correct') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); 
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } else {
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#00b894', '#0984e3', '#fdcb6e', '#00cec9', '#ffeaa7'];
+            const container = document.getElementById('confetti-container');
+            for(let i=0; i<35; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
+                container.appendChild(conf);
+                setTimeout(() => conf.remove(), 2500);
+            }
+        }
+
+        function handleAnswer(qNum, optId) {
+            if(hasAnswered[qNum]) return; 
+            hasAnswered[qNum] = true;
+
+            const clickedBtn = document.getElementById(`opt_${qNum}_${optId}`);
+            const isCorrect = clickedBtn.getAttribute('data-correct') === 'true';
+            
+            const allBtns = document.querySelectorAll(`[id^="opt_${qNum}_"]`);
+            allBtns.forEach(btn => btn.classList.add('disabled'));
+
+            if(isCorrect) {
+                clickedBtn.classList.add('correct');
+                playSound('correct');
+                createConfetti();
+                answeredCorrectly++;
+            } else {
+                clickedBtn.classList.add('wrong');
+                clickedBtn.classList.add('shake');
+                playSound('wrong');
+                
+                allBtns.forEach(btn => {
+                    if(btn.getAttribute('data-correct') === 'true') {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                document.getElementById(`exp_${qNum}`).classList.add('show');
+            }, 600);
+        }
+
+        let timeRemaining = 600; 
+        let timerInterval;
+        let isTimerRunning = false;
+
+        function updateTimerDisplay() {
+            let m = Math.floor(timeRemaining / 60);
+            let s = timeRemaining % 60;
+            document.getElementById("timerDisplay").innerText = 
+                (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+        }
+
+        function startTimer() {
+            const btn = document.getElementById("startTimerBtn");
+            if(!isTimerRunning) {
+                isTimerRunning = true;
+                btn.innerHTML = "⏸ TẠM DỪNG";
+                btn.style.background = "#e17055";
+                btn.style.boxShadow = "0 5px 0 #d63031";
+                
+                timerInterval = setInterval(() => {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                    if(timeRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                    }
+                }, 1000);
+            } else {
+                isTimerRunning = false;
+                clearInterval(timerInterval);
+                btn.innerHTML = "▶ TIẾP TỤC";
+                btn.style.background = "var(--primary)"; 
+                btn.style.boxShadow = "0 5px 0 #009432";
+            }
+        }
+
+        function submitQuiz() {
+            clearInterval(timerInterval);
+            let scoreText = `${answeredCorrectly}/${totalQuestions}`;
+            document.getElementById("modalScore").innerText = scoreText;
+            
+            let message = "";
+            let percent = answeredCorrectly / totalQuestions;
+            if(percent === 1) message = "Trí tuệ Thiên Tài! Bạn đã xuất sắc hoàn thành 100% bài thi. Trái Đất tự hào về bạn! 🌍💚";
+            else if(percent >= 0.8) message = "Làm tốt lắm! Bạn có kỹ năng đọc hiểu rất đáng nể. 👏🐬";
+            else if(percent >= 0.5) message = "Khá lắm! Cố gắng ôn thêm từ vựng là điểm sẽ cao vút. Lên nào! 🌱";
+            else message = "Không sao đâu! Học tiếng Anh là một hành trình dài. Làm lại lần nữa để nhớ lâu hơn nhé! 💪";
+            
+            document.getElementById("modalMessage").innerText = message;
+            document.getElementById("resultModal").style.display = "flex";
+            createConfetti();
+        }
+
+        window.onload = () => {
+            renderQuiz();
+        };
+    </script>
+</body>
+</html>
