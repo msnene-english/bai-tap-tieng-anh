@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Kiểm Tra Tiếng Anh - Gamification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ================= COLOR PALETTE & DYNAMIC THEME ================= */
+        :root {
+            --primary: #FDCB6E; /* Vàng sáng */
+            --secondary: #8854C0; /* Tím pastel */
+            --tertiary: #00C9A7; /* Xanh ngọc */
+            --correct: #00D26A; /* Xanh lá nhạt */
+            --wrong: #FF4757; /* Đỏ cam */
+            --text-dark: #2d3436;
+            --bg-card: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Quicksand', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text-dark);
+            /* Dynamic Background: Radial Gradient + SVG Emojis */
+            background-color: #ffecd2;
+            background-image: 
+                radial-gradient(circle at 30% 30%, rgba(253, 203, 110, 0.8), transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(136, 84, 192, 0.7), transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(0, 201, 167, 0.6), transparent 50%),
+                url("data:image/svg+xml,%3Csvg width='150' height='150' viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='20' y='30' font-size='24' opacity='0.7'%3E⚽%3C/text%3E%3Ctext x='100' y='80' font-size='28' opacity='0.6'%3E🏆%3C/text%3E%3Ctext x='40' y='120' font-size='22' opacity='0.7'%3E📺%3C/text%3E%3Ctext x='120' y='30' font-size='20' opacity='0.5'%3E🌟%3C/text%3E%3C/svg%3E");
+            background-blend-mode: normal;
+            background-size: 150% 150%, 150% 150%, 150% 150%, 200px 200px;
+            animation: gradientMove 15s ease infinite, bgFloat 30s linear infinite;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 0%, 100% 100%, 50% 100%, 0 0; }
+            50% { background-position: 100% 100%, 0% 0%, 50% 0%, 100px 100px; }
+            100% { background-position: 0% 0%, 100% 100%, 50% 100%, 200px 200px; }
+        }
+
+        @keyframes bgFloat {
+            from { background-position: 0% 0%, 100% 100%, 50% 100%, 0 0; }
+            to { background-position: 0% 0%, 100% 100%, 50% 100%, 400px 400px; }
+        }
+
+        /* ================= TOP CONTROL BAR ================= */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .creator-info h3 {
+            font-size: 14px;
+            color: var(--secondary);
+            font-weight: 700;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timer-display {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-dark);
+            background: var(--primary);
+            padding: 5px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 0px #e1b154;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 0px rgba(0,0,0,0.2);
+            font-size: 14px;
+        }
+        .btn:active { transform: translateY(5px); box-shadow: 0 0px 0px rgba(0,0,0,0.2); }
+
+        .btn-start { background-color: var(--tertiary); color: white; box-shadow: 0 5px 0px #00a185; }
+        .btn-pause { background-color: var(--secondary); color: white; box-shadow: 0 5px 0px #6b4198; }
+        
+        /* ================= SPLIT SCREEN LAYOUT ================= */
+        .main-container {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        .pane {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 25px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 10px; }
+
+        /* ================= READING PASSAGE (LEFT) ================= */
+        .passage-title {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 22px;
+            border-bottom: 3px dashed var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .paragraph {
+            margin-bottom: 25px;
+            line-height: 1.8;
+            font-size: 17px;
+            padding: 15px;
+            background: #fdfdfd;
+            border-radius: 15px;
+            border-left: 5px solid var(--tertiary);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        .btn-translate {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeeba;
+            border-radius: 12px;
+            padding: 8px 15px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+        .btn-translate:hover { background-color: #ffeeba; transform: scale(1.05); }
+
+        .translation-box {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            background: #e8f4f8;
+            border-radius: 10px;
+            font-style: italic;
+            color: #2c3e50;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* GLOSSARY TABLE */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .glossary-table th { background: var(--secondary); color: white; padding: 12px; text-align: left; }
+        .glossary-table td { padding: 12px; border-bottom: 1px solid #eee; }
+        .glossary-table tr:hover { background: #f9f9f9; }
+
+        /* ================= EXERCISES (RIGHT) ================= */
+        .question-card {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 0px rgba(0,0,0,0.05);
+            border: 2px solid #eee;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 12px 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0px #e9ecef;
+            display: flex;
+            align-items: center;
+        }
+        
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 0px #dee2e6;
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0px #dee2e6;
+        }
+
+        .option-btn.correct {
+            background: var(--correct) !important;
+            color: white;
+            border-color: #00b85c !important;
+            box-shadow: 0 4px 0px #00b85c !important;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong) !important;
+            color: white;
+            border-color: #e84150 !important;
+            box-shadow: 0 4px 0px #e84150 !important;
+        }
+
+        .explanation-box {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f7ff;
+            border-left: 5px solid #3498db;
+            border-radius: 10px;
+            font-size: 15px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn { from {opacity: 0; transform: translateY(-10px);} to {opacity: 1; transform: translateY(0);} }
+        
+        .shake { animation: shake 0.4s; }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+            100% { transform: translateX(0); }
+        }
+
+        .submit-container { text-align: center; margin-top: 30px; padding-bottom: 30px;}
+        .btn-submit {
+            background-color: var(--secondary);
+            color: white;
+            font-size: 20px;
+            padding: 15px 40px;
+            border-radius: 20px;
+            box-shadow: 0 6px 0px #6b4198;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        /* ================= MODALS & CONFETTI ================= */
+        .confetti {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            z-index: 9999;
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); }
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-score { font-size: 60px; font-weight: 700; color: var(--tertiary); margin: 20px 0; }
+        .modal-msg { font-size: 24px; color: var(--secondary); margin-bottom: 20px; }
+
+        /* Highlight fill in the blank */
+        .blank { font-weight: bold; color: var(--secondary); text-decoration: underline; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="creator-info">
+            <h3>Giáo viên tạo: Ms. Chí Nên </h3>
+        </div>
+        <div class="timer-container">
+            <button class="btn btn-start" id="btn-timer" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+            <div class="timer-display" id="timer-text">10:00</div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        
+        <div class="pane left-pane">
+            <h2 class="passage-title">📖 Reading Passages</h2>
+            
+            <div class="paragraph">
+                <strong>Exercise 9:</strong> Television first appeared in the 1950s. Nowadays, it is one of the most (1)____ source for both the old and the young. Television brings (2)____ for children, world news, music and many other (3)____. If someone likes sports, he can just choose the right (4)____. It is not difficult for us to see why (5)____ is so popular.
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans1">
+                    <strong>Bản dịch:</strong> Vô tuyến truyền hình xuất hiện lần đầu tiên vào những năm 1950. Ngày nay, nó là một trong những nguồn (1) phổ biến nhất cho cả người già và người trẻ. Truyền hình mang đến (2) phim hoạt hình cho trẻ em, tin tức thế giới, âm nhạc và nhiều (3) chương trình khác. Nếu ai đó thích thể thao, họ chỉ cần chọn đúng (4) kênh. Không khó để chúng ta hiểu tại sao (5) nó lại được yêu thích đến vậy.
+                </div>
+            </div>
+
+            <hr style="border: 1px dashed #ccc; margin: 20px 0;">
+
+            <h3 style="color: var(--secondary); margin-bottom: 10px;">Exercise 10: FIFA World Cup</h3>
+            
+            <div class="paragraph">
+                In almost every country around the world, there is a big sports competition. It is like the Olympics but only for one sport, the most popular sport in the world!
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans2">
+                    <strong>Bản dịch:</strong> Ở hầu hết các quốc gia trên thế giới, đều có một cuộc thi thể thao lớn. Nó giống như Thế vận hội Olympic nhưng chỉ dành cho một môn thể thao, môn thể thao phổ biến nhất trên thế giới!
+                </div>
+            </div>
+
+            <div class="paragraph">
+                What do you think about the FIFA World Cup? The first World Cup was in 1930, in Uruguay. In the final game, Uruguay beat Argentina and became the first World Cup winners. 13 countries played in the first World Cup. Now there are 32 countries in the competition. 3
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans3">
+                    <strong>Bản dịch:</strong> Bạn nghĩ sao về Giải vô địch bóng đá thế giới FIFA? Kỳ World Cup đầu tiên diễn ra vào năm 1930, tại Uruguay. Trong trận chung kết, Uruguay đã đánh bại Argentina và trở thành đội vô địch World Cup đầu tiên. Có 13 quốc gia đã tham gia kỳ World Cup đầu tiên. Bây giờ có 32 quốc gia tham gia giải đấu.
+                </div>
+            </div>
+
+            <div class="paragraph">
+                Until 2002, the World Cup was always in a European or American country. South Korea and Japan held the first Asian World Cup. The first African World Cup was in 2010, in South Africa.
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans4')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans4">
+                    <strong>Bản dịch:</strong> Cho đến năm 2002, World Cup luôn được tổ chức ở một quốc gia Châu Âu hoặc Châu Mỹ. Hàn Quốc và Nhật Bản đã đăng cai kỳ World Cup đầu tiên ở Châu Á. Kỳ World Cup đầu tiên ở Châu Phi là vào năm 2010, tại Nam Phi.
+                </div>
+            </div>
+
+            <div class="paragraph">
+                Brazil is the most successful team. It is the only team that has played in every tournament so far. Germany and Italy have won it four times. Uruguay, Argentina, and France have won it two times. England and Spain have won it once.
+                <br>
+                <button class="btn-translate" onclick="toggleTranslate('trans5')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans5">
+                    <strong>Bản dịch:</strong> Brazil là đội bóng thành công nhất. Đây là đội duy nhất đã tham gia mọi giải đấu cho đến nay. Đức và Ý đã giành chiến thắng bốn lần. Uruguay, Argentina và Pháp đã giành chiến thắng hai lần. Anh và Tây Ban Nha đã giành chiến thắng một lần.
+                </div>
+            </div>
+
+            <h3 style="color: var(--tertiary); margin-top: 30px;">📚 Bảng Từ Vựng (Glossary)</h3>
+            <table class="glossary-table">
+                <tr><th>Từ vựng (Word)</th><th>Loại từ (POS)</th><th>Nghĩa Tiếng Việt (Meaning)</th></tr>
+                <tr><td><strong>Competition</strong></td><td>Noun (n)</td><td>Cuộc thi, sự cạnh tranh</td></tr>
+                <tr><td><strong>Tournament</strong></td><td>Noun (n)</td><td>Giải đấu, vòng đấu</td></tr>
+                <tr><td><strong>Successful</strong></td><td>Adjective (adj)</td><td>Thành công, thắng lợi</td></tr>
+                <tr><td><strong>Beat</strong></td><td>Verb (v)</td><td>Đánh bại (ai đó)</td></tr>
+                <tr><td><strong>Appear</strong></td><td>Verb (v)</td><td>Xuất hiện, lộ diện</td></tr>
+                <tr><td><strong>Nowadays</strong></td><td>Adverb (adv)</td><td>Ngày nay, thời nay</td></tr>
+                <tr><td><strong>Popular</strong></td><td>Adjective (adj)</td><td>Phổ biến, được nhiều người ưa chuộng</td></tr>
+                <tr><td><strong>Athlete</strong></td><td>Noun (n)</td><td>Vận động viên</td></tr>
+                <tr><td><strong>Hold (Held)</strong></td><td>Verb (v)</td><td>Tổ chức, đăng cai</td></tr>
+                <tr><td><strong>Final</strong></td><td>Noun / Adj</td><td>Trận chung kết / Cuối cùng</td></tr>
+            </table>
+
+        </div>
+
+        <div class="pane right-pane" id="quiz-container">
+            <h2 class="passage-title" style="color: var(--tertiary);">🎯 Exercises</h2>
+            <div class="submit-container">
+                <button class="btn-submit" onclick="submitQuiz()">NỘP BÀI 🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-content">
+            <h2>Kết quả của bạn</h2>
+            <div class="modal-score" id="score-display">0/10</div>
+            <div class="modal-msg" id="score-msg">Tuyệt vời!</div>
+            <button class="btn btn-start" onclick="closeModal()">Xem lại đáp án chi tiết</button>
+        </div>
+    </div>
+
+<script>
+    // ================= DỮ LIỆU CÂU HỎI (Kèm Giải Thích Chi Tiết) =================
+    const rawQuestions = [
+        // EXERCISE 9
+        {
+            id: 'ex9_q1',
+            text: "Question 1 (Exercise 9): Nowadays, it is one of the most (1)____ source...",
+            options: [
+                { id: 'A', text: "channel", isCorrect: false, expl: "A. channel (n - danh từ): kênh. Sau 'the most' cần một tính từ (adjective) để bổ nghĩa cho danh từ 'source'. -> Sai ngữ pháp." },
+                { id: 'B', text: "program", isCorrect: false, expl: "B. program (n - danh từ): chương trình. Tương tự A, đây là danh từ. -> Sai ngữ pháp." },
+                { id: 'C', text: "popular", isCorrect: true, expl: "C. popular (adj - tính từ): phổ biến. Cấu trúc 'one of the most + adj + N' (một trong những... nhất). Dịch: 'một trong những nguồn phổ biến nhất'. -> Đúng hoàn toàn cả ngữ pháp và ngữ nghĩa." },
+                { id: 'D', text: "exciting", isCorrect: false, expl: "D. exciting (adj - tính từ): thú vị. Về ngữ nghĩa, tivi là nguồn 'phổ biến' (popular) để tiếp nhận thông tin, hợp lý hơn là 'nguồn thú vị'." }
+            ]
+        },
+        {
+            id: 'ex9_q2',
+            text: "Question 2 (Exercise 9): Television brings (2)____ for children...",
+            options: [
+                { id: 'A', text: "cartoons", isCorrect: true, expl: "A. cartoons (n): phim hoạt hình. Dựa vào vế 'for children' (cho trẻ em), phim hoạt hình là nội dung phù hợp nhất. Các vế sau liệt kê 'world news, music...' thể hiện sự đa dạng." },
+                { id: 'B', text: "news", isCorrect: false, expl: "B. news (n): tin tức. Tin tức đã được nhắc đến ở vế sau ('world news') và không phải là nội dung đặc trưng 'cho trẻ em'." },
+                { id: 'C', text: "films", isCorrect: false, expl: "C. films (n): phim ảnh. Quá chung chung so với 'cartoons' dành riêng cho trẻ em." },
+                { id: 'D', text: "plays", isCorrect: false, expl: "D. plays (n): vở kịch. Không phù hợp ngữ cảnh tivi cho trẻ em bằng phim hoạt hình." }
+            ]
+        },
+        {
+            id: 'ex9_q3',
+            text: "Question 3 (Exercise 9): ...world news, music and many other (3)____.",
+            options: [
+                { id: 'A', text: "shows", isCorrect: true, expl: "A. shows (n - số nhiều): chương trình biểu diễn/truyền hình. Từ khóa 'other' chỉ ra rằng các từ phía trước (news, music, cartoons) đều là các dạng 'shows' trên tivi. -> Phù hợp nhất." },
+                { id: 'B', text: "channels", isCorrect: false, expl: "B. channels (n): kênh truyền hình. Tin tức hay âm nhạc không phải là các 'kênh' mà là nội dung phát trên kênh." },
+                { id: 'C', text: "time", isCorrect: false, expl: "C. time (n): thời gian. Sai ngữ nghĩa hoàn toàn." },
+                { id: 'D', text: "studio", isCorrect: false, expl: "D. studio (n): phòng thu. Sai ngữ nghĩa hoàn toàn." }
+            ]
+        },
+        {
+            id: 'ex9_q4',
+            text: "Question 4 (Exercise 9): If someone likes sports, he can just choose the right (4)____.",
+            options: [
+                { id: 'A', text: "athletes", isCorrect: false, expl: "A. athletes (n): vận động viên. Khán giả xem tivi thì chọn kênh để xem chứ không trực tiếp chọn vận động viên." },
+                { id: 'B', text: "programs", isCorrect: false, expl: "B. programs (n): chương trình. Dù có lý, nhưng thói quen xem tivi là chọn 'kênh thể thao' (sports channel) thay vì 'right program'." },
+                { id: 'C', text: "channels", isCorrect: true, expl: "C. channels (n): kênh. Dịch: 'Nếu ai đó thích thể thao, họ chỉ cần chọn đúng kênh (thể thao)'. Rất tự nhiên và hợp logic." },
+                { id: 'D', text: "shows", isCorrect: false, expl: "D. shows (n): Các show diễn. Không hợp lý bằng 'kênh'." }
+            ]
+        },
+        {
+            id: 'ex9_q5',
+            text: "Question 5 (Exercise 9): It is not difficult for us to see why (5)____ is so popular.",
+            options: [
+                { id: 'A', text: "it", isCorrect: true, expl: "A. it (đại từ): nó. Từ 'it' ở đây thay thế cho danh từ số ít 'Television' ở đầu đoạn văn. Dịch: 'Không khó để hiểu tại sao nó (tivi) lại phổ biến đến vậy'." },
+                { id: 'B', text: "they", isCorrect: false, expl: "B. they (đại từ): chúng. 'Television' là danh từ không đếm được/số ít, không dùng 'they'." },
+                { id: 'C', text: "that", isCorrect: false, expl: "C. that: từ nối hoặc đại từ chỉ định. Không phù hợp cấu trúc câu này (why + S + V)." },
+                { id: 'D', text: "there", isCorrect: false, expl: "D. there: trạng từ chỉ nơi chốn / cấu trúc 'there is/are'. Sai ngữ pháp." }
+            ]
+        },
+        // EXERCISE 10
+        {
+            id: 'ex10_q1',
+            text: "Question 1 (Exercise 10): How often is a World Cup every ____?",
+            options: [
+                { id: 'A', text: "one year", isCorrect: false, expl: "Sai. Thực tế và trong bài không đề cập." },
+                { id: 'B', text: "two years", isCorrect: false, expl: "Sai. Thực tế và trong bài không đề cập." },
+                { id: 'C', text: "three years", isCorrect: false, expl: "Sai. Thực tế và trong bài không đề cập." },
+                { id: 'D', text: "eight years", isCorrect: true, expl: "🚨 CHÚ Ý TỪ GIÁO VIÊN: Dựa trên kiến thức thực tế, World Cup diễn ra 4 năm 1 lần. Tuy nhiên, đề bài cung cấp KHÔNG CHỨA đáp án 'four years'. Trong tình huống làm bài thi gặp lỗi đề như thế này, chúng ta buộc phải chọn một đáp án để vượt qua hệ thống (ở đây hệ thống tạm ghi nhận D hoặc bất kỳ đáp án nào là giả định), nhưng các em hãy nhớ sự thật là 4 năm nhé!" }
+            ]
+        },
+        {
+            id: 'ex10_q2',
+            text: "Question 2 (Exercise 10): In the first World Cup, how many teams played?",
+            options: [
+                { id: 'A', text: "there were 13 teams", isCorrect: true, expl: "A ĐÚNG. Dẫn chứng trong bài: '13 countries played in the first World Cup.' (13 quốc gia đã tham gia kỳ World Cup đầu tiên)." },
+                { id: 'B', text: "Argentina beat Uruguay in the final match", isCorrect: false, expl: "B SAI vì bài viết ghi ngược lại: 'Uruguay beat Argentina'." },
+                { id: 'C', text: "there were 32 teams", isCorrect: false, expl: "C SAI. Dẫn chứng: 'Now there are 32 countries' (Đó là số lượng Đội hiện tại, không phải kỳ đầu tiên)." },
+                { id: 'D', text: "Argentina and Uruguay are the winners", isCorrect: false, expl: "D SAI. Chỉ có Uruguay thắng trận chung kết đầu tiên." }
+            ]
+        },
+        {
+            id: 'ex10_q3',
+            text: "Question 3 (Exercise 10): In 2002, the World Cup was in ____.",
+            options: [
+                { id: 'A', text: "an American country", isCorrect: false, expl: "A SAI. Dẫn chứng bài đọc: 'Until 2002, the World Cup was always in a European or American country' -> Tức là TRƯỚC 2002 thì ở Âu/Mỹ." },
+                { id: 'B', text: "a European country", isCorrect: false, expl: "B SAI. Lý do tương tự câu A." },
+                { id: 'C', text: "an Asian country", isCorrect: false, expl: "C SAI một nửa. Thực tế nó diễn ra ở tận 2 quốc gia." },
+                { id: 'D', text: "South Korea and Japan", isCorrect: true, expl: "D ĐÚNG. Dẫn chứng: 'South Korea and Japan held the first Asian World Cup.' (Hàn Quốc và Nhật Bản đã tổ chức World Cup - diễn ra vào năm 2002 theo ngữ cảnh câu trước đó)." }
+            ]
+        },
+        {
+            id: 'ex10_q4',
+            text: "Question 4 (Exercise 10): Why is Brazil the most successful World Cup team?",
+            options: [
+                { id: 'A', text: "Because they haven't played in every tournament so far.", isCorrect: false, expl: "A SAI. Từ 'haven't' mang nghĩa phủ định, trái ngược hoàn toàn với bài đọc." },
+                { id: 'B', text: "Because they have played in all tournaments and won the World Cup five times.", isCorrect: true, expl: "B ĐÚNG. Dẫn chứng trong bài: 'Brazil is the most successful team. It is the only team that has played in every tournament so far.' Dù bài không nhắc trực tiếp số lần vô địch là 5, nhưng đây là đáp án hợp lý và trọn vẹn nhất trong 4 lựa chọn." },
+                { id: 'C', text: "Because no one could beat them in every competition.", isCorrect: false, expl: "C SAI. Bài đọc không hề nói rằng 'không ai có thể đánh bại họ'." },
+                { id: 'D', text: "Because Germany and Italy have only won the World Cup four times.", isCorrect: false, expl: "D SAI. Số lần Đức và Ý thắng không phải là lý do trực tiếp khiến Brazil được mệnh danh là thành công nhất trong nội dung câu hỏi." }
+            ]
+        },
+        {
+            id: 'ex10_q5',
+            text: "Question 5 (Exercise 10): Which of the following is NOT true?",
+            options: [
+                { id: 'A', text: "The first World Cup was in 1930.", isCorrect: false, expl: "A ĐÚNG theo bài đọc ('The first World Cup was in 1930'). Do đó loại vì ta đang tìm câu SAI (NOT true)." },
+                { id: 'B', text: "Uruguay won the first World Cup.", isCorrect: false, expl: "B ĐÚNG theo bài đọc ('Uruguay beat Argentina and became the first World Cup winners'). Loại." },
+                { id: 'C', text: "France has won the World Cup once.", isCorrect: true, expl: "C SAI so với bài đọc. Dẫn chứng: 'Uruguay, Argentina, and France have won it two times' (Pháp thắng 2 lần, không phải 1 lần). Vì câu này SAI nên nó chính là ĐÁP ÁN của câu hỏi." },
+                { id: 'D', text: "South Africa held the first African World Cup.", isCorrect: false, expl: "D ĐÚNG theo bài đọc ('The first African World Cup was in 2010, in South Africa'). Loại." }
+            ]
+        }
+    ];
+
+    // ================= AUDIO API SYNTHESIS (Âm thanh Tự động) =================
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playCorrectSound() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+        
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    function playWrongSound() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+        
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    // ================= CONFETTI EFFECT (Pháo giấy) =================
+    function fireConfetti() {
+        const colors = ['#00D26A', '#FDCB6E', '#8854C0', '#00C9A7', '#FF4757'];
+        for (let i = 0; i < 40; i++) {
+            let confetti = document.createElement('div');
+            confetti.classList.add('confetti');
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = (Math.random() * 1.5 + 1.5) + 's';
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 3000);
+        }
+    }
+
+    // ================= LOGIC HIỂN THỊ VÀ XÁO TRỘN =================
+    let userAnswers = {};
+    let isQuizActive = false;
+
+    // Shuffle Array Algorithm (Fisher-Yates)
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('quiz-container');
+        const submitBtnHTML = container.innerHTML; // Lưu lại nút submit
+        container.innerHTML = '<h2 class="passage-title" style="color: var(--tertiary);">🎯 Exercises</h2>';
+        
+        rawQuestions.forEach((q, index) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            
+            // Render tiêu đề câu hỏi
+            let html = `<div class="question-text">${q.text}</div>`;
+            html += `<div class="options-grid" id="grid-${q.id}">`;
+            
+            // Xáo trộn đáp án
+            let shuffledOptions = shuffleArray([...q.options]);
+            
+            shuffledOptions.forEach(opt => {
+                html += `
+                    <button class="option-btn" 
+                            id="btn-${q.id}-${opt.id}" 
+                            onclick="selectOption('${q.id}', '${opt.id}', ${opt.isCorrect})">
+                        ${opt.text}
+                    </button>
+                `;
+            });
+            html += `</div>`;
+            
+            // Div chứa giải thích
+            html += `<div class="explanation-box" id="expl-${q.id}">
+                <strong style="color: var(--secondary); font-size: 16px;">👩‍🏫 Giải thích chi tiết từ Giáo viên:</strong><br><br>
+            `;
+            // Ghép tất cả lời giải thích của 4 đáp án vào
+            q.options.forEach(o => {
+                html += `<p style="margin-bottom: 5px;">${o.expl}</p>`;
+            });
+            html += `</div>`;
+            
+            card.innerHTML = html;
+            container.appendChild(card);
+        });
+
+        // Add back the submit button
+        container.insertAdjacentHTML('beforeend', `
+            <div class="submit-container">
+                <button class="btn-submit" onclick="submitQuiz()">NỘP BÀI 🚀</button>
+            </div>
+        `);
+    }
+
+    function selectOption(qId, optId, isCorrect) {
+        if (!isQuizActive) {
+            alert("Vui lòng bấm 'BẮT ĐẦU TÍNH GIỜ' ở góc trên để làm bài!");
+            return;
+        }
+
+        // Nếu đã trả lời câu này rồi thì không cho chọn lại
+        if (userAnswers[qId] !== undefined) return;
+        
+        userAnswers[qId] = isCorrect;
+        const btn = document.getElementById(`btn-${qId}-${optId}`);
+        const explBox = document.getElementById(`expl-${qId}`);
+        const allBtns = document.querySelectorAll(`#grid-${qId} .option-btn`);
+        
+        // Disable all buttons for this question
+        allBtns.forEach(b => {
+            b.disabled = true;
+            b.style.cursor = 'not-allowed';
+        });
+
+        if (isCorrect) {
+            btn.classList.add('correct');
+            playCorrectSound();
+            fireConfetti();
+        } else {
+            btn.classList.add('wrong');
+            btn.classList.add('shake');
+            playWrongSound();
+            
+            // Tìm và bôi xanh đáp án đúng thực sự
+            const qData = rawQuestions.find(q => q.id === qId);
+            const correctOpt = qData.options.find(o => o.isCorrect === true);
+            const correctBtn = document.getElementById(`btn-${qId}-${correctOpt.id}`);
+            if (correctBtn) correctBtn.classList.add('correct');
+        }
+
+        // Hiện giải thích
+        explBox.style.display = 'block';
+    }
+
+    // ================= TIMER LOGIC =================
+    let timeRemaining = 600; // 10 minutes
+    let timerInterval;
+
+    function toggleTimer() {
+        const btn = document.getElementById('btn-timer');
+        if (!isQuizActive) {
+            // Bắt đầu
+            isQuizActive = true;
+            btn.innerText = "TẠM DỪNG";
+            btn.classList.remove('btn-start');
+            btn.classList.add('btn-pause');
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục xem và chọn đáp án, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                }
+            }, 1000);
+        } else {
+            // Tạm dừng
+            isQuizActive = false;
+            clearInterval(timerInterval);
+            btn.innerText = "TIẾP TỤC BÀI THI";
+            btn.classList.remove('btn-pause');
+            btn.classList.add('btn-start');
+        }
+    }
+
+    function updateTimerDisplay() {
+        const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+        const s = (timeRemaining % 60).toString().padStart(2, '0');
+        document.getElementById('timer-text').innerText = `${m}:${s}`;
+    }
+
+    // ================= ULTILITIES =================
+    function toggleTranslate(id) {
+        const el = document.getElementById(id);
+        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function submitQuiz() {
+        const total = rawQuestions.length;
+        const score = Object.values(userAnswers).filter(val => val === true).length;
+        
+        let msg = "";
+        if (score === total) msg = "🌟 Thiên tài! Bạn đã trả lời đúng hoàn toàn!";
+        else if (score >= total * 0.7) msg = "🔥 Làm tốt lắm! Cố gắng chút nữa là hoàn hảo!";
+        else if (score >= total * 0.5) msg = "👍 Khá ổn! Bạn cần ôn lại bài một chút nhé.";
+        else msg = "💪 Cố lên nhé! Hãy đọc kỹ giải thích của giáo viên bên dưới để rút kinh nghiệm.";
+
+        document.getElementById('score-display').innerText = `${score}/${total}`;
+        document.getElementById('score-msg').innerText = msg;
+        document.getElementById('result-modal').style.display = 'flex';
+        
+        clearInterval(timerInterval); // Dừng thời gian
+        if(score > total * 0.5) fireConfetti();
+    }
+
+    function closeModal() {
+        document.getElementById('result-modal').style.display = 'none';
+    }
+
+    // Khởi tạo trang
+    window.onload = () => {
+        renderQuestions();
+    };
+</script>
+</body>
+</html>
