@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms. Chí Nên  - Stress Pattern Master</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-purple: #8854C0;
+            --primary-teal: #00C9A7;
+            --success-green: #00D26A;
+            --error-red: #FF4757;
+            --text-color: #2C3A47;
+            --bg-color: #F8EFBA;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(var(--primary-purple) 20%, transparent 20%),
+                              radial-gradient(var(--primary-teal) 20%, transparent 20%);
+            background-position: 0 0, 20px 20px;
+            background-size: 40px 40px;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--text-color);
+        }
+
+        /* Container */
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #eee;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            color: var(--primary-purple);
+            font-weight: 800;
+            margin: 0;
+            font-size: 1.8rem;
+            text-shadow: 2px 2px 0px #eee;
+        }
+
+        .header h2 {
+            font-size: 1rem;
+            color: #777;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #eee;
+            border-radius: 15px;
+            height: 15px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-teal);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 15px;
+        }
+
+        /* Question Box */
+        .question-box {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: var(--primary-purple);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #eee;
+            border-bottom: 5px solid #ddd;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.1s;
+            position: relative;
+            text-align: left;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: var(--primary-teal);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            border-bottom-width: 2px;
+            margin-top: 3px;
+        }
+
+        .option-btn .label {
+            background: #eee;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-size: 0.9rem;
+            font-weight: 800;
+        }
+
+        /* States */
+        .option-btn.correct {
+            background-color: var(--success-green);
+            color: white;
+            border-color: #00b85b;
+            border-bottom-color: #008f46;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--error-red);
+            color: white;
+            border-color: #ff2e40;
+            border-bottom-color: #d61c2d;
+            animation: shake 0.5s;
+        }
+        
+        .option-btn.correct .label, .option-btn.wrong .label {
+            background: rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+        }
+
+        /* Explanation Area */
+        .explanation-area {
+            background-color: #fff8e1;
+            border-left: 5px solid var(--primary-purple);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none; /* Hidden by default */
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .explanation-title {
+            font-weight: 800;
+            color: var(--primary-purple);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .explanation-title::before {
+            content: '💡';
+            margin-right: 8px;
+        }
+
+        .explanation-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            white-space: pre-wrap; /* Keeps line breaks from JSON */
+            color: #444;
+        }
+
+        /* Controls */
+        .controls {
+            margin-top: 20px;
+            text-align: right;
+            display: none; /* Hidden until answer selected */
+        }
+
+        .next-btn {
+            background-color: var(--primary-purple);
+            color: white;
+            border: none;
+            border-bottom: 5px solid #6c4299;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .next-btn:active {
+            transform: translateY(4px);
+            border-bottom-width: 0px;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-2deg); }
+            50% { transform: translateX(5px) rotate(2deg); }
+            75% { transform: translateX(-5px) rotate(-2deg); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-teal);
+            margin: 10px 0;
+        }
+
+        .feedback-text {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        /* Canvas for Confetti */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="container">
+        <div class="header">
+            <h1>Ms. Chí Nên </h1>
+            <h2>Ngữ âm tiếng Anh: Trọng âm từ</h2>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div id="quiz-area">
+            <div class="question-box">
+                <span class="question-number" id="questionNumber">Question 1/30</span>
+                <div class="question-text" id="questionText">Loading...</div>
+                <div style="font-size: 0.9em; color: #666; margin-top:5px; font-style: italic;" id="questionHint"></div>
+            </div>
+
+            <div class="options-grid" id="optionsGrid">
+                <!-- Options will be injected here -->
+            </div>
+
+            <div class="explanation-area" id="explanationArea">
+                <div class="explanation-title">GIẢI THÍCH CHI TIẾT (Ms. Chí Nên):</div>
+                <div class="explanation-content" id="explanationContent">
+                    <!-- Explanation text -->
+                </div>
+            </div>
+
+            <div class="controls" id="controls">
+                <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next Question ➜</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 style="color: var(--primary-purple);">KẾT QUẢ BÀI THI</h2>
+            <div class="score-display" id="finalScore">0/30</div>
+            <p class="feedback-text" id="finalFeedback">Well done!</p>
+            <button class="next-btn" onclick="location.reload()">Làm lại bài thi ↺</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA SOURCE ---
+        const quizData = {
+            "questions": [
+    {
+      "questionNumber": 1,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "another", "rationale": "", "isCorrect": false },
+        { "text": "energy", "rationale": "", "isCorrect": true },
+        { "text": "example", "rationale": "", "isCorrect": false },
+        { "text": "develop", "rationale": "", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. another (det/pron): cái khác, người khác (Trọng âm 2 - /əˈnʌð.ər/)\n- B. energy (n): năng lượng (Trọng âm 1 - /ˈen.ə.dʒi/)\n- C. example (n): ví dụ (Trọng âm 2 - /ɪɡˈzɑːm.pəl/)\n- D. develop (v): phát triển (Trọng âm 2 - /dɪˈvel.əp/)\n\n2. Giải thích chi tiết:\nĐáp án B có trọng âm rơi vào âm tiết thứ 1. Các đáp án A, C, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Hãy chú ý đến từ 'energy' có 3 âm tiết nhưng trọng âm rơi vào âm đầu tiên."
+    },
+    {
+      "questionNumber": 2,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "afternoon", "isCorrect": true },
+        { "text": "tomorrow", "isCorrect": false },
+        { "text": "consider", "isCorrect": false },
+        { "text": "pollution", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. afternoon (n): buổi chiều (Trọng âm 3 - /ˌɑːf.təˈnuːn/)\n- B. tomorrow (adv): ngày mai (Trọng âm 2 - /təˈmɒr.əʊ/)\n- C. consider (v): cân nhắc, xem xét (Trọng âm 2 - /kənˈsɪd.ər/)\n- D. pollution (n): sự ô nhiễm (Trọng âm 2 - /pəˈluː.ʃən/)\n\n2. Giải thích chi tiết:\nĐáp án A có trọng âm rơi vào âm tiết thứ 3 (thường gặp ở các từ ghép có 'after-'). Các đáp án B, C, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Từ chỉ thời gian trong ngày 'afternoon' thường nhấn vào âm tiết cuối cùng."
+    },
+    {
+      "questionNumber": 3,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "quality", "isCorrect": false },
+        { "text": "suggestion", "isCorrect": true },
+        { "text": "natural", "isCorrect": false },
+        { "text": "yesterday", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. quality (n): chất lượng (Trọng âm 1 - /ˈkwɒl.ə.ti/)\n- B. suggestion (n): sự gợi ý (Trọng âm 2 - /səˈdʒes.tʃən/)\n- C. natural (adj): tự nhiên (Trọng âm 1 - /ˈnætʃ.ər.əl/)\n- D. yesterday (n/adv): hôm qua (Trọng âm 1 - /ˈjes.tə.dei/)\n\n2. Giải thích chi tiết:\nĐáp án B có trọng âm rơi vào âm tiết thứ 2 (quy tắc đuôi -tion nhấn âm trước nó). Các đáp án A, C, D đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Các từ tận cùng bằng đuôi -tion thường có trọng âm rơi vào âm tiết ngay trước nó."
+    },
+    {
+      "questionNumber": 4,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "vacation", "isCorrect": false },
+        { "text": "abundant", "isCorrect": false },
+        { "text": "disaster", "isCorrect": false },
+        { "text": "traveling", "isCorrect": true }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. vacation (n): kỳ nghỉ (Trọng âm 2 - /veɪˈkeɪ.ʃən/)\n- B. abundant (adj): dồi dào, phong phú (Trọng âm 2 - /əˈbʌn.dənt/)\n- C. disaster (n): thảm họa (Trọng âm 2 - /dɪˈzɑː.stər/)\n- D. traveling (n/v): việc đi du lịch (Trọng âm 1 - /ˈtræv.əl.ɪŋ/)\n\n2. Giải thích chi tiết:\nĐáp án D có trọng âm rơi vào âm tiết thứ 1. Các đáp án A, B, C đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Động từ 'travel' khi thêm đuôi -ing vẫn giữ nguyên trọng âm ở âm tiết đầu tiên."
+    },
+    {
+      "questionNumber": 5,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "easily", "isCorrect": false },
+        { "text": "Netherlands", "isCorrect": false },
+        { "text": "countryside", "isCorrect": false },
+        { "text": "convenient", "isCorrect": true }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. easily (adv): một cách dễ dàng (Trọng âm 1 - /ˈiː.zəl.i/)\n- B. Netherlands (n): nước Hà Lan (Trọng âm 1 - /ˈneð.ə.ləndz/)\n- C. countryside (n): vùng nông thôn (Trọng âm 1 - /ˈkʌn.tri.saɪd/)\n- D. convenient (adj): tiện lợi (Trọng âm 2 - /kənˈviː.ni.ənt/)\n\n2. Giải thích chi tiết:\nĐáp án D có trọng âm rơi vào âm tiết thứ 2. Các đáp án A, B, C đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Từ 'convenient' nhấn âm vào nguyên âm dài /iː/ ở giữa."
+    },
+    {
+      "questionNumber": 6,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "basketball", "isCorrect": true },
+        { "text": "recycle", "isCorrect": false },
+        { "text": "invasion", "isCorrect": false },
+        { "text": "expensive", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. basketball (n): bóng rổ (Trọng âm 1 - /ˈbɑː.skɪt.bɔːl/)\n- B. recycle (v): tái chế (Trọng âm 2 - /ˌriːˈsaɪ.kəl/)\n- C. invasion (n): sự xâm lược (Trọng âm 2 - /ɪnˈveɪ.ʒən/)\n- D. expensive (adj): đắt đỏ (Trọng âm 2 - /ɪkˈspen.sɪv/)\n\n2. Giải thích chi tiết:\nĐáp án A có trọng âm rơi vào âm tiết thứ 1. Các đáp án B, C, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Danh từ ghép 'basketball' nhấn mạnh vào thành phần đầu tiên."
+    },
+    {
+      "questionNumber": 7,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "holiday", "isCorrect": false },
+        { "text": "plentiful", "isCorrect": false },
+        { "text": "renewable", "isCorrect": true },
+        { "text": "atmosphere", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. holiday (n): kỳ nghỉ (Trọng âm 1 - /ˈhɒl.ə.deɪ/)\n- B. plentiful (adj): phong phú, dồi dào (Trọng âm 1 - /ˈplen.tɪ.fəl/)\n- C. renewable (adj): có thể tái tạo (Trọng âm 2 - /rɪˈnjuː.ə.bəl/)\n- D. atmosphere (n): bầu không khí (Trọng âm 1 - /ˈæt.mə.sfɪər/)\n\n2. Giải thích chi tiết:\nĐáp án C có trọng âm rơi vào âm tiết thứ 2. Các đáp án A, B, D đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Từ 'renewable' bắt nguồn từ động từ 'renew' (làm mới - trọng âm 2)."
+    },
+    {
+      "questionNumber": 8,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "happiness", "isCorrect": false },
+        { "text": "gathering", "isCorrect": false },
+        { "text": "violin", "isCorrect": true },
+        { "text": "everyone", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. happiness (n): niềm hạnh phúc (Trọng âm 1 - /ˈhæp.i.nəs/)\n- B. gathering (n): buổi tụ tập (Trọng âm 1 - /ˈɡæð.ər.ɪŋ/)\n- C. violin (n): đàn vĩ cầm (Trọng âm 3 - /ˌvaɪəˈlɪn/)\n- D. everyone (pron): mọi người (Trọng âm 1 - /ˈev.ri.wʌn/)\n\n2. Giải thích chi tiết:\nĐáp án C có trọng âm rơi vào âm tiết thứ 3. Các đáp án A, B, D đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Từ mượn 'violin' thường nhấn trọng âm vào âm tiết cuối cùng."
+    },
+    {
+      "questionNumber": 9,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "family", "isCorrect": true },
+        { "text": "difference", "isCorrect": false },
+        { "text": "photograph", "isCorrect": false },
+        { "text": "interesting", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. family (n): gia đình (Trọng âm 1 - /ˈfæm.əl.i/)\n- B. difference (n): sự khác biệt (Trọng âm 1 - /ˈdɪf.ər.əns/)\n- C. photograph (n/v): bức ảnh (Trọng âm 1 - /ˈfəʊ.tə.ɡrɑːf/).\n- D. interesting (adj): thú vị (Trọng âm 1 - /ˈɪn.trəs.tɪŋ/).\n\n*Lưu ý từ Ms. Chí Nên:* Đây là một câu hỏi 'đánh đố' thường gặp. Về lý thuyết chuẩn, cả 4 từ đều có trọng âm 1. Tuy nhiên, trong các đề thi truyền thống, người ra đề thường nhắm vào đáp án C (photograph) để bẫy học sinh nhầm với 'photography' (trọng âm 2) hoặc 'photographic' (trọng âm 3). Hoặc có thể đề muốn so sánh sắc thái âm 1 của family (rất mạnh) với các âm còn lại. Nhưng hãy cẩn trọng nhất với nhóm từ gốc photo-.",
+      "hint": "Hãy cẩn thận với từ 'photograph', nó thường bị nhầm lẫn trọng âm với 'photography'."
+    },
+    {
+      "questionNumber": 10,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "opinion", "isCorrect": false },
+        { "text": "volunteer", "isCorrect": true },
+        { "text": "museum", "isCorrect": false },
+        { "text": "comparison", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. opinion (n): ý kiến (Trọng âm 2 - /əˈpɪn.jən/)\n- B. volunteer (n/v): tình nguyện viên (Trọng âm 3 - /ˌvɒl.ənˈtɪər/)\n- C. museum (n): bảo tàng (Trọng âm 2 - /mjuːˈziː.əm/)\n- D. comparison (n): sự so sánh (Trọng âm 2 - /kəmˈpær.ɪ.sən/)\n\n2. Giải thích chi tiết:\nĐáp án B có trọng âm rơi vào âm tiết thứ 3 (đuôi -eer nhận trọng âm). Các đáp án A, C, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Các từ kết thúc bằng đuôi '-eer' (như volunteer, engineer) thường có trọng âm rơi vào chính âm tiết đó."
+    },
+    {
+      "questionNumber": 11,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "activity", "isCorrect": false },
+        { "text": "biogas", "isCorrect": true },
+        { "text": "exciting", "isCorrect": false },
+        { "text": "conclusion", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. activity (n): hoạt động (Trọng âm 2 - /ækˈtɪv.ə.ti/)\n- B. biogas (n): khí sinh học (Trọng âm 1 - /ˈbaɪ.əʊˌɡæs/)\n- C. exciting (adj): thú vị (Trọng âm 2 - /ɪkˈsaɪ.tɪŋ/)\n- D. conclusion (n): kết luận (Trọng âm 2 - /kənˈkluː.ʒən/)\n\n2. Giải thích chi tiết:\nĐáp án B có trọng âm rơi vào âm tiết thứ 1. Các đáp án A, C, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "'Biogas' là danh từ ghép, trọng âm nhấn vào từ đầu tiên 'bio'."
+    },
+    {
+      "questionNumber": 12,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "carnival", "isCorrect": false },
+        { "text": "powerful", "isCorrect": false },
+        { "text": "envelop", "isCorrect": true },
+        { "text": "waterfall", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. carnival (n): lễ hội hóa trang (Trọng âm 1 - /ˈkɑː.nɪ.vəl/)\n- B. powerful (adj): mạnh mẽ (Trọng âm 1 - /ˈpaʊ.ə.fəl/)\n- C. envelop (v): bao phủ, bao trùm (Trọng âm 2 - /ɪnˈvel.əp/)\n- D. waterfall (n): thác nước (Trọng âm 1 - /ˈwɔː.tə.fɔːl/)\n\n2. Giải thích chi tiết:\nĐáp án C (động từ) có trọng âm rơi vào âm tiết thứ 2. Các đáp án A, B, D đều có trọng âm rơi vào âm tiết thứ 1. \n*Lưu ý: Phân biệt động từ 'envelop' (nhấn âm 2) với danh từ 'envelope' (phong bì - nhấn âm 1).*",
+      "hint": "Chú ý 'envelop' ở đây là động từ (to cover), không phải danh từ 'envelope' (phong bì)."
+    },
+    {
+      "questionNumber": 13,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "collection", "isCorrect": true },
+        { "text": "volleyball", "isCorrect": false },
+        { "text": "negative", "isCorrect": false },
+        { "text": "dangerous", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. collection (n): bộ sưu tập (Trọng âm 2 - /kəˈlek.ʃən/)\n- B. volleyball (n): bóng chuyền (Trọng âm 1 - /ˈvɒl.i.bɔːl/)\n- C. negative (adj): tiêu cực (Trọng âm 1 - /ˈneɡ.ə.tɪv/)\n- D. dangerous (adj): nguy hiểm (Trọng âm 1 - /ˈdeɪn.dʒər.əs/)\n\n2. Giải thích chi tiết:\nĐáp án A có trọng âm rơi vào âm tiết thứ 2. Các đáp án B, C, D đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Đuôi -tion trong 'collection' luôn kéo trọng âm về âm tiết ngay trước nó."
+    },
+    {
+      "questionNumber": 14,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "excursion", "isCorrect": true },
+        { "text": "celebrate", "isCorrect": false },
+        { "text": "valuable", "isCorrect": false },
+        { "text": "motorbike", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. excursion (n): chuyến tham quan (Trọng âm 2 - /ɪkˈskɜː.ʃən/)\n- B. celebrate (v): tổ chức kỷ niệm (Trọng âm 1 - /ˈsel.ə.breɪt/)\n- C. valuable (adj): có giá trị (Trọng âm 1 - /ˈvæl.ju.ə.bəl/)\n- D. motorbike (n): xe máy (Trọng âm 1 - /ˈməʊ.tə.baɪk/)\n\n2. Giải thích chi tiết:\nĐáp án A có trọng âm rơi vào âm tiết thứ 2. Các đáp án B, C, D đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Đuôi -sion tương tự như -tion, trọng âm rơi vào ngay trước nó (ex-CUR-sion)."
+    },
+    {
+      "questionNumber": 15,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "unfortunate", "isCorrect": false },
+        { "text": "advantage", "isCorrect": false },
+        { "text": "ambition", "isCorrect": false },
+        { "text": "limitation", "isCorrect": true }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. unfortunate (adj): không may mắn (Trọng âm 2 - /ʌnˈfɔː.tʃən.ət/)\n- B. advantage (n): lợi thế (Trọng âm 2 - /ədˈvɑːn.tɪdʒ/)\n- C. ambition (n): tham vọng (Trọng âm 2 - /æmˈbɪʃ.ən/)\n- D. limitation (n): sự hạn chế (Trọng âm 3 - /ˌlɪm.ɪˈteɪ.ʃən/)\n\n2. Giải thích chi tiết:\nĐáp án D có trọng âm rơi vào âm tiết thứ 3 (do đuôi -ation). Các đáp án A, B, C đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Đuôi '-ation' thường nhận trọng âm ngay tại chữ 'a' (li-mi-TA-tion)."
+    },
+    {
+      "questionNumber": 16,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "musician", "isCorrect": false },
+        { "text": "enormous", "isCorrect": false },
+        { "text": "natural", "isCorrect": true },
+        { "text": "improvement", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. musician (n): nhạc sĩ (Trọng âm 2 - /mjuˈzɪʃ.ən/)\n- B. enormous (adj): to lớn, khổng lồ (Trọng âm 2 - /ɪˈnɔː.məs/)\n- C. natural (adj): tự nhiên (Trọng âm 1 - /ˈnætʃ.ər.əl/)\n- D. improvement (n): sự cải thiện (Trọng âm 2 - /ɪmˈpruːv.mənt/)\n\n2. Giải thích chi tiết:\nĐáp án C có trọng âm rơi vào âm tiết thứ 1. Các đáp án A, B, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Từ 'natural' giữ trọng âm ở âm tiết đầu giống danh từ gốc 'nature'."
+    },
+    {
+      "questionNumber": 17,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "effective", "isCorrect": true },
+        { "text": "plentiful", "isCorrect": false },
+        { "text": "dangerous", "isCorrect": false },
+        { "text": "limited", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. effective (adj): hiệu quả (Trọng âm 2 - /ɪˈfek.tɪv/)\n- B. plentiful (adj): dồi dào (Trọng âm 1 - /ˈplen.tɪ.fəl/)\n- C. dangerous (adj): nguy hiểm (Trọng âm 1 - /ˈdeɪn.dʒər.əs/)\n- D. limited (adj): hạn chế (Trọng âm 1 - /ˈlɪm.ɪ.tɪd/)\n\n2. Giải thích chi tiết:\nĐáp án A có trọng âm rơi vào âm tiết thứ 2. Các đáp án B, C, D đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Tính từ 'effective' nhấn vào âm tiết thứ 2."
+    },
+    {
+      "questionNumber": 18,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "population", "isCorrect": false },
+        { "text": "education", "isCorrect": false },
+        { "text": "consumption", "isCorrect": true },
+        { "text": "satisfaction", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. population (n): dân số (Trọng âm 3 - /ˌpɒp.juˈleɪ.ʃən/)\n- B. education (n): giáo dục (Trọng âm 3 - /ˌed.jʊˈkeɪ.ʃən/)\n- C. consumption (n): sự tiêu thụ (Trọng âm 2 - /kənˈsʌmp.ʃən/)\n- D. satisfaction (n): sự thỏa mãn (Trọng âm 3 - /ˌsæt.ɪsˈfæk.ʃən/)\n\n2. Giải thích chi tiết:\nĐáp án C có trọng âm rơi vào âm tiết thứ 2. Các đáp án A, B, D đều có trọng âm rơi vào âm tiết thứ 3.",
+      "hint": "Từ 'consumption' xuất phát từ 'consume' (nhấn âm 2), khác với các từ có đuôi -ation (nhấn âm 3)."
+    },
+    {
+      "questionNumber": 19,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "energy", "isCorrect": false },
+        { "text": "countryside", "isCorrect": false },
+        { "text": "changeable", "isCorrect": false },
+        { "text": "volunteer", "isCorrect": true }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. energy (n): năng lượng (Trọng âm 1 - /ˈen.ə.dʒi/)\n- B. countryside (n): vùng nông thôn (Trọng âm 1 - /ˈkʌn.tri.saɪd/)\n- C. changeable (adj): dễ thay đổi (Trọng âm 1 - /ˈtʃeɪn.dʒə.bəl/)\n- D. volunteer (n/v): tình nguyện viên (Trọng âm 3 - /ˌvɒl.ənˈtɪər/)\n\n2. Giải thích chi tiết:\nĐáp án D có trọng âm rơi vào âm tiết thứ 3. Các đáp án A, B, C đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Từ 'volunteer' có trọng âm rơi vào âm cuối cùng, khác biệt hẳn với 3 từ còn lại nhấn âm đầu."
+    },
+    {
+      "questionNumber": 20,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "renewable", "isCorrect": false },
+        { "text": "artificial", "isCorrect": true },
+        { "text": "unfortunate", "isCorrect": false },
+        { "text": "continuous", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. renewable (adj): có thể tái tạo (Trọng âm 2 - /rɪˈnjuː.ə.bəl/)\n- B. artificial (adj): nhân tạo (Trọng âm 3 - /ˌɑː.tɪˈfɪʃ.əl/)\n- C. unfortunate (adj): không may (Trọng âm 2 - /ʌnˈfɔː.tʃən.ət/)\n- D. continuous (adj): liên tục (Trọng âm 2 - /kənˈtɪn.ju.əs/)\n\n2. Giải thích chi tiết:\nĐáp án B có trọng âm rơi vào âm tiết thứ 3. Các đáp án A, C, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Đuôi -cial trong 'artificial' thường nhận trọng âm ở âm tiết ngay trước nó."
+    },
+    {
+      "questionNumber": 21,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "different", "isCorrect": false },
+        { "text": "serious", "isCorrect": false },
+        { "text": "effective", "isCorrect": true },
+        { "text": "regular", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. different (adj): khác biệt (Trọng âm 1 - /ˈdɪf.ər.ənt/)\n- B. serious (adj): nghiêm trọng (Trọng âm 1 - /ˈsɪə.ri.əs/)\n- C. effective (adj): hiệu quả (Trọng âm 2 - /ɪˈfek.tɪv/)\n- D. regular (adj): thường xuyên (Trọng âm 1 - /ˈreɡ.jə.lər/)\n\n2. Giải thích chi tiết:\nĐáp án C có trọng âm rơi vào âm tiết thứ 2. Các đáp án A, B, D đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Tính từ 'effective' nhấn âm 2, khác với các từ còn lại nhấn âm 1."
+    },
+    {
+      "questionNumber": 22,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "dangerous", "isCorrect": false },
+        { "text": "countryside", "isCorrect": false },
+        { "text": "energy", "isCorrect": false },
+        { "text": "volunteer", "isCorrect": true }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. dangerous (adj): nguy hiểm (Trọng âm 1 - /ˈdeɪn.dʒər.əs/)\n- B. countryside (n): vùng nông thôn (Trọng âm 1 - /ˈkʌn.tri.saɪd/)\n- C. energy (n): năng lượng (Trọng âm 1 - /ˈen.ə.dʒi/)\n- D. volunteer (n/v): tình nguyện viên (Trọng âm 3 - /ˌvɒl.ənˈtɪər/)\n\n2. Giải thích chi tiết:\nĐáp án D có trọng âm rơi vào âm tiết thứ 3. Các đáp án A, B, C đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Một lần nữa, 'volunteer' nhấn âm cuối cùng, khác biệt với các từ nhấn âm đầu."
+    },
+    {
+      "questionNumber": 23,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "incapable", "isCorrect": false },
+        { "text": "sincere", "isCorrect": false },
+        { "text": "loyalty", "isCorrect": true },
+        { "text": "success", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. incapable (adj): không có khả năng (Trọng âm 2 - /ɪnˈkeɪ.pə.bəl/)\n- B. sincere (adj): chân thành (Trọng âm 2 - /sɪnˈsɪər/)\n- C. loyalty (n): lòng trung thành (Trọng âm 1 - /ˈlɔɪ.əl.ti/)\n- D. success (n): sự thành công (Trọng âm 2 - /səkˈses/)\n\n2. Giải thích chi tiết:\nĐáp án C có trọng âm rơi vào âm tiết thứ 1. Các đáp án A, B, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Từ 'loyalty' xuất phát từ 'loyal' (trọng âm 1), khi thêm đuôi -ty trọng âm không đổi."
+    },
+    {
+      "questionNumber": 24,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "development", "isCorrect": true },
+        { "text": "satisfaction", "isCorrect": false },
+        { "text": "population", "isCorrect": false },
+        { "text": "education", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. development (n): sự phát triển (Trọng âm 2 - /dɪˈvel.əp.mənt/)\n- B. satisfaction (n): sự thỏa mãn (Trọng âm 3 - /ˌsæt.ɪsˈfæk.ʃən/)\n- C. population (n): dân số (Trọng âm 3 - /ˌpɒp.juˈleɪ.ʃən/)\n- D. education (n): giáo dục (Trọng âm 3 - /ˌed.jʊˈkeɪ.ʃən/)\n\n2. Giải thích chi tiết:\nĐáp án A có trọng âm rơi vào âm tiết thứ 2. Các đáp án B, C, D đều có trọng âm rơi vào âm tiết thứ 3.",
+      "hint": "'Development' giữ trọng âm giống động từ gốc 'develop' (âm 2)."
+    },
+    {
+      "questionNumber": 25,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "attraction", "isCorrect": false },
+        { "text": "humorous", "isCorrect": true },
+        { "text": "acquaintance", "isCorrect": false },
+        { "text": "unselfish", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. attraction (n): sự thu hút (Trọng âm 2 - /əˈtræk.ʃən/)\n- B. humorous (adj): hài hước (Trọng âm 1 - /ˈhjuː.mə.rəs/)\n- C. acquaintance (n): người quen (Trọng âm 2 - /əˈkweɪn.təns/)\n- D. unselfish (adj): không ích kỷ (Trọng âm 2 - /ʌnˈsel.fɪʃ/)\n\n2. Giải thích chi tiết:\nĐáp án B có trọng âm rơi vào âm tiết thứ 1. Các đáp án A, C, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Từ 'humorous' xuất phát từ 'humor' (âm 1), khi thêm đuôi -ous trọng âm không đổi."
+    },
+    {
+      "questionNumber": 26,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "excellent", "isCorrect": false },
+        { "text": "marvelous", "isCorrect": false },
+        { "text": "familiar", "isCorrect": true },
+        { "text": "similar", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. excellent (adj): xuất sắc (Trọng âm 1 - /ˈek.səl.ənt/)\n- B. marvelous (adj): kỳ diệu (Trọng âm 1 - /ˈmɑː.vəl.əs/)\n- C. familiar (adj): quen thuộc (Trọng âm 2 - /fəˈmɪl.i.ər/)\n- D. similar (adj): tương tự (Trọng âm 1 - /ˈsɪm.ɪ.lər/)\n\n2. Giải thích chi tiết:\nĐáp án C có trọng âm rơi vào âm tiết thứ 2. Các đáp án A, B, D đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Từ 'familiar' có trọng âm 2, khác với 'family' (trọng âm 1) và các từ còn lại trong nhóm."
+    },
+    {
+      "questionNumber": 27,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "musician", "isCorrect": true },
+        { "text": "scientist", "isCorrect": false },
+        { "text": "energy", "isCorrect": false },
+        { "text": "biogas", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. musician (n): nhạc sĩ (Trọng âm 2 - /mjuˈzɪʃ.ən/)\n- B. scientist (n): nhà khoa học (Trọng âm 1 - /ˈsaɪən.tɪst/)\n- C. energy (n): năng lượng (Trọng âm 1 - /ˈen.ə.dʒi/)\n- D. biogas (n): khí sinh học (Trọng âm 1 - /ˈbaɪ.əʊˌɡæs/)\n\n2. Giải thích chi tiết:\nĐáp án A có trọng âm rơi vào âm tiết thứ 2. Các đáp án B, C, D đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Đuôi -cian (trong musician) luôn nhận trọng âm ở âm tiết ngay trước nó."
+    },
+    {
+      "questionNumber": 28,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "abundant", "isCorrect": false },
+        { "text": "wonderful", "isCorrect": true },
+        { "text": "convenient", "isCorrect": false },
+        { "text": "important", "isCorrect": false }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. abundant (adj): dồi dào (Trọng âm 2 - /əˈbʌn.dənt/)\n- B. wonderful (adj): tuyệt vời (Trọng âm 1 - /ˈwʌn.də.fəl/)\n- C. convenient (adj): tiện lợi (Trọng âm 2 - /kənˈviː.ni.ənt/)\n- D. important (adj): quan trọng (Trọng âm 2 - /ɪmˈpɔː.tənt/)\n\n2. Giải thích chi tiết:\nĐáp án B có trọng âm rơi vào âm tiết thứ 1. Các đáp án A, C, D đều có trọng âm rơi vào âm tiết thứ 2.",
+      "hint": "Từ 'wonderful' có trọng âm 1, trong khi các từ còn lại nhấn âm 2."
+    },
+    {
+      "questionNumber": 29,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "excellent", "isCorrect": false },
+        { "text": "dangerous", "isCorrect": false },
+        { "text": "plentiful", "isCorrect": false },
+        { "text": "polluting", "isCorrect": true }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. excellent (adj): xuất sắc (Trọng âm 1 - /ˈek.səl.ənt/)\n- B. dangerous (adj): nguy hiểm (Trọng âm 1 - /ˈdeɪn.dʒər.əs/)\n- C. plentiful (adj): dồi dào (Trọng âm 1 - /ˈplen.tɪ.fəl/)\n- D. polluting (adj/participle): gây ô nhiễm (Trọng âm 2 - /pəˈluː.tɪŋ/)\n\n2. Giải thích chi tiết:\nĐáp án D có trọng âm rơi vào âm tiết thứ 2. Các đáp án A, B, C đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Động từ 'pollute' nhấn âm 2, khi thêm -ing trọng âm giữ nguyên."
+    },
+    {
+      "questionNumber": 30,
+      "question": "Choose the word which has a different stress pattern from the others.",
+      "answerOptions": [
+        { "text": "exercise", "isCorrect": false },
+        { "text": "calendar", "isCorrect": false },
+        { "text": "travelling", "isCorrect": false },
+        { "text": "convenience", "isCorrect": true }
+      ],
+      "fullRationale": "1. Phân tích từ vựng:\n- A. exercise (n/v): bài tập / tập thể dục (Trọng âm 1 - /ˈek.sə.saɪz/)\n- B. calendar (n): lịch (Trọng âm 1 - /ˈkæl.ɪn.dər/)\n- C. travelling (n/v): việc đi du lịch (Trọng âm 1 - /ˈtræv.əl.ɪŋ/)\n- D. convenience (n): sự tiện lợi (Trọng âm 2 - /kənˈviː.ni.əns/)\n\n2. Giải thích chi tiết:\nĐáp án D có trọng âm rơi vào âm tiết thứ 2. Các đáp án A, B, C đều có trọng âm rơi vào âm tiết thứ 1.",
+      "hint": "Danh từ 'convenience' nhấn âm 2, giống tính từ 'convenient'."
+    }
+  ]
+        };
+
+        // --- GAME LOGIC ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let audioContext = null;
+
+        const progressBar = document.getElementById('progressBar');
+        const questionNumber = document.getElementById('questionNumber');
+        const questionText = document.getElementById('questionText');
+        const questionHint = document.getElementById('questionHint');
+        const optionsGrid = document.getElementById('optionsGrid');
+        const explanationArea = document.getElementById('explanationArea');
+        const explanationContent = document.getElementById('explanationContent');
+        const controls = document.getElementById('controls');
+        const resultModal = document.getElementById('resultModal');
+        const finalScore = document.getElementById('finalScore');
+        const finalFeedback = document.getElementById('finalFeedback');
+
+        // Init Audio Context on first interaction
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            initAudio();
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            if (type === 'correct') {
+                // Ding sound: high pitch arpeggio
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } else {
+                // Wrong sound: low pitch wobble
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(100, audioContext.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+
+        // --- CONFETTI ENGINE (Minimal) ---
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function createConfetti() {
+            const colors = ['#8854C0', '#00C9A7', '#00D26A', '#FF4757', '#F8EFBA'];
+            for(let i=0; i<50; i++) {
+                particles.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 8 + 4,
+                    life: 100
+                });
+            }
+        }
+
+        function updateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2; // gravity
+                p.life--;
+                
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+                
+                if(p.life <= 0) particles.splice(index, 1);
+            });
+            requestAnimationFrame(updateConfetti);
+        }
+        updateConfetti();
+
+        // --- APP FUNCTIONS ---
+
+        function formatRationale(rationale) {
+            // Convert plain text to HTML with formatting based on user requirement
+            // The JSON already contains lines. We just need to ensure new lines are respected.
+            // Also bolding the "Đáp án..." part if possible.
+            let formatted = rationale.replace(/\n/g, '<br>');
+            formatted = formatted.replace(/(Đáp án [A-D])/g, '<b>$1</b>');
+            return formatted;
+        }
+
+        function loadQuestion() {
+            const qData = quizData.questions[currentQuestionIndex];
+            
+            // Update UI text
+            questionNumber.innerText = `Câu ${currentQuestionIndex + 1}/${quizData.questions.length}`;
+            questionText.innerText = qData.question;
+            questionHint.innerText = `(Gợi ý: ${qData.hint})`;
+            
+            // Reset UI state
+            explanationArea.style.display = 'none';
+            controls.style.display = 'none';
+            optionsGrid.innerHTML = '';
+
+            // Update progress
+            const progress = (currentQuestionIndex / quizData.questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            // Create options
+            const labels = ['A', 'B', 'C', 'D'];
+            qData.answerOptions.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `<div class="label">${labels[index]}</div> ${opt.text}`;
+                
+                // Add rationale to the button object for easy access (though we use fullRationale from main object)
+                btn.onclick = () => checkAnswer(btn, opt.isCorrect, qData.fullRationale);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedBtn, isCorrect, rationaleText) {
+            // Disable all buttons
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            // Highlight correct/wrong
+            if (isCorrect) {
+                selectedBtn.classList.add('correct');
+                score++;
+                playSound('correct');
+                createConfetti();
+            } else {
+                selectedBtn.classList.add('wrong');
+                playSound('wrong');
+                
+                // Find and highlight the correct one
+                const currentQ = quizData.questions[currentQuestionIndex];
+                const correctIndex = currentQ.answerOptions.findIndex(o => o.isCorrect);
+                buttons[correctIndex].classList.add('correct');
+            }
+
+            // Show explanation
+            explanationContent.innerHTML = formatRationale(rationaleText);
+            explanationArea.style.display = 'block';
+            
+            // Show Next button
+            controls.style.display = 'block';
+            
+            // Scroll to explanation on mobile if needed
+            if (window.innerWidth < 600) {
+                setTimeout(() => {
+                    explanationArea.scrollIntoView({behavior: "smooth", block: "nearest"});
+                }, 100);
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            const percentage = (score / quizData.questions.length) * 100;
+            finalScore.innerText = `${score}/${quizData.questions.length}`;
+            
+            if (percentage === 100) {
+                finalFeedback.innerText = "Xuất sắc! Bạn là bậc thầy trọng âm! 🏆";
+                createConfetti();
+                createConfetti(); // double confetti
+            } else if (percentage >= 80) {
+                finalFeedback.innerText = "Giỏi lắm! Chỉ sai một chút thôi! 🌟";
+            } else if (percentage >= 50) {
+                finalFeedback.innerText = "Cố gắng thêm nhé! Đọc kỹ giải thích nha. 💪";
+            } else {
+                finalFeedback.innerText = "Hãy ôn lại kiến thức và thử lại nhé! 📚";
+            }
+
+            resultModal.style.display = 'flex';
+            progressBar.style.width = '100%';
+        }
+
+        // Start App
+        loadQuestion();
+
+    </script>
+</body>
+</html>
