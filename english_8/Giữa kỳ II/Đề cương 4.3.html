@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified English Test - Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* ================= COLOR PALETTE & THEME (DYNAMIC ALGORITHM) ================= */
+        :root {
+            --primary: #1CB0F6; /* Blooket/Duolingo Blue */
+            --primary-shadow: #1480B3;
+            --secondary: #58CC02; /* Duolingo Green */
+            --secondary-shadow: #46A302;
+            --danger: #FF4757;
+            --danger-shadow: #C43642;
+            --warning: #FFC800;
+            --warning-shadow: #D1A300;
+            --text-dark: #3C3C3C;
+            --bg-light: #F0F8FF;
+            --white: #FFFFFF;
+            --gray-light: #E5E5E5;
+        }
+
+        /* SVG Emoji Background Base */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Dynamic SVG Background: Mua sắm (🛒), Thiên nhiên/Rừng (🌳), Thảm họa/Sinh tồn (🏕️) */
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.9) 0%, rgba(230, 245, 255, 0.95) 100%), 
+                        url('data:image/svg+xml;utf8,<svg width="150" height="150" xmlns="http://www.w3.org/2000/svg"><text x="20" y="40" font-size="24" opacity="0.3">🏕️</text><text x="90" y="80" font-size="24" opacity="0.3">🌳</text><text x="40" y="130" font-size="24" opacity="0.3">🛒</text><text x="110" y="20" font-size="24" opacity="0.3">✨</text></svg>');
+        }
+
+        /* ================= TOP CONTROL BAR ================= */
+        .top-bar {
+            height: 70px;
+            background-color: var(--white);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10;
+            border-bottom: 2px solid var(--gray-light);
+        }
+
+        .teacher-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timer-display {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            padding: 5px 20px;
+            border-radius: 20px;
+            border: 2px solid var(--gray-light);
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Quicksand', sans-serif;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 5px 0 var(--primary-shadow);
+        }
+        .btn-primary:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 var(--primary-shadow);
+        }
+
+        .btn-secondary {
+            background-color: var(--warning);
+            color: white;
+            box-shadow: 0 5px 0 var(--warning-shadow);
+        }
+        .btn-secondary:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 var(--warning-shadow);
+        }
+
+        /* ================= SPLIT SCREEN LAYOUT ================= */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .left-panel, .right-panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            border: 3px solid var(--gray-light);
+            padding: 30px;
+            overflow-y: auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        /* Tùy chỉnh thanh cuộn (Scrollbar) */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-light); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #BBD2E1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* ================= LEFT PANEL: READING & GLOSSARY ================= */
+        .passage-card {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 6px 0 var(--gray-light);
+            margin-bottom: 30px;
+            border: 2px solid #E5E5E5;
+        }
+
+        .passage-title {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--primary);
+            margin-top: 0;
+            border-bottom: 2px dashed var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .passage-content {
+            font-size: 18px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .translation-box {
+            display: none;
+            background: #FFFBEA;
+            border-left: 5px solid var(--warning);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        .glossary-table th { background: var(--primary); color: white; padding: 10px; }
+        .glossary-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        /* ================= RIGHT PANEL: EXERCISES ================= */
+        .question-card {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 6px 0 var(--gray-light);
+            margin-bottom: 25px;
+            border: 2px solid #E5E5E5;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid var(--gray-light);
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Quicksand', sans-serif;
+            border-radius: 16px;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--gray-light);
+            transition: all 0.2s;
+            color: var(--text-dark);
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            border-color: var(--primary);
+            background: #F2F9FF;
+        }
+
+        .option-btn.correct {
+            background-color: var(--secondary);
+            color: white;
+            border-color: var(--secondary-shadow);
+            box-shadow: 0 4px 0 var(--secondary-shadow);
+        }
+
+        .option-btn.wrong {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger-shadow);
+            box-shadow: 0 4px 0 var(--danger-shadow);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .explanation-box {
+            display: none;
+            background: #F2F9FF;
+            border: 2px solid var(--primary);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .explanation-box h4 { margin-top: 0; color: var(--primary); }
+        .vocab-list { margin-bottom: 10px; }
+        .vocab-list b { color: #d35400; }
+
+        /* ================= ANIMATIONS & EFFECTS ================= */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ================= MODAL RESULT ================= */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 0 rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease-out;
+        }
+        .modal-content h1 { font-size: 40px; margin: 0; color: var(--primary); }
+        .modal-content .score { font-size: 60px; font-weight: 900; color: var(--secondary); margin: 20px 0; }
+        .modal-content p { font-size: 20px; margin-bottom: 30px; }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="teacher-title">👨‍🏫 Ms. Chí Nên  - Mastery Test</div>
+        <div class="timer-container">
+            <div class="timer-display" id="timer">10:00</div>
+            <button class="btn btn-secondary" id="btn-timer" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+            <button class="btn btn-primary" onclick="submitTest()">NỘP BÀI</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        
+        <div class="left-panel">
+            
+            <div class="passage-card">
+                <h3 class="passage-title">Exercise 1: WHAT TO DO DURING DISASTERS 🌪️</h3>
+                <div class="passage-content">
+                    - Listen to the news - Stay updated with radio, TV or phone alerts.<br>
+                    - Follow evacuation orders - Listen to local news reports and leave (1) _ _ _ _ _ they tell you to leave.<br>
+                    - Find a (2) _ _ _ _ _ place - Stay inside your house, in a strong building or an open area.<br>
+                    - Have an (3) _ _ _ _ _ - Keep food, water, medicine, and a flashlight.<br>
+                    - Stay calm and help - Do not panic and assist others if needed.<br>
+                    - (4) _ _ _ _ _ danger - Stay away from flooded areas, weak buildings and power lines.<br>
+                    - Ask for help - Call the emergency services if you are in (5) _ _ _ _ _
+                </div>
+                <button class="btn btn-secondary" onclick="toggleElement('trans1')">BẢN DỊCH ĐẦY ĐỦ</button>
+                <button class="btn btn-primary" onclick="toggleElement('glos1')">BẢNG TỪ VỰNG</button>
+                
+                <div id="trans1" class="translation-box">
+                    <b>NHỮNG VIỆC CẦN LÀM KHI XẢY RA THẢM HỌA</b><br>
+                    - Lắng nghe tin tức - Cập nhật thông tin qua cảnh báo trên đài phát thanh, TV hoặc điện thoại.<br>
+                    - Tuân thủ lệnh sơ tán - Lắng nghe các bản tin địa phương và rời đi <b>nếu</b> họ yêu cầu bạn rời đi.<br>
+                    - Tìm một nơi <b>an toàn</b> - Ở yên trong nhà bạn, trong một tòa nhà kiên cố hoặc một khu vực trống trải.<br>
+                    - Chuẩn bị <b>bộ dụng cụ khẩn cấp</b> - Dự trữ thức ăn, nước uống, thuốc men và đèn pin.<br>
+                    - Giữ bình tĩnh và giúp đỡ - Không hoảng sợ và hỗ trợ người khác nếu cần.<br>
+                    - <b>Tránh xa</b> mối nguy hiểm - Tránh xa các khu vực ngập lụt, các tòa nhà yếu và đường dây điện.<br>
+                    - Yêu cầu giúp đỡ - Gọi cho các dịch vụ khẩn cấp nếu bạn đang gặp <b>nguy hiểm</b>.
+                </div>
+
+                <table id="glos1" class="glossary-table">
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt (CEFR)</th></tr>
+                    <tr><td>Disaster</td><td>n</td><td>Thảm họa (B2)</td></tr>
+                    <tr><td>Update</td><td>v/n</td><td>Cập nhật (B1)</td></tr>
+                    <tr><td>Alert</td><td>n</td><td>Cảnh báo (B2)</td></tr>
+                    <tr><td>Evacuation</td><td>n</td><td>Sự sơ tán (C1)</td></tr>
+                    <tr><td>Emergency</td><td>n</td><td>Trường hợp khẩn cấp (B1)</td></tr>
+                    <tr><td>Kit</td><td>n</td><td>Bộ dụng cụ (B1)</td></tr>
+                    <tr><td>Panic</td><td>v/n</td><td>Hoảng loạn (B2)</td></tr>
+                    <tr><td>Assist</td><td>v</td><td>Hỗ trợ, giúp đỡ (B2)</td></tr>
+                    <tr><td>Flooded</td><td>adj</td><td>Bị ngập lụt (B1)</td></tr>
+                    <tr><td>Power line</td><td>n</td><td>Đường dây điện (B2)</td></tr>
+                </table>
+            </div>
+
+            <div class="passage-card">
+                <h3 class="passage-title">Exercise 4: CUC PHUONG NATIONAL PARK 🌳</h3>
+                <div class="passage-content">
+                    Cuc Phuong, the first national park in Viet Nam, was officially opened (1) _ _ _ _ _ 1960. It (2) _ _ _ _ _ 160 km south west of Ha Noi spanning Ninh Binh, Hoa Binh and Thanh Hoa provinces. The 200 square kilometer park (3) _ _ _ _ _ tourists and scientists alike. In 2002, nearly 100, 000 visitors (4) _ _ _ _ _ their way to Cuc Phuong. Many come to see the work being done to protect (5) _ _ _ _ _ species. According to scientists, there are about 2, 000 different species of flora and 450 species of fauna.<br><br>
+                    Cuc Phuong National Park has many caves. Quen Voi, also part of the park, is where Nguyen Hue's army was stationed (6) _ _ _ _ _ it made its surprise attack on Thang Long and (7) _ _ _ _ _ the Qing invaders in the spring of 1789.<br><br>
+                    Cuc Phuong is also (8) _ _ _ _ _ to the Muong ethnic minority, who live mainly on beekeeping and farming.
+                </div>
+                <p style="font-size:12px; color:gray; font-style:italic;">*Lưu ý: Theo đề bài gốc không cung cấp đáp án cho vị trí (4), để đảm bảo TOÀN VẸN DỮ LIỆU, hệ thống giữ nguyên văn bản nhưng sẽ không hiện câu hỏi số 4 bên bảng bài tập.*</p>
+                <button class="btn btn-secondary" onclick="toggleElement('trans4')">BẢN DỊCH ĐẦY ĐỦ</button>
+                <button class="btn btn-primary" onclick="toggleElement('glos4')">BẢNG TỪ VỰNG</button>
+                
+                <div id="trans4" class="translation-box">
+                    Cúc Phương, công viên quốc gia đầu tiên ở Việt Nam, được chính thức mở cửa <b>vào</b> năm 1960. Nó <b>tọa lạc</b> cách Hà Nội 160 km về phía Tây Nam, trải dài qua các tỉnh Ninh Bình, Hòa Bình và Thanh Hóa. Khu bảo tồn rộng 200 km vuông này <b>thu hút</b> cả khách du lịch lẫn các nhà khoa học. Vào năm 2002, gần 100.000 du khách đã tìm đường đến Cúc Phương. Nhiều người đến để xem những công việc đang được thực hiện nhằm bảo vệ các loài <b>có nguy cơ tuyệt chủng</b>. Theo các nhà khoa học, có khoảng 2.000 loài thực vật và 450 loài động vật khác nhau.<br><br>
+                    Vườn quốc gia Cúc Phương có rất nhiều hang động. Quèn Voi, cũng là một phần của khu bảo tồn, là nơi quân đội của Nguyễn Huệ đóng quân <b>trước khi</b> thực hiện cuộc tấn công bất ngờ vào Thăng Long và <b>đánh bại</b> quân xâm lược nhà Thanh vào mùa xuân năm 1789.<br><br>
+                    Cúc Phương cũng là <b>nhà/nơi cư ngụ</b> của dân tộc thiểu số người Mường, những người sống chủ yếu dựa vào nghề nuôi ong và làm ruộng.
+                </div>
+
+                <table id="glos4" class="glossary-table">
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt (CEFR)</th></tr>
+                    <tr><td>Officially</td><td>adv</td><td>Một cách chính thức (B2)</td></tr>
+                    <tr><td>Locate</td><td>v</td><td>Tọa lạc, định vị (B2)</td></tr>
+                    <tr><td>Span</td><td>v</td><td>Trải dài, bắc ngang (C1)</td></tr>
+                    <tr><td>Attract</td><td>v</td><td>Thu hút (B1)</td></tr>
+                    <tr><td>Endangered</td><td>adj</td><td>Có nguy cơ tuyệt chủng (B2)</td></tr>
+                    <tr><td>Flora</td><td>n</td><td>Hệ thực vật (C1)</td></tr>
+                    <tr><td>Fauna</td><td>n</td><td>Hệ động vật (C1)</td></tr>
+                    <tr><td>Station</td><td>v</td><td>Đóng quân, đặt vị trí (C1)</td></tr>
+                    <tr><td>Defeat</td><td>v</td><td>Đánh bại (B2)</td></tr>
+                    <tr><td>Invader</td><td>n</td><td>Kẻ xâm lược (C1)</td></tr>
+                    <tr><td>Ethnic minority</td><td>n</td><td>Dân tộc thiểu số (B2)</td></tr>
+                </table>
+            </div>
+
+            <div class="passage-card">
+                <h3 class="passage-title">Exercise 5: ONLINE SHOPPING 🛒</h3>
+                <div class="passage-content">
+                    Nowadays, Vietnamese people are now in favor of buying goods from online stores due to their advantages. With Internet access, customers can easily find a wide range of products, including electronic devices, clothes, food and drink, etc. on these shopping platforms. They can spend a lot of time looking for products, comparing their prices among multiple online stores and reading customers' reviews to make a final decision on what they will buy. Online shopping offers many benefits, including lower prices. On special occasions, these online markets provide shoppers with lots of discount codes and items at cheaper prices. Moreover, e-commerce websites attract new customers every day due to its convenience with just a few mouse clicks at home. Customers can purchase anything, at any time, from anywhere without wasting time bargaining like in the traditional stores. This new method of shopping satisfies consumer demand.
+                </div>
+                <button class="btn btn-secondary" onclick="toggleElement('trans5')">BẢN DỊCH ĐẦY ĐỦ</button>
+                <button class="btn btn-primary" onclick="toggleElement('glos5')">BẢNG TỪ VỰNG</button>
+                
+                <div id="trans5" class="translation-box">
+                    Ngày nay, người dân Việt Nam đang rất ưa chuộng việc mua sắm hàng hóa từ các cửa hàng trực tuyến nhờ vào những ưu điểm của chúng. Có kết nối Internet, khách hàng có thể dễ dàng tìm thấy đa dạng các loại sản phẩm, bao gồm thiết bị điện tử, quần áo, đồ ăn thức uống, v.v. trên các nền tảng mua sắm này. Họ có thể dành nhiều thời gian để tìm kiếm sản phẩm, so sánh giá cả giữa nhiều cửa hàng trực tuyến và đọc đánh giá của khách hàng để đưa ra quyết định cuối cùng về những gì họ sẽ mua. Mua sắm trực tuyến mang lại nhiều lợi ích, bao gồm giá cả thấp hơn. Vào những dịp đặc biệt, các khu chợ trực tuyến này cung cấp cho người mua sắm rất nhiều mã giảm giá và các mặt hàng với giá rẻ hơn. Hơn nữa, các trang web thương mại điện tử thu hút khách hàng mới mỗi ngày do sự tiện lợi của nó chỉ với vài cú click chuột tại nhà. Khách hàng có thể mua bất cứ thứ gì, vào bất cứ lúc nào, từ bất cứ đâu mà không lãng phí thời gian mặc cả như ở các cửa hàng truyền thống. Phương thức mua sắm mới này đáp ứng nhu cầu của người tiêu dùng.
+                </div>
+
+                <table id="glos5" class="glossary-table">
+                    <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt (CEFR)</th></tr>
+                    <tr><td>In favor of</td><td>idiom</td><td>Ủng hộ, ưa chuộng (B2)</td></tr>
+                    <tr><td>Platform</td><td>n</td><td>Nền tảng (B2)</td></tr>
+                    <tr><td>Multiple</td><td>adj</td><td>Nhiều, phức hợp (B2)</td></tr>
+                    <tr><td>Occasion</td><td>n</td><td>Dịp, cơ hội (B1)</td></tr>
+                    <tr><td>Discount</td><td>n</td><td>Giảm giá (B1)</td></tr>
+                    <tr><td>E-commerce</td><td>n</td><td>Thương mại điện tử (C1)</td></tr>
+                    <tr><td>Purchase</td><td>v</td><td>Mua sắm (B2)</td></tr>
+                    <tr><td>Bargain</td><td>v/n</td><td>Mặc cả, trả giá (B2)</td></tr>
+                    <tr><td>Satisfy</td><td>v</td><td>Làm hài lòng, đáp ứng (B2)</td></tr>
+                    <tr><td>Consumer demand</td><td>n</td><td>Nhu cầu người tiêu dùng (C1)</td></tr>
+                </table>
+            </div>
+
+        </div>
+
+        <div class="right-panel" id="questions-container">
+            </div>
+
+    </div>
+
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-content">
+            <h1>KẾT QUẢ CỦA BẠN</h1>
+            <div class="score" id="score-display">0/19</div>
+            <p id="feedback-message">Tuyệt vời!</p>
+            <button class="btn btn-primary" onclick="location.reload()">LÀM LẠI BÀI</button>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <script>
+        /* ================= DATA & CONTENT ================= */
+        // Dữ liệu được mã hóa chuẩn hóa từ yêu cầu của người dùng. Bao gồm cả giải thích siêu chi tiết.
+        const quizData = [
+            // EXERCISE 1
+            {
+                id: '1-1',
+                text: "Exercise 1 - Question 1: Listen to local news reports and leave (1) _ _ _ _ _ they tell you to leave.",
+                options: [
+                    { text: "A. if", isCorrect: true },
+                    { text: "B. unless", isCorrect: false },
+                    { text: "C. before", isCorrect: false },
+                    { text: "D. until", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích từ vựng:</b><br>A. if (liên từ): nếu<br>B. unless (liên từ): trừ khi (= if not)<br>C. before (liên từ/giới từ): trước khi<br>D. until (liên từ): cho đến khi</div>
+                <b>2. Dịch câu:</b> "Lắng nghe các bản tin địa phương và rời đi <b>nếu</b> họ yêu cầu bạn rời đi."<br>
+                <b>3. Tại sao chọn A?</b> Xét về mặt logic trong tình huống thảm họa, việc sơ tán (leave) là một <i>hành động có điều kiện</i> phụ thuộc vào lệnh của cơ quan chức năng. Nghĩa "nếu" hoàn toàn khớp ngữ cảnh. Loại B vì sai nghĩa (rời đi trừ khi họ bảo -> vô lý).`
+            },
+            {
+                id: '1-2',
+                text: "Exercise 1 - Question 2: Find a (2) _ _ _ _ _ place - Stay inside your house, in a strong building...",
+                options: [
+                    { text: "A. careful", isCorrect: false },
+                    { text: "B. secret", isCorrect: false },
+                    { text: "C. safe", isCorrect: true },
+                    { text: "D. underground", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích từ vựng:</b><br>A. careful (adj): cẩn thận<br>B. secret (adj): bí mật<br>C. safe (adj): an toàn<br>D. underground (adj): dưới lòng đất</div>
+                <b>2. Dịch câu:</b> "Tìm một nơi <b>an toàn</b> - Ở yên trong nhà bạn, trong một tòa nhà kiên cố..."<br>
+                <b>3. Tại sao chọn C?</b> Dẫn chứng ngay vế sau: "Stay inside your house, in a strong building" (Ở trong nhà, tòa nhà kiên cố) -> Đây là những ví dụ về một nơi <b>an toàn (safe)</b> khi có thảm họa. Không cần thiết phải là nơi bí mật (B) hay dưới lòng đất (D).`
+            },
+            {
+                id: '1-3',
+                text: "Exercise 1 - Question 3: Have an (3) _ _ _ _ _ - Keep food, water, medicine, and a flashlight.",
+                options: [
+                    { text: "A. supplies", isCorrect: false },
+                    { text: "B. emergency kit", isCorrect: true },
+                    { text: "C. property", isCorrect: false },
+                    { text: "D. damage", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích từ vựng:</b><br>A. supplies (n - số nhiều): nguồn cung cấp (Không đi với mạo từ 'an')<br>B. emergency kit (n): bộ dụng cụ khẩn cấp<br>C. property (n): tài sản<br>D. damage (n): thiệt hại</div>
+                <b>2. Dịch câu:</b> "Chuẩn bị một <b>bộ dụng cụ khẩn cấp</b> - Giữ thức ăn, nước, thuốc men và đèn pin."<br>
+                <b>3. Tại sao chọn B?</b> Về ngữ pháp, mạo từ "an" cần đi với một danh từ/cụm danh từ đếm được số ít bắt đầu bằng nguyên âm -> "emergency kit" hợp lý. Về ngữ nghĩa, thức ăn, nước, thuốc, đèn pin chính là những thành phần cấu tạo nên "bộ dụng cụ khẩn cấp".`
+            },
+            {
+                id: '1-4',
+                text: "Exercise 1 - Question 4: (4) _ _ _ _ _ danger - Stay away from flooded areas, weak buildings...",
+                options: [
+                    { text: "A. Follow", isCorrect: false },
+                    { text: "B. Avoid", isCorrect: true },
+                    { text: "C. Have", isCorrect: false },
+                    { text: "D. Wait", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích từ vựng:</b><br>A. Follow (v): đi theo, tuân theo<br>B. Avoid (v): tránh xa<br>C. Have (v): có<br>D. Wait (v): chờ đợi</div>
+                <b>2. Dịch câu:</b> "<b>Tránh xa</b> mối nguy hiểm - Tránh xa các khu vực ngập lụt, các tòa nhà yếu..."<br>
+                <b>3. Tại sao chọn B?</b> Chú ý cụm từ giải thích ngay phía sau: "Stay away from..." (Tránh xa khỏi...). Do đó động từ cần điền ở đầu câu phải đồng nghĩa với cụm này -> "Avoid" (tránh) là chính xác tuyệt đối.`
+            },
+            {
+                id: '1-5',
+                text: "Exercise 1 - Question 5: Ask for help - Call the emergency services if you are in (5) _ _ _ _ _",
+                options: [
+                    { text: "A. dangerous", isCorrect: false },
+                    { text: "B. endangered", isCorrect: false },
+                    { text: "C. dangerously", isCorrect: false },
+                    { text: "D. danger", isCorrect: true }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích từ vựng (Word form):</b><br>A. dangerous (adj): nguy hiểm<br>B. endangered (adj): có nguy cơ tuyệt chủng<br>C. dangerously (adv): một cách nguy hiểm<br>D. danger (n): mối nguy hiểm</div>
+                <b>2. Dịch câu:</b> "Yêu cầu giúp đỡ - Gọi cho các dịch vụ khẩn cấp nếu bạn đang gặp <b>nguy hiểm</b>."<br>
+                <b>3. Tại sao chọn D?</b> Cấu trúc ngữ pháp "be in + Noun" -> <b>be in danger</b> (đang ở trong tình trạng nguy hiểm). Không thể dùng tính từ (A) hay trạng từ (C) sau giới từ "in" trong trường hợp này.`
+            },
+            
+            // EXERCISE 4
+            {
+                id: '4-1',
+                text: "Exercise 4 - Question 1: Cuc Phuong... was officially opened (1) _ _ _ _ _ 1960.",
+                options: [
+                    { text: "A. in", isCorrect: true },
+                    { text: "B. on", isCorrect: false },
+                    { text: "C. at", isCorrect: false },
+                    { text: "D. from", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích giới từ:</b><br>A. in + tháng/năm/mùa/thế kỷ<br>B. on + ngày/thứ trong tuần<br>C. at + giờ/thời điểm cụ thể</div>
+                <b>2. Dịch câu:</b> "Cúc Phương... được chính thức mở cửa <b>vào</b> năm 1960."<br>
+                <b>3. Tại sao chọn A?</b> "1960" là năm. Quy tắc cơ bản của tiếng Anh: Dùng giới từ <b>IN</b> đứng trước năm.`
+            },
+            {
+                id: '4-2',
+                text: "Exercise 4 - Question 2: It (2) _ _ _ _ _ 160 km south west of Ha Noi...",
+                options: [
+                    { text: "A. is located", isCorrect: true },
+                    { text: "B. located", isCorrect: false },
+                    { text: "C. locating", isCorrect: false },
+                    { text: "D. location", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích ngữ pháp:</b><br>Cấu trúc: Be located + preposition (in/on/at/khoảng cách) = Nằm ở vị trí nào đó.</div>
+                <b>2. Dịch câu:</b> "Nó <b>tọa lạc / nằm ở vị trí</b> cách Hà Nội 160 km về phía Tây Nam..."<br>
+                <b>3. Tại sao chọn A?</b> "Locate" mang nghĩa chủ động là "tìm ra vị trí" hoặc "đặt ở". Khi nói một địa điểm nằm ở đâu, ta PHẢI dùng thể bị động: <b>is located</b>. Các đáp án B, C, D sai ngữ pháp.`
+            },
+            {
+                id: '4-3',
+                text: "Exercise 4 - Question 3: The 200 square kilometer park (3) _ _ _ _ _ tourists and scientists alike.",
+                options: [
+                    { text: "A. protects", isCorrect: false },
+                    { text: "B. attracts", isCorrect: true },
+                    { text: "C. harms", isCorrect: false },
+                    { text: "D. invites", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích từ vựng:</b><br>A. protect (v): bảo vệ<br>B. attract (v): thu hút<br>C. harm (v): gây hại<br>D. invite (v): mời mọc</div>
+                <b>2. Dịch câu:</b> "Khu bảo tồn rộng 200 km vuông này <b>thu hút</b> cả khách du lịch lẫn các nhà khoa học."<br>
+                <b>3. Tại sao chọn B?</b> Vườn quốc gia có nhiều cảnh đẹp và hệ sinh thái đa dạng nên chức năng tự nhiên đối với con người là "thu hút" (attract). "Protect" (Bảo vệ) thường dùng cho động thực vật, không dùng bảo vệ du khách trong ngữ cảnh này.`
+            },
+            {
+                id: '4-5',
+                text: "Exercise 4 - Question 5: Many come to see the work being done to protect (5) _ _ _ _ _ species.",
+                options: [
+                    { text: "A. dangerous", isCorrect: false },
+                    { text: "B. danger", isCorrect: false },
+                    { text: "C. endangered", isCorrect: true },
+                    { text: "D. dangerously", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích từ vựng (Word Form):</b><br>Ta cần một tính từ đứng trước danh từ "species" (các loài).<br>A. dangerous (adj): nguy hiểm (gây hại cho người khác)<br>C. endangered (adj): bị nguy hiểm, có nguy cơ tuyệt chủng.</div>
+                <b>2. Dịch câu:</b> "Nhiều người đến để xem những công việc đang được thực hiện nhằm bảo vệ các loài <b>có nguy cơ tuyệt chủng</b>."<br>
+                <b>3. Tại sao chọn C?</b> Cụm từ cố định trong chủ đề môi trường: <b>Endangered species</b> (các loài có nguy cơ tuyệt chủng). Công viên quốc gia bảo vệ các loài bị đe dọa chứ không bảo vệ các loài gây nguy hiểm (dangerous).`
+            },
+            {
+                id: '4-6',
+                text: "Exercise 4 - Question 6: ...is where Nguyen Hue's army was stationed (6) _ _ _ _ _ it made its surprise attack...",
+                options: [
+                    { text: "A. since", isCorrect: false },
+                    { text: "B. before", isCorrect: true },
+                    { text: "C. during", isCorrect: false },
+                    { text: "D. while", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích từ vựng:</b><br>A. since: kể từ khi<br>B. before: trước khi<br>C. during (+ Noun): trong suốt<br>D. while (+ Clause): trong khi</div>
+                <b>2. Dịch câu:</b> "...là nơi quân đội của Nguyễn Huệ đóng quân <b>trước khi</b> thực hiện cuộc tấn công bất ngờ..."<br>
+                <b>3. Tại sao chọn B?</b> Xét về trật tự thời gian và logic lịch sử: Quân đội phải đóng quân, tập hợp lực lượng (hành động 1) <b>trước khi (before)</b> tấn công (hành động 2).`
+            },
+            {
+                id: '4-7',
+                text: "Exercise 4 - Question 7: ...surprise attack on Thang Long and (7) _ _ _ _ _ the Qing invaders...",
+                options: [
+                    { text: "A. increased", isCorrect: false },
+                    { text: "B. competed", isCorrect: false },
+                    { text: "C. defeated", isCorrect: true },
+                    { text: "D. finished", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích từ vựng:</b><br>A. increased: gia tăng<br>B. competed: cạnh tranh<br>C. defeated: đánh bại<br>D. finished: hoàn thành</div>
+                <b>2. Dịch câu:</b> "...cuộc tấn công bất ngờ vào Thăng Long và <b>đánh bại</b> quân xâm lược nhà Thanh..."<br>
+                <b>3. Tại sao chọn C?</b> Đối tượng phía sau là "the Qing invaders" (quân xâm lược nhà Thanh). Động từ phù hợp nhất đi với kẻ thù/quân xâm lược là "defeat" (đánh bại).`
+            },
+            {
+                id: '4-8',
+                text: "Exercise 4 - Question 8: Cuc Phuong is also (8) _ _ _ _ _ to the Muong ethnic minority...",
+                options: [
+                    { text: "A. room", isCorrect: false },
+                    { text: "B. flat", isCorrect: false },
+                    { text: "C. home", isCorrect: true },
+                    { text: "D. places", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <div class='vocab-list'><b>1. Phân tích cấu trúc:</b><br>Thành ngữ/Cấu trúc cố định: <b>be home to somebody/something</b> = là nhà của ai/cái gì (nơi sinh sống, cư ngụ tự nhiên).</div>
+                <b>2. Dịch câu:</b> "Cúc Phương cũng là <b>nơi cư ngụ / nhà</b> của dân tộc thiểu số người Mường..."<br>
+                <b>3. Tại sao chọn C?</b> Đây là cụm từ cố định trong tiếng Anh. Ta không dùng "room to", "flat to" hay "places to" trong ngữ cảnh chỉ nơi sinh sống của một cộng đồng hay loài vật.`
+            },
+
+            // EXERCISE 5
+            {
+                id: '5-1',
+                text: "Exercise 5 - Question 1: What is the passage mainly about?",
+                options: [
+                    { text: "A. Why buying online is popular in Viet Nam.", isCorrect: true },
+                    { text: "B. What Vietnamese young shoppers do online.", isCorrect: false },
+                    { text: "C. How Vietnamese people spend their time online.", isCorrect: false },
+                    { text: "D. When Vietnamese shop-keepers sell things online.", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <b>1. Dịch câu hỏi:</b> Đoạn văn chủ yếu nói về điều gì?<br>
+                <b>2. Tại sao chọn A?</b> Ngay câu đầu tiên (Topic sentence) đã nêu rõ: "Vietnamese people are now in favor of buying goods from online stores <b>due to their advantages</b>." (Người VN ưa chuộng mua hàng online <b>nhờ vào những lợi ích/ưu điểm của nó</b>). Cả đoạn văn sau đó liệt kê các lợi ích này (tiết kiệm thời gian, giá rẻ, mã giảm giá, tiện lợi). Điều này giải thích <b>Lý do tại sao (Why)</b> nó lại phổ biến.`
+            },
+            {
+                id: '5-2',
+                text: "Exercise 5 - Question 2: Why do shoppers prefer discount codes?",
+                options: [
+                    { text: "A. Because they can buy expensive things.", isCorrect: false },
+                    { text: "B. Because they don't have any money to buy brand-name items.", isCorrect: false },
+                    { text: "C. Because they can use discount codes to buy items at lower prices.", isCorrect: true },
+                    { text: "D. Because they can go shopping whenever they want.", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <b>1. Dịch câu hỏi:</b> Tại sao người mua hàng lại thích mã giảm giá?<br>
+                <b>2. Tìm dẫn chứng:</b> Trong bài có câu: "On special occasions, these online markets provide shoppers with lots of discount codes and items at <b>cheaper prices</b>."<br>
+                <b>3. Tại sao chọn C?</b> Mã giảm giá (discount codes) đi liền với "cheaper prices" (giá rẻ hơn). Tương đương với việc họ có thể mua đồ với "lower prices" (giá thấp hơn).`
+            },
+            {
+                id: '5-3',
+                text: "Exercise 5 - Question 3: How convenient is online shopping?",
+                options: [
+                    { text: "A. Customers can bargain, and they can also buy things quickly.", isCorrect: false },
+                    { text: "B. Customers can compare prices, read customers' reviews among different shops, and buy things at lower prices.", isCorrect: true },
+                    { text: "C. Customers have to bring products themselves.", isCorrect: false },
+                    { text: "D. Customers can't buy things with a lot of mouse clicks.", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <b>1. Dịch câu hỏi:</b> Mua sắm trực tuyến tiện lợi như thế nào?<br>
+                <b>2. Phân tích:</b> <br>
+                - Loại A vì bài viết ghi rõ "without wasting time bargaining" (KHÔNG CẦN mặc cả).<br>
+                - Loại C vì mua online là giao hàng tận nơi, không cần tự xách về.<br>
+                <b>3. Tại sao chọn B?</b> Dẫn chứng trong bài: "comparing their prices among multiple online stores and reading customers' reviews... Online shopping offers many benefits, including lower prices." Đáp án B tóm tắt chính xác 3 tiện ích này.`
+            },
+            {
+                id: '5-4',
+                text: "Exercise 5 - Question 4: According to the passage, which of the following is NOT true?",
+                options: [
+                    { text: "A. Vietnamese people prefer shopping online because of its benefits.", isCorrect: false },
+                    { text: "B. Customers can compare product prices and read reviews before buying.", isCorrect: false },
+                    { text: "C. Online shopping is less convenient than traditional shopping.", isCorrect: true },
+                    { text: "D. E-commerce websites attract new customers daily.", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <b>1. Dịch câu hỏi:</b> Theo đoạn văn, điều nào sau đây là KHÔNG ĐÚNG?<br>
+                <b>2. Tại sao chọn C?</b> Đáp án C nói: "Mua sắm online <b>ít tiện lợi hơn (less convenient)</b> so với mua sắm truyền thống". Điều này đi ngược hoàn toàn với thông điệp của cả bài văn (bài văn ca ngợi sự tiện lợi của mua sắm online với 'just a few mouse clicks at home'). Các đáp án A, B, D đều có thông tin rõ ràng trong bài.`
+            },
+            {
+                id: '5-5',
+                text: "Exercise 5 - Question 5: The word “traditional” in the passage is OPPOSITE in meaning to -",
+                options: [
+                    { text: "A. modern", isCorrect: true },
+                    { text: "B. online", isCorrect: false },
+                    { text: "C. expensive", isCorrect: false },
+                    { text: "D. convenient", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <b>1. Dịch câu hỏi:</b> Từ "traditional" (truyền thống) TRÁI NGHĨA với từ nào?<br>
+                <b>2. Phân tích từ vựng:</b><br>
+                - traditional (adj): thuộc về truyền thống, cũ.<br>
+                - modern (adj): hiện đại.<br>
+                - online: trực tuyến.<br>
+                <b>3. Tại sao chọn A?</b> Trái nghĩa trực tiếp của "truyền thống" trong tiếng Anh luôn là "hiện đại" (modern).`
+            },
+            {
+                id: '5-6',
+                text: "Exercise 5 - Question 6: The word “convenience” in the passage is CLOSEST in meaning to",
+                options: [
+                    { text: "A. comfort", isCorrect: true },
+                    { text: "B. difficulty", isCorrect: false },
+                    { text: "C. problem", isCorrect: false },
+                    { text: "D. risk", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <b>1. Dịch câu hỏi:</b> Từ "convenience" (sự tiện lợi) ĐỒNG NGHĨA/GẦN NGHĨA NHẤT với từ nào?<br>
+                <b>2. Phân tích từ vựng:</b><br>
+                - convenience (n): sự tiện lợi, thuận tiện.<br>
+                - comfort (n): sự thoải mái, tiện nghi (Mang tính tích cực, làm cho cuộc sống dễ dàng hơn).<br>
+                - difficulty (n): sự khó khăn.<br>
+                - problem/risk (n): vấn đề / rủi ro.<br>
+                <b>3. Tại sao chọn A?</b> "Comfort" là từ duy nhất mang nét nghĩa tích cực, làm cho người dùng cảm thấy dễ chịu, nhẹ nhàng (giống như "convenience").`
+            },
+            {
+                id: '5-7',
+                text: "Exercise 5 - Question 7: What can be inferred from the passage?",
+                options: [
+                    { text: "A. Online shopping helps people save time and money.", isCorrect: true },
+                    { text: "B. Customers do not like reading reviews before buying online.", isCorrect: false },
+                    { text: "C. Shopping online is more expensive than shopping in physical stores.", isCorrect: false },
+                    { text: "D. People prefer bargaining in traditional stores rather than buying online.", isCorrect: false }
+                ],
+                explanation: `<h4>GIẢI THÍCH CHI TIẾT:</h4>
+                <b>1. Dịch câu hỏi:</b> Có thể suy ra điều gì từ bài đọc?<br>
+                <b>2. Tại sao chọn A?</b> Dựa vào các chi tiết: "without wasting time" (tiết kiệm thời gian) và "lower prices / discount codes" (tiết kiệm tiền). Kết hợp lại, ta hoàn toàn có thể suy luận (infer) rằng Mua sắm trực tuyến giúp con người tiết kiệm Thời gian và Tiền bạc (Save time and money). Các đáp án khác đều sai thực tế bài đọc.`
+            }
+        ];
+
+        /* ================= GAME LOGIC & STATE ================= */
+        let score = 0;
+        let answeredQuestions = 0;
+        let isTimerRunning = false;
+        let timeLeft = 600; // 10 minutes = 600 seconds
+        let timerInterval;
+
+        // Shuffle Array (Tự động xáo trộn đáp án)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        /* ================= WEB AUDIO API FOR SOUNDS ================= */
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+        }
+
+        // Tạo tiếng Ding (Đúng)
+        function playCorrectSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        // Tạo tiếng Téo tèo tèo (Sai)
+        function playWrongSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+            
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        /* ================= RENDER UI ================= */
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = ''; // Clear
+
+            quizData.forEach((q, index) => {
+                // Shuffle options for each question
+                let shuffledOptions = [...q.options];
+                shuffleArray(shuffledOptions);
+
+                let cardHTML = `
+                    <div class="question-card" id="card-${q.id}">
+                        <div class="question-text">${q.text}</div>
+                        <div class="options-grid" id="options-${q.id}">
+                `;
+
+                shuffledOptions.forEach((opt, optIndex) => {
+                    // Mẹo lưu trữ dữ liệu tính đúng/sai
+                    let isCorrectStr = opt.isCorrect ? 'true' : 'false';
+                    cardHTML += `
+                        <button class="option-btn" 
+                            onclick="checkAnswer('${q.id}', this, ${isCorrectStr})"
+                            data-correct="${isCorrectStr}">
+                            ${opt.text}
+                        </button>
+                    `;
+                });
+
+                cardHTML += `
+                        </div>
+                        <div class="explanation-box" id="exp-${q.id}">
+                            ${q.explanation}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHTML;
+            });
+        }
+
+        /* ================= INTERACTION LOGIC ================= */
+        function toggleElement(id) {
+            const el = document.getElementById(id);
+            if(el.style.display === "block") {
+                el.style.display = "none";
+            } else {
+                el.style.display = "block";
+            }
+        }
+
+        function checkAnswer(questionId, btnElement, isCorrect) {
+            // Disable tất cả button trong câu hỏi này
+            const optionsContainer = document.getElementById(`options-${questionId}`);
+            const buttons = optionsContainer.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                // Đúng
+                btnElement.classList.add('correct');
+                playCorrectSound();
+                shootConfetti(btnElement);
+                score++;
+            } else {
+                // Sai
+                btnElement.classList.add('wrong');
+                btnElement.classList.add('shake');
+                playWrongSound();
+                
+                // Hiển thị luôn đáp án đúng (Màu xanh)
+                buttons.forEach(b => {
+                    if(b.getAttribute('data-correct') === 'true') {
+                        b.classList.add('correct');
+                        b.style.boxShadow = "0 0 15px rgba(88, 204, 2, 0.7)"; // highlight
+                    }
+                });
+            }
+
+            // Hiện giải thích chi tiết
+            const expBox = document.getElementById(`exp-${questionId}`);
+            expBox.style.display = 'block';
+
+            answeredQuestions++;
+        }
+
+        /* ================= TIMER ================= */
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').innerText = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer');
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                btn.innerText = "TIẾP TỤC BÀI";
+                isTimerRunning = false;
+            } else {
+                btn.innerText = "TẠM DỪNG";
+                isTimerRunning = true;
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        alert("Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                    }
+                }, 1000);
+            }
+        }
+
+        /* ================= SUBMIT & FEEDBACK ================= */
+        function submitTest() {
+            const modal = document.getElementById('result-modal');
+            const scoreDisplay = document.getElementById('score-display');
+            const feedback = document.getElementById('feedback-message');
+            
+            clearInterval(timerInterval);
+            
+            scoreDisplay.innerText = `${score} / ${quizData.length}`;
+            
+            let message = "";
+            let ratio = score / quizData.length;
+            if (ratio === 1) message = "🎉 THIÊN TÀI TIẾNG ANH LÀ ĐÂY! Xuất sắc 100%!";
+            else if (ratio >= 0.8) message = "🌟 Làm tốt lắm! Bạn nắm bài rất vững đấy!";
+            else if (ratio >= 0.5) message = "👍 Cố lên nhé! Hãy đọc kỹ phần giải thích chi tiết để cải thiện hơn.";
+            else message = "💪 Đừng nản chí! Học từ vựng thật kỹ và làm lại nhé!";
+            
+            feedback.innerText = message;
+            modal.style.display = 'flex';
+        }
+
+        /* ================= CONFETTI EFFECT (VANILLA JS) ================= */
+        function shootConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let particles = [];
+            const colors = ['#1CB0F6', '#58CC02', '#FFC800', '#FF4757', '#9146FF'];
+
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * -10 - 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, i) => {
+                    p.dy += 0.2; // Gravity
+                    p.x += p.dx;
+                    p.y += p.dy;
+                    p.tilt += 0.1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2, false);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+
+                    // Remove particles that fall out of bounds
+                    if(p.y > canvas.height) particles.splice(i, 1);
+                });
+
+                if(particles.length > 0) {
+                    requestAnimationFrame(draw);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            draw();
+        }
+
+        // Initialize App
+        window.onload = () => {
+            renderQuestions();
+        };
+    </script>
+</body>
+</html>
