@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms. Chí Nên  - Super Fun English Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #8854C0, #fceabb, #00C9A7);
+            --correct-color: #00D26A;
+            --incorrect-color: #FF4757;
+            --btn-color: #ffffff;
+            --text-main: #333333;
+            --shadow-color: rgba(0,0,0,0.15);
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Thêm họa tiết vui nhộn chìm dưới background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: radial-gradient(rgba(255,255,255,0.2) 2px, transparent 2px);
+            background-size: 30px 30px;
+            z-index: -1;
+        }
+
+        .header-title {
+            background: #fff;
+            padding: 10px 30px;
+            border-radius: 20px;
+            box-shadow: 0 6px 0 var(--shadow-color);
+            margin-bottom: 20px;
+            font-weight: 900;
+            color: #8854C0;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .quiz-container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 25px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 0 var(--shadow-color);
+            transition: transform 0.2s;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: #FF4757;
+            margin-bottom: 15px;
+            font-weight: 900;
+            text-transform: uppercase;
+            border-bottom: 3px dashed #fceabb;
+            padding-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn-option {
+            background: var(--btn-color);
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #e0e0e0;
+            transition: all 0.1s ease;
+            position: relative;
+            text-align: left;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-option:hover {
+            transform: scale(1.02);
+            border-color: #8854C0;
+        }
+
+        .btn-option:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        .btn-option.correct {
+            background: var(--correct-color);
+            color: white;
+            border-color: #009e4f;
+            box-shadow: 0 6px 0 #009e4f;
+        }
+
+        .btn-option.incorrect {
+            background: var(--incorrect-color);
+            color: white;
+            border-color: #cc3945;
+            box-shadow: 0 6px 0 #cc3945;
+            animation: shake 0.4s;
+        }
+
+        .explanation {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid #00C9A7;
+            border-radius: 10px;
+            font-size: 1rem;
+            line-height: 1.6;
+            animation: fadeIn 0.5s;
+        }
+
+        .explanation.show {
+            display: block;
+        }
+
+        .exp-step { margin-bottom: 10px; }
+        .exp-step strong { color: #8854C0; }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            background: #FF9F43;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            font-family: 'Quicksand', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #cc7f35;
+            margin: 40px 0;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        /* Kiểu dáng cho phần điền từ / sắp xếp (Duolingo style) */
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            min-height: 50px;
+            padding: 10px;
+            background: #f1f2f6;
+            border-radius: 15px;
+            border: 2px dashed #ced6e0;
+        }
+
+        .word-piece {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 8px 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #e0e0e0;
+            user-select: none;
+        }
+
+        .word-piece:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        .answer-slot {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 50px;
+            padding: 15px;
+            border-bottom: 3px solid #333;
+            margin-bottom: 15px;
+        }
+
+        .inline-options select {
+            font-family: 'Quicksand', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 10px;
+            border: 2px solid #8854C0;
+            background: #fff;
+            color: #8854C0;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .dialogue-box {
+            background: #eef2f3;
+            padding: 20px;
+            border-radius: 15px;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+        .dialogue-line { margin-bottom: 10px; display: flex; align-items: center; gap: 10px;}
+        .dialogue-line select { font-size: 1rem; padding: 5px; border-radius: 8px; border: 2px solid #00C9A7; }
+
+        @media(max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-title">👑 Giáo viên tạo: Ms. Chí Nên  👑</div>
+    <div id="app" class="quiz-container"></div>
+
+    <button id="submitBtn" class="submit-btn" onclick="submitQuiz()">Nộp Bài Khoe Điểm!</button>
+
+    <script>
+        // --- DATA NỘI DUNG & GIẢI THÍCH ---
+        const quizData = [
+            // PART I: STRESS
+            {
+                section: "I. Find the word which has a different stress position from the others.",
+                id: "1_1", type: "mcq",
+                question: "1. A. a<u>gain</u> B. <u>wild</u>life C. <u>fi</u>nish D. <u>rare</u>ly",
+                options: ["A. again", "B. wildlife", "C. finish", "D. rarely"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu hỏi:</strong> Tìm từ có trọng âm khác với các từ còn lại.</div>
+                      <div class="exp-step"><strong>2. Phân tích trọng âm:</strong><br>A. again /əˈɡen/ (Trọng âm 2)<br>B. wildlife /ˈwaɪldlaɪf/ (Trọng âm 1)<br>C. finish /ˈfɪnɪʃ/ (Trọng âm 1)<br>D. rarely /ˈreəli/ (Trọng âm 1)</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn A?</strong> Từ 'again' có trọng âm rơi vào âm tiết thứ 2, trong khi 3 từ còn lại đều có trọng âm rơi vào âm tiết thứ 1.</div>`
+            },
+            {
+                id: "1_2", type: "mcq",
+                question: "2. A. ar<u>ri</u>val B. <u>ty</u>pical C. <u>nu</u>merous D. <u>ha</u>bitat",
+                options: ["A. arrival", "B. typical", "C. numerous", "D. habitat"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu hỏi:</strong> Tìm từ có trọng âm khác với các từ còn lại.</div>
+                      <div class="exp-step"><strong>2. Phân tích:</strong><br>A. arrival /əˈraɪvl/ (âm 2)<br>B. typical /ˈtɪpɪkl/ (âm 1)<br>C. numerous /ˈnjuːmərəs/ (âm 1)<br>D. habitat /ˈhæbɪtæt/ (âm 1)</div>
+                      <div class="exp-step"><strong>3. Giải thích:</strong> Đáp án A trọng âm 2, các đáp án còn lại trọng âm 1. Đuôi '-al' thường không làm thay đổi trọng âm của từ gốc (arrive -> arrival).</div>`
+            },
+            {
+                id: "1_3", type: "mcq",
+                question: "3. A. <u>luc</u>kily B. after<u>noon</u> C. <u>cul</u>tural D. <u>res</u>cuer",
+                options: ["A. luckily", "B. afternoon", "C. cultural", "D. rescuer"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu hỏi:</strong> Tìm từ có trọng âm khác với các từ còn lại.</div>
+                      <div class="exp-step"><strong>2. Phân tích:</strong><br>A. luckily /ˈlʌkɪli/ (âm 1)<br>B. afternoon /ˌɑːftəˈnuːn/ (âm 3)<br>C. cultural /ˈkʌltʃərəl/ (âm 1)<br>D. rescuer /ˈreskjuːə(r)/ (âm 1)</div>
+                      <div class="exp-step"><strong>3. Giải thích:</strong> Từ chỉ các buổi có đuôi '-noon' thường nhận trọng âm chính vào chính nó. Đáp án B trọng âm 3, còn lại trọng âm 1.</div>`
+            },
+            {
+                id: "1_4", type: "mcq",
+                question: "4. A. e<u>lec</u>tric B. <u>na</u>tural C. am<u>bi</u>tion D. ad<u>dic</u>tion",
+                options: ["A. electric", "B. natural", "C. ambition", "D. addiction"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu hỏi:</strong> Tìm từ có trọng âm khác với các từ còn lại.</div>
+                      <div class="exp-step"><strong>2. Phân tích:</strong><br>A. electric /ɪˈlektrɪk/ (âm 2)<br>B. natural /ˈnætʃrəl/ (âm 1)<br>C. ambition /æmˈbɪʃn/ (âm 2)<br>D. addiction /əˈdɪkʃn/ (âm 2)</div>
+                      <div class="exp-step"><strong>3. Giải thích:</strong> Các từ kết thúc bằng đuôi '-ic', '-tion' thường có trọng âm rơi vào âm tiết ngay trước nó. Đáp án B trọng âm 1, còn lại trọng âm 2.</div>`
+            },
+            {
+                id: "1_5", type: "mcq",
+                question: "5. A. a<u>vai</u>lable B. e<u>co</u>nomy C. deco<u>ra</u>tion D. at<u>trac</u>tiveness",
+                options: ["A. available", "B. economy", "C. decoration", "D. attractiveness"],
+                correct: 2,
+                exp: `<div class="exp-step"><strong>1. Dịch câu hỏi:</strong> Tìm từ có trọng âm khác với các từ còn lại.</div>
+                      <div class="exp-step"><strong>2. Phân tích:</strong><br>A. available /əˈveɪləbl/ (âm 2)<br>B. economy /ɪˈkɒnəmi/ (âm 2)<br>C. decoration /ˌdekəˈreɪʃn/ (âm 3)<br>D. attractiveness /əˈtræktɪvnəs/ (âm 2)</div>
+                      <div class="exp-step"><strong>3. Giải thích:</strong> Đuôi '-tion' kéo trọng âm rơi vào trước nó (ra-). Nên C trọng âm 3, các từ còn lại trọng âm 2.</div>`
+            },
+
+            // PART II: VOCABULARY
+            {
+                section: "II. Choose the correct word to complete the sentences.",
+                id: "2_1", type: "mcq",
+                question: "1. A volcano in the South Pacific __________ violently last Saturday.",
+                options: ["A. caused", "B. flooded", "C. erupted", "D. blew"],
+                correct: 2,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Một ngọn núi lửa ở Nam Thái Bình Dương đã _____ dữ dội vào thứ Bảy tuần trước.</div>
+                      <div class="exp-step"><strong>2. Phân tích từ vựng:</strong><br>A. caused (v): gây ra.<br>B. flooded (v): làm ngập lụt.<br>C. erupted (v): phun trào.<br>D. blew (v): thổi.</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn C?</strong> Collocation (Cụm từ cố định): "volcano erupts" nghĩa là núi lửa phun trào. Sự việc xảy ra trong quá khứ nên dùng V-ed (erupted).</div>
+                      <div class="exp-step"><strong>4. Tại sao sai?</strong> Núi lửa không thể "gây ra" (nếu không có tân ngữ), không thể "ngập lụt" hay "thổi". Chỉ có C hợp nghĩa.</div>`
+            },
+            {
+                id: "2_2", type: "mcq",
+                question: "2. The tsunami __________ hundreds of homes on some small islands.",
+                options: ["A. built", "B. burned", "C. destroyed", "D. trembled"],
+                correct: 2,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Trận sóng thần đã _____ hàng trăm ngôi nhà trên một số hòn đảo nhỏ.</div>
+                      <div class="exp-step"><strong>2. Phân tích từ vựng:</strong><br>A. built (v): xây dựng.<br>B. burned (v): đốt cháy.<br>C. destroyed (v): phá hủy.<br>D. trembled (v): rung lắc.</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn C?</strong> Sóng thần là thiên tai mang tính hủy diệt, hành động phù hợp nhất tác động lên "homes" (nhà cửa) là "destroyed" (phá hủy).</div>`
+            },
+            {
+                id: "2_3", type: "mcq",
+                question: "3. They were very hard to __________ the villagers from the flooded area.",
+                options: ["A. shelter", "B. rescue", "C. provide", "D. hide"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Họ đã rất vất vả để _____ dân làng khỏi khu vực bị ngập lụt.</div>
+                      <div class="exp-step"><strong>2. Phân tích từ vựng:</strong><br>A. shelter (v): che chở.<br>B. rescue (v): giải cứu.<br>C. provide (v): cung cấp.<br>D. hide (v): trốn/giấu.</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn B?</strong> "Rescue somebody from something" là cụm từ chuẩn: Giải cứu ai đó khỏi cái gì. Ở đây là cứu khỏi vùng ngập lụt.</div>`
+            },
+            {
+                id: "2_4", type: "mcq",
+                question: "4. You can help protect the environment by picking up litter and __________ trees.",
+                options: ["A. planting", "B. cutting", "C. reusing", "D. buying"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Bạn có thể giúp bảo vệ môi trường bằng cách nhặt rác và _____ cây.</div>
+                      <div class="exp-step"><strong>2. Phân tích từ vựng:</strong><br>A. planting (v-ing): trồng.<br>B. cutting (v-ing): chặt, cắt.<br>C. reusing (v-ing): tái sử dụng.<br>D. buying (v-ing): mua.</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn A?</strong> Hành động bảo vệ môi trường đi đôi với "trees" (cây cối) chắc chắn là "trồng cây" (planting). Cấu trúc song song: picking up... and planting...</div>`
+            },
+            {
+                id: "2_5", type: "mcq",
+                question: "5. Water pollution has caused a wide range of __________ problems in humans.",
+                options: ["A. traffic", "B. education", "C. history", "D. health"],
+                correct: 3,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Ô nhiễm nước đã gây ra hàng loạt các vấn đề về _____ ở con người.</div>
+                      <div class="exp-step"><strong>2. Phân tích từ vựng:</strong><br>A. traffic (n): giao thông.<br>B. education (n): giáo dục.<br>C. history (n): lịch sử.<br>D. health (n): sức khỏe.</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn D?</strong> Cụm từ "health problems" (các vấn đề về sức khỏe) là hợp lý nhất khi nói về tác hại của ô nhiễm môi trường đối với con người.</div>`
+            },
+            {
+                id: "2_6", type: "mcq",
+                question: "6. This forest provides a habitat for hundreds of __________ of plants and animals.",
+                options: ["A. styles", "B. species", "C. families", "D. collections"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Khu rừng này cung cấp môi trường sống cho hàng trăm _____ thực vật và động vật.</div>
+                      <div class="exp-step"><strong>2. Phân tích từ vựng:</strong><br>A. styles (n): phong cách.<br>B. species (n): loài (sinh học).<br>C. families (n): gia đình.<br>D. collections (n): bộ sưu tập.</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn B?</strong> Khi nói về thực vật và động vật trong tự nhiên, ta dùng từ "species" (loài).</div>`
+            },
+            {
+                id: "2_7", type: "mcq",
+                question: "7. Some people say that protecting the environment is the government’s _________.",
+                options: ["A. responsive", "B. responsible", "C. responsibly", "D. responsibility"],
+                correct: 3,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Một số người nói rằng bảo vệ môi trường là _____ của chính phủ.</div>
+                      <div class="exp-step"><strong>2. Phân tích từ vựng:</strong><br>A. responsive (adj): phản hồi nhanh.<br>B. responsible (adj): chịu trách nhiệm.<br>C. responsibly (adv): một cách có trách nhiệm.<br>D. responsibility (n): trách nhiệm.</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn D?</strong> Sau sở hữu cách "the government's" bắt buộc phải là một danh từ. Trong 4 đáp án chỉ có D là danh từ.</div>`
+            },
+            {
+                id: "2_8", type: "mcq",
+                question: "8. __________ is a mass of rock and earth moving suddenly and quickly down a steep slope.",
+                options: ["A. Drought", "B. Flood", "C. Landslide", "D. Tornado"],
+                correct: 2,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> _____ là một khối đá và đất di chuyển bất ngờ và nhanh chóng xuống một sườn dốc.</div>
+                      <div class="exp-step"><strong>2. Phân tích từ vựng:</strong><br>A. Drought (n): hạn hán.<br>B. Flood (n): lũ lụt.<br>C. Landslide (n): sạt lở đất.<br>D. Tornado (n): lốc xoáy.</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn C?</strong> Dựa vào định nghĩa "mass of rock and earth" (khối đất đá) trượt xuống dốc, đây chính xác là hiện tượng sạt lở đất (Landslide).</div>`
+            },
+            {
+                id: "2_9", type: "mcq",
+                question: "9. Shopping centres attract lots of __________ during the sales season.",
+                options: ["A. customers", "B. habitats", "C. products", "D. disasters"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Các trung tâm mua sắm thu hút rất nhiều _____ trong mùa giảm giá.</div>
+                      <div class="exp-step"><strong>2. Phân tích từ vựng:</strong><br>A. customers (n): khách hàng.<br>B. habitats (n): môi trường sống.<br>C. products (n): sản phẩm.<br>D. disasters (n): thảm họa.</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn A?</strong> Mùa giảm giá (sales season) thì đối tượng bị thu hút đến trung tâm mua sắm chắc chắn là người mua hàng (customers).</div>`
+            },
+            {
+                id: "2_10", type: "mcq",
+                question: "10. We should recycle single-use products instead __________ throwing them away.",
+                options: ["A. on", "B. to", "C. of", "D. in"],
+                correct: 2,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Chúng ta nên tái chế các sản phẩm dùng một lần thay vì vứt chúng đi.</div>
+                      <div class="exp-step"><strong>2. Phân tích ngữ pháp:</strong> Cụm từ cố định (Prepositional phrase).</div>
+                      <div class="exp-step"><strong>3. Tại sao chọn C?</strong> "Instead of + V-ing/Noun" nghĩa là "thay vì làm gì đó". Đây là cấu trúc bắt buộc nên chọn giới từ 'of'.</div>`
+            },
+
+            // PART III: CIRCLE CORRECT OPTION
+            {
+                section: "III. Circle the correct option in brackets. (Kiểm tra Ngữ pháp Lớp 8/9 - Will vs Hiện tại đơn)",
+                id: "3_1", type: "binary",
+                question: "1. I _______ it to you as soon as I come home.",
+                options: ["send", "will send"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Tôi sẽ gửi nó cho bạn ngay khi tôi về nhà.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> Cấu trúc mệnh đề thời gian tương lai: Tương lai đơn + As soon as + Hiện tại đơn. Do vế sau là "come" (hiện tại đơn), vế chính phải là tương lai đơn "will send".</div>`
+            },
+            {
+                id: "3_2", type: "binary",
+                question: "2. You should help her if she _______.",
+                options: ["needs", "will need"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Bạn nên giúp cô ấy nếu cô ấy cần.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> Câu điều kiện loại 1: If + S + V(hiện tại đơn), S + can/should/will + V(nguyên thể). Sau 'If' không dùng 'will' trong trường hợp này, nên chọn 'needs'.</div>`
+            },
+            {
+                id: "3_3", type: "binary",
+                question: "3. They _______ to England to visit their aunt next year.",
+                options: ["go", "will go"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Họ sẽ tới Anh để thăm dì của họ vào năm sau.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> Dấu hiệu "next year" (năm sau) chỉ sự việc trong tương lai, nên dùng thì Tương lai đơn "will go".</div>`
+            },
+            {
+                id: "3_4", type: "binary",
+                question: "4. The side effects of the drug _______ not always predictable.",
+                options: ["are", "will be"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Các tác dụng phụ của thuốc thì không phải lúc nào cũng có thể đoán trước được.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> Đây là một sự thật hiển nhiên, một tính chất chung của thuốc men, nên ta dùng thì Hiện tại đơn "are".</div>`
+            },
+            {
+                id: "3_5", type: "binary",
+                question: "5. Our shop _______ at 8 o’clock every day.",
+                options: ["opens", "will open"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Cửa hàng của chúng tôi mở cửa lúc 8 giờ mỗi ngày.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> "Every day" chỉ một lịch trình, thói quen lặp đi lặp lại. Với lịch trình tàu xe, mở cửa hàng, ta luôn dùng Hiện tại đơn "opens".</div>`
+            },
+            {
+                id: "3_6", type: "binary",
+                question: "6. She _______ weight if she eats lots of fried food.",
+                options: ["gain", "will gain"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Cô ấy sẽ tăng cân nếu cô ấy ăn nhiều thức ăn chiên rán.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> Câu điều kiện loại 1 diễn tả sự việc có thể xảy ra ở hiện tại hoặc tương lai. Mệnh đề chính (không chứa If) phải dùng thì tương lai "will gain".</div>`
+            },
+            {
+                id: "3_7", type: "binary",
+                question: "7. My father often _______ breakfast at home before he goes to work.",
+                options: ["has", "will have"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Bố tôi thường ăn sáng ở nhà trước khi đi làm.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> Có trạng từ chỉ tần suất "often" (thường xuyên), diễn tả thói quen ở hiện tại -> Dùng thì Hiện tại đơn "has".</div>`
+            },
+            {
+                id: "3_8", type: "binary",
+                question: "8. The bus _______ at 7 o’clock every morning to take students to school.",
+                options: ["leaves", "will leave"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Xe buýt khởi hành lúc 7 giờ mỗi sáng để đưa học sinh tới trường.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> Giống câu 5, đây là lịch trình tàu xe cố định ("every morning"), nên ta dùng thì Hiện tại đơn "leaves".</div>`
+            },
+            {
+                id: "3_9", type: "binary",
+                question: "9. I _______ a big cake on your birthday next week.",
+                options: ["make", "will make"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Mình sẽ làm một chiếc bánh lớn vào sinh nhật cậu tuần tới.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> Dấu hiệu "next week" (tuần tới) chỉ một hành động sẽ xảy ra trong tương lai. Dùng Tương lai đơn "will make".</div>`
+            },
+            {
+                id: "3_10", type: "binary",
+                question: "10. We are allowed to go when the traffic lights _______ green.",
+                options: ["turn", "will turn"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Chúng ta được phép đi khi đèn giao thông chuyển sang màu xanh.</div>
+                      <div class="exp-step"><strong>2. Giải thích ngữ pháp:</strong> Mệnh đề chỉ thời gian bắt đầu bằng "when" (khi nào) không dùng thì Tương lai đơn, mà dùng Hiện tại đơn để chỉ tương lai. Nên chọn "turn".</div>`
+            },
+
+            // PART IV: FIND CORRECTION
+            {
+                section: "IV. Choose the part that needs correction. (Tìm lỗi sai)",
+                id: "4_1", type: "mcq",
+                question: "1. I <u>did</u> my homework <u>at 8 o’clock last night</u>.",
+                options: ["A. did", "B. my", "C. at 8 o'clock", "D. last night"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Tôi đang làm bài tập về nhà vào lúc 8 giờ tối qua.</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> Có mốc thời gian cụ thể trong quá khứ ("at 8 o'clock last night") -> Phải dùng thì Quá khứ tiếp diễn (Past Continuous).</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'did' -> 'was doing'.</div>`
+            },
+            {
+                id: "4_2", type: "mcq",
+                question: "2. Your <u>health</u> <u>will to get</u> <u>bad</u> if you <u>work</u> too hard.",
+                options: ["A. health", "B. will to get", "C. bad", "D. work"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Sức khỏe của bạn sẽ trở nên tồi tệ nếu bạn làm việc quá sức.</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> Động từ khuyết thiếu "will" luôn cộng với động từ nguyên thể KHÔNG "to" (will + V-infinitive).</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'will to get' -> 'will get'.</div>`
+            },
+            {
+                id: "4_3", type: "mcq",
+                question: "3. One of <u>the most</u> difficult <u>decisions</u> is <u>choose</u> a job <u>for a living</u>.",
+                options: ["A. the most", "B. decisions", "C. choose", "D. for a living"],
+                correct: 2,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Một trong những quyết định khó khăn nhất là chọn một công việc để mưu sinh.</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> Đứng sau động từ to-be "is" để đóng vai trò làm bổ ngữ cho chủ ngữ (việc là việc gì), động từ phải ở dạng V-ing hoặc To V.</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'choose' -> 'choosing' / 'to choose'.</div>`
+            },
+            {
+                id: "4_4", type: "mcq",
+                question: "4. You can <u>save</u> energy by <u>turning</u> off lights and <u>use</u> public <u>transport</u>.",
+                options: ["A. save", "B. turning", "C. use", "D. transport"],
+                correct: 2,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Bạn có thể tiết kiệm năng lượng bằng cách tắt đèn và sử dụng phương tiện công cộng.</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> Cấu trúc song song với liên từ "and". Trước "and" là V-ing ("turning"), thì sau "and" cũng phải là V-ing.</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'use' -> 'using'.</div>`
+            },
+            {
+                id: "4_5", type: "mcq",
+                question: "5. <u>Should</u> we delay the party <u>because</u> nobody can <u>coming</u> <u>that day</u>?",
+                options: ["A. Should", "B. because", "C. coming", "D. that day"],
+                correct: 2,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Chúng ta có nên hoãn bữa tiệc vì không ai có thể đến vào ngày hôm đó không?</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> "Can" là động từ khuyết thiếu (modal verb), theo sau nó phải là động từ nguyên thể không "to".</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'coming' -> 'come'.</div>`
+            },
+            {
+                id: "4_6", type: "mcq",
+                question: "6. <u>There were</u> a <u>terrible</u> thunderstorm <u>yesterday</u> <u>evening</u>.",
+                options: ["A. There were", "B. terrible", "C. yesterday", "D. evening"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Có một trận bão sấm sét tồi tệ vào tối qua.</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> Danh từ theo sau là "a thunderstorm" (danh từ số ít đếm được), do đó động từ to-be phải chia ở số ít.</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'There were' -> 'There was'.</div>`
+            },
+            {
+                id: "4_7", type: "mcq",
+                question: "7. <u>Humans</u> need a <u>constancy</u> supply <u>of water</u> to <u>live</u>.",
+                options: ["A. Humans", "B. constancy", "C. of water", "D. live"],
+                correct: 1,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Con người cần một nguồn cung cấp nước liên tục để sống.</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> Đứng trước danh từ "supply" cần một tính từ để bổ nghĩa. "Constancy" đang là danh từ (sự kiên định, sự không thay đổi).</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'constancy' (N) -> 'constant' (Adj).</div>`
+            },
+            {
+                id: "4_8", type: "mcq",
+                question: "8. The storm <u>sudden</u> <u>hit</u> and <u>destroyed</u> the <u>whole</u> village.",
+                options: ["A. sudden", "B. hit", "C. destroyed", "D. whole"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Cơn bão bất ngờ ập đến và phá hủy toàn bộ ngôi làng.</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> Bổ nghĩa cho động từ thường "hit" (ập đến) cần một trạng từ (Adverb), không phải tính từ (Adjective).</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'sudden' (Adj) -> 'suddenly' (Adv).</div>`
+            },
+            {
+                id: "4_9", type: "mcq",
+                question: "9. They <u>buy</u> a house <u>near</u> the <u>beach</u> last <u>summer</u>.",
+                options: ["A. buy", "B. near", "C. beach", "D. summer"],
+                correct: 0,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Họ đã mua một ngôi nhà gần bãi biển vào mùa hè năm ngoái.</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> Trạng từ chỉ thời gian "last summer" (mùa hè trước) yêu cầu sử dụng thì Quá khứ đơn. Động từ "buy" đang chia ở hiện tại.</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'buy' -> 'bought'.</div>`
+            },
+            {
+                id: "4_10", type: "mcq",
+                question: "10. <u>Were</u> the children <u>studying</u> <u>at school</u> <u>in this time</u> yesterday?",
+                options: ["A. Were", "B. studying", "C. at school", "D. in this time"],
+                correct: 3,
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Các đứa trẻ có đang học ở trường vào giờ này ngày hôm qua không?</div>
+                      <div class="exp-step"><strong>2. Phân tích lỗi sai:</strong> Cụm giới từ chỉ thời gian "vào thời điểm này" trong tiếng Anh chuẩn là "at this time", không dùng "in this time".</div>
+                      <div class="exp-step"><strong>3. Sửa lỗi:</strong> 'in this time' -> 'at this time'.</div>`
+            },
+
+            // PART VIII: SENTENCE BUILDING (Drag/Drop style implemented as Jumbled Words)
+            {
+                section: "VIII. Write complete sentences using the given words and phrases. (Sắp xếp từ để tạo thành câu)",
+                id: "8_1", type: "jumble",
+                question: "1. be / your sister / addict / shop / ?",
+                words: ["Is", "your", "sister", "a", "shop", "addict", "?"],
+                correctStr: "Is your sister a shop addict ?",
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Chị của bạn có phải là một người nghiện mua sắm không?</div>
+                      <div class="exp-step"><strong>2. Phân tích cấu trúc:</strong> Câu hỏi Yes/No với động từ To-be đưa lên đầu. Cụm từ "shop addict" (người nghiện mua sắm) cần mạo từ "a" phía trước do là danh từ đếm được số ít.</div>`
+            },
+            {
+                id: "8_2", type: "jumble",
+                question: "2. We / can’t / bargain / prices of goods / supermarkets/.",
+                words: ["We", "can't", "bargain", "over", "prices", "of", "goods", "in", "supermarkets", "."],
+                correctStr: "We can't bargain over prices of goods in supermarkets .",
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Chúng ta không thể mặc cả giá của hàng hóa trong siêu thị.</div>
+                      <div class="exp-step"><strong>2. Phân tích cấu trúc:</strong> Cụm "bargain over something" (mặc cả về cái gì). Chỉ địa điểm "supermarkets" dùng giới từ "in".</div>`
+            },
+            {
+                id: "8_3", type: "jumble",
+                question: "3. What / you / do / 9 o’clock yesterday morning / ?",
+                words: ["What", "were", "you", "doing", "at", "9 o'clock", "yesterday", "morning", "?"],
+                correctStr: "What were you doing at 9 o'clock yesterday morning ?",
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Bạn đang làm gì lúc 9 giờ sáng ngày hôm qua?</div>
+                      <div class="exp-step"><strong>2. Phân tích cấu trúc:</strong> Có mốc thời gian cụ thể trong quá khứ -> Dùng thì Quá khứ tiếp diễn. Cấu trúc câu hỏi: Wh-word + was/were + S + V-ing? Thêm giới từ "at" trước giờ.</div>`
+            },
+            {
+                id: "8_4", type: "jumble",
+                question: "4. residents / tall buildings / be frightened / when / they / fell / slight shaking /.",
+                words: ["The", "residents", "of", "tall", "buildings", "were", "frightened", "when", "they", "felt", "a", "slight", "shaking", "."],
+                correctStr: "The residents of tall buildings were frightened when they felt a slight shaking .",
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Cư dân của các tòa nhà cao tầng đã hoảng sợ khi họ cảm nhận thấy một sự rung lắc nhẹ.</div>
+                      <div class="exp-step"><strong>2. Phân tích:</strong> Thêm mạo từ "The" trước chủ ngữ xác định, giới từ "of" (của). Đổi 'fell' (rơi - đề bài gõ sai) thành 'felt' (cảm thấy). Thêm mạo từ "a" trước cụm danh từ đếm được "slight shaking".</div>`
+            },
+            {
+                id: "8_5", type: "jumble",
+                question: "5. When / natural disaster / happen, / we / must / listen / instruction from local authorities /.",
+                words: ["When", "a", "natural", "disaster", "happens", ",", "we", "must", "listen", "to", "instructions", "from", "local", "authorities", "."],
+                correctStr: "When a natural disaster happens , we must listen to instructions from local authorities .",
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Khi một thảm họa thiên nhiên xảy ra, chúng ta phải lắng nghe chỉ dẫn từ chính quyền địa phương.</div>
+                      <div class="exp-step"><strong>2. Phân tích:</strong> Thêm "a" trước natural disaster và chia động từ "happens" (số ít). "Listen" phải đi với giới từ "to". Thêm 's' vào "instructions" vì là danh từ đếm được chỉ số nhiều chung chung.</div>`
+            },
+            {
+                id: "8_6", type: "jumble",
+                question: "6. One disadvantage / shop online / be / that / you / not know exactly / what / you / get /.",
+                words: ["One", "disadvantage", "of", "shopping", "online", "is", "that", "you", "don't", "know", "exactly", "what", "you", "will", "get", "."],
+                correctStr: "One disadvantage of shopping online is that you don't know exactly what you will get .",
+                exp: `<div class="exp-step"><strong>1. Dịch câu:</strong> Một bất lợi của việc mua sắm trực tuyến là bạn không biết chính xác mình sẽ nhận được gì.</div>
+                      <div class="exp-step"><strong>2. Phân tích:</strong> Cấu trúc "disadvantage of V-ing" (bất lợi của việc gì). Chia động từ to-be là "is". Phủ định ở hiện tại dùng "don't know". Mệnh đề sau 'what' diễn tả tương lai nên dùng "will get".</div>`
+            }
+        ];
+
+        // Âm thanh
+        const playAudio = (type) => {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.start(); osc.stop(ctx.currentTime + 0.3);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                osc.start(); osc.stop(ctx.currentTime + 0.3);
+            }
+        };
+
+        // Hàm xáo trộn mảng
+        const shuffle = (array) => {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        };
+
+        let score = 0;
+        let answeredQuestions = new Set();
+        const totalScore = quizData.length + 6; // Cộng 6 câu phần V
+
+        // Render Quiz
+        const app = document.getElementById('app');
+        let currentSection = "";
+
+        quizData.forEach((item, index) => {
+            if (item.section && item.section !== currentSection) {
+                app.innerHTML += `<div class="section-title">${item.section}</div>`;
+                currentSection = item.section;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.id = `card_${item.id}`;
+
+            let contentHTML = `<div class="question-text">${item.question}</div>`;
+
+            if (item.type === 'mcq') {
+                // Xáo trộn đáp án mà vẫn giữ đúng logic
+                let optionsData = item.options.map((opt, i) => ({ text: opt, isCorrect: i === item.correct }));
+                optionsData = shuffle(optionsData);
+                
+                contentHTML += `<div class="options-grid">`;
+                optionsData.forEach((opt) => {
+                    contentHTML += `<button class="btn-option" onclick="handleMCQ(this, '${item.id}', ${opt.isCorrect})">${opt.text}</button>`;
+                });
+                contentHTML += `</div>`;
+            } else if (item.type === 'binary') {
+                let optionsData = item.options.map((opt, i) => ({ text: opt, isCorrect: i === item.correct }));
+                contentHTML += `<div class="options-grid">`;
+                optionsData.forEach((opt) => {
+                    contentHTML += `<button class="btn-option" style="text-align: center; justify-content: center;" onclick="handleMCQ(this, '${item.id}', ${opt.isCorrect})">${opt.text}</button>`;
+                });
+                contentHTML += `</div>`;
+            } else if (item.type === 'jumble') {
+                let shuffledWords = shuffle([...item.words]);
+                contentHTML += `
+                    <div class="answer-slot" id="slot_${item.id}" onclick="returnWord('${item.id}', event)"></div>
+                    <div class="word-bank" id="bank_${item.id}">
+                        ${shuffledWords.map(w => `<div class="word-piece" onclick="moveWord(this, '${item.id}')">${w}</div>`).join('')}
+                    </div>
+                    <button class="submit-btn" style="margin: 10px 0; padding: 10px; font-size: 1.1rem; background: #00C9A7; box-shadow: 0 5px 0 #008f76" onclick="checkJumble('${item.id}', '${item.correctStr.replace(/'/g, "\\'")}')">Kiểm Tra Câu</button>
+                `;
+            }
+
+            contentHTML += `<div class="explanation" id="exp_${item.id}">${item.exp}</div>`;
+            card.innerHTML = contentHTML;
+            app.appendChild(card);
+        });
+
+        // --- Render Phần V (Dialogue Gap Fill) ---
+        app.innerHTML += `<div class="section-title">V. Complete the dialogue with the sentences from the box.</div>`;
+        const dialogueHTML = `
+            <div class="card">
+                <div class="question-text">Chọn câu phù hợp điền vào đoạn hội thoại:</div>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 10px; margin-bottom: 15px; font-weight: bold; border: 2px solid #ffe69c;">
+                    A. I’m very sorry about that.<br>
+                    B. I’d like a full refund, please.<br>
+                    C. I’m afraid I can’t help you without the receipt.<br>
+                    D. I understand that.<br>
+                    E. Do you have the receipt?<br>
+                    F. What’s the matter with it, sir?
+                </div>
+                <div class="dialogue-box">
+                    <p><b>Customer:</b> Hello, I’d like to make a complaint about the cell phone that I bought last month.</p>
+                    <div class="dialogue-line"><b>Manager:</b> (1) <select id="d1" onchange="checkDialogue(this, 'F')"><option value="">-- Chọn --</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div>
+                    <p><b>Customer:</b> The screen doesn't work.</p>
+                    <div class="dialogue-line"><b>Manager:</b> (2) <select id="d2" onchange="checkDialogue(this, 'A')"><option value="">-- Chọn --</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select> Can I offer you a full refund or an exchange?</div>
+                    <div class="dialogue-line"><b>Customer:</b> (3) <select id="d3" onchange="checkDialogue(this, 'B')"><option value="">-- Chọn --</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div>
+                    <div class="dialogue-line"><b>Manager:</b> No problem. (4) <select id="d4" onchange="checkDialogue(this, 'E')"><option value="">-- Chọn --</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div>
+                    <p><b>Customer:</b> Oh, sorry. I lost it.</p>
+                    <div class="dialogue-line"><b>Manager:</b> (5) <select id="d5" onchange="checkDialogue(this, 'C')"><option value="">-- Chọn --</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select></div>
+                    <p><b>Customer:</b> I know, but the phone was very expensive and now I can't use it.</p>
+                    <div class="dialogue-line"><b>Manager:</b> (6) <select id="d6" onchange="checkDialogue(this, 'D')"><option value="">-- Chọn --</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option></select> You can get it repaired. There’s a repair shop near our shop.</p>
+                    <p><b>Customer:</b> Thanks.</p>
+                </div>
+                <div class="explanation" id="exp_dialogue">
+                    <div class="exp-step"><strong>Giải thích chi tiết đoạn hội thoại:</strong></div>
+                    <div class="exp-step"><strong>(1) F:</strong> Khách than phiền về điện thoại, quản lý phải hỏi vấn đề là gì ("What's the matter with it, sir?").</div>
+                    <div class="exp-step"><strong>(2) A:</strong> Khách nói màn hình hỏng. Quản lý xin lỗi ("I'm very sorry about that").</div>
+                    <div class="exp-step"><strong>(3) B:</strong> Quản lý hỏi muốn hoàn tiền hay đổi trả. Khách chọn hoàn tiền ("I'd like a full refund, please").</div>
+                    <div class="exp-step"><strong>(4) E:</strong> Để hoàn tiền thì cần biên lai, nên quản lý hỏi ("Do you have the receipt?").</div>
+                    <div class="exp-step"><strong>(5) C:</strong> Khách làm mất biên lai, quản lý từ chối khéo ("I'm afraid I can't help you without the receipt").</div>
+                    <div class="exp-step"><strong>(6) D:</strong> Khách nài nỉ vì máy đắt. Quản lý thể hiện sự thấu hiểu ("I understand that") nhưng vẫn tư vấn đem đi sửa.</div>
+                </div>
+            </div>`;
+        app.innerHTML += dialogueHTML;
+
+
+        // --- LOGIC XỬ LÝ ---
+        function handleMCQ(btn, id, isCorrect) {
+            if (answeredQuestions.has(id)) return; // Chỉ cho làm 1 lần
+            answeredQuestions.add(id);
+
+            const card = document.getElementById(`card_${id}`);
+            const buttons = card.querySelectorAll('.btn-option');
+            buttons.forEach(b => b.style.pointerEvents = 'none'); // Khóa các nút khác
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playAudio('correct');
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 }, colors: ['#00D26A', '#FF9F43', '#8854C0'] });
+                score++;
+            } else {
+                btn.classList.add('incorrect');
+                playAudio('wrong');
+                // Hiển thị đáp án đúng
+                buttons.forEach(b => {
+                    if(b.onclick.toString().includes('true')) b.classList.add('correct');
+                });
+            }
+
+            document.getElementById(`exp_${id}`).classList.add('show');
+        }
+
+        // Logic Duolingo Jumbled words
+        function moveWord(element, id) {
+            const slot = document.getElementById(`slot_${id}`);
+            slot.appendChild(element);
+        }
+
+        function returnWord(id, event) {
+            if (event.target.classList.contains('word-piece')) {
+                const bank = document.getElementById(`bank_${id}`);
+                bank.appendChild(event.target);
+            }
+        }
+
+        function checkJumble(id, correctStr) {
+            if (answeredQuestions.has(id)) return;
+            
+            const slot = document.getElementById(`slot_${id}`);
+            const userWords = Array.from(slot.children).map(el => el.innerText);
+            const userStr = userWords.join(' ');
+            
+            if (userWords.length === 0) {
+                Swal.fire({ icon: 'warning', title: 'Oops...', text: 'Bạn chưa ghép chữ nào kìa!' });
+                return;
+            }
+
+            answeredQuestions.add(id);
+            const isCorrect = userStr.trim() === correctStr.trim();
+
+            if (isCorrect) {
+                slot.style.borderColor = '#00D26A';
+                slot.style.backgroundColor = '#e8f5e9';
+                playAudio('correct');
+                confetti();
+                score++;
+            } else {
+                slot.style.borderColor = '#FF4757';
+                slot.style.backgroundColor = '#ffebee';
+                slot.classList.add('shake');
+                setTimeout(() => slot.classList.remove('shake'), 400);
+                playAudio('wrong');
+                
+                // Show correct string physically
+                const correctDiv = document.createElement('div');
+                correctDiv.innerHTML = `<strong>Đáp án đúng:</strong> ${correctStr}`;
+                correctDiv.style.color = '#FF4757';
+                correctDiv.style.marginTop = '10px';
+                slot.parentNode.insertBefore(correctDiv, slot.nextSibling);
+            }
+
+            document.getElementById(`exp_${id}`).classList.add('show');
+            document.getElementById(`bank_${id}`).style.display = 'none'; // Ẩn bank
+            event.target.style.display = 'none'; // Ẩn nút check
+        }
+
+        // Logic Dialogue Dropdown
+        let dialogueScoreCounted = 0;
+        function checkDialogue(selectElem, correctVal) {
+            if (selectElem.disabled) return;
+            
+            if (selectElem.value === correctVal) {
+                selectElem.style.borderColor = '#00D26A';
+                selectElem.style.backgroundColor = '#e8f5e9';
+                selectElem.disabled = true;
+                playAudio('correct');
+                score++;
+                dialogueScoreCounted++;
+            } else {
+                selectElem.style.borderColor = '#FF4757';
+                selectElem.style.backgroundColor = '#ffebee';
+                playAudio('wrong');
+                selectElem.value = ""; // Reset cho chọn lại (Hoặc có thể khóa luôn tùy ý, ở đây cho chọn lại đến khi đúng để học)
+            }
+
+            // Hiện giải thích khi làm xong 6 câu
+            if (dialogueScoreCounted === 6) {
+                document.getElementById('exp_dialogue').classList.add('show');
+                confetti();
+            }
+        }
+
+        // Nộp Bài
+        function submitQuiz() {
+            const percent = Math.round((score / totalScore) * 100);
+            let msg, imgUrl;
+
+            if (percent === 100) {
+                msg = "Quá xuất sắc! Perfect Score! Học trò cưng của Ms. Chí Nên đây rồi! 🏆";
+                imgUrl = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif";
+            } else if (percent >= 80) {
+                msg = "Giỏi lắm! Cố gắng chút nữa là đạt điểm tuyệt đối nhé! 🌟";
+                imgUrl = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif";
+            } else if (percent >= 50) {
+                msg = "Khá tốt! Đọc kỹ phần giải thích chi tiết để rút kinh nghiệm nha! 👍";
+                imgUrl = "https://media.giphy.com/media/26hirEPeos6yugLDO/giphy.gif";
+            } else {
+                msg = "Cần nỗ lực hơn nữa nhé! Ms. Chí Nên tin bạn sẽ làm tốt hơn ở lần sau! 💪";
+                imgUrl = "https://media.giphy.com/media/l41YkxvU8c7J7Bba0/giphy.gif";
+            }
+
+            Swal.fire({
+                title: 'Bảng Điểm Của Bạn!',
+                html: `<h1>${score} / ${totalScore}</h1><p>${msg}</p>`,
+                imageUrl: imgUrl,
+                imageWidth: 300,
+                imageHeight: 200,
+                confirmButtonText: 'Làm lại bài thi',
+                confirmButtonColor: '#8854C0',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
