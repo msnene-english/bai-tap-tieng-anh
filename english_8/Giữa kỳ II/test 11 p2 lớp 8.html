@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamified English Quiz - Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #FDCB6E;
+            --tertiary: #00C9A7;
+            --success: #00D26A;
+            --danger: #FF4757;
+            --bg-glass: rgba(255, 255, 255, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.5);
+            --text-main: #2D3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            color: var(--text-main);
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--tertiary), #FF9FF3);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'><text x='50' y='100' font-size='30' opacity='0.3'>🌪️</text><text x='700' y='50' font-size='40' opacity='0.3'>🛒</text><text x='150' y='500' font-size='35' opacity='0.3'>🌍</text><text x='400' y='300' font-size='25' opacity='0.3'>📚</text><text x='600' y='450' font-size='30' opacity='0.3'>🛍️</text><text x='300' y='150' font-size='40' opacity='0.3'>☁️</text></svg>");
+            background-size: cover;
+            opacity: 0.6;
+            animation: floatSVG 20s linear infinite alternate;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatSVG {
+            0% { transform: translateY(0px) scale(1); }
+            100% { transform: translateY(-30px) scale(1.05); }
+        }
+
+        .top-bar {
+            height: 70px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 2px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #4A235A;
+            background: rgba(255,255,255,0.6);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #d63031;
+            background: #fff;
+            padding: 5px 20px;
+            border-radius: 25px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            min-width: 110px;
+            text-align: center;
+        }
+
+        .btn-timer {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #5f3a8c;
+            transition: all 0.2s;
+        }
+
+        .btn-timer:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0 #5f3a8c;
+        }
+
+        .split-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 70px);
+            z-index: 10;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .pane {
+            flex: 1;
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 2px solid var(--border-glass);
+            border-radius: 24px;
+            padding: 25px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(136, 84, 192, 0.4); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(136, 84, 192, 0.7); }
+
+        .passage-block {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .paragraph {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .btn-translate {
+            background: #ffeaa7;
+            color: #d35400;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #f39c12;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-translate:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #f39c12;
+        }
+
+        .translation-box {
+            display: none;
+            background: #e8f8f5;
+            border-left: 4px solid var(--tertiary);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            color: #16a085;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .glossary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 15px;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .glossary-table th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            font-size: 1rem;
+        }
+        .glossary-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95rem;
+        }
+        .glossary-table tr:last-child td { border-bottom: none; }
+        .glossary-table tr:hover { background-color: #f9f9f9; }
+
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+            border: 2px solid #f1f2f6;
+            transition: transform 0.2s;
+        }
+        .question-card:hover { transform: translateY(-2px); }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: #f1f2f6;
+            border: 2px solid #dfe4ea;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2f3542;
+            cursor: pointer;
+            text-align: left;
+            box-shadow: 0 5px 0 #dfe4ea;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            transform: translateY(-3px) scale(1.02);
+            background: #eccc68;
+            border-color: #ffa502;
+            box-shadow: 0 8px 0 #ffa502;
+        }
+
+        .option-btn:active:not(.disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 #ffa502;
+        }
+
+        .option-btn.correct {
+            background: var(--success) !important;
+            color: white;
+            border-color: #00b85c !important;
+            box-shadow: 0 5px 0 #00b85c !important;
+        }
+
+        .option-btn.wrong {
+            background: var(--danger) !important;
+            color: white;
+            border-color: #ff3838 !important;
+            box-shadow: 0 5px 0 #ff3838 !important;
+        }
+
+        .option-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            background: #f8f9fa;
+            border: 2px dashed #a4b0be;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1rem;
+            line-height: 1.6;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .explanation-box.show { display: block; }
+
+        .explain-title {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .submit-container {
+            text-align: center;
+            margin-top: 30px;
+            padding-bottom: 20px;
+        }
+
+        .btn-submit {
+            background: linear-gradient(45deg, #FF9FF3, #feca57);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #e58e26;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover { transform: scale(1.05) translateY(-3px); }
+        .btn-submit:active { transform: scale(1) translateY(5px); box-shadow: 0 3px 0 #e58e26; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-title { font-size: 2.5rem; color: var(--primary); margin-bottom: 10px; }
+        .modal-score { font-size: 4rem; font-weight: 800; color: var(--success); margin: 20px 0; }
+        .modal-message { font-size: 1.2rem; color: #576574; margin-bottom: 30px; }
+        .btn-restart {
+            background: var(--tertiary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #009688;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .shake { animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shakeAnim {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        #confetti-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;
+        }
+        .confetti {
+            position: absolute; width: 10px; height: 10px; background-color: #f00; animation: fall 2s linear forwards;
+        }
+        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="header-title">✨ Ms. Chí Nên  ✨</div>
+        <div class="timer-container">
+            <button class="btn-timer" id="startTimerBtn" onclick="startTimer()">🚀 BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
+            <div class="timer-display" id="timerDisplay">10:00</div>
+        </div>
+    </div>
+
+    <div class="split-container">
+        <div class="pane" id="readingPane"></div>
+        <div class="pane" id="exercisePane">
+            <div id="questionsContainer"></div>
+            <div class="submit-container">
+                <button class="btn-submit" onclick="submitQuiz()">🏆 NỘP BÀI</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confetti-container"></div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modalTitle">Hoàn Thành! 🎉</h2>
+            <div class="modal-score" id="modalScore">0/0</div>
+            <p class="modal-message" id="modalMessage">Tuyệt vời!</p>
+            <button class="btn-restart" onclick="location.reload()">Làm Lại Bài 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                passageId: 1,
+                instruction: "Read the following announcement and mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each of the numbered blanks from 13 to 16.",
+                paragraphs: [
+                    {
+                        text: "SUPPORT WORKER<br>Do you have the ability to care for others? Can you understand how older people feel? Are you good (13) ........... communication? Do you have good listening skills?",
+                        translation: "NHÂN VIÊN HỖ TRỢ<br>Bạn có khả năng chăm sóc người khác không? Bạn có hiểu được cảm giác của người cao tuổi không? Bạn có giỏi (13) giao tiếp không? Bạn có kỹ năng lắng nghe tốt không?"
+                    },
+                    {
+                        text: "If you have answered YES to (14) ........... questions above, we would like to hear from you:<br>Starting rate of $ 8 per hour<br>Free uniform<br>Excellent training",
+                        translation: "Nếu bạn trả lời CÓ cho (14) những câu hỏi ở trên, chúng tôi rất muốn nghe tin từ bạn:<br>Mức lương khởi điểm 8 đô la một giờ<br>Đồng phục miễn phí<br>Được đào tạo xuất sắc"
+                    },
+                    {
+                        text: "For further (15) ..........., you can contact: Email: supportworker@gmail.com<br>Phone manager (16) ........... 01234567789",
+                        translation: "Để biết thêm (15) thông tin, bạn có thể liên hệ: Email: supportworker@gmail.com<br>Quản lý qua điện thoại (16) vào số 01234567789"
+                    }
+                ],
+                glossary: [
+                    { word: "Ability", type: "n.", meaning: "Khả năng, năng lực" },
+                    { word: "Care for", type: "phr. v.", meaning: "Chăm sóc, quan tâm" },
+                    { word: "Communication", type: "n.", meaning: "Sự giao tiếp" },
+                    { word: "Listening skill", type: "n. phr.", meaning: "Kỹ năng lắng nghe" },
+                    { word: "Starting rate", type: "n. phr.", meaning: "Mức lương khởi điểm" },
+                    { word: "Uniform", type: "n.", meaning: "Đồng phục" },
+                    { word: "Excellent", type: "adj.", meaning: "Xuất sắc, tuyệt vời" },
+                    { word: "Training", type: "n.", meaning: "Sự đào tạo, huấn luyện" },
+                    { word: "Further", type: "adj.", meaning: "Thêm nữa, sâu hơn" },
+                    { word: "Contact", type: "v.", meaning: "Liên hệ, liên lạc" }
+                ],
+                questions: [
+                    {
+                        qNum: 13,
+                        text: "Question 13: Are you good (13) ........... communication?",
+                        options: [
+                            { id: "A", text: "for", isCorrect: false },
+                            { id: "B", text: "with", isCorrect: false },
+                            { id: "C", text: "in", isCorrect: false },
+                            { id: "D", text: "at", isCorrect: true }
+                        ],
+                        explanation: "<b>Cô phân tích từng đáp án cho em hiểu rõ nhé:</b><br><br><b>A. for:</b> Cấu trúc 'be good for' mang ý nghĩa là 'tốt cho cái gì đó', ví dụ như 'Eating vegetables is good for your health' (Ăn rau xanh rất tốt cho sức khỏe của bạn). Ở đây không phù hợp về nghĩa.<br><b>B. with:</b> Cấu trúc 'be good with' dùng khi muốn nói ai đó khéo léo, xử lý tốt với công cụ hoặc với ai đó, ví dụ 'She is very good with children' (Cô ấy rất khéo léo với trẻ nhỏ).<br><b>C. in:</b> Trong tiếng Anh, giới từ 'in' không đi cùng tính từ 'good' để tạo thành cụm từ chỉ sự giỏi giang trong một kỹ năng cụ thể.<br><b>D. at:</b> Cấu trúc 'be good at + Noun / V-ing' mang ý nghĩa là 'giỏi về việc gì hoặc kỹ năng gì'. Ngữ cảnh câu hỏi là muốn biết ứng viên có giỏi kỹ năng giao tiếp hay không.<br><br>👉 Do đó, chúng ta ghép vào được câu hoàn chỉnh: <b>'Are you good at communication?'</b> (Bạn có giỏi giao tiếp không?). Chọn đáp án D là chính xác hoàn toàn."
+                    },
+                    {
+                        qNum: 14,
+                        text: "Question 14: If you have answered YES to (14) ........... questions above, we would like to hear from you:",
+                        options: [
+                            { id: "A", text: "the", isCorrect: true },
+                            { id: "B", text: "a", isCorrect: false },
+                            { id: "C", text: "an", isCorrect: false },
+                            { id: "D", text: "X", isCorrect: false }
+                        ],
+                        explanation: "<b>Cùng phân tích ngữ pháp để loại trừ nhé:</b><br><br><b>B. a</b> và <b>C. an:</b> Hai mạo từ này có nghĩa là 'một', chỉ đứng trước danh từ đếm được ở dạng số ít. Trong văn bản, từ 'questions' (những câu hỏi) đang ở dạng số nhiều (có đuôi 's'). Do đó, chúng ta loại bỏ ngay lập tức đáp án B và C.<br><b>A. the:</b> Mạo từ xác định 'the' được sử dụng khi cả người nói và người nghe đều biết rõ đối tượng đang được nhắc đến là đối tượng nào. Trong câu này, cụm từ 'questions above' (những câu hỏi ở bên trên) đã xác định rõ ràng vị trí và đối tượng cụ thể mà bài thông báo muốn nhắc tới (chính là những câu hỏi ở đoạn đầu tiên).<br><b>D. X (Không điền gì):</b> Nếu không điền mạo từ thì câu sẽ bị thiếu sự xác định cần thiết cho danh từ đã được chỉ điểm rõ ràng.<br><br>👉 Câu hoàn chỉnh sẽ là: <b>'If you have answered YES to the questions above, we would like to hear from you:'</b> (Nếu bạn trả lời CÓ cho những câu hỏi ở trên, chúng tôi rất muốn nghe tin từ bạn:). Chọn đáp án A."
+                    },
+                    {
+                        qNum: 15,
+                        text: "Question 15: For further (15) ..........., you can contact: Email: supportworker@gmail.com",
+                        options: [
+                            { id: "A", text: "inform", isCorrect: false },
+                            { id: "B", text: "information", isCorrect: true },
+                            { id: "C", text: "informative", isCorrect: false },
+                            { id: "D", text: "informatively", isCorrect: false }
+                        ],
+                        explanation: "<b>Chúng ta xét từ loại cần điền vào chỗ trống:</b><br><br>Vị trí ô trống đứng ngay sau tính từ 'further' (thêm nữa, chi tiết hơn). Theo quy tắc ngữ pháp tiếng Anh, sau một tính từ thì chúng ta bắt buộc phải sử dụng một Danh từ (Noun) để bổ nghĩa.<br><br><b>Phân tích các đáp án:</b><br><b>A. inform:</b> Đây là Động từ (Verb), mang nghĩa là 'thông báo'. Không thể đứng sau tính từ.<br><b>B. information:</b> Đây là Danh từ (Noun), mang nghĩa là 'thông tin'. Hoàn toàn phù hợp với quy tắc ngữ pháp.<br><b>C. informative:</b> Đây là Tính từ (Adjective), mang nghĩa là 'cung cấp nhiều thông tin hữu ích'. Không thể dùng hai tính từ đứng cạnh nhau mà không có danh từ theo sau.<br><b>D. informatively:</b> Đây là Trạng từ (Adverb). Không phù hợp để đứng sau tính từ.<br><br>👉 Chúng ta có cụm từ cố định rất hay xuất hiện trong các bài viết trang trọng: <b>'For further information'</b> (Để biết thêm thông tin chi tiết). Chọn đáp án B."
+                    },
+                    {
+                        qNum: 16,
+                        text: "Question 16: Phone manager (16) ........... 01234567789",
+                        options: [
+                            { id: "A", text: "on", isCorrect: true },
+                            { id: "B", text: "in", isCorrect: false },
+                            { id: "C", text: "at", isCorrect: false },
+                            { id: "D", text: "from", isCorrect: false }
+                        ],
+                        explanation: "<b>Phân tích giới từ đi cùng số điện thoại:</b><br><br>Khi bạn muốn diễn đạt ý 'gọi điện thoại cho ai đó thông qua số điện thoại nào', trong tiếng Anh (đặc biệt là Anh - Anh), cấu trúc chuẩn xác và thông dụng nhất là sử dụng giới từ <b>'on'</b> đứng trước dải số điện thoại.<br><br><b>Ví dụ:</b> 'You can reach me on 0912345678' (Bạn có thể liên hệ với tôi qua số 0912345678).<br><br>Các giới từ <b>'in', 'at', 'from'</b> không được sử dụng để nối giữa động từ gọi điện/liên hệ với một dãy số điện thoại cụ thể trong ngữ cảnh này.<br><br>👉 Câu hoàn chỉnh của chúng ta là: <b>'Phone manager on 01234567789'</b> (Gọi điện cho quản lý vào số 01234567789). Chọn đáp án A."
+                    }
+                ]
+            },
+            {
+                passageId: 2,
+                instruction: "Read the following passage and mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each numbered blank from 19 to 24.",
+                paragraphs: [
+                    {
+                        text: "Tornadoes are storms with very (19) ........... turning winds and dark clouds. These winds are perhaps the strongest on (20) ........... . They reach speeds of 300 miles per hour. The dark clouds are shaped like a funnel – wide at the top and narrow at the bottom. The winds are strongest in (21) ........... centre of the tunnel. Tornadoes are especially common in the US, but only in certain parts. They occur mainly in the (22) ........... states.",
+                        translation: "Lốc xoáy là những cơn bão có sức gió xoáy rất (19) mạnh và mây đen. Những cơn gió này có lẽ là mạnh nhất trên (20) trái đất. Chúng đạt tốc độ 300 dặm một giờ. Các đám mây đen có hình dạng giống như một cái phễu - rộng ở trên cùng và hẹp ở dưới cùng. Gió mạnh nhất ở (21) trung tâm của đường hầm. Lốc xoáy đặc biệt phổ biến ở Mỹ, nhưng chỉ ở một số vùng nhất định. Chúng chủ yếu xảy ra ở các tiểu bang (22) miền trung."
+                    },
+                    {
+                        text: "A hot afternoon in the spring is the most likely time for a tornado. (23) ........... become dark. There is thunder, lightning and rain. A cloud forms a funnel and begins to twist. The funnel moves faster and faster. The faster the winds, the louder the noise. Tornadoes always move in a northeastern (24) ........... . They never last longer than eight hours.",
+                        translation: "Một buổi chiều nóng bức vào mùa xuân là thời điểm dễ xảy ra lốc xoáy nhất. (23) Những đám mây trở nên đen kịt. Có sấm, chớp và mưa. Một đám mây tạo thành hình phễu và bắt đầu xoắn lại. Chiếc phễu di chuyển ngày càng nhanh. Gió càng nhanh, tiếng ồn càng lớn. Lốc xoáy luôn di chuyển theo (24) hướng đông bắc. Chúng không bao giờ kéo dài hơn tám giờ."
+                    }
+                ],
+                glossary: [
+                    { word: "Tornado", type: "n.", meaning: "Lốc xoáy" },
+                    { word: "Funnel", type: "n.", meaning: "Cái phễu" },
+                    { word: "Narrow", type: "adj.", meaning: "Hẹp" },
+                    { word: "Occur", type: "v.", meaning: "Xảy ra" },
+                    { word: "Mainly", type: "adv.", meaning: "Chủ yếu" },
+                    { word: "Likely", type: "adj.", meaning: "Có khả năng xảy ra" },
+                    { word: "Thunder", type: "n.", meaning: "Sấm sét" },
+                    { word: "Lightning", type: "n.", meaning: "Tia chớp" },
+                    { word: "Twist", type: "v.", meaning: "Xoắn lại" },
+                    { word: "Direction", type: "n.", meaning: "Phương hướng" }
+                ],
+                questions: [
+                    {
+                        qNum: 19, text: "Question 19: Tornadoes are storms with very (19) ........... turning winds and dark clouds.",
+                        options: [{id: "A", text: "angry", isCorrect: false}, {id: "B", text: "weak", isCorrect: false}, {id: "C", text: "cruel", isCorrect: false}, {id: "D", text: "strong", isCorrect: true}],
+                        explanation: "<b>Xét ý nghĩa của từng tính từ ghép với danh từ 'winds' (những cơn gió):</b><br><br><b>A. angry:</b> Nghĩa là 'tức giận'. Thường dùng để miêu tả cảm xúc con người, không ghép với gió trong văn cảnh khoa học địa lý.<br><b>B. weak:</b> Nghĩa là 'yếu ớt'. Sai hoàn toàn về mặt logic thực tế vì lốc xoáy là cơn bão có sức tàn phá khủng khiếp.<br><b>C. cruel:</b> Nghĩa là 'độc ác'. Tương tự đáp án A, tính từ này mang nét nghĩa chỉ tính cách con người.<br><b>D. strong:</b> Nghĩa là 'mạnh mẽ'. Tiếng Anh có cụm từ ghép cố định là 'strong winds' mang nghĩa là 'những cơn gió mạnh'.<br><br>👉 Ghép vào câu ta được: <b>'Tornadoes are storms with very strong turning winds and dark clouds.'</b> (Lốc xoáy là những cơn bão có sức gió xoáy rất mạnh và mây đen). Chọn đáp án D."
+                    },
+                    {
+                        qNum: 20, text: "Question 20: These winds are perhaps the strongest on (20) ........... .",
+                        options: [{id: "A", text: "space", isCorrect: false}, {id: "B", text: "earth", isCorrect: true}, {id: "C", text: "ground", isCorrect: false}, {id: "D", text: "planet", isCorrect: false}],
+                        explanation: "<b>Chúng ta cùng xét sự kết hợp từ (Collocation) đi với giới từ 'on':</b><br><br><b>A. space:</b> Không gian vũ trụ. Chúng ta dùng giới từ 'in space', không dùng 'on space'. Hơn nữa lốc xoáy xảy ra trên trái đất chứ không phải ngoài vũ trụ.<br><b>B. earth:</b> Trái đất. Tiếng Anh có cụm từ cố định <b>'on earth'</b> mang ý nghĩa là 'trên trái đất' hoặc 'trên thế gian này'. Đây là đáp án chính xác.<br><b>C. ground:</b> Mặt đất. Chúng ta nói 'on the ground' (trên mặt đất), bắt buộc phải có mạo từ 'the'. Đề bài chỉ có giới từ 'on' trống rỗng nên không ghép được từ này.<br><b>D. planet:</b> Hành tinh. Tương tự, chúng ta phải nói là 'on the planet' hoặc 'on our planet'. Không thể đứng trơ trọi sau giới từ 'on'.<br><br>👉 Ghép vào câu hoàn chỉnh: <b>'These winds are perhaps the strongest on earth.'</b> (Những cơn gió này có lẽ là mạnh nhất trên trái đất). Chọn đáp án B."
+                    },
+                    {
+                        qNum: 21, text: "Question 21: The winds are strongest in (21) ........... centre of the tunnel.",
+                        options: [{id: "A", text: "the", isCorrect: true}, {id: "B", text: "that", isCorrect: false}, {id: "C", text: "this", isCorrect: false}, {id: "D", text: "a", isCorrect: false}],
+                        explanation: "<b>Phân tích ngữ pháp về mạo từ xác định:</b><br><br>Danh từ 'centre' mang ý nghĩa là 'trung tâm'. Tâm của một đường hầm ('of the tunnel') là một vị trí duy nhất và hoàn toàn xác định. Cả người viết và người đọc đều biết rõ trung tâm đó thuộc về cái gì.<br><br>Theo quy tắc ngữ pháp, khi một danh từ đã được xác định cụ thể và là duy nhất trong ngữ cảnh đó, chúng ta bắt buộc phải sử dụng mạo từ xác định <b>'the'</b>.<br>Cấu trúc phổ biến: <b>'the centre of something'</b> (trung tâm của cái gì đó).<br>Các từ chỉ định 'that', 'this' hay mạo từ không xác định 'a' đều làm sai lệch ý nghĩa ngữ pháp của câu.<br><br>👉 Ghép vào câu hoàn chỉnh: <b>'The winds are strongest in the centre of the tunnel.'</b> (Sức gió mạnh nhất ở trung tâm của đường hầm). Chọn đáp án A."
+                    },
+                    {
+                        qNum: 22, text: "Question 22: They occur mainly in the (22) ........... states.",
+                        options: [{id: "A", text: "unknown", isCorrect: false}, {id: "B", text: "central", isCorrect: true}, {id: "C", text: "foreign", isCorrect: false}, {id: "D", text: "farther", isCorrect: false}],
+                        explanation: "<b>Phân tích ý nghĩa từ vựng dựa vào ngữ cảnh đoạn văn:</b><br><br>Câu phía trước có viết: 'Tornadoes are especially common in the US, but only in certain parts.' (Lốc xoáy đặc biệt phổ biến ở nước Mỹ, nhưng chỉ ở một số khu vực nhất định). Câu tiếp theo cần giải thích rõ đó là khu vực nào.<br><br><b>A. unknown:</b> Nghĩa là 'không ai biết đến'. Vô lý vì các nhà khoa học hoàn toàn biết rõ khu vực nào hay xảy ra bão.<br><b>B. central:</b> Nghĩa là 'thuộc về miền trung'. Theo kiến thức thực tế địa lý, lốc xoáy thường xảy ra ở dải trung tâm nước Mỹ. Cụm 'the central states' (các bang miền trung) là hoàn toàn hợp lý.<br><b>C. foreign:</b> Nghĩa là 'thuộc về nước ngoài'. Sai logic vì câu trước đang nói trực tiếp về lãnh thổ nước Mỹ ('in the US').<br><b>D. farther:</b> Nghĩa là 'xa hơn'. Không tạo thành ý nghĩa hoàn chỉnh bổ nghĩa cho từ 'states'.<br><br>👉 Ghép vào câu hoàn chỉnh: <b>'They occur mainly in the central states.'</b> (Chúng chủ yếu xảy ra ở các bang miền trung). Chọn đáp án B."
+                    },
+                    {
+                        qNum: 23, text: "Question 23: (23) ........... become dark. There is thunder, lightning and rain.",
+                        options: [{id: "A", text: "sun", isCorrect: false}, {id: "B", text: "sky", isCorrect: false}, {id: "C", text: "clouds", isCorrect: true}, {id: "D", text: "winds", isCorrect: false}],
+                        explanation: "<b>Phân tích ngữ pháp kết hợp ngữ nghĩa:</b><br><br>Về mặt ngữ pháp, chúng ta hãy nhìn vào động từ <b>'become'</b> (trở nên). Động từ này đang được chia ở dạng nguyên thể không có 's', chứng tỏ chủ ngữ đứng trước nó bắt buộc phải là một danh từ số nhiều.<br><br><b>A. sun:</b> Danh từ số ít (Mặt trời). Bị loại.<br><b>B. sky:</b> Danh từ số ít (Bầu trời). Bị loại.<br><b>C. clouds:</b> Danh từ số nhiều (Những đám mây). Thỏa mãn điều kiện ngữ pháp.<br><b>D. winds:</b> Danh từ số nhiều (Những cơn gió). Tuy nhiên, về mặt hiện tượng tự nhiên, gió không thể chuyển thành màu đen ('become dark'). Chỉ có những đám mây đen kịt mới là dấu hiệu của bão.<br><br>👉 Ghép vào câu hoàn chỉnh: <b>'Clouds become dark.'</b> (Những đám mây trở nên đen kịt). Chọn đáp án C."
+                    },
+                    {
+                        qNum: 24, text: "Question 24: Tornadoes always move in a northeastern (24) ........... .",
+                        options: [{id: "A", text: "direct", isCorrect: false}, {id: "B", text: "direction", isCorrect: true}, {id: "C", text: "directly", isCorrect: false}, {id: "D", text: "directing", isCorrect: false}],
+                        explanation: "<b>Phân tích loại từ cần điền vào ô trống:</b><br><br>Trong cụm từ 'in a northeastern ______', từ 'northeastern' đóng vai trò là một tính từ mang ý nghĩa 'thuộc về hướng đông bắc'. Theo cấu trúc ngữ pháp cơ bản của tiếng Anh, theo sau một tính từ phải là một Danh từ (Noun).<br><br><b>A. direct:</b> Đây là Tính từ (hoặc Động từ), mang ý nghĩa 'trực tiếp' hoặc 'chỉ đạo'. Không phải danh từ.<br><b>B. direction:</b> Đây là Danh từ, mang ý nghĩa 'phương hướng'. Hoàn toàn phù hợp với vị trí trống.<br><b>C. directly:</b> Đây là Trạng từ, mang ý nghĩa 'một cách trực tiếp'. Bị loại.<br><b>D. directing:</b> Đây là Động từ thêm đuôi -ing (Danh động từ). Không phù hợp nghĩa.<br><br>Cụm từ <b>'in a... direction'</b> là một cụm cố định mang ý nghĩa là 'di chuyển theo hướng...'.<br>👉 Ghép vào câu hoàn chỉnh: <b>'Tornadoes always move in a northeastern direction.'</b> (Lốc xoáy luôn luôn di chuyển theo hướng đông bắc). Chọn đáp án B."
+                    }
+                ]
+            },
+            {
+                passageId: 3,
+                instruction: "Read the following passage and mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions from 31 to 36.",
+                paragraphs: [
+                    {
+                        text: "Shopping is a necessary part of life which very few people can avoid. Some people go shopping more regularly than other people to browse products in shops even when they do not have much money. This is known as window shopping and allows people to plan ahead and save for the things they want to buy in the future or wait for the items to drop in price. Some people spend a lot of time looking for bargains while others do not think of the price and are happy to spend a lot. Some people believe that the more expensive the item, the better the quality, but this is not always true. It is sensible to buy items which are affordable, but some people use a credit card or borrow money from the bank so that they can buy the items they really want rather than wait for it.",
+                        translation: "Mua sắm là một phần thiết yếu của cuộc sống mà rất ít người có thể tránh được. Một số người đi mua sắm thường xuyên hơn những người khác để xem qua các sản phẩm trong cửa hàng ngay cả khi họ không có nhiều tiền. Điều này được gọi là 'window shopping' (ngắm đồ bày ở cửa kính) và cho phép mọi người lập kế hoạch trước và tiết kiệm cho những thứ họ muốn mua trong tương lai hoặc chờ đợi các mặt hàng giảm giá. Một số người dành nhiều thời gian để tìm kiếm những món hời trong khi những người khác không quan tâm đến giá cả và vui vẻ chi tiêu nhiều. Một số người tin rằng món đồ càng đắt tiền thì chất lượng càng tốt, nhưng điều này không phải lúc nào cũng đúng. Thật khôn ngoan khi mua những món đồ vừa túi tiền, nhưng một số người lại sử dụng thẻ tín dụng hoặc vay tiền từ ngân hàng để họ có thể mua những món đồ họ thực sự muốn thay vì phải chờ đợi."
+                    },
+                    {
+                        text: "Sometimes shopping can be stressful when choosing a gift to buy for other people for a special occasion. It is common to buy a gift voucher so that a friend or loved one can go shopping themselves at their own convenience. Shopping online is often popular with people who have a busy lifestyle. People are able to order their necessary and luxury items from the comfort of their own home, or even on the move. Delivery is usually free and items are often cheaper than in shops on the high street. The only real problem is that the item description and quality may be more different than what they hoped for. This could mean the customer may become disappointed with the item they receive and will need to return it at their own cost. People who go to shops to do their shopping often use self-service payment machines. This usually saves time as the shopper does not need to join a long queue. However, it can be frustrating when the machine has a problem and the sales assistant is not always available to help.",
+                        translation: "Đôi khi mua sắm có thể rất căng thẳng khi chọn mua quà cho người khác trong một dịp đặc biệt. Mọi người thường mua phiếu quà tặng để bạn bè hoặc người thân có thể tự đi mua sắm một cách thuận tiện nhất. Mua sắm trực tuyến thường phổ biến với những người có lối sống bận rộn. Mọi người có thể đặt mua những mặt hàng thiết yếu và xa xỉ ngay tại nhà, hoặc thậm chí khi đang di chuyển. Giao hàng thường miễn phí và các mặt hàng thường rẻ hơn so với các cửa hàng trên phố lớn. Vấn đề thực sự duy nhất là mô tả mặt hàng và chất lượng có thể khác so với những gì họ mong đợi. Điều này có nghĩa là khách hàng có thể thất vọng với món đồ họ nhận được và sẽ phải tự bỏ chi phí để trả lại. Những người đến cửa hàng để mua sắm thường sử dụng máy thanh toán tự phục vụ. Điều này thường tiết kiệm thời gian vì người mua không cần phải tham gia vào một hàng dài chờ đợi. Tuy nhiên, có thể rất bực bội khi máy gặp sự cố và nhân viên bán hàng không phải lúc nào cũng có sẵn để giúp đỡ."
+                    }
+                ],
+                glossary: [
+                    { word: "Necessary", type: "adj.", meaning: "Cần thiết, thiết yếu" },
+                    { word: "Browse", type: "v.", meaning: "Xem lướt qua" },
+                    { word: "Window shopping", type: "n. phr.", meaning: "Đi ngắm đồ (không mua)" },
+                    { word: "Bargain", type: "n.", meaning: "Món hời, đồ giảm giá" },
+                    { word: "Sensible", type: "adj.", meaning: "Hợp lý, khôn ngoan" },
+                    { word: "Affordable", type: "adj.", meaning: "Vừa túi tiền, phải chăng" },
+                    { word: "Voucher", type: "n.", meaning: "Phiếu giảm giá/quà tặng" },
+                    { word: "Luxury", type: "n.", meaning: "Sự xa xỉ, hàng cao cấp" },
+                    { word: "Disappointed", type: "adj.", meaning: "Thất vọng" },
+                    { word: "Frustrating", type: "adj.", meaning: "Gây bực bội, khó chịu" }
+                ],
+                questions: [
+                    {
+                        qNum: 31, text: "Question 31: What is the main idea of the passage?",
+                        options: [
+                            {id: "A", text: "Shopping online is always better than shopping in stores", isCorrect: false},
+                            {id: "B", text: "People have different shopping habits, and each has its own advantages and disadvantages", isCorrect: true},
+                            {id: "C", text: "Shopping is stressful and should be avoided", isCorrect: false},
+                            {id: "D", text: "Bargain hunting is the best way to shop", isCorrect: false}
+                        ],
+                        explanation: "<b>Cô sẽ phân tích nội dung tổng thể của toàn bộ đoạn văn nhé:</b><br><br><b>A. Shopping online is always better than shopping in stores</b> (Mua sắm trực tuyến luôn tốt hơn mua sắm tại cửa hàng): Ý này sai vì đoạn hai cũng chỉ ra nhược điểm của mua hàng online là 'the item description and quality may be more different than what they hoped for' (mô tả và chất lượng sản phẩm có thể khác với mong đợi).<br><b>C. Shopping is stressful and should be avoided</b> (Mua sắm rất căng thẳng và nên tránh): Sai ý hoàn toàn vì câu đầu tiên của bài đã khẳng định 'Shopping is a necessary part of life which very few people can avoid' (Mua sắm là phần thiết yếu khó ai tránh được).<br><b>D. Bargain hunting is the best way to shop</b> (Săn hàng giảm giá là cách mua sắm tốt nhất): Đây chỉ là một chi tiết nhỏ được nhắc tới ở đoạn một, không phải ý chính của toàn bài.<br><b>B. People have different shopping habits, and each has its own advantages and disadvantages</b> (Mọi người có thói quen mua sắm khác nhau, và mỗi thói quen đều có ưu nhược điểm riêng): Đây chính là nội dung thâu tóm toàn bài. Đoạn 1 nêu các thói quen như window shopping, tìm đồ giảm giá, quẹt thẻ tín dụng. Đoạn 2 nêu ưu nhược điểm của mua hàng online và mua hàng trực tiếp bằng máy tự động.<br><br>👉 Do đó, đáp án B phản ánh chính xác nhất ý tưởng chủ đạo của bài viết."
+                    },
+                    {
+                        qNum: 32, text: "Question 32: Which word is CLOSEST in meaning to “bargains” as used in the passage?",
+                        options: [
+                            {id: "A", text: "Discounts", isCorrect: true},
+                            {id: "B", text: "loans", isCorrect: false},
+                            {id: "C", text: "vouchers", isCorrect: false},
+                            {id: "D", text: "expenses", isCorrect: false}
+                        ],
+                        explanation: "<b>Phân tích nghĩa của từ vựng:</b><br><br>Trong tiếng Anh, danh từ <b>'bargains'</b> mang ý nghĩa là 'một món hời', tức là món đồ được mua với mức giá rẻ hơn nhiều so với giá trị thực hoặc giá thông thường của nó.<br><br>Cùng xét 4 đáp án:<br><b>B. loans:</b> Các khoản vay nợ. (Khác biệt hoàn toàn về nghĩa).<br><b>C. vouchers:</b> Phiếu giảm giá hoặc phiếu quà tặng. (Phiếu mua hàng không đồng nghĩa với món hàng giá rẻ).<br><b>D. expenses:</b> Chi phí, khoản tiền phải tiêu xài. (Không mang nghĩa giảm giá).<br><b>A. Discounts:</b> Sự giảm giá, mặt hàng được hạ giá. Trong ngữ cảnh mua sắm, tìm kiếm 'bargains' chính là tìm kiếm những món đồ có 'discounts' để tiết kiệm tiền.<br><br>👉 Do đó, từ gần nghĩa nhất với 'bargains' là <b>'Discounts'</b>. Chọn đáp án A."
+                    },
+                    {
+                        qNum: 33, text: "Question 33: Which word is OPPOSITE in meaning to “affordable” as used in the passage?",
+                        options: [
+                            {id: "A", text: "Expensive", isCorrect: true},
+                            {id: "B", text: "cheap", isCorrect: false},
+                            {id: "C", text: "sensible", isCorrect: false},
+                            {id: "D", text: "convenient", isCorrect: false}
+                        ],
+                        explanation: "<b>Lưu ý yêu cầu đề bài là tìm từ TRÁI NGHĨA (OPPOSITE):</b><br><br>Từ <b>'affordable'</b> được hình thành từ động từ 'afford' (có khả năng chi trả) và hậu tố '-able' (có thể). Do đó 'affordable' mang ý nghĩa là 'có mức giá phải chăng', 'vừa túi tiền', không quá đắt.<br><br>Chúng ta xét các đáp án:<br><b>B. cheap:</b> Rẻ. Đây là từ Đồng nghĩa (Closest in meaning) với 'affordable', không phải trái nghĩa.<br><b>C. sensible:</b> Khôn ngoan, hợp lý. Không liên quan đến giá cả.<br><b>D. convenient:</b> Thuận tiện. Không liên quan đến mức giá.<br><b>A. Expensive:</b> Đắt đỏ, tốn kém. Đây chính là khái niệm đối lập hoàn toàn với sự 'phải chăng, vừa túi tiền'.<br><br>👉 Chọn đáp án A."
+                    },
+                    {
+                        qNum: 34, text: "Question 34: Which of the following is NOT TRUE according to the passage?",
+                        options: [
+                            {id: "A", text: "Window shopping helps people plan purchases and save money", isCorrect: false},
+                            {id: "B", text: "Shopping online is always cheaper than shopping in physical stores", isCorrect: true},
+                            {id: "C", text: "People sometimes buy gifts like vouchers for others to choose their own items.", isCorrect: false},
+                            {id: "D", text: "Self-service machines can save time but may cause frustration when they malfunction", isCorrect: false}
+                        ],
+                        explanation: "<b>Bài yêu cầu tìm câu KHÔNG ĐÚNG (NOT TRUE) so với thông tin trong đoạn văn. Cùng đối chiếu nhé:</b><br><br><b>A.</b> Đối chiếu đoạn 1: 'This is known as window shopping and allows people to plan ahead and save for the things they want to buy in the future'. Câu này khớp hoàn toàn với bài viết -> ĐÂY LÀ CÂU ĐÚNG.<br><b>C.</b> Đối chiếu đoạn 2: 'It is common to buy a gift voucher so that a friend or loved one can go shopping themselves'. Câu này khớp hoàn toàn với bài viết -> ĐÂY LÀ CÂU ĐÚNG.<br><b>D.</b> Đối chiếu đoạn cuối: 'This usually saves time... However, it can be frustrating when the machine has a problem'. Câu này diễn đạt lại chính xác ý của bài -> ĐÂY LÀ CÂU ĐÚNG.<br><b>B.</b> Shopping online is <b>always cheaper</b> than shopping in physical stores (Mua sắm trực tuyến <b>luôn luôn rẻ hơn</b> mua sắm tại cửa hàng vật lý). Đối chiếu với câu trong bài: 'Delivery is usually free and items are <b>often cheaper</b> than in shops on the high street'. Tác giả chỉ dùng từ 'often' (thường xuyên), chứ không dùng từ 'always' (luôn luôn, ám chỉ 100% trường hợp). Sự khẳng định tuyệt đối bằng từ 'always' làm cho câu này trở thành thông tin sai lệch.<br><br>👉 Vì B là câu chứa thông tin sai lệch so với bài, nên chúng ta chọn đáp án B."
+                    },
+                    {
+                        qNum: 35, text: "Question 35: Which is one reason people prefer online shopping?",
+                        options: [
+                            {id: "A", text: "Online shopping guarantees better products quality", isCorrect: false},
+                            {id: "B", text: "Delivery is usually free, and items are often cheaper", isCorrect: true},
+                            {id: "C", text: "Sales assistants are always available online.", isCorrect: false},
+                            {id: "D", text: "Customers never have to return items purchased online.", isCorrect: false}
+                        ],
+                        explanation: "<b>Chúng ta tìm dẫn chứng giải thích tại sao mọi người thích mua sắm trực tuyến (online shopping) nhé:</b><br><br><b>A.</b> Mua sắm online đảm bảo chất lượng sản phẩm tốt hơn. Sai, vì trong bài viết có ghi rõ nhược điểm là: 'The only real problem is that the item description and quality may be more different than what they hoped for' (Chất lượng có thể khác so với mong đợi).<br><b>C.</b> Trợ lý bán hàng luôn có mặt trực tuyến. Bài viết không hề đề cập đến thông tin này.<br><b>D.</b> Khách hàng không bao giờ phải trả lại đồ mua online. Sai, bài viết khẳng định: 'will need to return it at their own cost' (sẽ cần phải trả lại hàng bằng chi phí tự chịu).<br><b>B.</b> Giao hàng thường miễn phí và hàng hóa thường rẻ hơn. Hãy đối chiếu với nguyên văn một câu trong đoạn 2: <b>'Delivery is usually free and items are often cheaper than in shops on the high street.'</b> Hai vế này trùng khớp hoàn hảo 100% ý nghĩa.<br><br>👉 Do đó, lý do chính xác nằm ở đáp án B."
+                    },
+                    {
+                        qNum: 36, text: "Question 36: Why do some people use credit cards or borrow money to shop?",
+                        options: [
+                            {id: "A", text: "They want to avoid long queues in physical stores", isCorrect: false},
+                            {id: "B", text: "They prefer to buy items immediately instead of waiting", isCorrect: true},
+                            {id: "C", text: "It helps them find better bargains", isCorrect: false},
+                            {id: "D", text: "They do not care about the item’s quality", isCorrect: false}
+                        ],
+                        explanation: "<b>Chúng ta tìm manh mối ở cuối đoạn văn thứ nhất:</b><br><br>Nguyên văn câu trích xuất: '...but some people use a credit card or borrow money from the bank so that they can buy the items they really want <b>rather than wait for it</b>.' (nhưng một số người lại sử dụng thẻ tín dụng hoặc vay tiền từ ngân hàng để họ có thể mua những món đồ họ thực sự muốn <b>thay vì phải chờ đợi</b>).<br><br>Bây giờ so sánh với các đáp án:<br>A. Họ muốn tránh xếp hàng dài. (Không liên quan đến việc vay tiền).<br>C. Việc này giúp họ tìm món hời tốt hơn. (Sai, vay tiền mua không có nghĩa là mua được giá rẻ).<br>D. Họ không quan tâm chất lượng. (Hoàn toàn không đề cập).<br><b>B. They prefer to buy items immediately instead of waiting</b> (Họ thích mua các món đồ ngay lập tức thay vì phải chờ đợi). Cụm từ 'instead of waiting' trong đáp án B hoàn toàn đồng nghĩa với cụm 'rather than wait for it' ở trong bài.<br><br>👉 Chọn đáp án B là sự lựa chọn duy nhất chính xác."
+                    }
+                ]
+            },
+            {
+                passageId: 4,
+                instruction: "Four phrases/ sentences have been removed from the text below. For each question, mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each of the numbered blanks from 37 to 40.",
+                paragraphs: [
+                    {
+                        text: "Black Friday and Cyber Monday promote mindless consumption, excessive packaging and shipping waste, especially with the rise of online shopping. The sales produce massive waste not just from the unwanted single-use plastic and cardboard packaging, (37) ........... . This mindset also ensures that the earth overshoot day keeps moving back.",
+                        translation: "Black Friday và Cyber Monday thúc đẩy việc tiêu dùng thiếu suy nghĩ, đóng gói quá mức và lãng phí trong vận chuyển, đặc biệt là với sự gia tăng của mua sắm trực tuyến. Doanh số bán hàng tạo ra một lượng rác thải khổng lồ không chỉ từ bao bì nhựa và bìa cứng dùng một lần không mong muốn, (37) mà còn từ việc trả lại các mặt hàng không mong muốn. Tư duy này cũng đảm bảo rằng 'Ngày Vượt mức Trái Đất' tiếp tục bị đẩy lùi lại sớm hơn."
+                    },
+                    {
+                        text: "This is especially true of the clothing industry, (38) ........... and the cost of putting the item back on the shelf is much too complicated. Britons throw away approximately 300,000 tonnes of clothes every year and many of them are only worn a handful of times.",
+                        translation: "Điều này đặc biệt đúng với ngành công nghiệp quần áo, (38) nơi mà phần lớn hàng hóa trả lại qua mạng bị vứt vào bãi rác vì khâu hậu cần và chi phí để đưa mặt hàng trở lại kệ quá phức tạp. Người Anh vứt bỏ khoảng 300.000 tấn quần áo mỗi năm và nhiều bộ trong số đó chỉ được mặc một vài lần."
+                    },
+                    {
+                        text: "(39) ........... . Mostly plastic toys, to e-waste, to fast fashion that is only used for one season. In fact, in France, (40) ........... .",
+                        translation: "(39) Tác động tiêu cực của Black Friday cũng rất đáng kể đối với các mặt hàng không thể tái chế. Chủ yếu là đồ chơi bằng nhựa, rác thải điện tử, cho đến thời trang nhanh chỉ được sử dụng trong một mùa. Trên thực tế, tại Pháp, (40) chính phủ đang xem xét việc cấm Black Friday do tác động lên hành tinh và việc thúc đẩy các thói quen tiêu dùng không bền vững."
+                    }
+                ],
+                glossary: [
+                    { word: "Mindless", type: "adj.", meaning: "Vô tâm, thiếu suy nghĩ" },
+                    { word: "Consumption", type: "n.", meaning: "Sự tiêu thụ" },
+                    { word: "Excessive", type: "adj.", meaning: "Quá mức, thừa thãi" },
+                    { word: "Massive", type: "adj.", meaning: "To lớn, khổng lồ" },
+                    { word: "Overshoot", type: "v.", meaning: "Vượt quá giới hạn" },
+                    { word: "Complicated", type: "adj.", meaning: "Phức tạp" },
+                    { word: "Approximately", type: "adv.", meaning: "Xấp xỉ, khoảng" },
+                    { word: "Landfill", type: "n.", meaning: "Bãi rác" },
+                    { word: "Non-recyclable", type: "adj.", meaning: "Không thể tái chế" },
+                    { word: "Unsustainable", type: "adj.", meaning: "Không bền vững" }
+                ],
+                questions: [
+                    {
+                        qNum: 37, text: "Question 37: The sales produce massive waste not just from the unwanted single-use plastic and cardboard packaging, (37) ........... .",
+                        options: [
+                            {id: "A", text: "The government is considering banning Black Friday due to the impact on the planet...", isCorrect: false},
+                            {id: "B", text: "The negative impact of Black Friday is also significant from non-recyclable.", isCorrect: false},
+                            {id: "C", text: "but also from the return of unwanted items.", isCorrect: true},
+                            {id: "D", text: "where much of the online returns are tossed into the landfill because the logistics", isCorrect: false}
+                        ],
+                        explanation: "<b>Dạng bài điền câu/cụm từ này cần phải soi kỹ dấu hiệu cấu trúc ngữ pháp liên kết:</b><br><br>Nhìn vào vế đầu của câu: 'The sales produce massive waste <b>not just from</b> the unwanted single-use plastic...'. Chúng ta thấy cấu trúc quen thuộc <b>'not just... but also...'</b> (không những... mà còn...).<br><br>Do vế trước đã có 'not just from' (không chỉ từ), bắt buộc vế sau phải bắt đầu bằng cụm 'but also from' (mà còn từ) để tạo thành một câu hoàn chỉnh, cân bằng về mặt cấu trúc.<br>Liếc xuống 4 đáp án cho sẵn, chỉ duy nhất đáp án C mở đầu bằng cụm từ này: <b>'but also from the return of unwanted items.'</b><br><br>👉 Chọn ngay đáp án C. Ý nghĩa của nguyên câu là: Doanh số bán hàng tạo ra một lượng rác thải khổng lồ không chỉ từ bao bì nhựa và bìa cứng dùng một lần không mong muốn, mà còn từ việc trả lại các mặt hàng không mong muốn."
+                    },
+                    {
+                        qNum: 38, text: "Question 38: This is especially true of the clothing industry, (38) ........... and the cost of putting the item back on the shelf is much too complicated.",
+                        options: [
+                            {id: "A", text: "The government is considering banning Black Friday due to the impact on the planet...", isCorrect: false},
+                            {id: "B", text: "The negative impact of Black Friday is also significant from non-recyclable.", isCorrect: false},
+                            {id: "C", text: "but also from the return of unwanted items.", isCorrect: false},
+                            {id: "D", text: "where much of the online returns are tossed into the landfill because the logistics", isCorrect: true}
+                        ],
+                        explanation: "<b>Xét tiếp sự liên kết bằng Đại từ quan hệ:</b><br><br>Vế câu đứng ngay phía trước ô trống (38) là: 'This is especially true of the clothing industry,' (Điều này đặc biệt đúng với ngành công nghiệp quần áo). Chữ 'industry' (ngành công nghiệp) ở đây có thể được coi là một danh từ chỉ nơi chốn bao quát hoặc một lĩnh vực. Để nối một mệnh đề phụ giải thích rõ hơn hiện tượng xảy ra ở ngành này, chúng ta cần một đại từ quan hệ chỉ nơi chốn là 'where'.<br><br>Đồng thời, vế phía sau ô trống là: 'and the cost of putting the item back on the shelf is much too complicated' (và chi phí để đưa mặt hàng trở lại kệ quá phức tạp). Chúng ta cần một chủ ngữ kết hợp với từ 'logistics' (khâu hậu cần) để ghép với chữ 'and the cost' tạo thành lý do.<br><br>Nhìn vào đáp án D: <b>'where much of the online returns are tossed into the landfill because the logistics'</b> (nơi mà phần lớn hàng hóa trả lại qua mạng bị vứt vào bãi rác vì khâu hậu cần). Ghép vào câu ta thấy hoàn toàn mượt mà cả về ngữ pháp ('where' thay thế cho 'industry') lẫn ý nghĩa logic (vì khâu hậu cần và chi phí quá phức tạp nên hàng bị vứt ra bãi rác).<br><br>👉 Chọn đáp án D."
+                    },
+                    {
+                        qNum: 39, text: "Question 39: (39) ........... . Mostly plastic toys, to e-waste, to fast fashion that is only used for one season.",
+                        options: [
+                            {id: "A", text: "The government is considering banning Black Friday due to the impact on the planet...", isCorrect: false},
+                            {id: "B", text: "The negative impact of Black Friday is also significant from non-recyclable.", isCorrect: true},
+                            {id: "C", text: "but also from the return of unwanted items.", isCorrect: false},
+                            {id: "D", text: "where much of the online returns are tossed into the landfill because the logistics", isCorrect: false}
+                        ],
+                        explanation: "<b>Câu văn đứng liền sau ô trống là manh mối giải quyết câu này:</b><br><br>Câu ngay phía sau viết là: 'Mostly plastic toys, to e-waste, to fast fashion that is only used for one season.' (Chủ yếu là đồ chơi bằng nhựa, rác thải điện tử, cho đến thời trang nhanh chỉ được sử dụng trong một mùa).<br>Các mặt hàng được liệt kê ở đây (nhựa, đồ điện tử phế thải, quần áo thời trang nhanh) đều có một điểm chung: Rất khó hoặc không thể tái chế.<br><br>Vì câu sau là sự liệt kê làm rõ ý cho câu trước, nên câu đứng trước (ô trống 39) phải mang thông tin giới thiệu về chủ đề 'vật liệu không thể tái chế'.<br>Xét các lựa chọn còn lại, chỉ có đáp án B: <b>'The negative impact of Black Friday is also significant from non-recyclable.'</b> (Tác động tiêu cực của Black Friday cũng rất đáng kể đối với các mặt hàng không thể tái chế) là nhắc trực tiếp đến chữ 'non-recyclable', tạo đà hoàn hảo cho sự liệt kê ở câu tiếp theo.<br><br>👉 Chọn đáp án B."
+                    },
+                    {
+                        qNum: 40, text: "Question 40: In fact, in France, (40) ........... .",
+                        options: [
+                            {id: "A", text: "The government is considering banning Black Friday due to the impact on the planet and the promotion of unsustainable consuming habits.", isCorrect: true},
+                            {id: "B", text: "The negative impact of Black Friday is also significant from non-recyclable.", isCorrect: false},
+                            {id: "C", text: "but also from the return of unwanted items.", isCorrect: false},
+                            {id: "D", text: "where much of the online returns are tossed into the landfill because the logistics", isCorrect: false}
+                        ],
+                        explanation: "<b>Tìm câu phù hợp với trạng ngữ chỉ địa điểm 'in France' (tại nước Pháp):</b><br><br>Cụm từ dẫn nhập 'In fact, in France,' (Trên thực tế, tại Pháp,) báo hiệu rằng chúng ta cần một mệnh đề chính hoàn chỉnh (bao gồm Chủ ngữ + Động từ) chỉ một hành động hoặc quyết định cụ thể đang diễn ra ở quốc gia này để làm ví dụ chốt lại cho bài báo.<br><br>Lựa chọn cuối cùng và duy nhất phù hợp về mặt cấu trúc ngữ pháp cũng như logic khép lại bài báo phê phán Black Friday chính là đáp án A: <b>'The government is considering banning Black Friday due to the impact on the planet and the promotion of unsustainable consuming habits.'</b> (Chính phủ đang xem xét việc cấm Black Friday do tác động lên hành tinh và việc thúc đẩy các thói quen tiêu dùng không bền vững).<br><br>👉 Chọn đáp án A để khép lại hoàn chỉnh văn bản."
+                    }
+                ]
+            }
+        ];
+
+        let totalQuestions = 0;
+        let answeredCorrectly = 0;
+        let hasAnswered = {}; 
+
+        function shuffleArray(array) {
+            let curId = array.length;
+            while (0 !== curId) {
+                let randId = Math.floor(Math.random() * curId);
+                curId -= 1;
+                let tmp = array[curId];
+                array[curId] = array[randId];
+                array[randId] = tmp;
+            }
+            return array;
+        }
+
+        function toggleTranslate(btn) {
+            const transBox = btn.nextElementSibling;
+            if (transBox.style.display === "block") {
+                transBox.style.display = "none";
+                btn.innerHTML = "Mở dịch đoạn này 🌟";
+            } else {
+                transBox.style.display = "block";
+                btn.innerHTML = "Đóng bản dịch 🙈";
+            }
+        }
+
+        function renderQuiz() {
+            const readPane = document.getElementById("readingPane");
+            const exerPane = document.getElementById("questionsContainer");
+            readPane.innerHTML = "";
+            exerPane.innerHTML = "";
+
+            quizData.forEach((passage, pIndex) => {
+                let readHtml = `<div class="passage-block">`;
+                if(passage.instruction) {
+                    readHtml += `<p style="font-style: italic; color: #5f27cd; margin-bottom: 15px;">${passage.instruction}</p>`;
+                }
+                
+                passage.paragraphs.forEach((para, i) => {
+                    readHtml += `
+                        <div class="paragraph">${para.text}</div>
+                        <button class="btn-translate" onclick="toggleTranslate(this)">Mở dịch đoạn này 🌟</button>
+                        <div class="translation-box">${para.translation}</div>
+                    `;
+                });
+
+                if(passage.glossary && passage.glossary.length > 0) {
+                    readHtml += `
+                        <h3 style="color: var(--primary); margin-top: 20px; font-size: 1.2rem;">📚 Bảng Từ Vựng Khó (Glossary)</h3>
+                        <table class="glossary-table">
+                            <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+                    `;
+                    passage.glossary.forEach(item => {
+                        readHtml += `<tr><td><strong>${item.word}</strong></td><td><i>${item.type}</i></td><td>${item.meaning}</td></tr>`;
+                    });
+                    readHtml += `</table>`;
+                }
+                readHtml += `</div>`;
+                readPane.innerHTML += readHtml;
+
+                passage.questions.forEach((q) => {
+                    totalQuestions++;
+                    let shuffledOptions = shuffleArray([...q.options]); 
+                    
+                    let optionsHtml = `<div class="options-grid">`;
+                    shuffledOptions.forEach((opt) => {
+                        optionsHtml += `
+                            <div class="option-btn" id="opt_${q.qNum}_${opt.id}" 
+                                 data-correct="${opt.isCorrect}"
+                                 onclick="handleAnswer(${q.qNum}, '${opt.id}')">
+                                 ${opt.text}
+                            </div>
+                        `;
+                    });
+                    optionsHtml += `</div>`;
+
+                    let qHtml = `
+                        <div class="question-card" id="card_${q.qNum}">
+                            <div class="question-text">${q.text}</div>
+                            ${optionsHtml}
+                            <div class="explanation-box" id="exp_${q.qNum}">
+                                <div class="explain-title">💡 Phân tích đáp án cùng Ms. Chí Nên:</div>
+                                ${q.explanation}
+                            </div>
+                        </div>
+                    `;
+                    exerPane.innerHTML += qHtml;
+                });
+            });
+        }
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if(type === 'correct') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); 
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            } else {
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#fbc531', '#4cd137', '#00a8ff', '#9c88ff', '#e84118'];
+            const container = document.getElementById('confetti-container');
+            for(let i=0; i<30; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 1 + 1) + 's';
+                container.appendChild(conf);
+                setTimeout(() => conf.remove(), 2000);
+            }
+        }
+
+        function handleAnswer(qNum, optId) {
+            if(hasAnswered[qNum]) return; 
+            hasAnswered[qNum] = true;
+
+            const clickedBtn = document.getElementById(`opt_${qNum}_${optId}`);
+            const isCorrect = clickedBtn.getAttribute('data-correct') === 'true';
+            
+            const allBtns = document.querySelectorAll(`[id^="opt_${qNum}_"]`);
+            allBtns.forEach(btn => btn.classList.add('disabled'));
+
+            if(isCorrect) {
+                clickedBtn.classList.add('correct');
+                playSound('correct');
+                createConfetti();
+                answeredCorrectly++;
+            } else {
+                clickedBtn.classList.add('wrong');
+                clickedBtn.classList.add('shake');
+                playSound('wrong');
+                
+                allBtns.forEach(btn => {
+                    if(btn.getAttribute('data-correct') === 'true') {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                document.getElementById(`exp_${qNum}`).classList.add('show');
+            }, 500);
+        }
+
+        let timeRemaining = 600; 
+        let timerInterval;
+        let isTimerRunning = false;
+
+        function updateTimerDisplay() {
+            let m = Math.floor(timeRemaining / 60);
+            let s = timeRemaining % 60;
+            document.getElementById("timerDisplay").innerText = 
+                (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+        }
+
+        function startTimer() {
+            const btn = document.getElementById("startTimerBtn");
+            if(!isTimerRunning) {
+                isTimerRunning = true;
+                btn.innerHTML = "⏸ TẠM DỪNG";
+                btn.style.background = "#e67e22";
+                btn.style.boxShadow = "0 5px 0 #d35400";
+                
+                timerInterval = setInterval(() => {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                    if(timeRemaining <= 0) {
+                        clearInterval(timerInterval);
+                        alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                    }
+                }, 1000);
+            } else {
+                isTimerRunning = false;
+                clearInterval(timerInterval);
+                btn.innerHTML = "▶ TIẾP TỤC";
+                btn.style.background = "var(--primary)"; 
+                btn.style.boxShadow = "0 5px 0 #5f3a8c";
+            }
+        }
+
+        function submitQuiz() {
+            clearInterval(timerInterval);
+            let scoreText = `${answeredCorrectly}/${totalQuestions}`;
+            document.getElementById("modalScore").innerText = scoreText;
+            
+            let message = "";
+            let percent = answeredCorrectly / totalQuestions;
+            if(percent === 1) message = "Trí tuệ Thiên Tài! Bạn đã xuất sắc hoàn thành 100% bài thi. Quá đỉnh! 🌟";
+            else if(percent >= 0.8) message = "Làm tốt lắm! Bạn có kỹ năng đọc hiểu rất đáng nể. 👏";
+            else if(percent >= 0.5) message = "Khá lắm! Cố gắng ôn thêm từ vựng là điểm sẽ cao vút. Lên nào! 🔥";
+            else message = "Không sao đâu! Học tiếng Anh là một hành trình dài. Làm lại lần nữa để nhớ lâu hơn nhé! 💪";
+            
+            document.getElementById("modalMessage").innerText = message;
+            document.getElementById("resultModal").style.display = "flex";
+            createConfetti();
+        }
+
+        window.onload = () => {
+            renderQuiz();
+        };
+    </script>
+</body>
+</html>
