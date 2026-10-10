@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Thi Tiếng Anh Tương Tác - Ms. Chí Nên </title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #00C9A7;
+            --accent: #FDCB6E;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --bg-light: #ffffff;
+            --text-dark: #2d3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        /* DYNAMIC BACKGROUND & ANIMATION */
+        body {
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent));
+            background-size: 300% 300%;
+            animation: gradientBG 10s ease infinite;
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG PATTERN OVERLAY */
+        .pattern-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg width="150" height="150" xmlns="http://www.w3.org/2000/svg"><text x="20" y="40" font-size="25" opacity="0.2">🌟</text><text x="100" y="90" font-size="25" opacity="0.2">📚</text><text x="40" y="130" font-size="25" opacity="0.2">🚀</text></svg>');
+            pointer-events: none;
+            z-index: 0;
+            animation: floatPattern 20s linear infinite;
+        }
+
+        @keyframes floatPattern {
+            from { background-position: 0 0; }
+            to { background-position: 150px 150px; }
+        }
+
+        /* TOP BAR */
+        .top-bar {
+            background: rgba(255, 255, 255, 0.95);
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .header-title span {
+            font-size: 0.8rem;
+            color: #636e72;
+            display: block;
+        }
+
+        .timer-btn {
+            background: var(--wrong);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #d63031;
+            transition: all 0.2s;
+        }
+
+        .timer-btn:active {
+            transform: translateY(5px);
+            box-shadow: none;
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--wrong);
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* SPLIT SCREEN LAYOUT */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        /* LEFT PANEL: READING */
+        .passage {
+            margin-bottom: 40px;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .passage-title {
+            color: var(--primary);
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            border-bottom: 2px dashed var(--accent);
+            padding-bottom: 10px;
+        }
+
+        .translate-btn {
+            background: var(--accent);
+            color: #2d3436;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 4px 0 #e1b12c;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .translate-btn:active { transform: translateY(4px); box-shadow: none; }
+
+        .translation-box {
+            display: none;
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            font-size: 1rem;
+            border-left: 5px solid var(--accent);
+        }
+
+        /* GLOSSARY TABLE */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+        .glossary-table th {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* RIGHT PANEL: EXERCISES */
+        .question-card {
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #dfe6e9;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0 #dfe6e9;
+            text-align: left;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            border-color: var(--secondary);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(4px) scale(1.02);
+            box-shadow: none;
+        }
+
+        .option-btn.correct {
+            background: var(--correct);
+            color: white;
+            border-color: var(--correct);
+            box-shadow: 0 4px 0 #00a854;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong);
+            color: white;
+            border-color: var(--wrong);
+            box-shadow: 0 4px 0 #d63031;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .explanation {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #e0f7fa;
+            border-left: 5px solid var(--secondary);
+            border-radius: 10px;
+            font-size: 1rem;
+            animation: fadeIn 0.5s;
+        }
+
+        .explanation strong { color: var(--primary); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SUBMIT BUTTON & MODAL */
+        .submit-btn {
+            display: block;
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #6c5ce7;
+            margin-top: 30px;
+            transition: all 0.2s;
+        }
+        .submit-btn:active {
+            transform: translateY(6px);
+            box-shadow: none;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .score-circle {
+            width: 120px; height: 120px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0 auto 20px;
+            color: #2d3436;
+            border: 5px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* CONFETTI CANVAS */
+        #confetti {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* SCROLLBAR CUSTOMIZATION */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="pattern-overlay"></div>
+    <canvas id="confetti"></canvas>
+
+    <div class="top-bar">
+        <div class="header-title">
+            ENGLISH CHALLENGE
+            <span>Giáo viên tạo: Ms. Chí Nên </span>
+        </div>
+        <button class="timer-btn" id="startTimerBtn">⏳ BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
+        <div class="timer-display" id="timerDisplay">
+            <span id="timeText">10:00</span>
+            <button id="pauseTimerBtn" style="background:none;border:none;cursor:pointer;font-size:1.2rem;">⏸️</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="panel left-panel">
+            
+            <div class="passage">
+                <h2 class="passage-title">Ex 10. ADVANTAGES OF FESTIVALS</h2>
+                <p>
+                    Around the world, there are a lot of festivals. People love festivals (1) __________ of the advantages they bring about. First of all, festivals are (2) __________for the community. They create an opportunity for the people to take part in the festival (3) __________. Also, festivals help people cooperate with one another when they organise the activities together. They can also (4) __________ more about and appreciate their cultural values. Second, families can benefit from festivals. These are the opportunities for family (5) __________ to gather, prepare for the festival and (6) __________ some fun. For example, before Tet, the whole family (7) __________ their house, go to the flower market, make Chung cake, etc. During Tet, they enjoy the meals (8) __________ and visit their relatives.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('trans1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans1">
+                    <strong>BẢN DỊCH ĐẦY ĐỦ:</strong><br>
+                    Trên khắp thế giới, có rất nhiều lễ hội. Mọi người yêu thích các lễ hội (1) bởi vì những lợi ích mà chúng mang lại. Trước hết, lễ hội rất (2) tốt cho cộng đồng. Chúng tạo cơ hội cho mọi người tham gia vào các (3) hoạt động lễ hội. Ngoài ra, lễ hội giúp mọi người hợp tác với nhau khi cùng nhau tổ chức các hoạt động. Họ cũng có thể (4) tìm hiểu thêm và trân trọng những giá trị văn hóa của mình. Thứ hai, các gia đình có thể hưởng lợi từ lễ hội. Đây là cơ hội để các (5) thành viên trong gia đình đoàn tụ, chuẩn bị cho lễ hội và (6) có những niềm vui. Ví dụ, trước Tết, cả gia đình (7) dọn dẹp nhà cửa, đi chợ hoa, gói bánh chưng, v.v. Trong dịp Tết, họ (8) cùng nhau thưởng thức các bữa ăn và đi thăm họ hàng.
+                </div>
+            </div>
+
+            <div class="passage">
+                <h2 class="passage-title">Ex 11. TRAFFIC IN CITIES</h2>
+                <p>
+                    The volume of traffic in many cities in the world today continues to expand. This caused many problems, including serious air pollution, lengthy delays, and the greater risk of accidents. Clearly, something must be done, but it is difficult to persuade people to change habits and leaves their cars at home.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('trans2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans2">
+                    <strong>BẢN DỊCH ĐẦY ĐỦ:</strong><br>
+                    Lưu lượng giao thông ở nhiều thành phố trên thế giới ngày nay tiếp tục tăng lên. Điều này gây ra nhiều vấn đề, bao gồm ô nhiễm không khí nghiêm trọng, những sự chậm trễ kéo dài và nguy cơ tai nạn cao hơn. Rõ ràng, cần phải làm một điều gì đó, nhưng rất khó để thuyết phục mọi người thay đổi thói quen và để xe hơi của họ ở nhà.
+                </div>
+                <br>
+                <p>
+                    One possible approach is to make it more expensive for people to use their cars by increasing charges for parking and bringing in tougher fines for anyone who breaks the law. In addition, drivers could be required to pay for using particular routes at differ times of the day. This system, known as road pricing has already been introduced in a number of cities, using a special electronic card fixed to the windscreen of the car. Of course, the most important thing is to provide good public transport. However, to get people to give up the comfort of their cars, public transport must be felt to be reliable, convenient and comfortable, with fares kept at an acceptable level.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('trans3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans3">
+                    <strong>BẢN DỊCH ĐẦY ĐỦ:</strong><br>
+                    Một giải pháp khả thi là làm cho việc sử dụng xe hơi trở nên đắt đỏ hơn bằng cách tăng phí đỗ xe và áp dụng các mức phạt nặng hơn đối với bất kỳ ai vi phạm luật. Ngoài ra, tài xế có thể bị yêu cầu trả tiền khi sử dụng các tuyến đường cụ thể vào các thời điểm khác nhau trong ngày. Hệ thống này, được gọi là thu phí đường bộ, đã được áp dụng ở một số thành phố, sử dụng một thẻ điện tử đặc biệt gắn trên kính chắn gió của xe hơi. Tất nhiên, điều quan trọng nhất là phải cung cấp phương tiện giao thông công cộng tốt. Tuy nhiên, để khiến mọi người từ bỏ sự thoải mái của xe hơi cá nhân, giao thông công cộng phải tạo được cảm giác đáng tin cậy, tiện lợi và thoải mái, với mức giá vé được giữ ở mức chấp nhận được.
+                </div>
+            </div>
+
+            <div class="passage">
+                <h2 class="passage-title">Ex 12. TITANIC FILM</h2>
+                <p>
+                    Titanic is a romantic film, which was ............. (1) by James Cameron. However, it’s also about a disaster. It .............. (2) Leonardo DiCaprio and Kate Winslet. The film is about the sinking of the ship Titanic on its first voyage. The main .............. (3) are Jack Dawson and Rose DeWitt Bukater. Jack saves Rose from killing herself during the journey on board the ship. .............. (4) they are from different social classes, and Rose is already engaged, they fall in love. The film has a sad .............. (5): the Titanic sinks and more than a thousand people die in the disaster, including Jack. .............. (6) say it is a must-see. I agree, because the story is moving and the acting is excellent. The .............. (7) effects, visuals, and music are also incredible. Titanic is a very sad film. Nevertheless, many people really love it. Go and see it if you can.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('trans4')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans4">
+                    <strong>BẢN DỊCH ĐẦY ĐỦ:</strong><br>
+                    Titanic là một bộ phim lãng mạn, được (1) đạo diễn bởi James Cameron. Tuy nhiên, nó cũng kể về một thảm họa. Bộ phim (2) có sự tham gia đóng chính của Leonardo DiCaprio và Kate Winslet. Phim kể về vụ chìm tàu Titanic trong chuyến hải hành đầu tiên của nó. (3) Các nhân vật chính là Jack Dawson và Rose DeWitt Bukater. Jack cứu Rose khỏi việc tự tử trong suốt hành trình trên tàu. (4) Mặc dù họ xuất thân từ các tầng lớp xã hội khác nhau, và Rose đã đính hôn, họ vẫn đem lòng yêu nhau. Bộ phim có một (5) kết thúc buồn: tàu Titanic chìm và hơn một nghìn người chết trong thảm họa, bao gồm cả Jack. (6) Các nhà phê bình nói rằng đây là một bộ phim phải xem. Tôi đồng ý, bởi vì câu chuyện rất cảm động và diễn xuất thì xuất sắc. (7) Các kỹ xảo đặc biệt, hình ảnh và âm nhạc cũng rất đáng kinh ngạc. Titanic là một bộ phim rất buồn. Tuy nhiên, nhiều người thực sự yêu thích nó. Hãy đi xem nếu bạn có thể.
+                </div>
+            </div>
+
+            <h3 style="color:var(--primary); margin-top:30px;">📚 BẢNG TỪ VỰNG HỌC THUẬT (GLOSSARY)</h3>
+            <table class="glossary-table">
+                <thead>
+                    <tr><th>Từ vựng (Word)</th><th>Loại từ</th><th>Nghĩa Tiếng Việt</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1. Advantage</td><td>(n)</td><td>Lợi ích, ưu điểm</td></tr>
+                    <tr><td>2. Cooperate</td><td>(v)</td><td>Hợp tác, cộng tác</td></tr>
+                    <tr><td>3. Appreciate</td><td>(v)</td><td>Trân trọng, đánh giá cao</td></tr>
+                    <tr><td>4. Expand</td><td>(v)</td><td>Mở rộng, tăng lên</td></tr>
+                    <tr><td>5. Persuade</td><td>(v)</td><td>Thuyết phục</td></tr>
+                    <tr><td>6. Approach</td><td>(n)</td><td>Giải pháp, phương pháp tiếp cận</td></tr>
+                    <tr><td>7. Reliable</td><td>(adj)</td><td>Đáng tin cậy</td></tr>
+                    <tr><td>8. Disaster</td><td>(n)</td><td>Thảm họa</td></tr>
+                    <tr><td>9. Voyage</td><td>(n)</td><td>Chuyến hải hành (đi trên biển)</td></tr>
+                    <tr><td>10. Engaged</td><td>(adj)</td><td>Đã đính hôn</td></tr>
+                    <tr><td>11. Critic</td><td>(n)</td><td>Nhà phê bình</td></tr>
+                    <tr><td>12. Incredible</td><td>(adj)</td><td>Đáng kinh ngạc, tuyệt vời</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel right-panel" id="quizContainer">
+            <button class="submit-btn" onclick="submitQuiz()">NỘP BÀI NHẬN KẾT QUẢ 🚀</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 style="color:var(--primary); margin-bottom:15px;">KẾT QUẢ BÀI LÀM</h2>
+            <div class="score-circle" id="scoreDisplay">0/0</div>
+            <h3 id="feedbackMessage" style="margin-bottom:20px;">Đang tính điểm...</h3>
+            <p style="color:#636e72; margin-bottom: 25px;">Hãy xem lại các câu sai ở cột bên phải để đọc giải thích chi tiết nhé!</p>
+            <button class="translate-btn" style="padding:10px 30px;" onclick="closeModal()">ĐÓNG</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DỮ LIỆU BÀI TẬP ---
+        const quizData = [
+            // EX 10 (Sinh đáp án cho học sinh chọn)
+            { id: "10_1", title: "Ex 10 - Blank (1)", text: "People love festivals (1) __________ of the advantages they bring about.", 
+              options: [ {t:"because", c:true}, {t:"spite", c:false}, {t:"instead", c:false}, {t:"due", c:false} ],
+              exp: "<strong>Tại sao chọn 'because'?</strong><br>Cấu trúc: <b>because of + Cụm danh từ/V-ing</b> (Bởi vì). Theo sau khoảng trống là cụm danh từ 'the advantages', nên ta dùng 'because'. 'In spite of' mang nghĩa 'mặc dù' (sai nghĩa). 'Due' đi với 'to'." },
+            { id: "10_2", title: "Ex 10 - Blank (2)", text: "First of all, festivals are (2) __________ for the community.", 
+              options: [ {t:"good", c:true}, {t:"bad", c:false}, {t:"harmful", c:false}, {t:"useless", c:false} ],
+              exp: "<strong>Tại sao chọn 'good'?</strong><br>Cụm từ: <b>be good for...</b> (tốt cho...). Các lễ hội mang lại lợi ích (advantages) nên chúng 'tốt cho' cộng đồng. Các từ còn lại mang nghĩa tiêu cực." },
+            { id: "10_3", title: "Ex 10 - Blank (3)", text: "take part in the festival (3) __________.", 
+              options: [ {t:"activities", c:true}, {t:"actions", c:false}, {t:"actors", c:false}, {t:"acting", c:false} ],
+              exp: "<strong>Tại sao chọn 'activities'?</strong><br><b>Festival activities</b>: các hoạt động lễ hội. Chỗ trống cần một danh từ số nhiều chỉ các hoạt động được tổ chức." },
+            { id: "10_4", title: "Ex 10 - Blank (4)", text: "They can also (4) __________ more about and appreciate their cultural values.", 
+              options: [ {t:"learn", c:true}, {t:"teach", c:false}, {t:"forget", c:false}, {t:"ignore", c:false} ],
+              exp: "<strong>Tại sao chọn 'learn'?</strong><br>Cụm <b>learn about</b>: học hỏi/tìm hiểu về. Hợp lý với vế sau 'appreciate' (trân trọng) giá trị văn hóa." },
+            { id: "10_5", title: "Ex 10 - Blank (5)", text: "These are the opportunities for family (5) __________ to gather...", 
+              options: [ {t:"members", c:true}, {t:"people", c:false}, {t:"humans", c:false}, {t:"friends", c:false} ],
+              exp: "<strong>Tại sao chọn 'members'?</strong><br>Cụm từ cố định: <b>family members</b> (các thành viên trong gia đình)." },
+            { id: "10_6", title: "Ex 10 - Blank (6)", text: "...prepare for the festival and (6) __________ some fun.", 
+              options: [ {t:"have", c:true}, {t:"make", c:false}, {t:"do", c:false}, {t:"take", c:false} ],
+              exp: "<strong>Tại sao chọn 'have'?</strong><br>Collocation cố định: <b>have fun / have some fun</b> (vui vẻ, có niềm vui). Không dùng make/do fun." },
+            { id: "10_7", title: "Ex 10 - Blank (7)", text: "before Tet, the whole family (7) __________ their house...", 
+              options: [ {t:"clean", c:true}, {t:"build", c:false}, {t:"destroy", c:false}, {t:"sell", c:false} ],
+              exp: "<strong>Tại sao chọn 'clean'?</strong><br>Hoạt động đặc trưng trước Tết: <b>clean the house</b> (dọn dẹp nhà cửa)." },
+            { id: "10_8", title: "Ex 10 - Blank (8)", text: "During Tet, they enjoy the meals (8) __________ and visit their relatives.", 
+              options: [ {t:"together", c:true}, {t:"lonely", c:false}, {t:"sadly", c:false}, {t:"alone", c:false} ],
+              exp: "<strong>Tại sao chọn 'together'?</strong><br><b>Enjoy meals together</b>: Thưởng thức bữa ăn cùng nhau. Thể hiện sự đoàn tụ gia đình." },
+
+            // EX 11
+            { id: "11_38", title: "Ex 11 - Question 38", text: "The word expand in paragraph 1 is closest in meaning to ____________.", 
+              options: [ {t:"A. decrease", c:false}, {t:"B. increase", c:true}, {t:"C. reduce", c:false}, {t:"D. develop", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>- <b>expand</b> (v): mở rộng, tăng lên.<br>- <b>increase</b> (v): tăng lên -> Đồng nghĩa.<br>- decrease/reduce: giảm (Trái nghĩa). Dẫn chứng: 'The volume of traffic... continues to expand'." },
+            { id: "11_39", title: "Ex 11 - Question 39", text: "Which of the following is NOT mentioned as a problem caused by more traffic?", 
+              options: [ {t:"A. serious air pollution", c:false}, {t:"B. greater risks of accidents", c:false}, {t:"C. people’s habits", c:true}, {t:"D. very long delays", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>Đoạn 1 liệt kê hậu quả: 'serious air pollution, lengthy delays, and the greater risk of accidents'. <b>Thói quen của con người (people's habits)</b> là nguyên nhân/vấn đề khó thay đổi, KHÔNG phải là hậu quả do giao thông gây ra." },
+            { id: "11_40", title: "Ex 11 - Question 40", text: "The most important thing to encourage people to use public transport is ____________", 
+              options: [ {t:"A. high parking fees", c:false}, {t:"B. good public transport", c:true}, {t:"C. road using fees", c:false}, {t:"D. high charges", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>Dẫn chứng đoạn 2: <i>'Of course, the most important thing is to provide <b>good public transport</b>'</i> (Tất nhiên, điều quan trọng nhất là cung cấp phương tiện giao thông công cộng tốt)." },
+            { id: "11_41", title: "Ex 11 - Question 41", text: "The verb give up is closest in meaning to ____________.", 
+              options: [ {t:"A. continue using", c:false}, {t:"B. encourage", c:false}, {t:"C. get bored with", c:false}, {t:"D. stop using", c:true} ],
+              exp: "<strong>Phân tích:</strong><br>Phrasal verb <b>give up</b> = từ bỏ, ngừng làm gì đó. Cụm đồng nghĩa là <b>stop using</b>." },
+            { id: "11_42", title: "Ex 11 - Question 42", text: "We can learn from the text that ____________.", 
+              options: [ {t:"A. easy to change habits", c:false}, {t:"B. not drive expensive cars", c:false}, {t:"C. more people use public transport if cheap, reliable, comfortable", c:true}, {t:"D. pollution causes people to leave cars", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>Dẫn chứng câu cuối: <i>'...public transport must be felt to be reliable, convenient and comfortable, with fares kept at an acceptable level'</i> (Giao thông công cộng phải đáng tin cậy, thoải mái và giá vé hợp lý thì người dân mới sử dụng)." },
+
+            // EX 12
+            { id: "12_1", title: "Ex 12 - Blank (1)", text: "Titanic is a romantic film, which was ............. (1) by James Cameron.", 
+              options: [ {t:"A. direction", c:false}, {t:"B. directed", c:true}, {t:"C. directing", c:false}, {t:"D. direct", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>Cấu trúc câu bị động (Passive Voice): <b>was + V_ed/P2</b>. Phim được đạo diễn bởi James Cameron. Chọn B. directed." },
+            { id: "12_2", title: "Ex 12 - Blank (2)", text: "It .............. (2) Leonardo DiCaprio and Kate Winslet.", 
+              options: [ {t:"A. stars", c:true}, {t:"B. plays", c:false}, {t:"C. creates", c:false}, {t:"D. introduces", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>Từ <b>star</b> ở đây đóng vai trò động từ: có sự tham gia diễn chính của ai đó. Phim này có sự tham gia của Leonardo và Kate." },
+            { id: "12_3", title: "Ex 12 - Blank (3)", text: "The main .............. (3) are Jack Dawson and Rose DeWitt Bukater.", 
+              options: [ {t:"A. people", c:false}, {t:"B. actors", c:false}, {t:"C. characters", c:true}, {t:"D. humans", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>Cụm từ <b>main characters</b> có nghĩa là: các nhân vật chính trong phim/truyện." },
+            { id: "12_4", title: "Ex 12 - Blank (4)", text: ".............. (4) they are from different social classes, and Rose is already engaged, they fall in love.", 
+              options: [ {t:"A. because", c:false}, {t:"B. although", c:true}, {t:"C. nevertheless", c:false}, {t:"D. therefore", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>Hai vế câu mang nghĩa đối lập: (1) Khác tầng lớp, đã đính hôn >< (2) Vẫn yêu nhau. Do đó ta dùng <b>Although</b> (Mặc dù) đứng đầu câu." },
+            { id: "12_5", title: "Ex 12 - Blank (5)", text: "The film has a sad .............. (5): the Titanic sinks...", 
+              options: [ {t:"A. end", c:false}, {t:"B. start", c:false}, {t:"C. ending", c:true}, {t:"D. starting", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>Cụm từ chỉ kết cục của một bộ phim/câu chuyện là <b>a sad ending / a happy ending</b> (một cái kết buồn/vui)." },
+            { id: "12_6", title: "Ex 12 - Blank (6)", text: ".............. (6) say it is a must-see.", 
+              options: [ {t:"A. critics", c:true}, {t:"B. criticism", c:false}, {t:"C. critical", c:false}, {t:"D. criticize", c:false} ],
+              exp: "<strong>Phân tích:</strong><br>Chỗ trống đứng đầu câu làm chủ ngữ cho động từ 'say' (nói), nên cần danh từ chỉ người số nhiều. <b>Critics</b> (các nhà phê bình). Criticism là lời phê bình (vật)." },
+            { id: "12_7", title: "Ex 12 - Blank (7)", text: "The .............. (7) effects, visuals, and music are also incredible.", 
+              options: [ {t:"A. unique", c:false}, {t:"B. important", c:false}, {t:"C. great", c:false}, {t:"D. special", c:true} ],
+              exp: "<strong>Phân tích:</strong><br>Collocation cố định trong phim ảnh: <b>special effects</b> (kỹ xảo điện ảnh/hiệu ứng đặc biệt)." }
+        ];
+
+        let score = 0;
+        let answeredQuestions = new Set();
+        const totalQuestions = quizData.length;
+
+        // --- WEB AUDIO API (Tạo âm thanh không cần link ngoài) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Note A5
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playWrong() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // --- HỆ THỐNG RENDER VÀ SHUFFLE TRẮC NGHIỆM ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            // Xóa button nộp bài tạm để render câu hỏi
+            container.innerHTML = ''; 
+
+            quizData.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `card_${q.id}`;
+                
+                // Shuffle options
+                const shuffledOptions = shuffleArray([...q.options]);
+                
+                let optionsHTML = '<div class="options-grid">';
+                shuffledOptions.forEach((opt, optIdx) => {
+                    optionsHTML += `
+                        <button class="option-btn" 
+                                onclick="handleAnswer('${q.id}', ${opt.c}, this)"
+                                data-correct="${opt.c}">
+                            ${opt.t}
+                        </button>`;
+                });
+                optionsHTML += '</div>';
+
+                card.innerHTML = `
+                    <div style="color:#636e72; font-size:0.9rem; margin-bottom:5px;">${q.title}</div>
+                    <div class="question-text">${q.text}</div>
+                    ${optionsHTML}
+                    <div class="explanation" id="exp_${q.id}">${q.exp}</div>
+                `;
+                container.appendChild(card);
+            });
+
+            // Append lại nút NỘP BÀI
+            const submitBtn = document.createElement('button');
+            submitBtn.className = 'submit-btn';
+            submitBtn.innerHTML = 'NỘP BÀI NHẬN KẾT QUẢ 🚀';
+            submitBtn.onclick = submitQuiz;
+            container.appendChild(submitBtn);
+        }
+
+        function handleAnswer(qId, isCorrect, btnElement) {
+            if (answeredQuestions.has(qId)) return; // Chỉ cho phép chọn 1 lần
+            
+            answeredQuestions.add(qId);
+            const card = document.getElementById(`card_${qId}`);
+            const allBtns = card.querySelectorAll('.option-btn');
+            
+            // Khóa các nút khác
+            allBtns.forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btnElement.classList.add('correct');
+                playDing();
+                fireConfetti(btnElement);
+                score++;
+            } else {
+                btnElement.classList.add('wrong');
+                playWrong();
+                // Hiển thị nút đúng
+                allBtns.forEach(b => {
+                    if(b.getAttribute('data-correct') === 'true') {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            // Hiện giải thích
+            document.getElementById(`exp_${qId}`).style.display = 'block';
+        }
+
+        // --- CÁC TÍNH NĂNG PHỤ TRỢ ---
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        // --- TIMER BẤM GIỜ ---
+        let timerInterval;
+        let timeLeft = 600; // 10 minutes in seconds
+        let isTimerRunning = false;
+
+        document.getElementById('startTimerBtn').addEventListener('click', function() {
+            this.style.display = 'none';
+            document.getElementById('timerDisplay').style.display = 'flex';
+            startTimer();
+            // Kích hoạt AudioContext cho phép chạy âm thanh sau cú click đầu tiên
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        });
+
+        document.getElementById('pauseTimerBtn').addEventListener('click', function() {
+            if(isTimerRunning) {
+                clearInterval(timerInterval);
+                this.innerHTML = '▶️';
+                isTimerRunning = false;
+            } else {
+                startTimer();
+                this.innerHTML = '⏸️';
+            }
+        });
+
+        function startTimer() {
+            isTimerRunning = true;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                document.getElementById('timeText').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                }
+            }, 1000);
+        }
+
+        // --- TÍNH ĐIỂM & ĐÁNH GIÁ ---
+        function submitQuiz() {
+            const modal = document.getElementById('resultModal');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const feedbackMessage = document.getElementById('feedbackMessage');
+
+            scoreDisplay.innerText = `${score}/${totalQuestions}`;
+            
+            let message = "";
+            let percentage = score / totalQuestions;
+
+            if (percentage === 1) {
+                message = "🏆 THIÊN TÀI XUẤT CHÚNG! Bạn đã đúng toàn bộ!";
+            } else if (percentage >= 0.8) {
+                message = "🌟 LÀM TỐT LẮM! Kiến thức của bạn rất vững!";
+            } else if (percentage >= 0.5) {
+                message = "👍 KHÁ LẮM! Hãy xem lại giải thích để hoàn hảo hơn nhé!";
+            } else {
+                message = "💪 CỐ LÊN NHÉ! Đừng nản, đọc kỹ phần giải thích là bạn sẽ giỏi lên ngay!";
+            }
+
+            feedbackMessage.innerText = message;
+            modal.style.display = 'flex';
+            fireConfettiCenter();
+        }
+
+        function closeModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+
+        // --- HIỆU ỨNG PHÁO GIẤY (CONFETTI VANILLA JS) ---
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+
+        function createParticles(x, y) {
+            for(let i=0; i<30; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 1) * 10,
+                    color: `hsl(${Math.random()*360}, 100%, 50%)`,
+                    size: Math.random() * 8 + 4
+                });
+            }
+        }
+
+        function fireConfetti(btn) {
+            const rect = btn.getBoundingClientRect();
+            createParticles(rect.left + rect.width/2, rect.top + rect.height/2);
+        }
+
+        function fireConfettiCenter() {
+            createParticles(window.innerWidth/2, window.innerHeight/2);
+            createParticles(window.innerWidth/3, window.innerHeight/2);
+            createParticles((window.innerWidth/3)*2, window.innerHeight/2);
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.3; // gravity
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                if(p.y > canvas.height) particles.splice(index, 1);
+            });
+            requestAnimationFrame(animateConfetti);
+        }
+        animateConfetti();
+
+        // Khởi tạo bài tập
+        renderQuiz();
+    </script>
+</body>
+</html>
