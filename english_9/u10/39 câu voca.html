@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tiếng Anh 9 (Global Success) - Nature & Environment | Ms. Chí Nên</title>
+    <!-- Google Fonts: Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- CUSTOM THEME & ANIMATIONS --- */
+        :root {
+            --primary: #8854C0; /* Tím hồng */
+            --secondary: #00C9A7; /* Xanh ngọc */
+            --correct: #00D26A; /* Xanh lá */
+            --wrong: #FF4757; /* Đỏ cam */
+            --bg-pattern: #f0f4f8;
+            --card-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            --btn-shadow: 0 4px 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #E0E7FF;
+            background-image: radial-gradient(#8854C0 1px, transparent 1px), radial-gradient(#8854C0 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            background-attachment: fixed;
+            color: #2D3748;
+        }
+
+        /* 3D Button Style */
+        .btn-option {
+            transition: all 0.1s;
+            box-shadow: 0 6px 0 #CBD5E0; /* Default shadow color matching gray border */
+            border: 2px solid #CBD5E0;
+        }
+        
+        .btn-option:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #CBD5E0;
+        }
+
+        .btn-option.selected-correct {
+            background-color: var(--correct) !important;
+            border-color: #009E4F !important;
+            color: white !important;
+            box-shadow: 0 6px 0 #009E4F !important;
+        }
+
+        .btn-option.selected-wrong {
+            background-color: var(--wrong) !important;
+            border-color: #C41E3A !important;
+            color: white !important;
+            box-shadow: 0 6px 0 #C41E3A !important;
+        }
+        
+        .btn-option:active.selected-correct { box-shadow: 0 2px 0 #009E4F !important; }
+        .btn-option:active.selected-wrong { box-shadow: 0 2px 0 #C41E3A !important; }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-5deg); }
+            50% { transform: translateX(5px) rotate(5deg); }
+            75% { transform: translateX(-5px) rotate(-5deg); }
+            100% { transform: translateX(0); }
+        }
+        .anim-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .card-enter {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Explanation Box Styling */
+        .explanation-box {
+            border-left: 5px solid var(--secondary);
+            background-color: #F0FDFA; /* Light Teal bg */
+        }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* Header Badge */
+        .header-badge {
+            background: linear-gradient(135deg, var(--primary), #FF6B6B);
+            box-shadow: 0 4px 0 #5a3485;
+        }
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-md py-3 px-4 border-b-4 border-purple-200">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center border-2 border-purple-500 shadow-sm overflow-hidden">
+                    <!-- Teacher Avatar Placeholder -->
+                    <span class="text-2xl">👩‍🏫</span>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-extrabold text-purple-700 leading-tight">Ms. Chí Nên · ☎️ 0852639652</h1>
+                    <p class="text-xs md:text-sm text-gray-500 font-bold">Grade 9: Nature & Environment</p>
+                </div>
+            </div>
+            
+            <!-- Score Board -->
+            <div class="flex gap-2">
+                <div class="bg-green-100 border-2 border-green-400 px-3 py-1 rounded-xl shadow-sm flex flex-col items-center">
+                    <span class="text-xs font-bold text-green-600 uppercase">Đúng</span>
+                    <span id="score-correct" class="text-lg font-black text-green-600 leading-none">0</span>
+                </div>
+                <div class="bg-red-100 border-2 border-red-400 px-3 py-1 rounded-xl shadow-sm flex flex-col items-center">
+                    <span class="text-xs font-bold text-red-500 uppercase">Sai</span>
+                    <span id="score-wrong" class="text-lg font-black text-red-500 leading-none">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Quiz Container -->
+    <main class="max-w-3xl mx-auto mt-6 px-4" id="quiz-container">
+        <!-- Questions will be injected here by JS -->
+    </main>
+
+    <!-- Submit Button Area -->
+    <div class="max-w-3xl mx-auto mt-8 px-4 text-center mb-12">
+        <button onclick="finishQuiz()" class="bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 text-white font-extrabold text-xl py-4 px-10 rounded-full shadow-[0_6px_0_#1e40af] active:translate-y-1 active:shadow-[0_2px_0_#1e40af] transition-all transform hover:scale-105">
+            NỘP BÀI & XEM KẾT QUẢ 🏆
+        </button>
+    </div>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[100] backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 text-center shadow-2xl border-b-8 border-purple-300 relative card-enter">
+            <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 text-6xl">🎉</div>
+            <h2 class="text-3xl font-extrabold text-purple-600 mt-4 mb-2">Tổng Kết</h2>
+            <p id="result-message" class="text-gray-600 mb-6 font-semibold italic">"..."</p>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-green-50 rounded-2xl p-4 border-2 border-green-200">
+                    <p class="text-sm text-green-600 font-bold uppercase">Chính xác</p>
+                    <p id="final-correct" class="text-4xl font-black text-green-500">0</p>
+                </div>
+                <div class="bg-red-50 rounded-2xl p-4 border-2 border-red-200">
+                    <p class="text-sm text-red-600 font-bold uppercase">Chưa đúng</p>
+                    <p id="final-wrong" class="text-4xl font-black text-red-500">0</p>
+                </div>
+            </div>
+
+            <button onclick="closeModal()" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_#6b21a8] active:translate-y-1 active:shadow-none transition-all">
+                Xem lại bài làm
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. QUIZ DATA (From User Prompt) ---
+        const quizData = {
+          "questions": [
+            {
+              "questionNumber": 1,
+              "question": "Scientists study the ________ to understand the formation and evolution of planets.",
+              "answerOptions": [
+                { "text": "solar system", "rationale": "1. Phân tích từ vựng:\nA. solar system (n phrase): hệ mặt trời.\nB. natural habitat (n phrase): môi trường sống tự nhiên.\nC. nature reserve (n phrase): khu bảo tồn thiên nhiên.\nD. global warming (n phrase): sự nóng lên toàn cầu.\n\n2. Dịch nghĩa toàn câu: \"Các nhà khoa học nghiên cứu hệ mặt trời để hiểu sự hình thành và tiến hóa của các hành tinh.\"\n\n3. Giải thích chi tiết:\nTừ khóa \"planets\" (các hành tinh) liên quan trực tiếp đến \"solar system\". Các đáp án còn lại đều nói về môi trường cụ thể trên Trái Đất.", "isCorrect": true },
+                { "text": "natural habitat", "rationale": "", "isCorrect": false },
+                { "text": "nature reserve", "rationale": "", "isCorrect": false },
+                { "text": "global warming", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 2,
+              "question": "Turning _______into cropland worsens soil, water, and air quality.",
+              "answerOptions": [
+                { "text": "grassland", "rationale": "1. Phân tích từ vựng:\nA. farmland (n): đất canh tác/nông nghiệp.\nB. dreamland (n): cõi mộng.\nC. grassland (n): đồng cỏ.\nD. homeland (n): quê hương.\n\n2. Dịch nghĩa toàn câu: \"Việc biến đồng cỏ thành đất trồng trọt làm suy giảm chất lượng đất, nước và không khí.\"\n\n3. Giải thích chi tiết:\nHành động \"turning ... into cropland\" (biến ... thành đất trồng) ám chỉ việc thay đổi mục đích sử dụng đất tự nhiên. \"Grassland\" (đồng cỏ tự nhiên) là đối tượng thường bị chuyển đổi, gây ảnh hưởng môi trường.", "isCorrect": true },
+                { "text": "farmland", "rationale": "", "isCorrect": false },
+                { "text": "dreamland", "rationale": "", "isCorrect": false },
+                { "text": "homeland", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 3,
+              "question": "Cuc Phuong National Park is the natural ________ for many rare species, both plants and animals.",
+              "answerOptions": [
+                { "text": "habitat", "rationale": "1. Phân tích từ vựng:\nA. habitat (n): môi trường sống.\nB. accommodation (n): chỗ ở (cho con người).\nC. land (n): đất đai.\nD. fauna (n): hệ động vật.\n\n2. Dịch nghĩa toàn câu: \"Vườn quốc gia Cúc Phương là môi trường sống tự nhiên cho nhiều loài quý hiếm, cả thực vật và động vật.\"\n\n3. Giải thích chi tiết:\nCụm từ cố định \"natural habitat\" (môi trường sống tự nhiên) dùng cho sinh vật. \"Accommodation\" chỉ dùng cho người.", "isCorrect": true },
+                { "text": "accommodation", "rationale": "", "isCorrect": false },
+                { "text": "land", "rationale": "", "isCorrect": false },
+                { "text": "fauna", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 4,
+              "question": "The protection and ________ of natural resources and the environment are called conservation.",
+              "answerOptions": [
+                { "text": "preservation", "rationale": "1. Phân tích từ vựng:\nA. preserve (v): bảo tồn.\nB. preserver (n): người bảo tồn.\nC. preserving (v-ing): việc bảo tồn.\nD. preservation (n): sự bảo tồn/gìn giữ.\n\n2. Dịch nghĩa toàn câu: \"Sự bảo vệ và gìn giữ các nguồn tài nguyên thiên nhiên và môi trường được gọi là sự bảo tồn.\"\n\n3. Giải thích chi tiết:\nCần một danh từ để song song với \"protection\" (noun) trong cấu trúc \"The protection and ...\". Đáp án D là danh từ chỉ sự việc.", "isCorrect": true },
+                { "text": "preserve", "rationale": "", "isCorrect": false },
+                { "text": "preserver", "rationale": "", "isCorrect": false },
+                { "text": "preserving", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 5,
+              "question": "Many factories ________ harmful pollutants into the atmosphere.",
+              "answerOptions": [
+                { "text": "emit", "rationale": "1. Phân tích từ vựng:\nA. provide (v): cung cấp.\nB. give (v): cho/tặng.\nC. emit (v): thải ra/phát ra.\nD. put (v): đặt/để.\n\n2. Dịch nghĩa toàn câu: \"Nhiều nhà máy thải các chất ô nhiễm độc hại vào khí quyển.\"\n\n3. Giải thích chi tiết:\nĐộng từ \"emit\" chuyên dùng cho việc thải khí, khói, nhiệt... ra môi trường. \"Emit pollutants\" là cụm từ kết hợp (collocation) chuẩn.", "isCorrect": true },
+                { "text": "provide", "rationale": "", "isCorrect": false },
+                { "text": "give", "rationale": "", "isCorrect": false },
+                { "text": "put", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 6,
+              "question": "Biodiversity is ________ for the health and resilience of ecosystems on Earth.",
+              "answerOptions": [
+                { "text": "vital", "rationale": "1. Phân tích từ vựng:\nA. vital (adj): thiết yếu/quan trọng sống còn.\nB. harmful (adj): có hại.\nC. ecological (adj): thuộc về sinh thái.\nD. threatening (adj): mang tính đe dọa.\n\n2. Dịch nghĩa toàn câu: \"Đa dạng sinh học là yếu tố sống còn đối với sức khỏe và khả năng phục hồi của các hệ sinh thái trên Trái Đất.\"\n\n3. Giải thích chi tiết:\nDựa vào ngữ cảnh tích cực \"health and resilience\" (sức khỏe và sự phục hồi), ta cần một tính từ mang nghĩa quan trọng/tốt. \"Vital\" (thiết yếu) là phù hợp nhất.", "isCorrect": true },
+                { "text": "harmful", "rationale": "", "isCorrect": false },
+                { "text": "ecological", "rationale": "", "isCorrect": false },
+                { "text": "threatening", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 7,
+              "question": "Millions of animals die every year because man has ________ their natural home or ‘habitat’.",
+              "answerOptions": [
+                { "text": "polluted", "rationale": "1. Phân tích từ vựng:\nA. changed (v): thay đổi.\nB. polluted (v): làm ô nhiễm.\nC. kept (v): giữ.\nD. hunted (v): săn bắn.\n\n2. Dịch nghĩa toàn câu: \"Hàng triệu động vật chết mỗi năm vì con người đã làm ô nhiễm ngôi nhà tự nhiên hay 'môi trường sống' của chúng.\"\n\n3. Giải thích chi tiết:\nViệc động vật chết hàng loạt (die) thường do môi trường bị hủy hoại hoặc ô nhiễm. \"Polluted\" (làm ô nhiễm) tác động trực tiếp lên \"habitat\" (môi trường sống). \"Hunted\" tác động lên động vật chứ không phải lên \"habitat\".", "isCorrect": true },
+                { "text": "changed", "rationale": "", "isCorrect": false },
+                { "text": "kept", "rationale": "", "isCorrect": false },
+                { "text": "hunted", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 8,
+              "question": "A food ________ shows you the order in which living things depend on each other for food.",
+              "answerOptions": [
+                { "text": "chain", "rationale": "1. Phân tích từ vựng:\nA. chain (n): chuỗi.\nB. source (n): nguồn.\nC. sample (n): mẫu vật.\nD. provider (n): nhà cung cấp.\n\n2. Dịch nghĩa toàn câu: \"Chuỗi thức ăn cho bạn thấy thứ tự mà các sinh vật phụ thuộc vào nhau để kiếm ăn.\"\n\n3. Giải thích chi tiết:\n\"Food chain\" (chuỗi thức ăn) là thuật ngữ sinh học chỉ mối quan hệ ăn uống giữa các loài.", "isCorrect": true },
+                { "text": "source", "rationale": "", "isCorrect": false },
+                { "text": "sample", "rationale": "", "isCorrect": false },
+                { "text": "provider", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 9,
+              "question": "It is not easy to ________ ecological balance in an area.",
+              "answerOptions": [
+                { "text": "maintain", "rationale": "1. Phân tích từ vựng:\nA. pick up (v phrase): nhặt lên/học lỏm.\nB. survive (v): sinh tồn.\nC. maintain (v): duy trì.\nD. support (v): ủng hộ/hỗ trợ.\n\n2. Dịch nghĩa toàn câu: \"Không dễ để duy trì sự cân bằng sinh thái trong một khu vực.\"\n\n3. Giải thích chi tiết:\nĐi với \"balance\" (sự cân bằng) thì động từ \"maintain\" (duy trì) là phù hợp nhất (collocation: maintain balance).", "isCorrect": true },
+                { "text": "pick up", "rationale": "", "isCorrect": false },
+                { "text": "survive", "rationale": "", "isCorrect": false },
+                { "text": "support", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 10,
+              "question": "Many national parks are established to conserve the Earth's unique ________.",
+              "answerOptions": [
+                { "text": "flora and fauna", "rationale": "1. Phân tích từ vựng:\nA. food chain (n): chuỗi thức ăn.\nB. water bodies (n): thủy vực (sông, hồ...).\nC. outer space (n): không gian vũ trụ.\nD. flora and fauna (n phrase): hệ thực vật và động vật.\n\n2. Dịch nghĩa toàn câu: \"Nhiều vườn quốc gia được thành lập để bảo tồn hệ động thực vật độc đáo của Trái Đất.\"\n\n3. Giải thích chi tiết:\nVườn quốc gia (National parks) có chức năng chính là bảo vệ sinh vật. \"Flora and fauna\" là cụm từ trang trọng chỉ toàn bộ cây cỏ và muông thú.", "isCorrect": true },
+                { "text": "food chain", "rationale": "", "isCorrect": false },
+                { "text": "water bodies", "rationale": "", "isCorrect": false },
+                { "text": "outer space", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 11,
+              "question": "Reducing our carbon footprint is a good way to _______planet Earth.",
+              "answerOptions": [
+                { "text": "protect", "rationale": "1. Phân tích từ vựng:\nA. protect (v): bảo vệ.\nB. change (v): thay đổi.\nC. support (v): hỗ trợ.\nD. preserve (v): bảo quản/lưu giữ.\n\n2. Dịch nghĩa toàn câu: \"Giảm thiểu dấu chân carbon là một cách tốt để bảo vệ hành tinh Trái Đất.\"\n\n3. Giải thích chi tiết:\nCụm từ \"protect the planet\" (bảo vệ hành tinh) rất phổ biến. \"Preserve\" thường dùng cho tài nguyên hoặc di sản hơn là cả hành tinh.", "isCorrect": true },
+                { "text": "change", "rationale": "", "isCorrect": false },
+                { "text": "support", "rationale": "", "isCorrect": false },
+                { "text": "preserve", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 12,
+              "question": "Protecting ________ habitats is essential for maintaining marine biodiversity.",
+              "answerOptions": [
+                { "text": "ocean", "rationale": "1. Phân tích từ vựng:\nA. polar (adj): thuộc địa cực.\nB. ocean (n): đại dương.\nC. grassland (n): đồng cỏ.\nD. forest (n): rừng.\n\n2. Dịch nghĩa toàn câu: \"Bảo vệ môi trường sống đại dương là thiết yếu để duy trì đa dạng sinh học biển.\"\n\n3. Giải thích chi tiết:\nTừ khóa \"marine\" (thuộc về biển) đồng nghĩa và liên quan trực tiếp đến \"ocean\" (đại dương).", "isCorrect": true },
+                { "text": "polar", "rationale": "", "isCorrect": false },
+                { "text": "grassland", "rationale": "", "isCorrect": false },
+                { "text": "forest", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 13,
+              "question": "The ________ of all the endangered species is everybody’s job.",
+              "answerOptions": [
+                { "text": "protection", "rationale": "1. Phân tích từ vựng:\nA. protecting (v-ing): việc bảo vệ.\nB. protect (v): bảo vệ.\nC. protection (n): sự bảo vệ.\nD. protector (n): người bảo vệ.\n\n2. Dịch nghĩa toàn câu: \"Sự bảo vệ tất cả các loài có nguy cơ tuyệt chủng là nhiệm vụ của mọi người.\"\n\n3. Giải thích chi tiết:\nSau mạo từ \"The\" cần một danh từ. \"Protection\" (sự bảo vệ) là danh từ trừu tượng phù hợp với ngữ cảnh \"là nhiệm vụ\". \"Protector\" là người, không hợp lý lắm khi nói \"người bảo vệ... là nhiệm vụ\".", "isCorrect": true },
+                { "text": "protecting", "rationale": "", "isCorrect": false },
+                { "text": "protect", "rationale": "", "isCorrect": false },
+                { "text": "protector", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 14,
+              "question": "The word ‘________’ refers to all the plants living in a particular area.",
+              "answerOptions": [
+                { "text": "flora", "rationale": "1. Phân tích từ vựng:\nA. flora (n): hệ thực vật.\nB. habitat (n): môi trường sống.\nC. living things (n phrase): sinh vật sống.\nD. fauna (n): hệ động vật.\n\n2. Dịch nghĩa toàn câu: \"Từ 'hệ thực vật' dùng để chỉ tất cả các loài cây sống trong một khu vực cụ thể.\"\n\n3. Giải thích chi tiết:\nĐịnh nghĩa của \"plants\" (thực vật) trong một khu vực chính là \"flora\". \"Fauna\" dùng cho động vật.", "isCorrect": true },
+                { "text": "habitat", "rationale": "", "isCorrect": false },
+                { "text": "living things", "rationale": "", "isCorrect": false },
+                { "text": "fauna", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 15,
+              "question": "The mountain ________, the highest points of the mountain, are often covered in snow year-round.",
+              "answerOptions": [
+                { "text": "peaks", "rationale": "1. Phân tích từ vựng:\nA. bases (n): chân núi/cơ sở.\nB. peaks (n): đỉnh núi.\nC. ranges (n): dãy núi.\nD. trails (n): đường mòn.\n\n2. Dịch nghĩa toàn câu: \"Các đỉnh núi, những điểm cao nhất của ngọn núi, thường bị bao phủ bởi tuyết quanh năm.\"\n\n3. Giải thích chi tiết:\nĐịnh nghĩa \"highest points\" (điểm cao nhất) chính xác là \"peaks\" (đỉnh).", "isCorrect": true },
+                { "text": "bases", "rationale": "", "isCorrect": false },
+                { "text": "ranges", "rationale": "", "isCorrect": false },
+                { "text": "trails", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 16,
+              "question": "Oceans and lakes are examples of places where we find ________.",
+              "answerOptions": [
+                { "text": "liquid water", "rationale": "1. Phân tích từ vựng:\nA. ecological balance (n phrase): cân bằng sinh thái.\nB. Solar System (n phrase): Hệ Mặt Trời.\nC. liquid water (n phrase): nước dạng lỏng.\nD. forest habitat (n phrase): môi trường sống rừng.\n\n2. Dịch nghĩa toàn câu: \"Đại dương và hồ là những ví dụ về nơi chúng ta tìm thấy nước dạng lỏng.\"\n\n3. Giải thích chi tiết:\nĐại dương và hồ chứa nước. Trong khoa học hành tinh và môi trường, việc phân biệt nước dạng lỏng (liquid) với băng (ice) hay hơi nước là quan trọng.", "isCorrect": true },
+                { "text": "ecological balance", "rationale": "", "isCorrect": false },
+                { "text": "Solar System", "rationale": "", "isCorrect": false },
+                { "text": "forest habitat", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 17,
+              "question": "________, such as oceans and rivers, cover much of the Earth's surface.",
+              "answerOptions": [
+                { "text": "Water bodies", "rationale": "1. Phân tích từ vựng:\nA. Polar habitats (n phrase): môi trường cực.\nB. Flora and fauna (n phrase): hệ động thực vật.\nC. Nature reserves (n phrase): khu bảo tồn thiên nhiên.\nD. Water bodies (n phrase): các vùng nước/thủy vực.\n\n2. Dịch nghĩa toàn câu: \"Các vùng nước, chẳng hạn như đại dương và sông ngòi, bao phủ phần lớn bề mặt Trái Đất.\"\n\n3. Giải thích chi tiết:\n\"Water bodies\" là thuật ngữ chung chỉ các hình thái chứa nước như sông, hồ, biển, đại dương...", "isCorrect": true },
+                { "text": "Polar habitats", "rationale": "", "isCorrect": false },
+                { "text": "Flora and fauna", "rationale": "", "isCorrect": false },
+                { "text": "Nature reserves", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 18,
+              "question": "Islands are ________ surrounded by water, often found in oceans or lakes.",
+              "answerOptions": [
+                { "text": "landforms", "rationale": "1. Phân tích từ vựng:\nA. landforms (n): địa hình/dạng đất.\nB. poles (n): cực (Trái Đất).\nC. water bodies (n): vùng nước.\nD. forests (n): rừng.\n\n2. Dịch nghĩa toàn câu: \"Các hòn đảo là các dạng địa hình được bao quanh bởi nước, thường được tìm thấy ở đại dương hoặc hồ.\"\n\n3. Giải thích chi tiết:\nĐảo (Island) là một phần đất (land/landform) nổi lên giữa nước.", "isCorrect": true },
+                { "text": "poles", "rationale": "", "isCorrect": false },
+                { "text": "water bodies", "rationale": "", "isCorrect": false },
+                { "text": "forests", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 19,
+              "question": "We should discuss with our partners the best ways to __________ our environment.",
+              "answerOptions": [
+                { "text": "protect", "rationale": "1. Phân tích từ vựng:\nA. keep (v): giữ.\nB. change (v): thay đổi.\nC. protect (v): bảo vệ.\nD. provide (v): cung cấp.\n\n2. Dịch nghĩa toàn câu: \"Chúng ta nên thảo luận với các đối tác về những cách tốt nhất để bảo vệ môi trường của chúng ta.\"\n\n3. Giải thích chi tiết:\nCụm từ \"protect the environment\" là collocation phổ biến nhất và mang nghĩa tích cực trong ngữ cảnh này.", "isCorrect": true },
+                { "text": "keep", "rationale": "", "isCorrect": false },
+                { "text": "change", "rationale": "", "isCorrect": false },
+                { "text": "provide", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 20,
+              "question": "Deforestation is the main cause to destroy the natural __________ of the rare animals.",
+              "answerOptions": [
+                { "text": "habitat", "rationale": "1. Phân tích từ vựng:\nA. habitat (n): môi trường sống.\nB. inhabit (v): cư trú.\nC. inhabitant (n): cư dân.\nD. inhabitation (n): sự cư trú.\n\n2. Dịch nghĩa toàn câu: \"Nạn phá rừng là nguyên nhân chính phá hủy môi trường sống tự nhiên của các loài động vật quý hiếm.\"\n\n3. Giải thích chi tiết:\nCần một danh từ chỉ nơi chốn sinh sống của động vật. \"Natural habitat\" là cụm từ cố định.", "isCorrect": true },
+                { "text": "inhabit", "rationale": "", "isCorrect": false },
+                { "text": "inhabitant", "rationale": "", "isCorrect": false },
+                { "text": "inhabitation", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 21,
+              "question": "________ is happening and it affects almost everybody on Earth.",
+              "answerOptions": [
+                { "text": "Climate change", "rationale": "1. Phân tích từ vựng:\nA. Climate change (n phrase): Biến đổi khí hậu.\nB. Weather forecast (n phrase): Dự báo thời tiết.\nC. Nature reserve (n phrase): Khu bảo tồn thiên nhiên.\nD. Solar system (n phrase): Hệ mặt trời.\n\n2. Dịch nghĩa toàn câu: \"Biến đổi khí hậu đang diễn ra và nó ảnh hưởng đến hầu hết mọi người trên Trái Đất.\"\n\n3. Giải thích chi tiết:\n\"Happening and affects everybody\" (đang xảy ra và ảnh hưởng mọi người) mô tả một vấn đề toàn cầu cấp bách -> Biến đổi khí hậu.", "isCorrect": true },
+                { "text": "Weather forecast", "rationale": "", "isCorrect": false },
+                { "text": "Nature reserve", "rationale": "", "isCorrect": false },
+                { "text": "Solar system", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 22,
+              "question": "Burning fossil fuels, cutting down forests, and farming livestock are causes of_______.",
+              "answerOptions": [
+                { "text": "climate change", "rationale": "1. Phân tích từ vựng:\nA. forest habitats (n phrase): môi trường sống rừng.\nB. extreme weather (n phrase): thời tiết cực đoan.\nC. natural disasters (n phrase): thảm họa thiên nhiên.\nD. climate change (n phrase): biến đổi khí hậu.\n\n2. Dịch nghĩa toàn câu: \"Đốt nhiên liệu hóa thạch, chặt phá rừng và chăn nuôi gia súc là những nguyên nhân của biến đổi khí hậu.\"\n\n3. Giải thích chi tiết:\nCác hoạt động trên làm tăng khí nhà kính, dẫn đến nguyên nhân gốc rễ là biến đổi khí hậu (climate change). \"Extreme weather\" và \"natural disasters\" là HẬU QUẢ của biến đổi khí hậu.", "isCorrect": true },
+                { "text": "forest habitats", "rationale": "", "isCorrect": false },
+                { "text": "extreme weather", "rationale": "", "isCorrect": false },
+                { "text": "natural disasters", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 23,
+              "question": "Polluted water can directly __________ our health and kill fish in the water bodies.",
+              "answerOptions": [
+                { "text": "harm", "rationale": "1. Phân tích từ vựng:\nA. pollute (v): làm ô nhiễm.\nB. change (v): thay đổi.\nC. protect (v): bảo vệ.\nD. harm (v): gây hại.\n\n2. Dịch nghĩa toàn câu: \"Nước bị ô nhiễm có thể trực tiếp gây hại cho sức khỏe của chúng ta và giết chết cá trong các vùng nước.\"\n\n3. Giải thích chi tiết:\nNgữ cảnh tiêu cực \"kill fish\" (giết cá) -> Cần động từ tiêu cực. \"Harm our health\" (gây hại sức khỏe) là hợp lý nhất.", "isCorrect": true },
+                { "text": "pollute", "rationale": "", "isCorrect": false },
+                { "text": "change", "rationale": "", "isCorrect": false },
+                { "text": "protect", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 24,
+              "question": "A(n) ________ sunset over the savannah painted the sky with brilliant colours.",
+              "answerOptions": [
+                { "text": "majestic", "rationale": "1. Phân tích từ vựng:\nA. tropical (adj): nhiệt đới.\nB. majestic (adj): hùng vĩ/tráng lệ.\nC. essential (adj): thiết yếu.\nD. natural (adj): tự nhiên.\n\n2. Dịch nghĩa toàn câu: \"Một cảnh hoàng hôn tráng lệ trên thảo nguyên đã tô điểm bầu trời với những sắc màu rực rỡ.\"\n\n3. Giải thích chi tiết:\nCâu văn mang tính miêu tả vẻ đẹp (\"brilliant colours\"). Tính từ \"majestic\" (tráng lệ) phù hợp để tả cảnh đẹp thiên nhiên ấn tượng.", "isCorrect": true },
+                { "text": "tropical", "rationale": "", "isCorrect": false },
+                { "text": "essential", "rationale": "", "isCorrect": false },
+                { "text": "natural", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 25,
+              "question": "Global warming is an example of ________ which makes the Earth warmer?",
+              "answerOptions": [
+                { "text": "climate change", "rationale": "1. Phân tích từ vựng:\nA. natural reserve (n phrase): khu bảo tồn thiên nhiên.\nB. habitat loss (n phrase): mất môi trường sống.\nC. ecological balance (n phrase): cân bằng sinh thái.\nD. climate change (n phrase): biến đổi khí hậu.\n\n2. Dịch nghĩa toàn câu: \"Sự nóng lên toàn cầu là một ví dụ của biến đổi khí hậu, cái mà làm Trái Đất nóng hơn?\"\n\n3. Giải thích chi tiết:\nGlobal warming (nóng lên toàn cầu) là biểu hiện chính của Climate change (biến đổi khí hậu).", "isCorrect": true },
+                { "text": "natural reserve", "rationale": "", "isCorrect": false },
+                { "text": "habitat loss", "rationale": "", "isCorrect": false },
+                { "text": "ecological balance", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 26,
+              "question": "We will protest if the government supports fossil fuel companies instead of solving the problem of __________.",
+              "answerOptions": [
+                { "text": "global warming", "rationale": "1. Phân tích từ vựng:\nA. ecosystem (n): hệ sinh thái.\nB. habitat loss (n phrase): mất môi trường sống.\nC. global warming (n phrase): sự nóng lên toàn cầu.\nD. natural habitat (n phrase): môi trường sống tự nhiên.\n\n2. Dịch nghĩa toàn câu: \"Chúng tôi sẽ phản đối nếu chính phủ ủng hộ các công ty nhiên liệu hóa thạch thay vì giải quyết vấn đề nóng lên toàn cầu.\"\n\n3. Giải thích chi tiết:\nNhiên liệu hóa thạch (fossil fuel) là nguyên nhân chính gây ra khí nhà kính và \"global warming\".", "isCorrect": true },
+                { "text": "ecosystem", "rationale": "", "isCorrect": false },
+                { "text": "habitat loss", "rationale": "", "isCorrect": false },
+                { "text": "natural habitat", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 27,
+              "question": "The place in which a plant, animal, bird or fish normally lives is its __________.",
+              "answerOptions": [
+                { "text": "habitat", "rationale": "1. Phân tích từ vựng:\nA. flora and fauna (n phrase): hệ động thực vật.\nB. habitat (n): môi trường sống.\nC. grassland (n): đồng cỏ.\nD. pole (n): cực.\n\n2. Dịch nghĩa toàn câu: \"Nơi mà một loài cây, động vật, chim hoặc cá sinh sống bình thường là môi trường sống của nó.\"\n\n3. Giải thích chi tiết:\nĐây là định nghĩa chuẩn của từ \"habitat\".", "isCorrect": true },
+                { "text": "flora and fauna", "rationale": "", "isCorrect": false },
+                { "text": "grassland", "rationale": "", "isCorrect": false },
+                { "text": "pole", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 28,
+              "question": "The loss of a species may have impacts on the food________.",
+              "answerOptions": [
+                { "text": "chain", "rationale": "1. Phân tích từ vựng:\nA. supply (n): nguồn cung.\nB. chain (n): chuỗi.\nC. variety (n): sự đa dạng.\nD. security (n): an ninh.\n\n2. Dịch nghĩa toàn câu: \"Sự biến mất của một loài có thể có tác động lên chuỗi thức ăn.\"\n\n3. Giải thích chi tiết:\nTrong sinh học, các loài liên kết với nhau qua \"food chain\". Mất một mắt xích sẽ ảnh hưởng cả chuỗi.", "isCorrect": true },
+                { "text": "supply", "rationale": "", "isCorrect": false },
+                { "text": "variety", "rationale": "", "isCorrect": false },
+                { "text": "security", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 29,
+              "question": "Farmers need to find alternatives to harmful ________ to protect the environment.",
+              "answerOptions": [
+                { "text": "pesticides", "rationale": "1. Phân tích từ vựng:\nA. medicines (n): thuốc chữa bệnh.\nB. plants (n): cây cối.\nC. pesticides (n): thuốc trừ sâu.\nD. emissions (n): khí thải.\n\n2. Dịch nghĩa toàn câu: \"Nông dân cần tìm các giải pháp thay thế cho thuốc trừ sâu độc hại để bảo vệ môi trường.\"\n\n3. Giải thích chi tiết:\nTrong nông nghiệp (Farmers), chất độc hại thường dùng là \"pesticides\". Việc thay thế chúng giúp bảo vệ môi trường.", "isCorrect": true },
+                { "text": "medicines", "rationale": "", "isCorrect": false },
+                { "text": "plants", "rationale": "", "isCorrect": false },
+                { "text": "emissions", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 30,
+              "question": "Flora and fauna are vital to the environment because they create __________.",
+              "answerOptions": [
+                { "text": "ecological balance", "rationale": "1. Phân tích từ vựng:\nA. natural reserve (n phrase): khu bảo tồn thiên nhiên.\nB. climate change (n phrase): biến đổi khí hậu.\nC. ecological balance (n phrase): cân bằng sinh thái.\nD. habitat loss (n phrase): mất môi trường sống.\n\n2. Dịch nghĩa toàn câu: \"Hệ động thực vật rất thiết yếu với môi trường bởi vì chúng tạo nên sự cân bằng sinh thái.\"\n\n3. Giải thích chi tiết:\nSự tương tác giữa động thực vật tạo nên sự ổn định cho môi trường, gọi là \"ecological balance\".", "isCorrect": true },
+                { "text": "natural reserve", "rationale": "", "isCorrect": false },
+                { "text": "climate change", "rationale": "", "isCorrect": false },
+                { "text": "habitat loss", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 31,
+              "question": "The presence of ________ can help researchers identify which animals are active in the area.",
+              "answerOptions": [
+                { "text": "droppings", "rationale": "1. Phân tích từ vựng:\nA. plants (n): cây cối.\nB. droppings (n): phân (động vật).\nC. chains (n): chuỗi.\nD. reserves (n): khu bảo tồn.\n\n2. Dịch nghĩa toàn câu: \"Sự hiện diện của phân động vật có thể giúp các nhà nghiên cứu xác định loài động vật nào đang hoạt động trong khu vực.\"\n\n3. Giải thích chi tiết:\nTrong nghiên cứu động vật hoang dã, \"droppings\" (phân), dấu chân, lông... là những dấu hiệu quan trọng để nhận diện loài.", "isCorrect": true },
+                { "text": "plants", "rationale": "", "isCorrect": false },
+                { "text": "chains", "rationale": "", "isCorrect": false },
+                { "text": "reserves", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 32,
+              "question": "Earth’s soil ________ nutrients that are essential for growing crops and sustaining agriculture.",
+              "answerOptions": [
+                { "text": "provides", "rationale": "1. Phân tích từ vựng:\nA. orbits (v): quay quanh quỹ đạo.\nB. preserves (v): bảo tồn.\nC. provides (v): cung cấp.\nD. affects (v): ảnh hưởng.\n\n2. Dịch nghĩa toàn câu: \"Đất của Trái Đất cung cấp các chất dinh dưỡng thiết yếu cho việc trồng trọt và duy trì nông nghiệp.\"\n\n3. Giải thích chi tiết:\nĐất \"cung cấp\" (provides) dinh dưỡng cho cây. Collocation: provide nutrients.", "isCorrect": true },
+                { "text": "orbits", "rationale": "", "isCorrect": false },
+                { "text": "preserves", "rationale": "", "isCorrect": false },
+                { "text": "affects", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 33,
+              "question": "The ________ shows how living things depend on each other for food.",
+              "answerOptions": [
+                { "text": "food chain", "rationale": "1. Phân tích từ vựng:\nA. global warming (n phrase): nóng lên toàn cầu.\nB. liquid water (n phrase): nước lỏng.\nC. food chain (n phrase): chuỗi thức ăn.\nD. habitat loss (n phrase): mất môi trường sống.\n\n2. Dịch nghĩa toàn câu: \"Chuỗi thức ăn cho thấy các sinh vật sống phụ thuộc vào nhau để kiếm ăn như thế nào.\"\n\n3. Giải thích chi tiết:\nCâu này lặp lại ý của câu 8. \"depend on each other for food\" -> Food chain.", "isCorrect": true },
+                { "text": "global warming", "rationale": "", "isCorrect": false },
+                { "text": "liquid water", "rationale": "", "isCorrect": false },
+                { "text": "habitat loss", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 34,
+              "question": "Some clearly seen examples of water ________ are lakes, streams, and rivers.",
+              "answerOptions": [
+                { "text": "bodies", "rationale": "1. Phân tích từ vựng:\nA. bodies (n): cơ thể/khối.\nB. transport (n): giao thông.\nC. existence (n): sự tồn tại.\nD. parts (n): bộ phận.\n\n2. Dịch nghĩa toàn câu: \"Một số ví dụ rõ ràng về các thủy vực là hồ, suối và sông.\"\n\n3. Giải thích chi tiết:\nCụm từ \"water bodies\" (thủy vực/vùng nước) dùng để chỉ chung sông, hồ, biển...", "isCorrect": true },
+                { "text": "transport", "rationale": "", "isCorrect": false },
+                { "text": "existence", "rationale": "", "isCorrect": false },
+                { "text": "parts", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 35,
+              "question": "Deforestation is a________ to wildlife habitats around the world.",
+              "answerOptions": [
+                { "text": "threat", "rationale": "1. Phân tích từ vựng:\nA. benefit (n): lợi ích.\nB. threat (n): mối đe dọa.\nC. safety (n): sự an toàn.\nD. landform (n): địa hình.\n\n2. Dịch nghĩa toàn câu: \"Nạn phá rừng là một mối đe dọa đối với môi trường sống của động vật hoang dã trên toàn thế giới.\"\n\n3. Giải thích chi tiết:\nPhá rừng là tiêu cực -> Mối đe dọa (Threat). Cấu trúc \"a threat to something\".", "isCorrect": true },
+                { "text": "benefit", "rationale": "", "isCorrect": false },
+                { "text": "safety", "rationale": "", "isCorrect": false },
+                { "text": "landform", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 36,
+              "question": "Do penguins live in the North or the South _____________?",
+              "answerOptions": [
+                { "text": "pole", "rationale": "1. Phân tích từ vựng:\nA. part (n): phần.\nB. earth (n): trái đất.\nC. body (n): cơ thể.\nD. pole (n): cực.\n\n2. Dịch nghĩa toàn câu: \"Chim cánh cụt sống ở Bắc Cực hay Nam Cực?\"\n\n3. Giải thích chi tiết:\nCụm từ \"North Pole\" (Bắc Cực) và \"South Pole\" (Nam Cực). Chim cánh cụt sống ở South Pole.", "isCorrect": true },
+                { "text": "part", "rationale": "", "isCorrect": false },
+                { "text": "earth", "rationale": "", "isCorrect": false },
+                { "text": "body", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 37,
+              "question": "The bamboo forest is the natural _______of the panda.",
+              "answerOptions": [
+                { "text": "habitat", "rationale": "1. Phân tích từ vựng:\nA. home (n): nhà.\nB. place (n): nơi chốn.\nC. habitat (n): môi trường sống.\nD. land (n): đất.\n\n2. Dịch nghĩa toàn câu: \"Rừng tre là môi trường sống tự nhiên của gấu trúc.\"\n\n3. Giải thích chi tiết:\nDùng thuật ngữ khoa học \"habitat\" cho động vật hoang dã thay vì \"home\". \"Natural habitat\" là cụm chuẩn.", "isCorrect": true },
+                { "text": "home", "rationale": "", "isCorrect": false },
+                { "text": "place", "rationale": "", "isCorrect": false },
+                { "text": "land", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 38,
+              "question": "Reducing waste is ________ as a key step in preserving Earth’s resources.",
+              "answerOptions": [
+                { "text": "considered", "rationale": "1. Phân tích từ vựng:\nA. considered (v): được xem là/cân nhắc.\nB. produced (v): được sản xuất.\nC. supposed (v): được cho là.\nD. caused (v): bị gây ra.\n\n2. Dịch nghĩa toàn câu: \"Giảm thiểu rác thải được xem là một bước then chốt trong việc bảo tồn tài nguyên Trái Đất.\"\n\n3. Giải thích chi tiết:\nCấu trúc \"be considered as\" (được xem như là).", "isCorrect": true },
+                { "text": "produced", "rationale": "", "isCorrect": false },
+                { "text": "supposed", "rationale": "", "isCorrect": false },
+                { "text": "caused", "rationale": "", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 39,
+              "question": "The environmentalists are trying to raise funds to build a _______reserve.",
+              "answerOptions": [
+                { "text": "nature", "rationale": "1. Phân tích từ vựng:\nA. nature (n): thiên nhiên.\nB. earth (n): trái đất.\nC. ground (n): mặt đất.\nD. space (n): không gian.\n\n2. Dịch nghĩa toàn câu: \"Các nhà môi trường học đang cố gắng gây quỹ để xây dựng một khu bảo tồn thiên nhiên.\"\n\n3. Giải thích chi tiết:\nCụm từ cố định \"nature reserve\" (khu bảo tồn thiên nhiên).", "isCorrect": true },
+                { "text": "earth", "rationale": "", "isCorrect": false },
+                { "text": "ground", "rationale": "", "isCorrect": false },
+                { "text": "space", "rationale": "", "isCorrect": false }
+              ]
+            }
+          ]
+        };
+
+        // --- 2. AUDIO ENGINE (Web Audio API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                // Ding sound
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1); // C6
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'wrong') {
+                // Buzz sound
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // --- 3. GAME LOGIC ---
+        let correctCount = 0;
+        let wrongCount = 0;
+        const answeredQuestions = new Set();
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            const findRationale = (options) => {
+                const correct = options.find(o => o.isCorrect);
+                return correct ? correct.rationale : "Chưa có giải thích.";
+            };
+
+            const html = quizData.questions.map((q, qIndex) => `
+                <div class="bg-white rounded-3xl p-6 mb-8 card-enter border-b-8 border-gray-200 shadow-xl blooket-card relative overflow-hidden" id="card-${qIndex}">
+                    <!-- Question Badge -->
+                    <div class="absolute top-0 left-0 bg-purple-500 text-white font-bold px-4 py-2 rounded-br-2xl text-sm">
+                        Câu ${q.questionNumber}
+                    </div>
+
+                    <div class="mt-8 mb-6">
+                        <h3 class="text-xl md:text-2xl font-bold text-gray-800 leading-snug">
+                            ${q.question}
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${q.answerOptions.map((opt, optIndex) => `
+                            <button 
+                                id="btn-${qIndex}-${optIndex}"
+                                onclick="handleAnswer(${qIndex}, ${optIndex}, ${opt.isCorrect})"
+                                class="btn-option bg-white hover:bg-gray-50 text-gray-700 font-bold py-4 px-4 rounded-2xl text-lg flex items-center justify-center h-full w-full">
+                                ${opt.text}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <!-- Explanation Area (Hidden by default) -->
+                    <div id="explain-${qIndex}" class="hidden mt-6 explanation-box rounded-2xl p-6 animate-fade-in-up">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="text-2xl">👩‍🏫</span>
+                            <h4 class="font-extrabold text-teal-600 text-lg uppercase">Ms. Chí Nên · ☎️ 0852639652giải thích:</h4>
+                        </div>
+                        <div class="text-gray-700 leading-relaxed whitespace-pre-wrap font-medium">
+                            ${findRationale(q.answerOptions)}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+
+        function handleAnswer(qIndex, optIndex, isCorrect) {
+            if (answeredQuestions.has(qIndex)) return; // Prevent re-answering
+            answeredQuestions.add(qIndex);
+
+            const btn = document.getElementById(`btn-${qIndex}-${optIndex}`);
+            const card = document.getElementById(`card-${qIndex}`);
+            const explanation = document.getElementById(`explain-${qIndex}`);
+
+            // Find correct button index to highlight it even if wrong was chosen
+            const correctOptIndex = quizData.questions[qIndex].answerOptions.findIndex(o => o.isCorrect);
+            const correctBtn = document.getElementById(`btn-${qIndex}-${correctOptIndex}`);
+
+            if (isCorrect) {
+                correctCount++;
+                document.getElementById('score-correct').innerText = correctCount;
+                btn.classList.add('selected-correct');
+                playSound('correct');
+                fireConfetti();
+            } else {
+                wrongCount++;
+                document.getElementById('score-wrong').innerText = wrongCount;
+                btn.classList.add('selected-wrong');
+                correctBtn.classList.add('selected-correct'); // Show correct answer
+                card.classList.add('anim-shake');
+                playSound('wrong');
+            }
+
+            // Disable all buttons in this card
+            const allBtns = card.querySelectorAll('.btn-option');
+            allBtns.forEach(b => {
+                b.disabled = true;
+                b.style.cursor = 'default';
+                if (!b.classList.contains('selected-correct') && !b.classList.contains('selected-wrong')) {
+                    b.style.opacity = '0.5';
+                }
+            });
+
+            // Show explanation
+            explanation.classList.remove('hidden');
+        }
+
+        function finishQuiz() {
+            const modal = document.getElementById('result-modal');
+            const msgEl = document.getElementById('result-message');
+            document.getElementById('final-correct').innerText = correctCount;
+            document.getElementById('final-wrong').innerText = wrongCount;
+
+            // Generate random praise
+            const praises = [
+                "Tuyệt vời! Em đã làm rất tốt! 🌟",
+                "Cố gắng thêm chút nữa là hoàn hảo! 💪",
+                "Cô rất tự hào về sự nỗ lực của em! ❤️",
+                "Đỉnh của chóp! Tiếp tục phát huy nhé! 🚀"
+            ];
+            const percent = correctCount / quizData.questions.length;
+            let msg = "";
+            if (percent === 1) msg = "Xuất sắc! Điểm tuyệt đối! 💯";
+            else if (percent > 0.8) msg = praises[0];
+            else if (percent > 0.5) msg = praises[1];
+            else msg = "Hãy ôn lại bài kỹ hơn nhé! 📚";
+
+            msgEl.innerText = msg;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            fireConfetti();
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('result-modal').classList.remove('flex');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- 4. CONFETTI EFFECT (Lightweight) ---
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const particleCount = 100;
+            const colors = ['#8854C0', '#00C9A7', '#FF4757', '#FFD166', '#00D26A'];
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    w: Math.random() * 10 + 5,
+                    h: Math.random() * 10 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 0.5) * 20,
+                    gravity: 0.5,
+                    life: 100
+                });
+            }
+
+            function update() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, index) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += p.gravity;
+                    p.life--;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                    if (p.life <= 0) particles.splice(index, 1);
+                });
+                if (particles.length > 0) requestAnimationFrame(update);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            update();
+        }
+
+        // Initialize
+        renderQuiz();
+
+    </script>
+</body>
+</html>
