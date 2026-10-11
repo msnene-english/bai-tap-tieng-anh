@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms. Chí Nên - Word Formation Game</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #8854C0; /* Purple/Pink */
+            --secondary: #00C9A7; /* Teal */
+            --correct: #00D26A; /* Green */
+            --wrong: #FF4757; /* Red/Orange */
+            --bg-pattern: #f0f3f9;
+            --text-dark: #2d3436;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #e5e5f7;
+            background-image:  radial-gradient(#8854c0 0.5px, transparent 0.5px), radial-gradient(#8854c0 0.5px, #e5e5f7 0.5px);
+            background-size: 20px 20px;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #8854C0, #a29bfe);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header h1 {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 800;
+            margin: 0;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Card Style */
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(136, 84, 192, 0.15);
+            border: 2px solid #fff;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: var(--secondary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            color: #2c3e50;
+        }
+        
+        .question-hint {
+            font-style: italic;
+            color: #636e72;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            background: #f1f2f6;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #dfe6e9;
+            border-bottom: 5px solid #dfe6e9;
+            border-radius: 15px;
+            padding: 15px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            position: relative;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+            margin-top: 3px; /* visual adjustment */
+        }
+
+        /* Correct/Wrong States */
+        .option-btn.correct {
+            background-color: #d1fae5;
+            border-color: var(--correct);
+            border-bottom-color: #059669; /* Darker green */
+            color: #065f46;
+        }
+
+        .option-btn.wrong {
+            background-color: #fee2e2;
+            border-color: var(--wrong);
+            border-bottom-color: #b91c1c; /* Darker red */
+            color: #991b1b;
+            animation: shake 0.5s;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+        
+        .option-btn:disabled:not(.correct):not(.wrong) {
+            background: #f1f2f6;
+            border-color: #ced6e0;
+            border-bottom-color: #ced6e0;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none; /* Hidden by default */
+            margin-top: 20px;
+            background: #f0f9ff;
+            border: 2px dashed #74b9ff;
+            border-radius: 15px;
+            padding: 20px;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .explanation-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #0984e3;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        .explanation-header i {
+            margin-right: 10px;
+            font-size: 1.4rem;
+        }
+
+        .exp-section {
+            margin-bottom: 10px;
+        }
+        
+        .exp-label {
+            font-weight: 800;
+            color: var(--primary);
+            text-decoration: underline;
+            margin-right: 5px;
+        }
+
+        .vocab-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .vocab-item {
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        .vocab-item:last-child { border-bottom: none; }
+        .vocab-word { font-weight: bold; color: #d63031; }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-8px) rotate(-2deg); }
+            50% { transform: translateX(8px) rotate(2deg); }
+            75% { transform: translateX(-8px) rotate(-2deg); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Submit Button */
+        .submit-container {
+            text-align: center;
+            margin-top: 40px;
+            margin-bottom: 60px;
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-bottom: 6px solid #6c429c;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 10px 20px rgba(136, 84, 192, 0.3);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.1);
+        }
+
+        .btn-submit:active {
+            transform: translateY(3px);
+            border-bottom-width: 2px;
+            margin-top: 4px;
+        }
+
+        /* Result Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 4px solid var(--primary);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: zoomIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            background: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 auto 20px;
+            border: 5px solid white;
+            box-shadow: 0 0 0 5px var(--secondary);
+        }
+        
+        .feedback-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            background: #dfe6e9;
+            color: #2d3436;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* Floating Score */
+        .floating-score {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 800;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body>
+
+    <!-- Sounds -->
+    <!-- Using generic joyful/error sounds from reliable CDNs -->
+    <audio id="sound-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.m4a"></audio>
+    <audio id="sound-wrong" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.m4a"></audio>
+    <audio id="sound-finish" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.m4a"></audio>
+
+    <div class="floating-score">
+        <i class="fas fa-star" style="color: gold;"></i>
+        <span id="current-score">0</span>/<span id="total-questions">0</span>
+    </div>
+
+    <div class="header">
+        <h1>Ms. Chí Nên · ☎️ 0852639652</h1>
+        <p>Exercise 5: Word Formation Practice</p>
+    </div>
+
+    <div class="quiz-container" id="quiz-container">
+        <!-- Questions will be rendered here -->
+    </div>
+
+    <div class="submit-container">
+        <button class="btn-submit" onclick="submitQuiz()">
+            <i class="fas fa-paper-plane"></i> Nộp Bài
+        </button>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal-overlay" id="result-modal">
+        <div class="modal-content">
+            <div class="score-circle">
+                <span id="final-score">0</span>
+            </div>
+            <div class="feedback-text" id="feedback-msg">Xuất sắc!</div>
+            <button class="close-btn" onclick="closeModal()">Xem lại bài</button>
+        </div>
+    </div>
+
+    <script>
+        // Data from the provided JSON
+        const quizData = {
+          "questions": [
+            {
+              "questionNumber": 1,
+              "question": "The travel agency which specializes in __________ (culture) tours offers trips to 30 Asian countries.",
+              "hint": "Chỗ trống đứng trước danh từ 'tours'. Cần một tính từ để bổ nghĩa cho danh từ này.",
+              "answerOptions": [
+                { "text": "cultural", "rationale": "Chính xác! **cultural** (adj): thuộc về văn hóa.\n**Giải thích:** Trước danh từ 'tours' cần một tính từ bổ nghĩa.\n**Dịch:** Công ty du lịch chuyên về các tour **văn hóa** cung cấp các chuyến đi đến 30 quốc gia châu Á.", "isCorrect": true },
+                { "text": "culturally", "rationale": "Sai. **culturally** (adv): về mặt văn hóa (trạng từ không đứng trước danh từ để bổ nghĩa trực tiếp trong cụm danh từ ghép này).", "isCorrect": false },
+                { "text": "culture", "rationale": "Sai. **culture** (n): văn hóa (danh từ). Dù có danh từ ghép, nhưng cụm 'cultural tours' phổ biến và chuẩn ngữ pháp hơn.", "isCorrect": false },
+                { "text": "cultured", "rationale": "Sai. **cultured** (adj): có học thức/có văn hóa (dùng cho người).", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 2,
+              "question": "The resort whose __________ (accommodate) is five-star rated attracts luxury travelers worldwide.",
+              "hint": "Sau đại từ sở hữu 'whose' luôn là một danh từ.",
+              "answerOptions": [
+                { "text": "accommodation", "rationale": "Chính xác! **accommodation** (n): chỗ ở/tiện nghi lưu trú.\n**Giải thích:** Sau 'whose' cần danh từ làm chủ ngữ cho động từ 'is'.\n**Dịch:** Khu nghỉ dưỡng mà **chỗ ở** của nó được xếp hạng 5 sao thu hút du khách sang trọng trên toàn thế giới.", "isCorrect": true },
+                { "text": "accommodating", "rationale": "Sai. **accommodating** (adj): hay giúp đỡ/dễ tính.", "isCorrect": false },
+                { "text": "accommodates", "rationale": "Sai. **accommodates** (v): cung cấp chỗ ở (động từ chia số ít).", "isCorrect": false },
+                { "text": "accommodated", "rationale": "Sai. **accommodated** (v): quá khứ phân từ.", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 3,
+              "question": "The guide who __________ (participate) in the eco-tourism workshop became more knowledgeable.",
+              "hint": "Động từ chính của câu là 'became' (quá khứ). Hành động trong mệnh đề quan hệ cũng đã xảy ra.",
+              "answerOptions": [
+                { "text": "participated", "rationale": "Chính xác! **participated** (v): đã tham gia.\n**Giải thích:** Cần động từ chia ở thì quá khứ đơn (Past Simple) để hòa hợp với động từ chính 'became'.\n**Dịch:** Người hướng dẫn viên, người đã **tham gia** hội thảo du lịch sinh thái, đã trở nên am hiểu hơn.", "isCorrect": true },
+                { "text": "participation", "rationale": "Sai. **participation** (n): sự tham gia.", "isCorrect": false },
+                { "text": "participant", "rationale": "Sai. **participant** (n): người tham gia.", "isCorrect": false },
+                { "text": "participating", "rationale": "Sai. **participating** (V-ing): Thiếu động từ to be nếu dùng tiếp diễn, hoặc đây là dạng rút gọn nhưng câu đề bài có 'who' nên cần động từ chia thì.", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 4,
+              "question": "The __________ (tour) who visited our city last year spent an average of $200 per day.",
+              "hint": "Đại từ quan hệ 'who' thay thế cho người. Động từ 'spent' (chi tiêu) ám chỉ số nhiều (nói về mức trung bình của một nhóm).",
+              "answerOptions": [
+                { "text": "tourists", "rationale": "Chính xác! **tourists** (n): khách du lịch (số nhiều).\n**Giải thích:** Cần danh từ chỉ người. Dùng số nhiều vì nói về số liệu trung bình của một nhóm người.\n**Dịch:** Những **khách du lịch** người mà đã ghé thăm thành phố của chúng tôi năm ngoái đã chi tiêu trung bình 200 đô la mỗi ngày.", "isCorrect": true },
+                { "text": "tourism", "rationale": "Sai. **tourism** (n): ngành du lịch (không dùng 'who').", "isCorrect": false },
+                { "text": "tour", "rationale": "Sai. **tour** (n): chuyến đi (vật).", "isCorrect": false },
+                { "text": "tourist", "rationale": "Chấp nhận được nhưng chưa chuẩn nhất. **tourist** (số ít) thường đi với 'spent' (số ít), nhưng ngữ cảnh 'average' (trung bình) thường ám chỉ khảo sát trên nhiều người -> Tourists.", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 5,
+              "question": "The company which offers __________ (flex) booking options is popular among young travelers.",
+              "hint": "Đứng trước danh từ 'booking options' cần một tính từ.",
+              "answerOptions": [
+                { "text": "flexible", "rationale": "Chính xác! **flexible** (adj): linh hoạt.\n**Giải thích:** Cấu trúc: Adj + Noun. 'Flexible booking options' = Các lựa chọn đặt chỗ linh hoạt.\n**Dịch:** Công ty cung cấp các lựa chọn đặt chỗ **linh hoạt** rất phổ biến đối với các du khách trẻ.", "isCorrect": true },
+                { "text": "flexibility", "rationale": "Sai. **flexibility** (n): sự linh hoạt.", "isCorrect": false },
+                { "text": "flexibly", "rationale": "Sai. **flexibly** (adv): một cách linh hoạt.", "isCorrect": false },
+                { "text": "flexion", "rationale": "Sai. **flexion** (n): sự uốn cong (y học/kỹ thuật).", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 6,
+              "question": "The hotel whose staff are very __________ (accommodate) receives excellent reviews online.",
+              "hint": "Sau động từ to be 'are' và trạng từ 'very' cần một tính từ chỉ tính cách/phẩm chất.",
+              "answerOptions": [
+                { "text": "accommodating", "rationale": "Chính xác! **accommodating** (adj): hay giúp đỡ, sẵn lòng làm hài lòng khách, dễ tính.\n**Giải thích:** Dùng tính từ để mô tả nhân viên.\n**Dịch:** Khách sạn mà nhân viên rất **nhiệt tình/hay giúp đỡ** nhận được những đánh giá xuất sắc trực tuyến.", "isCorrect": true },
+                { "text": "accommodation", "rationale": "Sai. **accommodation** (n): chỗ ở.", "isCorrect": false },
+                { "text": "accommodated", "rationale": "Sai. **accommodated** (V-ed): được cung cấp chỗ ở (bị động - không hợp nghĩa).", "isCorrect": false },
+                { "text": "accommodates", "rationale": "Sai. **accommodates** (v): chia thì hiện tại.", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 7,
+              "question": "The festival which attracts __________ (nation) visitors from all provinces generates millions in revenue.",
+              "hint": "Khách đến từ 'all provinces' (các tỉnh thành) tức là khách trong nước. Cần tính từ bổ nghĩa cho 'visitors'.",
+              "answerOptions": [
+                { "text": "national", "rationale": "Chính xác! **national** (adj): thuộc quốc gia/trong nước.\n**Giải thích:** 'From all provinces' ám chỉ quy mô trong nước.\n**Dịch:** Lễ hội thu hút du khách **trong nước** từ tất cả các tỉnh thành tạo ra doanh thu hàng triệu đô.", "isCorrect": true },
+                { "text": "international", "rationale": "Sai. **international** (adj): quốc tế (mâu thuẫn với 'from provinces' - các tỉnh trong nước).", "isCorrect": false },
+                { "text": "nationality", "rationale": "Sai. **nationality** (n): quốc tịch.", "isCorrect": false },
+                { "text": "nationally", "rationale": "Sai. **nationally** (adv): trên toàn quốc.", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 8,
+              "question": "The travel blogger who __________ (estimate) the trip cost at $5,000 was quite accurate.",
+              "hint": "Động từ chính là 'was' (quá khứ). Hành động ước tính đã xảy ra trước đó.",
+              "answerOptions": [
+                { "text": "estimated", "rationale": "Chính xác! **estimated** (v): đã ước tính.\n**Giải thích:** Cần động từ chia thì quá khứ đơn.\n**Dịch:** Blogger du lịch người mà đã **ước tính** chi phí chuyến đi ở mức 5.000 đô la đã khá chính xác.", "isCorrect": true },
+                { "text": "estimation", "rationale": "Sai. **estimation** (n): sự ước tính.", "isCorrect": false },
+                { "text": "estimate", "rationale": "Sai. **estimate** (v): hiện tại đơn (nếu dùng phải là estimates vì blogger số ít), nhưng câu đang kể lại quá khứ.", "isCorrect": false },
+                { "text": "estimating", "rationale": "Sai. **estimating** (V-ing): thiếu to be.", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 9,
+              "question": "The airline which __________ (require) online check-in has reduced waiting times significantly.",
+              "hint": "Đây là một sự thật hiển nhiên/chính sách của hãng (Airline - số ít). Động từ chính 'has reduced' (hiện tại hoàn thành).",
+              "answerOptions": [
+                { "text": "requires", "rationale": "Chính xác! **requires** (v): yêu cầu.\n**Giải thích:** Chia thì hiện tại đơn (Present Simple) với chủ ngữ số ít 'The airline'.\n**Dịch:** Hãng hàng không cái mà **yêu cầu** check-in trực tuyến đã giảm thời gian chờ đợi đáng kể.", "isCorrect": true },
+                { "text": "requirement", "rationale": "Sai. **requirement** (n): sự yêu cầu.", "isCorrect": false },
+                { "text": "required", "rationale": "Sai. Dùng quá khứ đơn cũng được nhưng hiện tại đơn hay hơn vì nó nói về chính sách đang áp dụng dẫn đến kết quả hiện tại 'has reduced'.", "isCorrect": false },
+                { "text": "requiring", "rationale": "Sai. **requiring** (V-ing): Không làm vị ngữ chính.", "isCorrect": false }
+              ]
+            },
+            {
+              "questionNumber": 10,
+              "question": "The tourists whose __________ (participate) in local activities enriched their experience loved the trip.",
+              "hint": "Sau 'whose' cần một Danh từ. Danh từ này làm chủ ngữ cho động từ 'enriched'.",
+              "answerOptions": [
+                { "text": "participation", "rationale": "Chính xác! **participation** (n): sự tham gia.\n**Giải thích:** Whose + Noun. Sự tham gia của họ đã làm phong phú trải nghiệm.\n**Dịch:** Những du khách mà **sự tham gia** của họ vào các hoạt động địa phương đã làm phong phú trải nghiệm của họ thì rất yêu thích chuyến đi.", "isCorrect": true },
+                { "text": "participated", "rationale": "Sai. Động từ quá khứ.", "isCorrect": false },
+                { "text": "participant", "rationale": "Sai. Nghĩa là 'người tham gia'. 'Người tham gia của họ' không hợp nghĩa bằng 'Sự tham gia của họ'.", "isCorrect": false },
+                { "text": "participate", "rationale": "Sai. Động từ nguyên mẫu.", "isCorrect": false }
+              ]
+            }
+          ]
+        };
+
+        let currentScore = 0;
+        let shuffledQuestions = [];
+
+        // Shuffle function
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Initialize Quiz
+        function initQuiz() {
+            // Shuffle both questions AND options within each question
+            shuffledQuestions = shuffleArray([...quizData.questions]).map(q => {
+                // Create a shallow copy and shuffle options
+                return {
+                    ...q,
+                    answerOptions: shuffleArray([...q.answerOptions])
+                };
+            });
+
+            document.getElementById('total-questions').innerText = shuffledQuestions.length;
+            const container = document.getElementById('quiz-container');
+            
+            shuffledQuestions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `card-${index}`;
+
+                // Create content
+                card.innerHTML = `
+                    <div class="question-number">Question ${index + 1}</div>
+                    <div class="question-text">${q.question}</div>
+                    <div class="question-hint"><i class="fas fa-lightbulb"></i> Gợi ý: ${q.hint}</div>
+                    <div class="options-grid" id="options-${index}">
+                        ${q.answerOptions.map((opt, optIndex) => `
+                            <button class="option-btn" 
+                                onclick="checkAnswer(${index}, ${optIndex}, ${opt.isCorrect})">
+                                ${['A', 'B', 'C', 'D'][optIndex]}. ${opt.text}
+                            </button>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="explanation-box" id="exp-${index}">
+                        <div class="explanation-header">
+                            <i class="fas fa-chalkboard-teacher"></i> Ms. Chí Nên · ☎️ 0852639652giải thích:
+                        </div>
+                        <div class="exp-content">
+                            <!-- Detailed explanation generated dynamically -->
+                            ${generateDetailedExplanation(q)}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Function to generate strict layout explanation
+        function generateDetailedExplanation(questionData) {
+            // Find correct option rationale to extract translation usually hidden there
+            const correctOpt = questionData.answerOptions.find(o => o.isCorrect);
+            
+            // Extract Translation: Look for "**Dịch:**" in rationale
+            let translation = "Không có bản dịch.";
+            if (correctOpt.rationale.includes("**Dịch:**")) {
+                translation = correctOpt.rationale.split("**Dịch:**")[1].trim();
+            }
+
+            // Extract Logic: Look for "**Giải thích:**"
+            let logic = "";
+            if (correctOpt.rationale.includes("**Giải thích:**")) {
+                logic = correctOpt.rationale.split("**Giải thích:**")[1].split("**Dịch:**")[0].trim();
+            } else {
+                logic = correctOpt.rationale.split("**Dịch:**")[0].replace("Chính xác!", "").trim();
+            }
+
+            // Build Vocab List (Analysis of all options)
+            let vocabListHTML = `<ul class="vocab-list">`;
+            questionData.answerOptions.forEach((opt, idx) => {
+                // Try to extract definitions from rationale if possible, otherwise use raw text
+                // The source data has definitions like "**cultural** (adj): thuộc về văn hóa."
+                // We will try to clean up the "Sai." or "Chính xác!" prefixes.
+                let cleanRationale = opt.rationale.replace(/^Sai\.\s*/i, "").replace(/^Chính xác!\s*/i, "").split("\n")[0];
+                let label = ['A', 'B', 'C', 'D'][idx];
+                vocabListHTML += `<li class="vocab-item"><span class="vocab-word">${label}. ${opt.text}</span>: ${cleanRationale}</li>`;
+            });
+            vocabListHTML += `</ul>`;
+
+            return `
+                <div class="exp-section">
+                    <span class="exp-label">1. Dịch câu hỏi:</span><br>
+                    "${translation}"
+                </div>
+                <div class="exp-section">
+                    <span class="exp-label">2. Phân tích đáp án:</span>
+                    ${vocabListHTML}
+                </div>
+                <div class="exp-section">
+                    <span class="exp-label">3. Tại sao chọn đáp án này?</span><br>
+                    ${logic}
+                </div>
+            `;
+        }
+
+        // Check Answer Logic
+        function checkAnswer(questionIndex, optionIndex, isCorrect) {
+            const cardId = `card-${questionIndex}`;
+            const optionsDiv = document.getElementById(`options-${questionIndex}`);
+            const buttons = optionsDiv.getElementsByClassName('option-btn');
+            const expBox = document.getElementById(`exp-${questionIndex}`);
+            const clickedBtn = buttons[optionIndex];
+
+            // Prevent re-clicking
+            if (clickedBtn.disabled) return;
+
+            // Disable all buttons in this card
+            for (let btn of buttons) {
+                btn.disabled = true;
+            }
+
+            if (isCorrect) {
+                // Correct
+                clickedBtn.classList.add('correct');
+                document.getElementById('sound-correct').play();
+                
+                // Update Score
+                currentScore++;
+                document.getElementById('current-score').innerText = currentScore;
+                
+                // Confetti
+                triggerConfetti(clickedBtn);
+            } else {
+                // Wrong
+                clickedBtn.classList.add('wrong');
+                document.getElementById('sound-wrong').play();
+                
+                // Highlight correct answer automatically
+                const correctBtnIndex = shuffledQuestions[questionIndex].answerOptions.findIndex(o => o.isCorrect);
+                buttons[correctBtnIndex].classList.add('correct');
+            }
+
+            // Show Explanation immediately
+            expBox.style.display = 'block';
+        }
+
+        function triggerConfetti(element) {
+            const rect = element.getBoundingClientRect();
+            // Normalized coordinates
+            const x = (rect.left + rect.width / 2) / window.innerWidth;
+            const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { x: x, y: y },
+                colors: ['#8854C0', '#00C9A7', '#ffeb3b']
+            });
+        }
+
+        function submitQuiz() {
+            document.getElementById('sound-finish').play();
+            const total = shuffledQuestions.length;
+            const percentage = (currentScore / total) * 100;
+            
+            let feedback = "";
+            if (percentage === 100) feedback = "Tuyệt vời! Bạn là thiên tài!";
+            else if (percentage >= 80) feedback = "Rất tốt! Cố gắng thêm chút nữa!";
+            else if (percentage >= 50) feedback = "Khá lắm! Hãy ôn tập thêm nhé.";
+            else feedback = "Đừng buồn, hãy xem lại giải thích và làm lại nhé!";
+
+            document.getElementById('final-score').innerText = `${currentScore}/${total}`;
+            document.getElementById('feedback-msg').innerText = feedback;
+            document.getElementById('result-modal').style.display = 'flex';
+            
+            // Big Confetti
+            if (percentage >= 50) {
+                const duration = 3000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 }
+                    });
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 }
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Run Init
+        window.onload = initQuiz;
+
+    </script>
+</body>
+</html>
