@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luyện tập Ngữ Âm & Trọng Âm - Ms. Chí Nên</title>
+    <!-- Google Fonts: Nunito for friendly look -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS (CDN for single file) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#8854C0',    // Tím hồng chủ đạo
+                        secondary: '#00C9A7',  // Xanh ngọc
+                        correct: '#00D26A',    // Xanh lá đúng
+                        wrong: '#FF4757',      // Đỏ sai
+                        surface: '#ffffff',
+                    },
+                    boxShadow: {
+                        '3d': '0 6px 0 0 rgba(0,0,0,0.15)',
+                        '3d-active': '0 2px 0 0 rgba(0,0,0,0.15)',
+                        'card': '0 10px 25px -5px rgba(136, 84, 192, 0.2)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F3E5F5;
+            background-image: radial-gradient(#8854C0 1px, transparent 1px), radial-gradient(#8854C0 1px, transparent 1px);
+            background-position: 0 0, 25px 25px;
+            background-size: 50px 50px;
+            opacity: 1;
+        }
+
+        /* 3D Button Styles */
+        .btn-option {
+            transition: all 0.1s;
+            border: 2px solid transparent;
+        }
+        .btn-option:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 0 rgba(0,0,0,0.1) !important;
+        }
+        
+        /* Animation Classes */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-2deg); }
+            50% { transform: translateX(5px) rotate(2deg); }
+            75% { transform: translateX(-5px) rotate(-2deg); }
+            100% { transform: translateX(0); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .animate-pop {
+            animation: pop 0.3s ease-in-out;
+        }
+
+        .correct-answer {
+            background-color: #00D26A !important;
+            color: white !important;
+            border-color: #00b359 !important;
+            box-shadow: 0 6px 0 0 #00994d !important;
+        }
+
+        .wrong-answer {
+            background-color: #FF4757 !important;
+            color: white !important;
+            border-color: #ff2e40 !important;
+            box-shadow: 0 6px 0 0 #e60017 !important;
+        }
+        
+        /* Explanation Box Styling */
+        .explanation-box {
+            border-left: 5px solid #8854C0;
+            background: #F8F0FF;
+        }
+
+        .highlight-text {
+            color: #8854C0;
+            font-weight: 800;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8854C0; 
+            border-radius: 4px;
+        }
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-6 px-4 selection:bg-purple-200 selection:text-purple-900">
+
+    <!-- Header -->
+    <header class="w-full max-w-3xl flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-card border-b-4 border-purple-200">
+        <div class="flex items-center gap-3">
+            <div class="bg-purple-100 p-2 rounded-full">
+                <i class="fa-solid fa-graduation-cap text-2xl text-primary"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-xl text-gray-800">English Practice</h1>
+                <p class="text-sm text-primary font-bold">Ms. Chí Nên · ☎️ 0852639652</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="bg-green-100 px-4 py-2 rounded-xl border-2 border-green-200">
+                <span class="text-green-700 font-bold"><i class="fa-solid fa-check mr-2"></i><span id="score-display">0</span></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="w-full max-w-3xl mb-6 px-1">
+        <div class="flex justify-between text-sm font-bold text-gray-600 mb-2">
+            <span>Câu hỏi: <span id="current-question-num">1</span>/<span id="total-question-num">20</span></span>
+            <span id="progress-percent">0%</span>
+        </div>
+        <div class="w-full bg-white rounded-full h-4 border-2 border-white shadow-sm overflow-hidden">
+            <div id="progress-bar" class="bg-secondary h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Main Quiz Area -->
+    <main id="quiz-container" class="w-full max-w-3xl relative perspective-1000">
+        <!-- Question Card -->
+        <div class="bg-white rounded-3xl shadow-card p-6 md:p-8 border-b-8 border-gray-100 relative overflow-hidden">
+            
+            <!-- Question Tag -->
+            <div class="mb-4">
+                <span id="question-type-badge" class="inline-block px-3 py-1 bg-purple-100 text-primary text-xs font-extrabold rounded-full uppercase tracking-wider mb-2">
+                    Phonetics
+                </span>
+                <h2 id="question-text" class="text-xl md:text-2xl font-bold text-gray-800 leading-relaxed">
+                    <!-- Question text goes here -->
+                </h2>
+                <p id="question-hint" class="text-gray-500 text-sm italic mt-2 flex items-center gap-2">
+                    <i class="fa-regular fa-lightbulb text-yellow-500"></i> <span id="hint-text"></span>
+                </p>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <!-- Options will be injected here -->
+            </div>
+
+            <!-- Explanation Area (Hidden by default) -->
+            <div id="explanation-container" class="hidden mt-8 animate-pop">
+                <div class="explanation-box p-5 rounded-xl text-gray-700 text-sm md:text-base leading-relaxed shadow-sm">
+                    <div class="flex items-center gap-2 mb-3">
+                        <img src="https://ui-avatars.com/api/?name=Mai+An&background=8854C0&color=fff&rounded=true&size=32" alt="Avatar" class="w-8 h-8 shadow-sm">
+                        <h3 class="font-bold text-primary text-lg">Ms. Chí Nên · ☎️ 0852639652giải thích chi tiết:</h3>
+                    </div>
+                    <div id="explanation-content" class="space-y-3">
+                        <!-- Content goes here -->
+                    </div>
+                </div>
+                
+                <!-- Next Button -->
+                <div class="mt-6 flex justify-end">
+                    <button id="next-btn" class="bg-secondary hover:bg-teal-400 text-white font-bold py-3 px-8 rounded-xl shadow-3d active:shadow-3d-active active:translate-y-1 transition-all flex items-center gap-2 text-lg">
+                        Tiếp theo <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Result Modal -->
+    <div id="result-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center relative border-t-8 border-primary animate-pop">
+            <div class="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded-full shadow-xl border-4 border-primary">
+                <i class="fa-solid fa-trophy text-4xl text-yellow-400"></i>
+            </div>
+            
+            <h2 class="text-3xl font-extrabold text-gray-800 mt-8 mb-2">Hoàn thành!</h2>
+            <p id="result-message" class="text-gray-500 mb-6 font-semibold">Bạn đã làm rất tốt!</p>
+            
+            <div class="bg-purple-50 rounded-2xl p-6 mb-8">
+                <div class="text-4xl font-extrabold text-primary mb-1" id="final-score">0/20</div>
+                <div class="text-sm text-gray-400 font-bold uppercase tracking-widest">Câu đúng</div>
+            </div>
+
+            <button onclick="location.reload()" class="w-full bg-primary hover:bg-purple-600 text-white font-bold py-4 rounded-xl shadow-3d active:shadow-3d-active active:translate-y-1 transition-all text-lg">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Làm lại bài
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Elements (Base64 for single file portability) -->
+    <!-- Sound: Ding (Correct) -->
+    <audio id="sound-correct" src="data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"></audio>
+    <!-- We will rely on simple oscillator for sounds to keep file small and reliable if base64 is too long, implementing simple beep in JS below -->
+
+    <script>
+        // --- 1. GAME DATA (FROM USER INPUT) ---
+        const rawData = {
+          "questions": [
+            {
+              "id": 1,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Chú ý đến phụ âm đầu của các từ này (đặc biệt là chữ 'h').",
+              "options": [
+                { "text": "sour", "ipa": "/saʊər/", "meaning": "chua", "correct": false, "note": "Phụ âm đầu /s/ được phát âm rõ." },
+                { "text": "hour", "ipa": "/aʊər/", "meaning": "giờ", "correct": true, "note": "Đây là từ duy nhất có chữ **'h' bị câm**." },
+                { "text": "south", "ipa": "/saʊθ/", "meaning": "phía nam", "correct": false, "note": "Phụ âm đầu /s/ được phát âm rõ." },
+                { "text": "mouse", "ipa": "/maʊs/", "meaning": "con chuột", "correct": false, "note": "Phụ âm đầu /m/ được phát âm rõ." }
+              ]
+            },
+            {
+              "id": 2,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Chú ý cách phát âm chữ 'g'.",
+              "options": [
+                { "text": "guide", "ipa": "/ɡaɪd/", "meaning": "hướng dẫn", "correct": false, "note": "Chữ 'g' phát âm là /ɡ/." },
+                { "text": "guest", "ipa": "/ɡest/", "meaning": "khách", "correct": false, "note": "Chữ 'g' phát âm là /ɡ/." },
+                { "text": "gate", "ipa": "/ɡeɪt/", "meaning": "cổng", "correct": false, "note": "Chữ 'g' phát âm là /ɡ/." },
+                { "text": "general", "ipa": "/ˈdʒen.ər.əl/", "meaning": "chung/tướng", "correct": true, "note": "Chữ 'g' phát âm là **/dʒ/** (giống 'gi')." }
+              ]
+            },
+            {
+              "id": 3,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Quy tắc phát âm đuôi -ed.",
+              "options": [
+                { "text": "booked", "ipa": "/bʊkt/", "meaning": "đã đặt chỗ", "correct": false, "note": "Đuôi -ed phát âm là /t/." },
+                { "text": "visited", "ipa": "/ˈvɪz.ɪ.tɪd/", "meaning": "đã ghé thăm", "correct": true, "note": "Đuôi -ed phát âm là **/ɪd/** (sau âm t, d)." },
+                { "text": "traveled", "ipa": "/ˈtræv.əld/", "meaning": "đã du lịch", "correct": false, "note": "Đuôi -ed phát âm là /d/." },
+                { "text": "stayed", "ipa": "/steɪd/", "meaning": "đã ở lại", "correct": false, "note": "Đuôi -ed phát âm là /d/." }
+              ]
+            },
+            {
+              "id": 4,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Chú ý cụm nguyên âm 'ea'.",
+              "options": [
+                { "text": "beach", "ipa": "/biːtʃ/", "meaning": "bãi biển", "correct": false, "note": "'ea' phát âm là /iː/." },
+                { "text": "seat", "ipa": "/siːt/", "meaning": "chỗ ngồi", "correct": false, "note": "'ea' phát âm là /iː/." },
+                { "text": "meal", "ipa": "/miːl/", "meaning": "bữa ăn", "correct": false, "note": "'ea' phát âm là /iː/." },
+                { "text": "break", "ipa": "/breɪk/", "meaning": "nghỉ ngơi/vỡ", "correct": true, "note": "'ea' phát âm là **/eɪ/**." }
+              ]
+            },
+            {
+              "id": 5,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Chú ý chữ 'c'.",
+              "options": [
+                { "text": "camera", "ipa": "/ˈkæm.rə/", "meaning": "máy ảnh", "correct": false, "note": "Chữ 'c' phát âm là /k/." },
+                { "text": "coast", "ipa": "/kəʊst/", "meaning": "bờ biển", "correct": false, "note": "Chữ 'c' phát âm là /k/." },
+                { "text": "cruise", "ipa": "/kruːz/", "meaning": "du thuyền", "correct": false, "note": "Chữ 'c' phát âm là /k/." },
+                { "text": "city", "ipa": "/ˈsɪt.i/", "meaning": "thành phố", "correct": true, "note": "Chữ 'c' phát âm là **/s/**." }
+              ]
+            },
+            {
+              "id": 6,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Chú ý các chữ cái bị câm (silent letters).",
+              "options": [
+                { "text": "island", "ipa": "/ˈaɪ.lənd/", "meaning": "hòn đảo", "correct": true, "note": "Chữ **'s' bị câm** hoàn toàn." },
+                { "text": "castle", "ipa": "/ˈkɑː.sl/", "meaning": "lâu đài", "correct": false, "note": "Chữ 't' câm, nhưng 's' vẫn phát âm." },
+                { "text": "famous", "ipa": "/ˈfeɪ.məs/", "meaning": "nổi tiếng", "correct": false, "note": "Chữ 's' phát âm là /s/." },
+                { "text": "travel", "ipa": "/ˈtræv.əl/", "meaning": "du lịch", "correct": false, "note": "Không có âm câm." }
+              ]
+            },
+            {
+              "id": 7,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Chú ý âm 'o'.",
+              "options": [
+                { "text": "hotel", "ipa": "/həʊˈtel/", "meaning": "khách sạn", "correct": false, "note": "Âm 'o' là /əʊ/." },
+                { "text": "motel", "ipa": "/məʊˈtel/", "meaning": "nhà nghỉ", "correct": false, "note": "Âm 'o' là /əʊ/." },
+                { "text": "local", "ipa": "/ˈləʊ.kl/", "meaning": "địa phương", "correct": false, "note": "Âm 'o' là /əʊ/." },
+                { "text": "today", "ipa": "/təˈdeɪ/", "meaning": "hôm nay", "correct": true, "note": "Âm 'o' đọc lướt thành **/ə/**." }
+              ]
+            },
+            {
+              "id": 8,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Chú ý âm 'i'.",
+              "options": [
+                { "text": "sign", "ipa": "/saɪn/", "meaning": "biển báo", "correct": true, "note": "Chữ 'i' phát âm là **/aɪ/**." },
+                { "text": "trip", "ipa": "/trɪp/", "meaning": "chuyến đi", "correct": false, "note": "Chữ 'i' phát âm là /ɪ/." },
+                { "text": "ticket", "ipa": "/ˈtɪk.ɪt/", "meaning": "vé", "correct": false, "note": "Chữ 'i' phát âm là /ɪ/." },
+                { "text": "city", "ipa": "/ˈsɪt.i/", "meaning": "thành phố", "correct": false, "note": "Chữ 'i' phát âm là /ɪ/." }
+              ]
+            },
+            {
+              "id": 9,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Chú ý chữ 'c'.",
+              "options": [
+                { "text": "place", "ipa": "/pleɪs/", "meaning": "nơi chốn", "correct": false, "note": "Chữ 'c' phát âm là /s/." },
+                { "text": "center", "ipa": "/ˈsen.tər/", "meaning": "trung tâm", "correct": false, "note": "Chữ 'c' phát âm là /s/." },
+                { "text": "exciting", "ipa": "/ɪkˈsaɪ.tɪŋ/", "meaning": "thú vị", "correct": false, "note": "Chữ 'c' phát âm là /s/." },
+                { "text": "cat", "ipa": "/kæt/", "meaning": "con mèo", "correct": true, "note": "Chữ 'c' phát âm là **/k/**." }
+              ]
+            },
+            {
+              "id": 10,
+              "type": "pronunciation",
+              "question": "Mark the letter A, B, C, or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+              "hint": "Chú ý âm 'u'.",
+              "options": [
+                { "text": "museum", "ipa": "/mjuːˈziː.əm/", "meaning": "bảo tàng", "correct": true, "note": "Chữ 'u' phát âm là **/juː/**." },
+                { "text": "bus", "ipa": "/bʌs/", "meaning": "xe buýt", "correct": false, "note": "Chữ 'u' phát âm là /ʌ/." },
+                { "text": "summer", "ipa": "/ˈsʌm.ər/", "meaning": "mùa hè", "correct": false, "note": "Chữ 'u' phát âm là /ʌ/." },
+                { "text": "luggage", "ipa": "/ˈlʌɡ.ɪdʒ/", "meaning": "hành lý", "correct": false, "note": "Chữ 'u' phát âm là /ʌ/." }
+              ]
+            },
+            {
+              "id": 11,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Danh từ 2 âm tiết thường nhấn âm 1, nhưng có ngoại lệ.",
+              "options": [
+                { "text": "picnic", "ipa": "/ˈpɪk.nɪk/", "meaning": "dã ngoại", "correct": false, "note": "Trọng âm 1." },
+                { "text": "sunset", "ipa": "/ˈsʌn.set/", "meaning": "hoàng hôn", "correct": false, "note": "Trọng âm 1." },
+                { "text": "valley", "ipa": "/ˈvæl.i/", "meaning": "thung lũng", "correct": false, "note": "Trọng âm 1." },
+                { "text": "safari", "ipa": "/səˈfɑː.ri/", "meaning": "cuộc đi săn", "correct": true, "note": "Trọng âm rơi vào **âm tiết 2**." }
+              ]
+            },
+            {
+              "id": 12,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Tìm từ có trọng âm rơi vào âm tiết thứ 2.",
+              "options": [
+                { "text": "departure", "ipa": "/dɪˈpɑː.tʃər/", "meaning": "sự khởi hành", "correct": true, "note": "Trọng âm rơi vào **âm tiết 2**." },
+                { "text": "entrance", "ipa": "/ˈen.trəns/", "meaning": "lối vào", "correct": false, "note": "Trọng âm 1." },
+                { "text": "baggage", "ipa": "/ˈbæɡ.ɪdʒ/", "meaning": "hành lý", "correct": false, "note": "Trọng âm 1." },
+                { "text": "terminal", "ipa": "/ˈtɜː.mɪ.nəl/", "meaning": "nhà ga", "correct": false, "note": "Trọng âm 1." }
+              ]
+            },
+            {
+              "id": 13,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Tìm từ nhấn âm 2.",
+              "options": [
+                { "text": "adventure", "ipa": "/ədˈven.tʃər/", "meaning": "cuộc phiêu lưu", "correct": true, "note": "Trọng âm rơi vào **âm tiết 2**." },
+                { "text": "waterfall", "ipa": "/ˈwɔː.tə.fɔːl/", "meaning": "thác nước", "correct": false, "note": "Trọng âm 1." },
+                { "text": "mountain", "ipa": "/ˈmaʊn.tɪn/", "meaning": "ngọn núi", "correct": false, "note": "Trọng âm 1." },
+                { "text": "wildlife", "ipa": "/ˈwaɪld.laɪf/", "meaning": "động vật hoang dã", "correct": false, "note": "Trọng âm 1." }
+              ]
+            },
+            {
+              "id": 14,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Quy tắc đuôi -tion.",
+              "options": [
+                { "text": "nature", "ipa": "/ˈneɪ.tʃər/", "meaning": "thiên nhiên", "correct": false, "note": "Trọng âm 1." },
+                { "text": "ocean", "ipa": "/ˈəʊ.ʃən/", "meaning": "đại dương", "correct": false, "note": "Trọng âm 1." },
+                { "text": "destination", "ipa": "/ˌdes.tɪˈneɪ.ʃən/", "meaning": "điểm đến", "correct": true, "note": "Trọng âm rơi vào **âm tiết 3** (trước -tion)." },
+                { "text": "heritage", "ipa": "/ˈher.ɪ.tɪdʒ/", "meaning": "di sản", "correct": false, "note": "Trọng âm 1." }
+              ]
+            },
+            {
+              "id": 15,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Tìm từ nhấn âm 2.",
+              "options": [
+                { "text": "guidebook", "ipa": "/ˈɡaɪd.bʊk/", "meaning": "sách hướng dẫn", "correct": false, "note": "Trọng âm 1." },
+                { "text": "outdoor", "ipa": "/ˈaʊt.dɔːr/", "meaning": "ngoài trời", "correct": false, "note": "Trọng âm 1." },
+                { "text": "reception", "ipa": "/rɪˈsep.ʃən/", "meaning": "lễ tân", "correct": true, "note": "Trọng âm rơi vào **âm tiết 2**." },
+                { "text": "leisure", "ipa": "/ˈleʒ.ər/", "meaning": "sự thư nhàn", "correct": false, "note": "Trọng âm 1." }
+              ]
+            },
+            {
+              "id": 16,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Tìm từ nhấn âm 2.",
+              "options": [
+                { "text": "restaurant", "ipa": "/ˈres.tɒr.ɒnt/", "meaning": "nhà hàng", "correct": false, "note": "Trọng âm 1." },
+                { "text": "umbrella", "ipa": "/ʌmˈbrel.ə/", "meaning": "cái ô", "correct": true, "note": "Trọng âm rơi vào **âm tiết 2**." },
+                { "text": "festival", "ipa": "/ˈfes.tɪ.vəl/", "meaning": "lễ hội", "correct": false, "note": "Trọng âm 1." },
+                { "text": "photograph", "ipa": "/ˈfəʊ.tə.ɡrɑːf/", "meaning": "bức ảnh", "correct": false, "note": "Trọng âm 1." }
+              ]
+            },
+            {
+              "id": 17,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Tìm từ nhấn âm 2 (động từ/tiền tố ex-).",
+              "options": [
+                { "text": "foreign", "ipa": "/ˈfɒr.ən/", "meaning": "nước ngoài", "correct": false, "note": "Trọng âm 1." },
+                { "text": "exchange", "ipa": "/ɪksˈtʃeɪndʒ/", "meaning": "trao đổi", "correct": true, "note": "Trọng âm rơi vào **âm tiết 2**." },
+                { "text": "quarter", "ipa": "/ˈkwɔː.tər/", "meaning": "một phần tư", "correct": false, "note": "Trọng âm 1." },
+                { "text": "gallery", "ipa": "/ˈɡæl.ər.i/", "meaning": "phòng trưng bày", "correct": false, "note": "Trọng âm 1." }
+              ]
+            },
+            {
+              "id": 18,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Tìm từ nhấn âm 2.",
+              "options": [
+                { "text": "vacation", "ipa": "/veɪˈkeɪ.ʃən/", "meaning": "kỳ nghỉ", "correct": true, "note": "Trọng âm rơi vào **âm tiết 2**." },
+                { "text": "monument", "ipa": "/ˈmɒn.jə.mənt/", "meaning": "đài tưởng niệm", "correct": false, "note": "Trọng âm 1." },
+                { "text": "boarding", "ipa": "/ˈbɔː.dɪŋ/", "meaning": "lên tàu", "correct": false, "note": "Trọng âm 1." },
+                { "text": "national", "ipa": "/ˈnæʃ.ən.əl/", "meaning": "thuộc quốc gia", "correct": false, "note": "Trọng âm 1." }
+              ]
+            },
+            {
+              "id": 19,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Đếm số âm tiết và tìm trọng âm.",
+              "options": [
+                { "text": "historic", "ipa": "/hɪˈstɒr.ɪk/", "meaning": "mang tính lịch sử", "correct": false, "note": "Trọng âm 2." },
+                { "text": "activity", "ipa": "/ækˈtɪv.ə.ti/", "meaning": "hoạt động", "correct": false, "note": "Trọng âm 2." },
+                { "text": "itinerary", "ipa": "/aɪˈtɪn.ər.ər.i/", "meaning": "lịch trình", "correct": false, "note": "Trọng âm 2." },
+                { "text": "information", "ipa": "/ˌɪn.fəˈmeɪ.ʃən/", "meaning": "thông tin", "correct": true, "note": "Trọng âm rơi vào **âm tiết 3**." }
+              ]
+            },
+            {
+              "id": 20,
+              "type": "stress",
+              "question": "Mark the letter A, B, C, or D to indicate the word that differs from the other three in the position of primary stress.",
+              "hint": "Tìm từ nhấn âm 2.",
+              "options": [
+                { "text": "uniform", "ipa": "/ˈjuː.nɪ.fɔːm/", "meaning": "đồng phục", "correct": false, "note": "Trọng âm 1." },
+                { "text": "climate", "ipa": "/ˈklaɪ.mət/", "meaning": "khí hậu", "correct": false, "note": "Trọng âm 1." },
+                { "text": "distance", "ipa": "/ˈdɪs.təns/", "meaning": "khoảng cách", "correct": false, "note": "Trọng âm 1." },
+                { "text": "location", "ipa": "/ləʊˈkeɪ.ʃən/", "meaning": "vị trí", "correct": true, "note": "Trọng âm rơi vào **âm tiết 2**." }
+              ]
+            }
+          ]
+        };
+
+        // --- 2. GAME LOGIC ---
+
+        let quizData = rawData.questions;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+
+        // Shuffle function (Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Initialize Game
+        function initGame() {
+            shuffleArray(quizData);
+            score = 0;
+            currentQuestionIndex = 0;
+            updateScoreUI();
+            loadQuestion();
+        }
+
+        // Render Sounds
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playCorrectSound() {
+            playTone(600, 'sine', 0.1);
+            setTimeout(() => playTone(800, 'sine', 0.2), 100);
+        }
+
+        function playWrongSound() {
+            playTone(150, 'sawtooth', 0.3);
+            setTimeout(() => playTone(100, 'sawtooth', 0.3), 200);
+        }
+
+        // Load Question UI
+        function loadQuestion() {
+            const q = quizData[currentQuestionIndex];
+            isAnswered = false;
+
+            // UI Elements
+            document.getElementById('current-question-num').innerText = currentQuestionIndex + 1;
+            document.getElementById('total-question-num').innerText = quizData.length;
+            document.getElementById('progress-percent').innerText = Math.round(((currentQuestionIndex) / quizData.length) * 100) + '%';
+            document.getElementById('progress-bar').style.width = ((currentQuestionIndex) / quizData.length) * 100 + '%';
+            
+            // Text
+            document.getElementById('question-type-badge').innerText = q.type === 'stress' ? 'Trọng âm (Stress)' : 'Ngữ âm (Pronunciation)';
+            document.getElementById('question-text').innerHTML = `Question ${currentQuestionIndex + 1}: ${q.question}`;
+            document.getElementById('hint-text').innerText = q.hint;
+            
+            // Reset Explanation
+            document.getElementById('explanation-container').classList.add('hidden');
+            
+            // Options
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = `btn-option w-full bg-white text-gray-700 font-bold py-4 px-6 rounded-2xl shadow-3d border-b-4 border-gray-200 hover:bg-purple-50 hover:border-purple-300 text-left transition-all flex justify-between items-center group`;
+                btn.innerHTML = `
+                    <span class="text-lg"><span class="inline-block w-8 h-8 bg-gray-100 text-gray-500 rounded-full text-center leading-8 mr-3 text-sm group-hover:bg-primary group-hover:text-white transition-colors">${String.fromCharCode(65 + index)}</span> ${opt.text}</span>
+                    <i class="fa-regular fa-circle text-gray-300 text-xl status-icon"></i>
+                `;
+                btn.onclick = () => checkAnswer(btn, opt, index);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // Check Answer Logic
+        function checkAnswer(btn, option, index) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const q = quizData[currentQuestionIndex];
+            const allBtns = document.querySelectorAll('.btn-option');
+
+            // Find correct index
+            const correctIndex = q.options.findIndex(o => o.correct);
+            const correctBtn = allBtns[correctIndex];
+
+            if (option.correct) {
+                // CORRECT
+                score++;
+                updateScoreUI();
+                playCorrectSound();
+                
+                // Style Correct Button
+                btn.classList.add('correct-answer');
+                btn.querySelector('.status-icon').className = 'fa-solid fa-circle-check text-white text-xl';
+                
+                // Confetti
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#00C9A7', '#8854C0', '#FFD700']
+                });
+
+            } else {
+                // WRONG
+                playWrongSound();
+                
+                // Style Wrong Button
+                btn.classList.add('wrong-answer', 'animate-shake');
+                btn.querySelector('.status-icon').className = 'fa-solid fa-circle-xmark text-white text-xl';
+                
+                // Show Correct Button
+                correctBtn.classList.add('bg-green-100', 'border-green-300', 'text-green-700');
+                correctBtn.querySelector('.status-icon').className = 'fa-regular fa-circle-check text-green-500 text-xl';
+            }
+
+            showExplanation(q);
+        }
+
+        function updateScoreUI() {
+            document.getElementById('score-display').innerText = score;
+        }
+
+        // Generate and Show Explanation
+        function showExplanation(q) {
+            const container = document.getElementById('explanation-container');
+            const content = document.getElementById('explanation-content');
+            
+            // Generate HTML for explanation
+            let html = `
+                <div class="mb-4 text-gray-600 italic border-l-4 border-gray-300 pl-3">
+                    "Dịch đề bài: ${q.type === 'stress' ? 'Chọn từ có vị trí trọng âm chính khác với ba từ còn lại.' : 'Chọn từ có phần gạch chân phát âm khác với ba từ còn lại.'}"
+                </div>
+                <div class="grid grid-cols-1 gap-2">
+            `;
+
+            q.options.forEach((opt, idx) => {
+                const isCorrect = opt.correct;
+                const label = String.fromCharCode(65 + idx);
+                html += `
+                    <div class="p-2 rounded-lg ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-white border border-gray-100'}">
+                        <span class="font-bold ${isCorrect ? 'text-green-600' : 'text-gray-500'}">${label}. ${opt.text}</span> 
+                        <span class="text-purple-600 font-mono text-sm mx-1">[${opt.ipa}]</span>
+                        <span class="text-gray-500 text-sm">(${opt.meaning})</span>
+                        <div class="text-sm mt-1 text-gray-700 ${isCorrect ? 'font-bold' : ''}"><i class="fa-solid fa-angle-right text-xs mr-1"></i> ${opt.note}</div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            
+            // Add final conclusion
+            const correctOpt = q.options.find(o => o.correct);
+            html += `
+                <div class="mt-4 p-3 bg-purple-100 rounded-lg text-primary font-bold text-center">
+                    <i class="fa-solid fa-star text-yellow-500 mr-1"></i> Đáp án đúng là: <span class="text-lg uppercase">${correctOpt.text}</span>
+                </div>
+            `;
+
+            content.innerHTML = html;
+            container.classList.remove('hidden');
+            
+            // Scroll to explanation on mobile
+            if(window.innerWidth < 768) {
+                setTimeout(() => {
+                    container.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }, 300);
+            }
+        }
+
+        // Next Button Logic
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentQuestionIndex < quizData.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            } else {
+                finishQuiz();
+            }
+        });
+
+        function finishQuiz() {
+            const modal = document.getElementById('result-modal');
+            const finalScore = document.getElementById('final-score');
+            const msg = document.getElementById('result-message');
+            
+            finalScore.innerText = `${score}/${quizData.length}`;
+            
+            const percentage = (score / quizData.length) * 100;
+            if (percentage === 100) {
+                msg.innerText = "Tuyệt vời! Bạn là thiên tài ngữ âm! 🌟";
+                confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+            } else if (percentage >= 80) {
+                msg.innerText = "Giỏi lắm! Chỉ cần cẩn thận hơn chút xíu thôi! 💪";
+            } else if (percentage >= 50) {
+                msg.innerText = "Khá tốt! Hãy luyện tập thêm để điểm cao hơn nhé! 📚";
+            } else {
+                msg.innerText = "Đừng buồn nhé! Hãy xem lại phần giải thích và thử lại nào! 🔥";
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        // Start Game
+        initGame();
+
+    </script>
+</body>
+</html>
