@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gap Fill Challenge - Ms. Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-pink: #8854C0;
+            --primary-teal: #00C9A7;
+            --correct-green: #00D26A;
+            --wrong-red: #FF4757;
+            --bg-color: #F0F3F8;
+            --card-bg: #FFFFFF;
+            --text-dark: #2d3436;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#dbe3f0 2px, transparent 2px);
+            background-size: 20px 20px;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* --- Header --- */
+        .header-bar {
+            background: linear-gradient(135deg, var(--primary-pink), #a29bfe);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(136, 84, 192, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+
+        .header-title {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            margin: 0;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+
+        .teacher-name {
+            font-size: 0.9rem;
+            opacity: 0.95;
+            margin-top: 5px;
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* --- Container --- */
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 15px 100px 15px;
+        }
+
+        /* --- Reading Card --- */
+        .reading-card {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 0 #dfe6e9, 0 10px 20px rgba(0,0,0,0.1);
+            border: 2px solid #f1f2f6;
+            position: relative;
+        }
+
+        .card-title {
+            color: var(--primary-pink);
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #e1bee7;
+            padding-bottom: 10px;
+        }
+
+        .reading-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #2f3542;
+            white-space: pre-wrap; /* Preserves newlines */
+        }
+
+        /* --- Gap Styles --- */
+        .gap-blank {
+            display: inline-block;
+            min-width: 80px;
+            height: 30px;
+            background: #f1f2f6;
+            border-bottom: 3px solid #b2bec3;
+            border-radius: 8px;
+            margin: 0 5px;
+            cursor: pointer;
+            text-align: center;
+            color: var(--primary-pink);
+            font-weight: 800;
+            vertical-align: middle;
+            line-height: 30px;
+            padding: 0 10px;
+            transition: all 0.2s;
+        }
+
+        .gap-blank:hover {
+            background: #dfe6e9;
+            transform: scale(1.05);
+        }
+
+        .gap-blank.correct {
+            background: #d4edda;
+            color: var(--correct-green);
+            border-bottom-color: var(--correct-green);
+        }
+
+        .gap-blank.wrong {
+            background: #f8d7da;
+            color: var(--wrong-red);
+            border-bottom-color: var(--wrong-red);
+            animation: shake 0.5s;
+        }
+
+        /* --- Glossary Table --- */
+        .glossary-box {
+            margin-top: 30px;
+            background: #e0fbf6;
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid var(--primary-teal);
+        }
+
+        .glossary-title {
+            font-weight: 800;
+            color: var(--primary-teal);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .glossary-table th, .glossary-table td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid rgba(0, 201, 167, 0.3);
+            font-size: 0.9rem;
+        }
+        
+        .glossary-table th { color: var(--primary-teal); }
+        .glossary-table td strong { color: #2d3436; }
+
+        /* --- Explanation Box --- */
+        .explanation-container {
+            margin-top: 20px;
+        }
+
+        .expl-item {
+            display: none; /* Hidden by default */
+            background: #fff0f6;
+            border-left: 5px solid var(--primary-pink);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .expl-header {
+            font-weight: 800;
+            color: var(--primary-pink);
+            margin-bottom: 5px;
+            font-size: 1.05rem;
+        }
+
+        /* --- Selection Popup (Modal) --- */
+        .option-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+
+        .option-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 300px;
+            text-align: center;
+            animation: popIn 0.3s;
+        }
+
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: white;
+            border: 2px solid #dfe4ea;
+            border-bottom: 5px solid #dfe4ea;
+            border-radius: 15px;
+            font-weight: 700;
+            color: #57606f;
+            cursor: pointer;
+            transition: all 0.1s;
+            font-size: 1rem;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-pink);
+            color: var(--primary-pink);
+        }
+        
+        .option-btn:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+
+        /* --- Footer --- */
+        .quiz-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            z-index: 99;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .score-box {
+            font-weight: 800;
+            color: var(--primary-teal);
+            font-size: 1.4rem;
+            background: #e0fbf6;
+            padding: 8px 20px;
+            border-radius: 50px;
+            border: 2px solid var(--primary-teal);
+        }
+
+        .submit-btn {
+            background-color: var(--primary-pink);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            border-radius: 50px;
+            box-shadow: 0 6px 0 #6c429c;
+            cursor: pointer;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        /* --- Animations --- */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* --- Result Modal --- */
+        .result-modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            border: 4px solid var(--primary-teal);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        
+        .image-placeholder {
+            border: 2px dashed #ccc;
+            background: #f9f9f9;
+            color: #888;
+            padding: 10px;
+            text-align: center;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 0.8rem;
+        }
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body>
+
+    <header class="header-bar">
+        <h1 class="header-title">English Gap Fill</h1>
+        <span class="teacher-name">Giáo viên: Ms. Chí Nên · ☎️ 0852639652</span>
+    </header>
+
+    <div class="container" id="quiz-container">
+        <div class="reading-card">
+            <div class="card-title">① Announcement: Virtual Reality Experience</div>
+            
+            <div class="image-placeholder">
+                <div style="font-size: 2rem;">🥽</div>
+                
+
+[Image of Virtual Reality Event Poster]
+
+            </div>
+
+            <div class="reading-text">
+Hello Everyone!
+We are <span class="gap-blank" onclick="openGapModal(1, 'set1_q1')">(1)</span> to announce a "Virtual Reality Experience" event <span class="gap-blank" onclick="openGapModal(2, 'set1_q2')">(2)</span> November 15, 2024!
+🕒 Time: 2:00 PM - 5:00 PM
+Location: Multimedia Room, 789 Technology Blvd, Da Nang
+Explore <span class="gap-blank" onclick="openGapModal(3, 'set1_q3')">(3)</span> world of virtual reality and how it is changing education. Don’t miss the chance to <span class="gap-blank" onclick="openGapModal(4, 'set1_q4')">(4)</span> VR headsets!✶
+Be part of this amazing experience!
+Reserve your spot at [VREvent.com]!
+Can’t wait to see you there!
+            </div>
+
+            <div class="glossary-box">
+                <div class="glossary-title">📚 Glossary (Từ vựng)</div>
+                <table class="glossary-table">
+                    <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                    <tr><td><strong>Virtual Reality</strong></td><td>(n.phr)</td><td>Thực tế ảo</td></tr>
+                    <tr><td><strong>Announce</strong></td><td>(v)</td><td>Thông báo</td></tr>
+                    <tr><td><strong>Experience</strong></td><td>(n)</td><td>Trải nghiệm</td></tr>
+                    <tr><td><strong>Headset</strong></td><td>(n)</td><td>Tai nghe kèm kính/mic</td></tr>
+                    <tr><td><strong>Reserve</strong></td><td>(v)</td><td>Đặt chỗ trước</td></tr>
+                </table>
+            </div>
+
+            <div class="explanation-container" id="expl-container-1"></div>
+        </div>
+
+        <div class="reading-card">
+            <div class="card-title">② We Are Hiring: Electric Device Technicians!</div>
+            
+            <div class="reading-text">
+Do you have an interest in fixing electric devices? We are looking <span class="gap-blank" onclick="openGapModal(5, 'set2_q1')">(1)</span> skilled individuals to join our team as technicians. Here’s what you need to know:
+A full-time position with <span class="gap-blank" onclick="openGapModal(6, 'set2_q2')">(2)</span> working hours.
+Competitive pay and training provided.
+No previous experience needed; we will teach you everything you need to know.
+Apply by December 20, 2024, and help us <span class="gap-blank" onclick="openGapModal(7, 'set2_q3')">(3)</span> our customers’ devices running smoothly!
+Contact us:
+Email: jobs@electricfixers.com
+Phone: 039-111-222
+Address: 789 Tech Avenue, <span class="gap-blank" onclick="openGapModal(8, 'set2_q4')">(4)</span> Electric City
+            </div>
+
+            <div class="glossary-box">
+                <div class="glossary-title">📚 Glossary (Từ vựng)</div>
+                <table class="glossary-table">
+                    <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                    <tr><td><strong>Technician</strong></td><td>(n)</td><td>Kỹ thuật viên</td></tr>
+                    <tr><td><strong>Individual</strong></td><td>(n)</td><td>Cá nhân</td></tr>
+                    <tr><td><strong>Competitive</strong></td><td>(adj)</td><td>Cạnh tranh (lương cao)</td></tr>
+                    <tr><td><strong>Previous</strong></td><td>(adj)</td><td>Trước đó</td></tr>
+                    <tr><td><strong>Smoothly</strong></td><td>(adv)</td><td>Trôi chảy, mượt mà</td></tr>
+                </table>
+            </div>
+
+            <div class="explanation-container" id="expl-container-2"></div>
+        </div>
+
+        <div class="reading-card">
+            <div class="card-title">③ Dear Students (Safety Letter)</div>
+            
+             <div class="image-placeholder">
+                <div style="font-size: 2rem;">⚡</div>
+                
+            </div>
+
+            <div class="reading-text">
+Dear Students,
+Understanding how to safely use electric devices is important. Incorrect usage can <span class="gap-blank" onclick="openGapModal(9, 'set3_q1')">(1)</span> accidents or device damage.
+Be careful when using any new electric device <span class="gap-blank" onclick="openGapModal(10, 'set3_q2')">(2)</span> the first time.
+Follow the <span class="gap-blank" onclick="openGapModal(11, 'set3_q3')">(3)</span> provided in the device manual to ensure proper usage.
+Report any malfunctioning device to a trained technician or adult.
+Let's keep our environment safe by handling <span class="gap-blank" onclick="openGapModal(12, 'set3_q4')">(4)</span> electric devices with care!
+Best regards,
+            </div>
+
+            <div class="glossary-box">
+                <div class="glossary-title">📚 Glossary (Từ vựng)</div>
+                <table class="glossary-table">
+                    <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                    <tr><td><strong>Incorrect usage</strong></td><td>(n.phr)</td><td>Sử dụng sai cách</td></tr>
+                    <tr><td><strong>Damage</strong></td><td>(n)</td><td>Thiệt hại, hư hỏng</td></tr>
+                    <tr><td><strong>Manual</strong></td><td>(n)</td><td>Sách hướng dẫn</td></tr>
+                    <tr><td><strong>Malfunctioning</strong></td><td>(adj)</td><td>Bị trục trặc, hỏng hóc</td></tr>
+                    <tr><td><strong>Handle</strong></td><td>(v)</td><td>Xử lý, cầm nắm</td></tr>
+                </table>
+            </div>
+
+            <div class="explanation-container" id="expl-container-3"></div>
+        </div>
+
+    </div>
+
+    <div class="quiz-footer">
+        <div class="score-box">Điểm: <span id="current-score">0</span>/12</div>
+        <button class="submit-btn" onclick="finishQuiz()">Nộp bài</button>
+    </div>
+
+    <div class="option-modal" id="gap-modal">
+        <div class="option-content">
+            <h3 style="color:var(--primary-pink); margin-top:0;">Chọn đáp án</h3>
+            <div id="modal-options-container">
+                </div>
+            <button onclick="closeModal()" style="margin-top:10px; background:none; border:none; color:#999; cursor:pointer;">Đóng</button>
+        </div>
+    </div>
+
+    <div class="option-modal" id="result-modal">
+        <div class="result-modal-content">
+            <h2 style="color:var(--primary-teal); margin-top:0;">TỔNG KẾT</h2>
+            <p>Em đã hoàn thành bài tập!</p>
+            <div style="font-size: 3rem; font-weight:800; color:var(--primary-pink); margin:10px 0;" id="final-score">0/12</div>
+            <p id="teacher-message" style="font-weight: 700; color: #57606f;"></p>
+            <button class="submit-btn" onclick="document.getElementById('result-modal').style.display='none'">Xem lại bài</button>
+        </div>
+    </div>
+
+<script>
+    // --- DATABASE ---
+    // Note: Mapped based on context logic as per thinking process.
+    const quizData = {
+        // Exercise 1 (VR)
+        // Correction: Q1 needs "excited" (Set 2), Q2 needs "on" (Set 1). 
+        // Based on Input Data: 
+        // 1. A. in B. out C. with D. on
+        // 2. A. excited B. exciting C. enjoyed D. excitement
+        // Blank (1) "We are ____ to announce" -> Needs Adjective -> Set 2.
+        // Blank (2) "Event ____ November 15" -> Needs Preposition -> Set 1.
+        // I will map logical IDs to the datasets provided.
+        
+        'set1_q1': { // Blank 1 - Needs "Excited"
+            options: [
+                {val: 'A', text: 'excited', correct: true},
+                {val: 'B', text: 'exciting', correct: false},
+                {val: 'C', text: 'enjoyed', correct: false},
+                {val: 'D', text: 'excitement', correct: false}
+            ],
+            explId: 'expl-container-1',
+            questionText: "(1) We are ______ to announce...",
+            explanation: `
+                <strong>Dịch:</strong> Chúng tôi rất <u>hào hứng</u> được thông báo...<br>
+                <strong>Phân tích:</strong>
+                <ul>
+                    <li>A. excited (adj): hào hứng (chỉ cảm xúc người).</li>
+                    <li>B. exciting (adj): thú vị (chỉ tính chất sự vật).</li>
+                    <li>C. enjoyed (v): đã thích.</li>
+                    <li>D. excitement (n): sự hào hứng.</li>
+                </ul>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> Cấu trúc "Be + adj + to V". Chủ ngữ "We" là người nên dùng tính từ đuôi -ed (excited) để chỉ cảm xúc.
+            `
+        },
+        'set1_q2': { // Blank 2 - Needs "On"
+            options: [
+                {val: 'A', text: 'in', correct: false},
+                {val: 'B', text: 'out', correct: false},
+                {val: 'C', text: 'with', correct: false},
+                {val: 'D', text: 'on', correct: true}
+            ],
+            explId: 'expl-container-1',
+            questionText: "(2) ...event ______ November 15!",
+            explanation: `
+                <strong>Dịch:</strong> ...sự kiện <u>vào</u> ngày 15 tháng 11!<br>
+                <strong>Phân tích:</strong>
+                <ul>
+                    <li>A. in (+ tháng/năm/mùa).</li>
+                    <li>D. on (+ ngày cụ thể/ngày trong tuần).</li>
+                </ul>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> Trước ngày cụ thể (November 15) ta bắt buộc dùng giới từ "On".
+            `
+        },
+        'set1_q3': {
+            options: [
+                {val: 'A', text: 'a', correct: false},
+                {val: 'B', text: 'no article', correct: false},
+                {val: 'C', text: 'an', correct: false},
+                {val: 'D', text: 'the', correct: true}
+            ],
+            explId: 'expl-container-1',
+            questionText: "(3) Explore ______ world of virtual reality...",
+            explanation: `
+                <strong>Dịch:</strong> Khám phá <u>thế giới</u> thực tế ảo...<br>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> "World" (thế giới) là danh từ chỉ sự vật duy nhất hoặc đã được xác định rõ (của thực tế ảo). Ta dùng mạo từ xác định "The". Cụm cố định: "The world of...".
+            `
+        },
+        'set1_q4': {
+            options: [
+                {val: 'A', text: 'take on', correct: false},
+                {val: 'B', text: 'try out', correct: true},
+                {val: 'C', text: 'give up', correct: false},
+                {val: 'D', text: 'come over', correct: false}
+            ],
+            explId: 'expl-container-1',
+            questionText: "(4) Don’t miss the chance to ______ VR headsets!",
+            explanation: `
+                <strong>Dịch:</strong> Đừng bỏ lỡ cơ hội <u>thử nghiệm</u> kính VR!<br>
+                <strong>Phân tích:</strong>
+                <ul>
+                    <li>A. take on: đảm nhận.</li>
+                    <li>B. try out: thử nghiệm/dùng thử.</li>
+                    <li>C. give up: từ bỏ.</li>
+                    <li>D. come over: ghé chơi.</li>
+                </ul>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> Trong ngữ cảnh giới thiệu sản phẩm mới, "try out" (thử) là hợp lý nhất.
+            `
+        },
+
+        // Exercise 2 (Job Ad)
+        'set2_q1': {
+            options: [
+                {val: 'A', text: 'out', correct: false},
+                {val: 'B', text: 'with', correct: false},
+                {val: 'C', text: 'about', correct: false},
+                {val: 'D', text: 'for', correct: true}
+            ],
+            explId: 'expl-container-2',
+            questionText: "(1) We are looking ______ skilled individuals...",
+            explanation: `
+                <strong>Dịch:</strong> Chúng tôi đang <u>tìm kiếm</u> những cá nhân có tay nghề...<br>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> Cụm động từ "Look for" = Tìm kiếm. "Look at" là nhìn, "Look after" là chăm sóc.
+            `
+        },
+        'set2_q2': {
+            options: [
+                {val: 'A', text: 'flexible', correct: true},
+                {val: 'B', text: 'flexibly', correct: false},
+                {val: 'C', text: 'flexibility', correct: false},
+                {val: 'D', text: 'flex', correct: false}
+            ],
+            explId: 'expl-container-2',
+            questionText: "(2) ...position with ______ working hours.",
+            explanation: `
+                <strong>Dịch:</strong> ...với giờ làm việc <u>linh hoạt</u>.<br>
+                <strong>Phân tích:</strong> Trước cụm danh từ "working hours", ta cần một Tính từ (Adjective) để bổ nghĩa.<br>
+                <strong>Đáp án:</strong> A. flexible (adj). (B là adv, C là noun, D là verb).
+            `
+        },
+        'set2_q3': {
+            options: [
+                {val: 'A', text: 'keep', correct: true},
+                {val: 'B', text: 'look', correct: false},
+                {val: 'C', text: 'make', correct: false},
+                {val: 'D', text: 'learn', correct: false}
+            ],
+            explId: 'expl-container-2',
+            questionText: "(3) ...help us ______ our customers’ devices running smoothly!",
+            explanation: `
+                <strong>Dịch:</strong> ...giúp chúng tôi <u>giữ</u> cho thiết bị của khách hàng hoạt động trơn tru!<br>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> Cấu trúc: "Keep + O + V-ing/Adj" (Giữ cho cái gì như thế nào/tiếp tục làm gì). Ở đây là "Keep devices running".
+            `
+        },
+        'set2_q4': {
+            options: [
+                {val: 'A', text: 'the', correct: false},
+                {val: 'B', text: 'a', correct: false},
+                {val: 'C', text: 'an', correct: false},
+                {val: 'D', text: '∅ (no article)', correct: true}
+            ],
+            explId: 'expl-container-2',
+            questionText: "(4) Address: ..., ______ Electric City",
+            explanation: `
+                <strong>Dịch:</strong> Địa chỉ: ..., Thành phố Electric.<br>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> Trước tên riêng của thành phố (Electric City, Da Nang, Hanoi...), ta KHÔNG dùng mạo từ (No article/∅).
+            `
+        },
+
+        // Exercise 3 (Safety)
+        'set3_q1': {
+            options: [
+                {val: 'A', text: 'break down', correct: false},
+                {val: 'B', text: 'block out', correct: false},
+                {val: 'C', text: 'take note', correct: false},
+                {val: 'D', text: 'lead to', correct: true}
+            ],
+            explId: 'expl-container-3',
+            questionText: "(1) Incorrect usage can ______ accidents...",
+            explanation: `
+                <strong>Dịch:</strong> Sử dụng sai cách có thể <u>dẫn đến</u> tai nạn.<br>
+                <strong>Phân tích:</strong>
+                <ul>
+                    <li>A. break down: hỏng.</li>
+                    <li>D. lead to: dẫn đến, gây ra (= cause).</li>
+                </ul>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> "Lead to" phù hợp nhất về nghĩa nguyên nhân - kết quả.
+            `
+        },
+        'set3_q2': {
+            options: [
+                {val: 'A', text: 'with', correct: false},
+                {val: 'B', text: 'about', correct: false},
+                {val: 'C', text: 'for', correct: true},
+                {val: 'D', text: 'from', correct: false}
+            ],
+            explId: 'expl-container-3',
+            questionText: "(2) ...using any new electric device ______ the first time.",
+            explanation: `
+                <strong>Dịch:</strong> ...sử dụng thiết bị mới <u>lần đầu tiên</u>.<br>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> Cụm cố định (Collocation): "For the first time" (Lần đầu tiên).
+            `
+        },
+        'set3_q3': {
+            options: [
+                {val: 'A', text: 'instructions', correct: true},
+                {val: 'B', text: 'instruct', correct: false},
+                {val: 'C', text: 'instructor', correct: false},
+                {val: 'D', text: 'instructing', correct: false}
+            ],
+            explId: 'expl-container-3',
+            questionText: "(3) Follow the ______ provided in the device manual...",
+            explanation: `
+                <strong>Dịch:</strong> Làm theo các <u>hướng dẫn</u> được cung cấp trong sách...<br>
+                <strong>Phân tích:</strong> Sau mạo từ "the" cần một Danh từ.
+                <ul>
+                    <li>A. instructions (n): các hướng dẫn (vật).</li>
+                    <li>C. instructor (n): người hướng dẫn (người).</li>
+                </ul>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> Sách hướng dẫn (manual) thì chứa "instructions", không chứa "instructor".
+            `
+        },
+        'set3_q4': {
+            options: [
+                {val: 'A', text: '∅ (no article)', correct: true},
+                {val: 'B', text: 'the', correct: false},
+                {val: 'C', text: 'a', correct: false},
+                {val: 'D', text: 'an', correct: false}
+            ],
+            explId: 'expl-container-3',
+            questionText: "(4) ...handling ______ electric devices with care!",
+            explanation: `
+                <strong>Dịch:</strong> ...xử lý <u>các thiết bị điện</u> cẩn thận!<br>
+                <strong>Ms. Chí Nên · ☎️ 0852639652giải thích:</strong> "Electric devices" là danh từ số nhiều đếm được, dùng với ý nghĩa chung chung (bất kỳ thiết bị nào). Do đó ta không dùng mạo từ (Zero article).
+            `
+        }
+    };
+
+    // --- VARIABLES ---
+    let currentScore = 0;
+    let currentBlankId = null;
+    let currentKey = null;
+
+    // Sounds
+    const audioCorrect = new Audio("https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg");
+    const audioWrong = new Audio("https://actions.google.com/sounds/v1/cartoon/clank_car_crash.ogg");
+
+    // --- FUNCTIONS ---
+
+    function openGapModal(blankIndex, key) {
+        // Prevent re-opening answered gaps
+        const gapEl = document.querySelector(`.gap-blank[onclick*="'${key}'"]`);
+        if (gapEl.dataset.answered === "true") return;
+
+        currentKey = key;
+        const data = quizData[key];
+        const container = document.getElementById('modal-options-container');
+        
+        container.innerHTML = ''; // Clear old options
+        
+        data.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `<strong>${opt.val}.</strong> ${opt.text}`;
+            btn.onclick = () => selectAnswer(key, opt);
+            container.appendChild(btn);
+        });
+
+        document.getElementById('gap-modal').style.display = 'flex';
+    }
+
+    function selectAnswer(key, option) {
+        const gapEl = document.querySelector(`.gap-blank[onclick*="'${key}'"]`);
+        const data = quizData[key];
+        
+        // Update Gap UI
+        gapEl.textContent = option.text;
+        gapEl.dataset.answered = "true";
+        
+        if (option.correct) {
+            gapEl.classList.add('correct');
+            currentScore++;
+            audioCorrect.currentTime = 0;
+            audioCorrect.play();
+            // Confetti
+            confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.7 }
+            });
+        } else {
+            gapEl.classList.add('wrong');
+            audioWrong.currentTime = 0;
+            audioWrong.play();
+        }
+
+        // Update Score
+        document.getElementById('current-score').innerText = currentScore;
+
+        // Render Explanation Immediately
+        renderExplanation(key, option.correct);
+
+        // Close Modal
+        closeModal();
+    }
+
+    function renderExplanation(key, isCorrect) {
+        const data = quizData[key];
+        const container = document.getElementById(data.explId);
+        
+        const div = document.createElement('div');
+        div.className = 'expl-item';
+        div.style.display = 'block';
+        div.innerHTML = `
+            <div class="expl-header">
+                ${isCorrect ? '✅ Đúng rồi!' : '❌ Chưa chính xác!'} ${data.questionText}
+            </div>
+            ${data.explanation}
+        `;
+        container.appendChild(div);
+    }
+
+    function closeModal() {
+        document.getElementById('gap-modal').style.display = 'none';
+    }
+
+    function finishQuiz() {
+        const modal = document.getElementById('result-modal');
+        const finalScoreEl = document.getElementById('final-score');
+        const msgEl = document.getElementById('teacher-message');
+        const total = 12;
+
+        finalScoreEl.innerText = `${currentScore}/${total}`;
+
+        const percentage = (currentScore / total) * 100;
+        if (percentage === 100) {
+            msgEl.innerText = "Xuất sắc! Em là thiên tài ngữ pháp! 🌟";
+            confetti({ particleCount: 200, spread: 150 });
+        } else if (percentage >= 80) {
+            msgEl.innerText = "Rất tốt! Em nắm bài rất chắc. 💪";
+        } else if (percentage >= 50) {
+            msgEl.innerText = "Khá lắm! Hãy xem lại các lỗi sai nhé. 📚";
+        } else {
+            msgEl.innerText = "Cố lên! Ms. Chí Nên · ☎️ 0852639652sẽ giúp em tiến bộ hơn. ❤️";
+        }
+
+        modal.style.display = 'flex';
+    }
+
+</script>
+
+</body>
+</html>
+
+
