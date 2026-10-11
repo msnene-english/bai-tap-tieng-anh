@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms. Chí Nên - Speaking Practice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8854C0; /* Tím hồng nhạt */
+            --secondary-color: #00C9A7; /* Xanh ngọc */
+            --correct-color: #00D26A; /* Xanh lá */
+            --wrong-color: #FF4757; /* Đỏ cam */
+            --bg-pattern: #f0f3f9;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-pattern);
+            background-image: radial-gradient(#dbe0ea 15%, transparent 16%), radial-gradient(#dbe0ea 15%, transparent 16%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--primary-color);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-weight: 800;
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-top: 5px;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        /* Score Board */
+        .score-board {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 800;
+            box-shadow: 0 4px 0 #008f7a;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: bounceIn 0.5s;
+        }
+
+        /* Quiz Container */
+        .quiz-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding-bottom: 80px;
+        }
+
+        /* Question Card */
+        .question-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border-bottom: 6px solid #e0e0e0;
+            transition: transform 0.3s;
+            position: relative;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #eee;
+            padding-bottom: 10px;
+        }
+
+        .q-tag {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 25px;
+            white-space: pre-line; /* Giữ xuống dòng của đề gốc */
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            position: relative;
+            box-shadow: 0 4px 0 #ccc;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            transform: scale(1.02);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .option-btn:active:not(.disabled) {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .option-letter {
+            background: #eee;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        /* States */
+        .option-btn.correct {
+            background-color: var(--correct-color);
+            color: white;
+            border-color: #00a855;
+            box-shadow: 0 4px 0 #008f47;
+        }
+        .option-btn.correct .option-letter {
+            background: rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        .option-btn.wrong {
+            background-color: var(--wrong-color);
+            color: white;
+            border-color: #d63030;
+            box-shadow: 0 4px 0 #b32424;
+            animation: shake 0.5s;
+        }
+        .option-btn.wrong .option-letter {
+            background: rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        .option-btn.disabled {
+            cursor: default;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            margin-top: 25px;
+            background: #f8f9fa;
+            border: 2px solid var(--secondary-color);
+            border-radius: 15px;
+            padding: 20px;
+            display: none; /* Hidden initially */
+            animation: slideDown 0.4s ease-out;
+        }
+
+        .explanation-box.show {
+            display: block;
+        }
+
+        .exp-header {
+            color: var(--secondary-color);
+            font-weight: 800;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .exp-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .exp-content p {
+            margin: 5px 0;
+        }
+
+        .exp-highlight {
+            font-weight: 700;
+            color: #d63031;
+        }
+        
+        .exp-translate {
+            color: #0984e3;
+            font-style: italic;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-2deg); }
+            50% { transform: translateX(5px) rotate(2deg); }
+            75% { transform: translateX(-5px) rotate(-2deg); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+
+        /* Canvas Confetti */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Footer / Submit */
+        .footer-controls {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .submit-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #5f3a87;
+            transition: all 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #5f3a87;
+        }
+        
+        .submit-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        /* Summary Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: bounceIn 0.5s;
+            border: 5px solid var(--secondary-color);
+        }
+
+        .final-score {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+
+        .msg-text {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #444;
+        }
+
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <header>
+        <h1>Ms. Chí Nên · ☎️ 0852639652</h1>
+        <div class="subtitle">Speaking Practice: Conversational Exchanges</div>
+    </header>
+
+    <div class="score-board">
+        <span>⭐ Điểm:</span>
+        <span id="current-score">0</span>
+        <span>/</span>
+        <span id="total-score">0</span>
+    </div>
+
+    <div class="quiz-container" id="quiz-container">
+        <!-- Questions will be injected here via JS -->
+    </div>
+
+    <div class="footer-controls">
+        <button class="submit-btn" onclick="finishQuiz()">NỘP BÀI & XEM KẾT QUẢ</button>
+    </div>
+
+    <!-- Summary Modal -->
+    <div class="modal-overlay" id="summary-modal">
+        <div class="modal-content">
+            <h2>KẾT QUẢ BÀI LÀM</h2>
+            <div class="final-score" id="final-score-display">0/10</div>
+            <p class="msg-text" id="final-message">Bạn đã làm rất tốt!</p>
+            <button class="submit-btn" onclick="location.reload()" style="background: var(--secondary-color); box-shadow: 0 6px 0 #008f7a;">Làm lại bài</button>
+        </div>
+    </div>
+
+    <script>
+        // DỮ LIỆU ĐỀ BÀI TỪ FILE CUNG CẤP
+        const quizData = [
+            {
+                "questionNumber": 1,
+                "question": "Exercise 1 - Q1: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- Mr. Alverez: “Did you see the documentary about whales yesterday evening?”\n- Mr. Luan: “________”",
+                "answerOptions": [
+                    {
+                        "text": "No, I was busy preparing the lecture. How was it?",
+                        "rationale": "1. Phân tích: A. love (v): yêu thích; B. busy (adj): bận rộn, lecture (n): bài giảng; C. paying attention (phrase): chú ý; D. adore (v): mê, thích.\n2. Dịch: 'Không, tôi bận chuẩn bị bài giảng. Nó thế nào?'\n3. Giải thích: Câu hỏi bắt đầu bằng 'Did you see...?' (Bạn có xem không?). Câu trả lời cần xác nhận Yes/No. Đáp án B trả lời trực tiếp ('No') và đưa ra lý do hợp lý, đồng thời hỏi lại để duy trì hội thoại.",
+                        "isCorrect": true
+                    },
+                    { "text": "Oh, I absolutely love animals! Especially dogs.", "isCorrect": false },
+                    { "text": "Actually, I wasn’t paying attention at all. What did we miss?", "isCorrect": false },
+                    { "text": "No, I don’t adore documentary about whales, but I like the zoo.", "isCorrect": false }
+                ]
+            },
+            {
+                "questionNumber": 2,
+                "question": "Exercise 1 - Q2: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- Mr. Vincent: “I’m worried about the increasing pollution in our oceans.”\n- Ms. Ruth: “________”",
+                "answerOptions": [
+                    {
+                        "text": "Agreed. We should definitely protect our marine life.",
+                        "rationale": "1. Phân tích: A. take out the trash (phrase): vứt rác; B. unrestricted harvesting (n.phr): khai thác không giới hạn; C. marine life (n.phr): sinh vật biển; D. economic gain (n.phr): lợi ích kinh tế.\n2. Dịch: 'Đồng ý. Chúng ta chắc chắn nên bảo vệ sự sống dưới biển.'\n3. Giải thích: Mr. Vincent bày tỏ sự lo lắng (worried). Ms. Ruth cần thể hiện sự đồng cảm hoặc đồng ý. Đáp án C thể hiện sự đồng tình ('Agreed') và đưa ra giải pháp liên quan.",
+                        "isCorrect": true
+                    },
+                    { "text": "That reminds me, did you take out the trash?", "isCorrect": false },
+                    { "text": "Let’s open up the seas for unrestricted harvesting.", "isCorrect": false },
+                    { "text": "We should prioritize economic gain over environmental concerns.", "isCorrect": false }
+                ]
+            },
+            {
+                "questionNumber": 3,
+                "question": "Exercise 1 - Q3: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- Mr. Alverez: “Wow, this sunflower is enormous!”\n- Mr. James: “________”",
+                "answerOptions": [
+                    {
+                        "text": "Sunflowers are a great source of energy.",
+                        "rationale": "1. Phân tích: A. source of energy (n.phr): nguồn năng lượng; B. care for (v): quan tâm/thích; C. prefer (v): thích hơn; D. droopy (adj): rũ xuống, last season (idm): lỗi thời.\n2. Dịch: 'Hoa hướng dương là một nguồn năng lượng tuyệt vời.'\n3. Giải thích: Câu nói của Alverez là một lời cảm thán về kích thước hoa. Đáp án A là lựa chọn phù hợp nhất về mặt ngữ pháp và tính lịch sự (bổ sung thông tin tích cực). Các đáp án khác sai ngữ pháp phản hồi hoặc thô lỗ.",
+                        "isCorrect": true
+                    },
+                    { "text": "No, I don’t. I really care for sunflowers.", "isCorrect": false },
+                    { "text": "Yes, I do. I much prefer lilies over sunflowers.", "isCorrect": false },
+                    { "text": "Those droopy sunflowers are so last season.", "isCorrect": false }
+                ]
+            },
+            {
+                "questionNumber": 4,
+                "question": "Exercise 1 - Q4: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- Lucas: “I’m so excited about our camping trip this weekend!”\n- Brian: “________”",
+                "answerOptions": [
+                    {
+                        "text": "Me too! Camping is a great way to connect with nature.",
+                        "rationale": "1. Phân tích: A. stay home (v): ở nhà; B. groceries (n): thực phẩm tạp hóa; C. postpone (v): hoãn lại; D. connect with nature (phrase): kết nối với thiên nhiên.\n2. Dịch: 'Tớ cũng vậy! Cắm trại là cách tuyệt vời để hòa mình vào thiên nhiên.'\n3. Giải thích: Lucas đang hào hứng (excited). Brian cần đáp lại bằng thái độ tương tự. 'Me too!' (Tớ cũng thế) là phản hồi tự nhiên nhất.",
+                        "isCorrect": true
+                    },
+                    { "text": "Can’t we just stay home this weekend?", "isCorrect": false },
+                    { "text": "Oh no, I forgot to buy groceries again!", "isCorrect": false },
+                    { "text": "Disagreed. I should postpone the camping trip.", "isCorrect": false }
+                ]
+            },
+            {
+                "questionNumber": 5,
+                "question": "Exercise 1 - Q5: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- Ms. Ella: “I’m so hot! I wish it would rain soon.”\n- Mr. Fritz: “________”",
+                "answerOptions": [
+                    {
+                        "text": "The plants definitely need a drink.",
+                        "rationale": "1. Phân tích: A. refreshing breeze (n.phr): làn gió mát lành; B. need a drink (idm): cần tưới nước; C. freezing (adj): lạnh cóng; D. pouring down (v): mưa như trút.\n2. Dịch: 'Cây cối chắc chắn cũng đang cần tưới nước đấy.'\n3. Giải thích: Ms. Ella than nóng và muốn mưa. Mr. Fritz đồng tình bằng cách đưa ra lý do bổ sung (cây cối cũng cần nước/mưa).",
+                        "isCorrect": true
+                    },
+                    { "text": "What a refreshing breeze!", "isCorrect": false },
+                    { "text": "Yes, this room is freezing!", "isCorrect": false },
+                    { "text": "The rain keeps pouring down.", "isCorrect": false }
+                ]
+            },
+            {
+                "questionNumber": 6,
+                "question": "Exercise 1 - Q6: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- A: The local animal shelter is recruiting volunteers. “________”\n- B: OK, I’ll think about that.",
+                "answerOptions": [
+                    {
+                        "text": "Why don’t you give it a go?",
+                        "rationale": "1. Phân tích: A. like doing (v): thích làm; B. give it a go (idm): thử xem sao; C. free time (n): thời gian rảnh; D. how (adv): như thế nào.\n2. Dịch: 'Sao bạn không thử xem sao nhỉ?' - 'OK, tôi sẽ suy nghĩ về việc đó.'\n3. Giải thích: Câu sau của B là 'I'll think about that' (Tôi sẽ suy nghĩ), chứng tỏ câu trước của A phải là một lời gợi ý (suggestion). Cấu trúc 'Why don't you...?' là lời gợi ý phổ biến.",
+                        "isCorrect": true
+                    },
+                    { "text": "What do you like doing there?", "isCorrect": false },
+                    { "text": "Do you have any free time?", "isCorrect": false },
+                    { "text": "How would you do that?", "isCorrect": false }
+                ]
+            },
+            {
+                "questionNumber": 7,
+                "question": "Exercise 1 - Q7: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- A: How would you feel about going on a hiking trip next month? It’s going to be an amazing adventure!\n- B: “________” I prefer more relaxed vacations.",
+                "answerOptions": [
+                    {
+                        "text": "Hiking isn’t really my thing.",
+                        "rationale": "1. Phân tích: A. not really my thing (idm): không phải sở thích của tôi; B. go with you (v): đi cùng bạn; C. feel sorry (v): thấy tiếc; D. sign up (v): đăng ký.\n2. Dịch: 'Leo núi không phải gu của tôi lắm. Tôi thích những kỳ nghỉ thư giãn hơn.'\n3. Giải thích: Vế sau 'I prefer more relaxed vacations' (Tôi thích thư giãn hơn) là một lời từ chối khéo cho lời rủ rê đi leo núi (vốn mệt nhọc). Đáp án A là lời từ chối lịch sự phù hợp nhất.",
+                        "isCorrect": true
+                    },
+                    { "text": "Alright. I’ll go with you.", "isCorrect": false },
+                    { "text": "I feel so sorry for you.", "isCorrect": false },
+                    { "text": "How do I sign up for the trip?", "isCorrect": false }
+                ]
+            },
+            {
+                "questionNumber": 8,
+                "question": "Exercise 1 - Q8: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- A: Hey, I heard you have an exam coming up. “________”\n- B: Thanks a lot.",
+                "answerOptions": [
+                    {
+                        "text": "Good luck with your studies!",
+                        "rationale": "1. Phân tích: A. study together (v): học cùng nhau; B. teach (v): dạy; C. pass (v): đậu; D. Good luck (phrase): Chúc may mắn.\n2. Dịch: 'Chúc cậu học tốt nhé!' - 'Cảm ơn nhiều.'\n3. Giải thích: Khi nghe tin ai đó sắp thi, phản xạ tự nhiên nhất là chúc may mắn. Câu trả lời 'Thanks a lot' xác nhận người nói vừa nhận được một lời chúc.",
+                        "isCorrect": true
+                    },
+                    { "text": "Let’s study together later.", "isCorrect": false },
+                    { "text": "Would you like to teach me?", "isCorrect": false },
+                    { "text": "I hope I can pass this.", "isCorrect": false }
+                ]
+            },
+            {
+                "questionNumber": 9,
+                "question": "Exercise 1 - Q9: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- A: Can we enter this part of the forest?\n- B: “________” This is restricted area.",
+                "answerOptions": [
+                    {
+                        "text": "No, sorry, you can’t.",
+                        "rationale": "1. Phân tích: A. welcomed (adj): được chào đón; B. restricted area (n.phr): khu vực cấm/hạn chế; C. thank (v): cảm ơn; D. Be my guest (idm): Cứ tự nhiên.\n2. Dịch: 'Không, xin lỗi, bạn không thể. Đây là khu vực cấm.'\n3. Giải thích: Vì vế sau giải thích 'This is restricted area' (Đây là khu vực cấm), nên câu trả lời bắt buộc phải là từ chối (No).",
+                        "isCorrect": true
+                    },
+                    { "text": "Sure. You’re always welcomed.", "isCorrect": false },
+                    { "text": "Yes. Thank you so much.", "isCorrect": false },
+                    { "text": "Of course. Be my guest.", "isCorrect": false }
+                ]
+            },
+            {
+                "questionNumber": 10,
+                "question": "Exercise 1 - Q10: Mark the letter A, B, C or D to indicate the option that best completes the exchange.\n- A: I think you should start a vegetable garden in our backyard. You can eat fresh and organic products.\n- B: “________”",
+                "answerOptions": [
+                    {
+                        "text": "I’m not sure if I have the time to take care of it.",
+                        "rationale": "1. Phân tích: A. rich (adj): hào phóng/giàu (nghĩa bóng trong ngữ cảnh này không hợp); B. contribution (n): sự đóng góp; C. take care of (v): chăm sóc; D. think about (v): suy nghĩ.\n2. Dịch: 'Em không chắc là mình có thời gian chăm sóc nó không nữa.'\n3. Giải thích: A đưa ra lời khuyên/gợi ý làm vườn. B phản hồi về tính khả thi của gợi ý đó (vấn đề thời gian). Đây là cách phản hồi tự nhiên nhất.",
+                        "isCorrect": true
+                    },
+                    { "text": "That’s very rich of you to do so.", "isCorrect": false },
+                    { "text": "Your contribution will help protect the planet.", "isCorrect": false },
+                    { "text": "Why don’t you think about that?", "isCorrect": false }
+                ]
+            }
+        ];
+
+        let score = 0;
+        let answeredCount = 0;
+        const totalQuestions = quizData.length;
+
+        // Initialize
+        document.getElementById('total-score').textContent = totalQuestions;
+        const quizContainer = document.getElementById('quiz-container');
+
+        // AUDIO CONTEXT
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1000, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } else {
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                oscillator.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // FORMAT EXPLANATION TEXT
+        function formatRationale(text) {
+            if (!text) return "";
+            let formatted = text
+                .replace(/1\. Phân tích:/g, '<br><strong>1. Phân tích (Vocabulary Analysis):</strong><br>')
+                .replace(/2\. Dịch:/g, '<br><strong>2. Dịch nghĩa (Translation):</strong>')
+                .replace(/3\. Giải thích:/g, '<br><strong>3. Giải thích chi tiết (Ms. Chí Nên · ☎️ 0852639652Explains):</strong>');
+            
+            if (formatted.startsWith('<br>')) formatted = formatted.substring(4);
+            return formatted;
+        }
+
+        // FISHER-YATES SHUFFLE ALGORITHM
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // RENDER QUIZ
+        function renderQuiz() {
+            quizData.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `q-card-${index}`;
+
+                // Extract Correct Answer for Logic (before shuffle)
+                const correctOption = item.answerOptions.find(opt => opt.isCorrect);
+                const rationaleText = correctOption ? correctOption.rationale : "Chưa cập nhật giải thích.";
+
+                // Clone and SHUFFLE options for Display
+                let displayOptions = [...item.answerOptions];
+                shuffleArray(displayOptions);
+
+                // Header
+                const header = `
+                    <div class="question-header">
+                        <span class="q-tag">Question ${item.questionNumber}</span>
+                    </div>
+                    <div class="question-text">${item.question}</div>
+                `;
+
+                // Options
+                const letters = ['A', 'B', 'C', 'D'];
+                let optionsHtml = '<div class="options-grid">';
+                
+                displayOptions.forEach((opt, optIndex) => {
+                    optionsHtml += `
+                        <div class="option-btn" 
+                             onclick="checkAnswer(${index}, ${optIndex}, ${opt.isCorrect}, this)"
+                             data-opt-index="${optIndex}">
+                            <div class="option-letter">${letters[optIndex]}</div>
+                            ${opt.text}
+                        </div>
+                    `;
+                });
+                optionsHtml += '</div>';
+
+                // Explanation Block (Hidden)
+                const explanationHtml = `
+                    <div class="explanation-box" id="exp-${index}">
+                        <div class="exp-header">
+                            <span>🎓 Ms. Chí Nên · ☎️ 0852639652giải thích chi tiết:</span>
+                        </div>
+                        <div class="exp-content">
+                            ${formatRationale(rationaleText)}
+                        </div>
+                    </div>
+                `;
+
+                card.innerHTML = header + optionsHtml + explanationHtml;
+                quizContainer.appendChild(card);
+            });
+        }
+
+        // CHECK ANSWER LOGIC
+        function checkAnswer(qIndex, optIndex, isCorrect, btnElement) {
+            const card = document.getElementById(`q-card-${qIndex}`);
+            // Prevent multiple clicks
+            if (card.classList.contains('answered')) return;
+            card.classList.add('answered');
+
+            const allOptions = card.querySelectorAll('.option-btn');
+            
+            // Show Explanation Immediately
+            document.getElementById(`exp-${qIndex}`).classList.add('show');
+            answeredCount++;
+
+            if (isCorrect) {
+                // CORRECT
+                score++;
+                document.getElementById('current-score').textContent = score;
+                btnElement.classList.add('correct');
+                playSound('correct');
+                fireConfetti();
+            } else {
+                // WRONG
+                btnElement.classList.add('wrong');
+                playSound('wrong');
+                
+                // Find and highlight the correct button (visual search)
+                // Since we shuffled, we can't rely on original index. We rely on the text content or isCorrect flag logic passed.
+                // But since we don't have the flag in the DOM easily, let's look at the JS object? 
+                // Wait, the shuffleArray shuffled the objects.
+                // The easiest way is to loop through DOM elements and check if they trigger the correct logic? 
+                // No, simpler: Use a data attribute if we had it, OR:
+                // We rendered 'isCorrect' into the onclick.
+                // We can't access onclick easily.
+                // Better way: Re-scan the quizData? No, quizData is unshuffled.
+                // Hack: The options rendered correspond to 'displayOptions' which is local scope.
+                
+                // FIX: Let's find the correct button by text content matching the known correct answer.
+                const correctText = quizData[qIndex].answerOptions.find(o => o.isCorrect).text;
+                
+                allOptions.forEach(btn => {
+                    if (btn.innerText.includes(correctText)) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            // Disable all buttons
+            allOptions.forEach(btn => btn.classList.add('disabled'));
+        }
+
+        // CONFETTI EFFECT
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const particleCount = 100;
+            const colors = ['#8854C0', '#00C9A7', '#FF4757', '#FFD700', '#FFFFFF'];
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    w: Math.random() * 10 + 5,
+                    h: Math.random() * 10 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    gravity: 0.2
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                particles.forEach((p) => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += p.gravity;
+                    
+                    if (p.y < canvas.height) active = true;
+
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                });
+
+                if (active) requestAnimationFrame(draw);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            draw();
+        }
+
+        // FINISH QUIZ
+        function finishQuiz() {
+            const modal = document.getElementById('summary-modal');
+            const finalScore = document.getElementById('final-score-display');
+            const message = document.getElementById('final-message');
+
+            finalScore.textContent = `${score}/${totalQuestions}`;
+            
+            if (score === totalQuestions) {
+                message.textContent = "Xuất sắc! Bạn là thiên tài Tiếng Anh! 🌟";
+                fireConfetti();
+                fireConfetti(); // Double confetti
+            } else if (score >= totalQuestions * 0.7) {
+                message.textContent = "Rất tốt! Cố gắng thêm chút nữa là hoàn hảo! 💪";
+            } else {
+                message.textContent = "Đừng nản chí! Hãy xem kỹ phần giải thích nhé! 📚";
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        // Start
+        renderQuiz();
+
+    </script>
+</body>
+</html>
