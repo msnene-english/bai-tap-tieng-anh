@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robots Quiz - Ms. Chí Nên</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #6C63FF;
+  --secondary: #00C9A7;
+  --accent: #FF6B9D;
+  --yellow: #FDCB6E;
+  --bg1: #1a1a2e;
+  --bg2: #16213e;
+  --card: rgba(255,255,255,0.07);
+  --correct: #00D26A;
+  --wrong: #FF4757;
+  --text: #f0f0ff;
+  --text2: #b0b0cc;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg1);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* === ANIMATED BACKGROUND === */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 30%, #0f3460 60%, #1a1a2e 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 10s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+.bg-svg {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Ctext y='60' font-size='40'%3E🤖%3C/text%3E%3Ctext x='100' y='130' font-size='35'%3E⚙️%3C/text%3E%3Ctext x='20' y='180' font-size='30'%3E🦾%3C/text%3E%3Ctext x='130' y='50' font-size='28'%3E💡%3C/text%3E%3C/svg%3E");
+  animation: floatBg 20s linear infinite;
+}
+
+@keyframes floatBg {
+  0%{background-position:0 0}
+  100%{background-position:200px 200px}
+}
+
+/* === HEADER === */
+header {
+  position: relative; z-index: 10;
+  background: rgba(108,99,255,0.15);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(108,99,255,0.3);
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+
+.header-title h1 {
+  font-size: 1.1rem; font-weight: 900;
+  background: linear-gradient(90deg, #6C63FF, #00C9A7, #FF6B9D);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.header-title p { font-size: 0.75rem; color: var(--text2); }
+
+/* === TIMER === */
+.timer-zone { display: flex; align-items: center; gap: 10px; }
+
+.timer-display {
+  font-size: 1.4rem; font-weight: 900;
+  background: linear-gradient(135deg, var(--yellow), var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  min-width: 70px; text-align: center;
+}
+
+.timer-display.urgent { animation: pulse 0.5s infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)}50%{transform:scale(1.1)} }
+
+.btn {
+  padding: 8px 16px; border: none; border-radius: 50px; cursor: pointer;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.85rem;
+  transition: all 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.btn-start {
+  background: linear-gradient(135deg, var(--secondary), var(--primary));
+  color: white;
+}
+
+.btn-start:hover { transform: scale(1.05); }
+
+.btn-pause {
+  background: linear-gradient(135deg, var(--yellow), var(--accent));
+  color: white;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, var(--accent), #c0392b);
+  color: white; padding: 10px 24px; font-size: 1rem;
+}
+
+.btn-submit:hover { transform: scale(1.05); }
+
+/* === MAIN LAYOUT === */
+.main-container {
+  position: relative; z-index: 5;
+  display: flex; height: calc(100vh - 65px);
+}
+
+/* === LEFT PANEL === */
+.left-panel {
+  width: 48%; border-right: 1px solid rgba(108,99,255,0.25);
+  overflow-y: auto; padding: 20px;
+  scrollbar-width: thin; scrollbar-color: var(--primary) transparent;
+}
+
+.left-panel::-webkit-scrollbar { width: 6px; }
+.left-panel::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+/* === RIGHT PANEL === */
+.right-panel {
+  width: 52%; overflow-y: auto; padding: 20px;
+  scrollbar-width: thin; scrollbar-color: var(--secondary) transparent;
+}
+
+.right-panel::-webkit-scrollbar { width: 6px; }
+.right-panel::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 3px; }
+
+/* === SECTION TITLES === */
+.section-badge {
+  display: inline-block; padding: 5px 16px; border-radius: 50px;
+  font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.badge-reading { background: rgba(108,99,255,0.3); color: #a89cff; border: 1px solid rgba(108,99,255,0.4); }
+.badge-exercise { background: rgba(0,201,167,0.2); color: #00C9A7; border: 1px solid rgba(0,201,167,0.3); }
+
+/* === PASSAGE CARD === */
+.passage-card {
+  background: var(--card);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px; padding: 16px; margin-bottom: 16px;
+}
+
+.passage-card h3 {
+  font-size: 0.85rem; font-weight: 800; color: var(--secondary);
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+
+.passage-card h3::before { content: "📖"; }
+
+.passage-label {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--accent); margin-bottom: 6px;
+}
+
+.passage-text {
+  font-size: 0.95rem; line-height: 1.75; color: #dde;
+}
+
+.btn-translate {
+  margin-top: 10px; padding: 6px 14px;
+  background: rgba(253,203,110,0.15); border: 1px solid rgba(253,203,110,0.4);
+  color: var(--yellow); border-radius: 50px; font-size: 0.8rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+}
+
+.btn-translate:hover { background: rgba(253,203,110,0.25); transform: scale(1.03); }
+
+.translation-box {
+  display: none; margin-top: 10px; padding: 12px;
+  background: rgba(253,203,110,0.08); border-left: 3px solid var(--yellow);
+  border-radius: 8px; font-size: 0.88rem; line-height: 1.7; color: #ffe8a0;
+}
+
+/* === GLOSSARY === */
+.glossary-card {
+  background: rgba(0,201,167,0.05); border: 1px solid rgba(0,201,167,0.25);
+  border-radius: 16px; padding: 16px; margin-top: 16px;
+}
+
+.glossary-card h3 { font-size: 0.9rem; font-weight: 800; color: var(--secondary); margin-bottom: 12px; }
+
+.glossary-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+
+.glossary-table th {
+  background: rgba(0,201,167,0.2); color: var(--secondary);
+  padding: 7px 10px; text-align: left; font-weight: 800;
+}
+
+.glossary-table td {
+  padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: var(--text2);
+}
+
+.glossary-table tr:hover td { background: rgba(255,255,255,0.04); }
+.word-cell { color: var(--yellow) !important; font-weight: 700; }
+.pos-cell { color: var(--accent) !important; font-style: italic; }
+
+/* === EXERCISE SECTIONS === */
+.ex-card {
+  background: var(--card); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
+  padding: 16px; margin-bottom: 18px;
+}
+
+.ex-card h3 { font-size: 0.92rem; font-weight: 800; margin-bottom: 12px; color: var(--yellow); }
+
+.question-block { margin-bottom: 18px; }
+
+.question-text {
+  font-size: 1rem; font-weight: 700; margin-bottom: 10px; color: var(--text);
+  line-height: 1.55;
+}
+
+.options-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+
+.options-grid.single-col { grid-template-columns: 1fr; }
+
+.option-btn {
+  padding: 10px 14px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06); color: var(--text);
+  font-family: 'Nunito', sans-serif; font-size: 0.92rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; text-align: left;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  line-height: 1.4;
+}
+
+.option-btn:hover:not(.answered) {
+  transform: scale(1.02);
+  border-color: rgba(108,99,255,0.6);
+  background: rgba(108,99,255,0.15);
+}
+
+.option-btn.correct {
+  background: rgba(0,210,106,0.25) !important;
+  border-color: var(--correct) !important;
+  color: #90ffcc !important;
+}
+
+.option-btn.wrong {
+  background: rgba(255,71,87,0.25) !important;
+  border-color: var(--wrong) !important;
+  color: #ffaaaa !important;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-6px)}
+  75%{transform:translateX(6px)}
+}
+
+.option-btn.disabled { cursor: default; opacity: 0.6; }
+.option-btn.answered { cursor: default; }
+
+/* === FILL BLANK === */
+.fill-sentence { font-size: 0.97rem; line-height: 2.2; color: var(--text); }
+
+.blank-click {
+  display: inline-block;
+  min-width: 90px; padding: 2px 8px;
+  border-bottom: 2px dashed var(--secondary);
+  color: var(--secondary); font-weight: 700; cursor: pointer;
+  transition: all 0.2s;
+}
+
+.blank-click:hover { background: rgba(0,201,167,0.1); border-radius: 6px; }
+.blank-click.revealed { color: var(--yellow); border-bottom-color: var(--yellow); border-style: solid; }
+
+/* === EXPLANATION === */
+.explanation-box {
+  display: none; margin-top: 12px; padding: 12px 14px;
+  background: rgba(108,99,255,0.1); border-left: 3px solid var(--primary);
+  border-radius: 10px; font-size: 0.88rem; line-height: 1.7;
+}
+
+.explanation-box.show { display: block; }
+.explanation-box strong { color: var(--yellow); }
+.ex-why { color: var(--secondary); }
+.ex-trans { color: #c8c8ff; font-style: italic; }
+.ex-correct-label { color: var(--correct); font-weight: 800; }
+.ex-wrong-label { color: var(--wrong); }
+
+/* === SCORE SECTION === */
+.score-area { display: flex; justify-content: center; padding: 20px; position: relative; z-index: 5; }
+
+.score-card {
+  background: rgba(255,255,255,0.06); backdrop-filter: blur(20px);
+  border: 2px solid rgba(108,99,255,0.4); border-radius: 24px;
+  padding: 30px 40px; text-align: center; min-width: 320px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.score-emoji { font-size: 4rem; margin-bottom: 10px; }
+.score-title { font-size: 1.6rem; font-weight: 900; color: var(--yellow); margin-bottom: 8px; }
+.score-numbers { font-size: 3rem; font-weight: 900; color: var(--secondary); margin-bottom: 10px; }
+.score-comment { font-size: 1.1rem; color: var(--text2); }
+
+/* === CONFETTI === */
+.confetti-piece {
+  position: fixed; width: 10px; height: 10px; border-radius: 2px;
+  animation: confettiFall 1s ease-out forwards;
+  pointer-events: none; z-index: 9999;
+}
+
+@keyframes confettiFall {
+  0%{transform:translateY(-20px) rotate(0deg); opacity:1}
+  100%{transform:translateY(100vh) rotate(720deg); opacity:0}
+}
+
+/* === RESULT OVERLAY === */
+.result-overlay {
+  display: none; position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+  justify-content: center; align-items: center;
+}
+
+.result-overlay.show { display: flex; }
+
+.result-card {
+  background: linear-gradient(135deg, #1a1a3e, #0f3460);
+  border: 2px solid var(--primary); border-radius: 28px;
+  padding: 40px; text-align: center; max-width: 480px; width: 90%;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  animation: resultPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes resultPop { from{transform:scale(0.7);opacity:0} to{transform:scale(1);opacity:1} }
+
+.result-card .big-emoji { font-size: 5rem; margin-bottom: 12px; display: block; }
+.result-card h2 { font-size: 1.8rem; font-weight: 900; color: var(--yellow); margin-bottom: 8px; }
+.result-card .score-big { font-size: 3.5rem; font-weight: 900; color: var(--secondary); margin: 10px 0; }
+.result-card .comment { font-size: 1.1rem; color: var(--text2); margin-bottom: 20px; }
+
+.btn-retry {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white; padding: 12px 28px; border-radius: 50px; font-size: 1rem;
+  font-weight: 800; border: none; cursor: pointer;
+}
+
+/* === SCROLLBAR STYLING === */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 3px; }
+
+/* Timer message */
+.timer-msg {
+  display: none; position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  z-index: 200; background: rgba(255,71,87,0.9); color: white;
+  padding: 12px 24px; border-radius: 14px; font-weight: 800; font-size: 0.9rem;
+  box-shadow: 0 4px 20px rgba(255,71,87,0.4); text-align: center; max-width: 90%;
+}
+
+.submit-area { display: flex; justify-content: center; padding: 10px 0 20px; }
+
+.ix-passage {
+  font-size: 0.95rem; line-height: 1.9; color: #dde;
+  background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px;
+  margin-bottom: 10px;
+}
+
+.ix-passage .blank-static {
+  display: inline-block; min-width: 80px; border-bottom: 2px solid var(--secondary);
+  text-align: center; color: var(--secondary); font-weight: 700;
+  cursor: pointer; padding: 0 4px;
+}
+
+.ix-passage .blank-static.revealed { color: var(--yellow); border-color: var(--yellow); }
+</style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div class="bg-svg"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-title">
+    <h1>🤖 ROBOTS — Reading & Exercises</h1>
+    <p>Giáo viên tạo: Ms. Chí Nên · ☎️ 0852639652</p>
+  </div>
+  <div class="timer-zone">
+    <div class="timer-display" id="timerDisplay">10:00</div>
+    <button class="btn btn-start" id="btnStart" onclick="startTimer()">▶ BẮT ĐẦU TÍNH GIỜ</button>
+    <button class="btn btn-pause" id="btnPause" onclick="togglePause()" style="display:none">⏸ Tạm dừng</button>
+  </div>
+  <button class="btn btn-submit" onclick="submitAll()">📝 NỘP BÀI</button>
+</header>
+
+<div class="timer-msg" id="timerMsg">
+  ⏰ Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha! 💪
+</div>
+
+<!-- MAIN -->
+<div class="main-container">
+
+  <!-- ===== LEFT PANEL: READING ===== -->
+  <div class="left-panel">
+    <div class="section-badge badge-reading">📖 Reading Passage</div>
+
+    <!-- PASSAGE IX -->
+    <div class="passage-card">
+      <div class="passage-label">Passage IX — Cloze Text: Gita Robot</div>
+      <div class="passage-text" id="para-ix">
+        Carrying your own bags is such a (1)______. With Gita Robot, worry no more. This compact robot is designed to follow you around (2)______ you're out and about in town or on the way to work. The robot is capable (3)______ carrying the equivalent of a case of wine, a loaded rucksack or two shopping bags, so it's an (4)______ companion for a quick trip down to the shops. In the future, you (5)______ be able to leave the car at home and stretch your legs without the misery of carrying your (6)______ home.
+      </div>
+      <button class="btn-translate" onclick="toggleTrans('trans-ix')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="trans-ix">
+        <strong>📌 Bản dịch đầy đủ:</strong><br>
+        Tự mang túi xách là một công việc vặt thật sự. Với Robot Gita, bạn không còn phải lo nữa. Chiếc robot nhỏ gọn này được thiết kế để đi theo bạn khi bạn đang ra ngoài trong thành phố hoặc trên đường đi làm. Robot có khả năng mang tương đương một thùng rượu vang, một ba lô đầy đồ hoặc hai túi đi chợ, vì vậy nó là người bạn đồng hành lý tưởng cho một chuyến đi nhanh đến cửa hàng. Trong tương lai, bạn sẽ có thể để xe ở nhà và thảnh thơi dạo bộ mà không còn khổ sở vì phải mang đồ mua sắm về nhà.
+      </div>
+    </div>
+
+    <!-- PASSAGE X: ROBOTS -->
+    <div class="passage-card">
+      <div class="passage-label">Passage X — Main Reading: ROBOTS</div>
+
+      <!-- Para 1 -->
+      <div class="passage-text" id="para-1">
+        A robot is a machine. But it is not just any machine. It is a special kind of machine. It is a machine that moves. It follows instructions. The instructions come from a computer. Because it is a machine, it does not make mistakes. And it does not get tired. And it never complains. Unless you tell it to!
+      </div>
+      <button class="btn-translate" onclick="toggleTrans('trans-1')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="trans-1">
+        <strong>📌 Bản dịch Đoạn 1:</strong><br>
+        Robot là một cỗ máy. Nhưng nó không phải là cỗ máy bình thường. Nó là một loại máy đặc biệt. Đó là loại máy biết di chuyển. Nó tuân theo các hướng dẫn. Các hướng dẫn đó đến từ một máy tính. Vì nó là một cỗ máy, nó không mắc sai lầm. Và nó không biết mệt mỏi. Và nó không bao giờ phàn nàn. Trừ khi bạn lập trình bảo nó làm vậy!
+      </div>
+
+      <!-- Para 2 -->
+      <div class="passage-text" style="margin-top:12px" id="para-2">
+        Robots are all around us. Some robots are used to make things. For example, robots can help make cars. Some robots are used to explore dangerous places. For example, robots can help explore volcanoes. Some robots are used to clean things. These robots can help vacuum your house. Some robots can even recognize words. They can be used to help answer telephone calls. Some robots look like humans. But most robots do not. Most robots just look like machines.
+      </div>
+      <button class="btn-translate" onclick="toggleTrans('trans-2')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="trans-2">
+        <strong>📌 Bản dịch Đoạn 2:</strong><br>
+        Robot có mặt khắp nơi xung quanh chúng ta. Một số robot được dùng để chế tạo đồ vật. Ví dụ, robot có thể giúp sản xuất ô tô. Một số robot được dùng để khám phá những nơi nguy hiểm. Ví dụ, robot có thể giúp khám phá núi lửa. Một số robot được dùng để dọn dẹp. Những robot này có thể giúp hút bụi nhà bạn. Một số robot thậm chí có thể nhận diện giọng nói. Chúng có thể được dùng để trả lời các cuộc điện thoại. Một số robot trông giống con người. Nhưng hầu hết robot không giống. Hầu hết robot trông giống như những cỗ máy bình thường.
+      </div>
+
+      <!-- Para 3 -->
+      <div class="passage-text" style="margin-top:12px" id="para-3">
+        Long ago, people imagined robots. But nobody was able to make a real robot. The first real robot was made in 1961. It was called Unimate. It was used to help make cars. It looked like a giant arm.
+      </div>
+      <button class="btn-translate" onclick="toggleTrans('trans-3')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="trans-3">
+        <strong>📌 Bản dịch Đoạn 3:</strong><br>
+        Từ xa xưa, con người đã tưởng tượng về robot. Nhưng không ai có thể chế tạo một robot thật. Robot thật đầu tiên được chế tạo vào năm 1961. Nó được gọi là Unimate. Nó được dùng để giúp sản xuất ô tô. Nó trông giống như một cánh tay khổng lồ.
+      </div>
+
+      <!-- Para 4 -->
+      <div class="passage-text" style="margin-top:12px" id="para-4">
+        In the future, we will have even more robots. They will do things that we can't do. Or they will do things that we don't want to do. Or they will do things that are too dangerous for us. They will help make life better.
+      </div>
+      <button class="btn-translate" onclick="toggleTrans('trans-4')">🌟 Mở dịch đoạn này</button>
+      <div class="translation-box" id="trans-4">
+        <strong>📌 Bản dịch Đoạn 4:</strong><br>
+        Trong tương lai, chúng ta sẽ có nhiều robot hơn nữa. Chúng sẽ làm những việc mà chúng ta không thể làm. Hoặc chúng sẽ làm những việc mà chúng ta không muốn làm. Hoặc chúng sẽ làm những việc quá nguy hiểm đối với chúng ta. Chúng sẽ giúp cuộc sống tốt đẹp hơn.
+      </div>
+    </div>
+
+    <!-- GLOSSARY -->
+    <div class="glossary-card">
+      <h3>📚 Glossary — Bảng từ vựng học thuật</h3>
+      <table class="glossary-table">
+        <thead><tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr></thead>
+        <tbody>
+          <tr><td class="word-cell">compact</td><td class="pos-cell">adj</td><td>nhỏ gọn, tiện lợi</td></tr>
+          <tr><td class="word-cell">capable (of)</td><td class="pos-cell">adj</td><td>có khả năng (làm gì đó)</td></tr>
+          <tr><td class="word-cell">equivalent</td><td class="pos-cell">n/adj</td><td>tương đương; vật/lượng tương đương</td></tr>
+          <tr><td class="word-cell">companion</td><td class="pos-cell">n</td><td>người/vật bầu bạn, đồng hành</td></tr>
+          <tr><td class="word-cell">instruction</td><td class="pos-cell">n</td><td>hướng dẫn, lệnh (máy tính)</td></tr>
+          <tr><td class="word-cell">complain</td><td class="pos-cell">v</td><td>phàn nàn, than vãn</td></tr>
+          <tr><td class="word-cell">explore</td><td class="pos-cell">v</td><td>khám phá, thám hiểm</td></tr>
+          <tr><td class="word-cell">volcano</td><td class="pos-cell">n</td><td>núi lửa</td></tr>
+          <tr><td class="word-cell">recognize</td><td class="pos-cell">v</td><td>nhận ra, nhận diện</td></tr>
+          <tr><td class="word-cell">vacuum</td><td class="pos-cell">v/n</td><td>hút bụi; máy hút bụi</td></tr>
+          <tr><td class="word-cell">imagine</td><td class="pos-cell">v</td><td>tưởng tượng</td></tr>
+          <tr><td class="word-cell">misery</td><td class="pos-cell">n</td><td>sự khổ sở, đau khổ</td></tr>
+          <tr><td class="word-cell">rucksack</td><td class="pos-cell">n</td><td>ba lô (đeo lưng)</td></tr>
+          <tr><td class="word-cell">dangerous</td><td class="pos-cell">adj</td><td>nguy hiểm</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div><!-- end left -->
+
+  <!-- ===== RIGHT PANEL: EXERCISES ===== -->
+  <div class="right-panel">
+    <div class="section-badge badge-exercise">✏️ Exercises</div>
+
+    <!-- SECTION IX -->
+    <div class="ex-card">
+      <h3>📌 IX. Choose the correct answer to complete the passage</h3>
+
+      <!-- Q IX.1 -->
+      <div class="question-block" id="qix1">
+        <div class="question-text">1. Carrying your own bags is such a (1)______.</div>
+        <div class="options-grid" id="opts-ix1"></div>
+        <div class="explanation-box" id="exp-ix1">
+          <strong>✅ Đáp án đúng: B. chore</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch câu: "Tự mang túi xách của bạn thật sự là một công việc vặt."</span><br><br>
+          <span class="ex-why">💡 Phân tích 4 đáp án:</span><br>
+          • <strong>a. work</strong> (n): công việc (nghề nghiệp, dự án lớn) — không phù hợp vì "work" thường chỉ công việc chính, nghề nghiệp, không dùng để chỉ việc lặt vặt hằng ngày như mang túi.<br>
+          • <strong>b. chore</strong> (n): việc vặt, việc nhà hằng ngày (thường có tính chất phiền toái, nhàm chán) — ✅ ĐÚNG vì "such a chore" là cụm diễn đạt tự nhiên, hàm ý "thật phiền phức".<br>
+          • <strong>c. part</strong> (n): phần, bộ phận — nghĩa không phù hợp với ngữ cảnh.<br>
+          • <strong>d. way</strong> (n): con đường, cách thức — không liên quan.<br><br>
+          🔑 <strong>Mẹo nhớ:</strong> "Such a chore" = "phiền phức thật!" — cụm cố định thường gặp trong tiếng Anh tự nhiên.
+        </div>
+      </div>
+
+      <!-- Q IX.2 -->
+      <div class="question-block" id="qix2">
+        <div class="question-text">2. ...designed to follow you around (2)______ you're out and about in town...</div>
+        <div class="options-grid" id="opts-ix2"></div>
+        <div class="explanation-box" id="exp-ix2">
+          <strong>✅ Đáp án đúng: D. while</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "...được thiết kế để đi theo bạn khi bạn đang ra ngoài trong thành phố..."</span><br><br>
+          <span class="ex-why">💡 Phân tích:</span><br>
+          • <strong>a. because</strong>: vì, bởi vì — nối nguyên nhân, không phù hợp.<br>
+          • <strong>b. though</strong>: mặc dù — nối sự tương phản, không phù hợp.<br>
+          • <strong>c. whether</strong>: liệu có... hay không — dùng trong câu hỏi gián tiếp, không phù hợp.<br>
+          • <strong>d. while</strong>: trong khi, khi — ✅ ĐÚNG. "While" nối hai hành động xảy ra đồng thời: robot đi theo bạn TRONG KHI bạn đang ra ngoài phố.
+        </div>
+      </div>
+
+      <!-- Q IX.3 -->
+      <div class="question-block" id="qix3">
+        <div class="question-text">3. The robot is capable (3)______ carrying the equivalent of a case of wine...</div>
+        <div class="options-grid" id="opts-ix3"></div>
+        <div class="explanation-box" id="exp-ix3">
+          <strong>✅ Đáp án đúng: C. of</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Robot có khả năng mang tương đương một thùng rượu vang..."</span><br><br>
+          <span class="ex-why">💡 Phân tích:</span><br>
+          • Đây là cấu trúc ngữ pháp cố định: <strong>be capable OF + V-ing</strong> (có khả năng làm gì).<br>
+          • <strong>a. in</strong>, <strong>b. for</strong>, <strong>d. on</strong>: đều sai về mặt ngữ pháp khi đi với "capable".<br>
+          • <strong>c. of</strong> ✅: "capable of" là collocation bất biến trong tiếng Anh.<br><br>
+          🔑 <strong>Cấu trúc quan trọng:</strong> capable <u>of</u> doing = có khả năng làm gì.
+        </div>
+      </div>
+
+      <!-- Q IX.4 -->
+      <div class="question-block" id="qix4">
+        <div class="question-text">4. ...it's an (4)______ companion for a quick trip down to the shops.</div>
+        <div class="options-grid" id="opts-ix4"></div>
+        <div class="explanation-box" id="exp-ix4">
+          <strong>✅ Đáp án đúng: A. ideal</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "...nó là người bạn đồng hành lý tưởng cho một chuyến đi nhanh đến cửa hàng."</span><br><br>
+          <span class="ex-why">💡 Phân tích:</span><br>
+          • <strong>a. ideal</strong> (adj): lý tưởng, hoàn hảo nhất — ✅ ĐÚNG. Robot có thể mang đồ nặng → là người bạn đồng hành HOÀN HẢO khi đi mua sắm.<br>
+          • <strong>b. pleasant</strong>: dễ chịu, thú vị — ít chính xác hơn, không nêu bật công dụng thực tế.<br>
+          • <strong>c. expensive</strong>: đắt tiền — mang nghĩa tiêu cực, mâu thuẫn với lợi ích được mô tả.<br>
+          • <strong>d. uncomfortable</strong>: không thoải mái — nghĩa tiêu cực hoàn toàn sai ngữ cảnh.
+        </div>
+      </div>
+
+      <!-- Q IX.5 -->
+      <div class="question-block" id="qix5">
+        <div class="question-text">5. In the future, you (5)______ be able to leave the car at home...</div>
+        <div class="options-grid" id="opts-ix5"></div>
+        <div class="explanation-box" id="exp-ix5">
+          <strong>✅ Đáp án đúng: C. will</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Trong tương lai, bạn sẽ có thể để xe ở nhà..."</span><br><br>
+          <span class="ex-why">💡 Phân tích:</span><br>
+          • Từ khóa: <strong>"In the future"</strong> → diễn tả sự dự đoán/chắc chắn về tương lai → dùng <strong>will</strong>.<br>
+          • <strong>a. can</strong>: thì hiện tại, chỉ khả năng hiện tại — không hợp với "in the future".<br>
+          • <strong>b. could</strong>: khả năng trong quá khứ hoặc giả định — sai thì.<br>
+          • <strong>c. will</strong> ✅: will + base verb = tương lai đơn, phù hợp hoàn toàn.<br>
+          • <strong>d. might</strong>: có thể (không chắc) — câu văn mang tính khẳng định (sẽ tốt hơn) → "will" chắc chắn hơn.
+        </div>
+      </div>
+
+      <!-- Q IX.6 -->
+      <div class="question-block" id="qix6">
+        <div class="question-text">6. ...without the misery of carrying your (6)______ home.</div>
+        <div class="options-grid" id="opts-ix6"></div>
+        <div class="explanation-box" id="exp-ix6">
+          <strong>✅ Đáp án đúng: B. shopping</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "...mà không còn khổ sở vì phải mang đồ mua sắm về nhà."</span><br><br>
+          <span class="ex-why">💡 Phân tích:</span><br>
+          • Ngữ cảnh: Bài nói về robot giúp mang túi khi đi mua sắm → "mang đồ mua sắm" là logic nhất.<br>
+          • <strong>a. buying</strong>: đang mua (động từ dạng V-ing) — không dùng sau "your" như danh từ.<br>
+          • <strong>b. shopping</strong> ✅: danh từ (đồ mua sắm) — "your shopping" = đồ bạn mua, colocation tự nhiên "carry your shopping".<br>
+          • <strong>c. selling</strong>: đang bán — không liên quan.<br>
+          • <strong>d. pushing</strong>: đẩy — không liên quan đến ngữ cảnh.
+        </div>
+      </div>
+    </div><!-- end ex IX -->
+
+    <!-- SECTION X - A -->
+    <div class="ex-card">
+      <h3>📌 X - A. Choose the correct answers (Multiple Choice)</h3>
+
+      <!-- X.A.1 -->
+      <div class="question-block" id="qxa1">
+        <div class="question-text">1. As used in paragraph 1, we can understand that something special is NOT ______.</div>
+        <div class="options-grid" id="opts-xa1"></div>
+        <div class="explanation-box" id="exp-xa1">
+          <strong>✅ Đáp án đúng: A. normal</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch câu hỏi: "Theo đoạn 1, chúng ta có thể hiểu rằng điều gì đó đặc biệt thì KHÔNG phải là ______."</span><br><br>
+          <span class="ex-why">💡 Phân tích:</span><br>
+          • Đoạn 1 viết: <em>"It is a <strong>special</strong> kind of machine"</em> — đối lập trực tiếp với <strong>normal/ordinary</strong>.<br>
+          • "Special" = không bình thường, không phổ thông → "special" ≠ <strong>normal</strong>.<br>
+          • <strong>b. expensive</strong>: đắt tiền — bài không đề cập đến giá cả.<br>
+          • <strong>c. perfect</strong>: hoàn hảo — bài không nói special = perfect.<br>
+          • <strong>d. tired</strong>: mệt mỏi — bài có nói robot không mệt, nhưng đây là đặc điểm của robot, không phải định nghĩa "special".<br><br>
+          🔑 <strong>Từ khóa:</strong> "special" ↔ "normal" là cặp từ trái nghĩa trực tiếp nhất.
+        </div>
+      </div>
+
+      <!-- X.A.2 -->
+      <div class="question-block" id="qxa2">
+        <div class="question-text">2. According to the author, robots cannot be used to ______.</div>
+        <div class="options-grid" id="opts-xa2"></div>
+        <div class="explanation-box" id="exp-xa2">
+          <strong>✅ Đáp án đúng: D. do the gardening</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Theo tác giả, robot KHÔNG thể được dùng để ______."</span><br><br>
+          <span class="ex-why">💡 Phân tích — Dẫn chứng từ bài:</span><br>
+          • <strong>a. explore volcanoes</strong> ❌ (không chọn): Bài có nói <em>"robots can help explore volcanoes"</em> → robot CÓ THỂ làm → loại.<br>
+          • <strong>b. make cars</strong> ❌ (không chọn): Bài có nói <em>"robots can help make cars"</em> → robot CÓ THỂ làm → loại.<br>
+          • <strong>c. clean your house</strong> ❌ (không chọn): Bài có nói <em>"These robots can help vacuum your house"</em> → robot CÓ THỂ làm → loại.<br>
+          • <strong>d. do the gardening</strong> ✅: Bài KHÔNG đề cập đến làm vườn ở bất kỳ đâu → đây là việc robot KHÔNG được nhắc đến là có thể làm.
+        </div>
+      </div>
+
+      <!-- X.A.3 -->
+      <div class="question-block" id="qxa3">
+        <div class="question-text">3. What is the main purpose of paragraph 2?</div>
+        <div class="options-grid" id="opts-xa3"></div>
+        <div class="explanation-box" id="exp-xa3">
+          <strong>✅ Đáp án đúng: C. to describe the things a robot can do</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Mục đích chính của đoạn 2 là gì?"</span><br><br>
+          <span class="ex-why">💡 Phân tích:</span><br>
+          • Đoạn 2 liệt kê nhiều ứng dụng của robot: sản xuất ô tô, khám phá núi lửa, hút bụi, trả lời điện thoại → đây là <strong>mô tả những việc robot có thể làm</strong>.<br>
+          • <strong>a. to show how easy it is to make a robot</strong>: Bài không nói về cách chế tạo robot.<br>
+          • <strong>b. to tell what a robot is</strong>: Định nghĩa robot là nhiệm vụ của Đoạn 1.<br>
+          • <strong>c. to describe the things a robot can do</strong> ✅: Chính xác. Cấu trúc lặp đi lặp lại "Some robots are used to..." = liệt kê công dụng.<br>
+          • <strong>d. to explain the difference between a robot and a machine</strong>: Sự khác biệt này không được đề cập ở đoạn 2.
+        </div>
+      </div>
+
+      <!-- X.A.4 -->
+      <div class="question-block" id="qxa4">
+        <div class="question-text">4. Which of these gives the best use of a robot?</div>
+        <div class="options-grid" id="opts-xa4"></div>
+        <div class="explanation-box" id="exp-xa4">
+          <strong>✅ Đáp án đúng: D. to help explore Mars</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Ứng dụng nào thể hiện tốt nhất sức mạnh của robot?"</span><br><br>
+          <span class="ex-why">💡 Phân tích — Bài có đề cập: robot làm những việc "nguy hiểm" / không thể làm:</span><br>
+          • <strong>a. to help make a sandwich</strong>: Quá đơn giản, con người dễ dàng tự làm — không cần robot.<br>
+          • <strong>b. to help tie shoes</strong>: Đơn giản, con người tự làm được.<br>
+          • <strong>c. to help read a book</strong>: Con người đọc được sách → không cần robot.<br>
+          • <strong>d. to help explore Mars</strong> ✅: Sao Hỏa là nơi <strong>quá nguy hiểm</strong> và con người <strong>không thể tự đến</strong> — đây là ứng dụng phù hợp nhất với câu kết đoạn 4: <em>"do things that are too dangerous for us"</em>.
+        </div>
+      </div>
+
+      <!-- X.A.5 -->
+      <div class="question-block" id="qxa5">
+        <div class="question-text">5. How does the author feel about robots?</div>
+        <div class="options-grid" id="opts-xa5"></div>
+        <div class="explanation-box" id="exp-xa5">
+          <strong>✅ Đáp án đúng: B. Robots are helpful.</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Tác giả cảm thấy thế nào về robot?"</span><br><br>
+          <span class="ex-why">💡 Phân tích — Thái độ tác giả (Author's Attitude):</span><br>
+          • Câu cuối bài: <em>"They will help make life <strong>better</strong>."</em> → Tác giả có THÁI ĐỘ TÍCH CỰC với robot.<br>
+          • <strong>a. Robots are useless</strong>: Sai hoàn toàn — bài liệt kê rất nhiều công dụng hữu ích.<br>
+          • <strong>b. Robots are helpful</strong> ✅: Từ "help" được lặp lại nhiều lần trong bài: "robots can HELP make cars", "HELP explore volcanoes", "HELP vacuum", "HELP answer calls", "HELP make life better".<br>
+          • <strong>c. Robots are confusing</strong>: Không có dấu hiệu bối rối trong bài.<br>
+          • <strong>d. Robots are dangerous</strong>: Bài nói robot giúp con người làm việc NGUY HIỂM, chứ không nói robot là nguy hiểm.
+        </div>
+      </div>
+    </div><!-- end XA -->
+
+    <!-- SECTION X - B (Converted to Multiple Choice) -->
+    <div class="ex-card">
+      <h3>📌 X - B. Answer the questions (Multiple Choice)</h3>
+
+      <!-- B.1 -->
+      <div class="question-block" id="qxb1">
+        <div class="question-text">1. What is a robot?</div>
+        <div class="options-grid options-grid single-col" id="opts-xb1"></div>
+        <div class="explanation-box" id="exp-xb1">
+          <strong>✅ Đáp án đúng: A. A robot is a special kind of machine.</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Robot là gì?" → "Robot là một loại máy đặc biệt."</span><br><br>
+          <span class="ex-why">💡 Dẫn chứng từ bài (Đoạn 1):</span> <em>"It is a <strong>special kind of machine</strong>."</em><br>
+          • <strong>B</strong>: "A robot is a computer" — Sai. Robot nhận lệnh từ máy tính, nhưng bản thân nó không phải máy tính.<br>
+          • <strong>C</strong>: "A robot is a normal machine" — Sai. Bài nhấn mạnh "NOT just any machine" = KHÔNG phải máy bình thường.<br>
+          • <strong>D</strong>: "A robot is a human" — Sai. Bài nói "Some robots look like humans. But most robots do not."
+        </div>
+      </div>
+
+      <!-- B.2 -->
+      <div class="question-block" id="qxb2">
+        <div class="question-text">2. Why doesn't a robot make mistakes?</div>
+        <div class="options-grid options-grid single-col" id="opts-xb2"></div>
+        <div class="explanation-box" id="exp-xb2">
+          <strong>✅ Đáp án đúng: B. A robot doesn't make mistakes because it is a machine.</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Tại sao robot không mắc sai lầm?" → "Robot không mắc sai lầm vì nó là một cỗ máy."</span><br><br>
+          <span class="ex-why">💡 Dẫn chứng từ bài (Đoạn 1):</span> <em>"<strong>Because it is a machine</strong>, it does not make mistakes."</em><br>
+          • Từ khóa quan trọng: <strong>Because</strong> = vì → nguyên nhân trực tiếp là "it is a machine".<br>
+          • Các đáp án sai đều đưa ra lý do không có trong bài.
+        </div>
+      </div>
+
+      <!-- B.3 -->
+      <div class="question-block" id="qxb3">
+        <div class="question-text">3. Do most robots look like humans?</div>
+        <div class="options-grid options-grid single-col" id="opts-xb3"></div>
+        <div class="explanation-box" id="exp-xb3">
+          <strong>✅ Đáp án đúng: A. No, they don't. Just some robots look like humans.</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Phần lớn robot có trông giống người không?" → "Không. Chỉ một số ít robot trông giống người."</span><br><br>
+          <span class="ex-why">💡 Dẫn chứng từ bài (Đoạn 2):</span> <em>"<strong>Some</strong> robots look like humans. But <strong>most</strong> robots do <strong>not</strong>. Most robots just look like machines."</em><br>
+          • "Most" (phần lớn) ≠ giống người → câu trả lời phủ định là đúng.
+        </div>
+      </div>
+
+      <!-- B.4 -->
+      <div class="question-block" id="qxb4">
+        <div class="question-text">4. When was the first robot made?</div>
+        <div class="options-grid options-grid single-col" id="opts-xb4"></div>
+        <div class="explanation-box" id="exp-xb4">
+          <strong>✅ Đáp án đúng: C. The first robot was made in 1961.</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Robot đầu tiên được tạo ra khi nào?" → "Robot đầu tiên được tạo ra vào năm 1961."</span><br><br>
+          <span class="ex-why">💡 Dẫn chứng từ bài (Đoạn 3):</span> <em>"The first real robot was made in <strong>1961</strong>."</em><br>
+          • Đây là câu hỏi sự kiện (factual) — chỉ cần tìm đúng năm trong bài.
+        </div>
+      </div>
+
+      <!-- B.5 -->
+      <div class="question-block" id="qxb5">
+        <div class="question-text">5. What did the first robot look like?</div>
+        <div class="options-grid options-grid single-col" id="opts-xb5"></div>
+        <div class="explanation-box" id="exp-xb5">
+          <strong>✅ Đáp án đúng: B. The first robot looked like a giant arm.</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Robot đầu tiên trông như thế nào?" → "Robot đầu tiên trông giống như một cánh tay khổng lồ."</span><br><br>
+          <span class="ex-why">💡 Dẫn chứng từ bài (Đoạn 3):</span> <em>"It looked like a <strong>giant arm</strong>."</em><br>
+          • "Giant" = khổng lồ, to lớn. "Arm" = cánh tay.
+        </div>
+      </div>
+
+      <!-- B.6 -->
+      <div class="question-block" id="qxb6">
+        <div class="question-text">6. Will robots make our lives better or worse?</div>
+        <div class="options-grid options-grid single-col" id="opts-xb6"></div>
+        <div class="explanation-box" id="exp-xb6">
+          <strong>✅ Đáp án đúng: A. They will make our lives better.</strong><br><br>
+          <span class="ex-trans">🇻🇳 Dịch: "Robot sẽ làm cho cuộc sống của chúng ta tốt hơn hay tệ hơn?" → "Chúng sẽ làm cuộc sống của chúng ta tốt hơn."</span><br><br>
+          <span class="ex-why">💡 Dẫn chứng từ bài (Đoạn 4 - câu cuối):</span> <em>"They will help make life <strong>better</strong>."</em><br>
+          • Tác giả kết bài bằng thái độ tích cực: robot sẽ giúp cuộc sống TỐT ĐẸP HƠN.
+        </div>
+      </div>
+    </div><!-- end XB -->
+
+    <div class="submit-area">
+      <button class="btn btn-submit" onclick="submitAll()">📝 NỘP BÀI & XEM ĐIỂM</button>
+    </div>
+  </div><!-- end right -->
+</div><!-- end main -->
+
+<!-- RESULT OVERLAY -->
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <span class="big-emoji" id="resultEmoji">🏆</span>
+    <h2 id="resultTitle">Tuyệt vời!</h2>
+    <div class="score-big" id="resultScore">17/17</div>
+    <p class="comment" id="resultComment">Bạn là thiên tài Robot học! 🤖</p>
+    <button class="btn-retry" onclick="retryQuiz()">🔄 Làm lại bài</button>
+  </div>
+</div>
+
+<script>
+// ===== AUDIO =====
+function playCorrect() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = ctx.createOscillator(); const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+  o.frequency.setValueAtTime(523, ctx.currentTime);
+  o.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+  o.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+  g.gain.setValueAtTime(0.3, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+  o.start(); o.stop(ctx.currentTime + 0.5);
+}
+
+function playWrong() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  [300,250,200].forEach((f,i) => {
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0.3, ctx.currentTime + i*0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.15 + 0.12);
+    o.start(ctx.currentTime + i*0.15);
+    o.stop(ctx.currentTime + i*0.15 + 0.12);
+  });
+}
+
+// ===== CONFETTI =====
+function spawnConfetti() {
+  const colors = ['#6C63FF','#00C9A7','#FF6B9D','#FDCB6E','#00D26A','#fff'];
+  for (let i = 0; i < 40; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random()*100 + 'vw';
+    el.style.top = '-20px';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.width = (Math.random()*10+5) + 'px';
+    el.style.height = (Math.random()*10+5) + 'px';
+    el.style.animationDelay = Math.random()*0.5 + 's';
+    el.style.animationDuration = (Math.random()*0.8+0.6) + 's';
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 1500);
+  }
+}
+
+// ===== SHUFFLE =====
+function shuffle(arr) {
+  for (let i = arr.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// ===== QUESTION DATA =====
+const questions = {
+  'ix1': { correct: 'b', options: [['a','work'],['b','chore'],['c','part'],['d','way']] },
+  'ix2': { correct: 'd', options: [['a','because'],['b','though'],['c','whether'],['d','while']] },
+  'ix3': { correct: 'c', options: [['a','in'],['b','for'],['c','of'],['d','on']] },
+  'ix4': { correct: 'a', options: [['a','ideal'],['b','pleasant'],['c','expensive'],['d','uncomfortable']] },
+  'ix5': { correct: 'c', options: [['a','can'],['b','could'],['c','will'],['d','might']] },
+  'ix6': { correct: 'b', options: [['a','buying'],['b','shopping'],['c','selling'],['d','pushing']] },
+  'xa1': { correct: 'a', options: [['a','normal'],['b','expensive'],['c','perfect'],['d','tired']] },
+  'xa2': { correct: 'd', options: [['a','explore volcanoes'],['b','make cars'],['c','clean your house'],['d','do the gardening']] },
+  'xa3': {
+    correct: 'c',
+    options: [
+      ['a','to show how easy it is to make a robot'],
+      ['b','to tell what a robot is'],
+      ['c','to describe the things a robot can do'],
+      ['d','to explain the difference between a robot and a machine']
+    ],
+    singleCol: true
+  },
+  'xa4': {
+    correct: 'd',
+    options: [
+      ['a','to help make a sandwich'],
+      ['b','to help tie shoes'],
+      ['c','to help read a book'],
+      ['d','to help explore Mars']
+    ]
+  },
+  'xa5': {
+    correct: 'b',
+    options: [
+      ['a','Robots are useless.'],
+      ['b','Robots are helpful.'],
+      ['c','Robots are confusing.'],
+      ['d','Robots are dangerous.']
+    ]
+  },
+  'xb1': {
+    correct: 'a',
+    options: [
+      ['a','A robot is a special kind of machine.'],
+      ['b','A robot is a computer.'],
+      ['c','A robot is a normal machine.'],
+      ['d','A robot is a human.']
+    ],
+    singleCol: true
+  },
+  'xb2': {
+    correct: 'b',
+    options: [
+      ['a','A robot doesn\'t make mistakes because it is very smart.'],
+      ['b','A robot doesn\'t make mistakes because it is a machine.'],
+      ['c','A robot doesn\'t make mistakes because it is expensive.'],
+      ['d','A robot doesn\'t make mistakes because it follows humans.']
+    ],
+    singleCol: true
+  },
+  'xb3': {
+    correct: 'a',
+    options: [
+      ['a','No, they don\'t. Just some robots look like humans.'],
+      ['b','Yes, all robots look like humans.'],
+      ['c','Yes, most robots look like humans.'],
+      ['d','No, robots always look like animals.']
+    ],
+    singleCol: true
+  },
+  'xb4': {
+    correct: 'c',
+    options: [
+      ['a','The first robot was made in 1916.'],
+      ['b','The first robot was made in 1941.'],
+      ['c','The first robot was made in 1961.'],
+      ['d','The first robot was made in 1991.']
+    ],
+    singleCol: true
+  },
+  'xb5': {
+    correct: 'b',
+    options: [
+      ['a','The first robot looked like a small wheel.'],
+      ['b','The first robot looked like a giant arm.'],
+      ['c','The first robot looked like a human.'],
+      ['d','The first robot looked like a vacuum cleaner.']
+    ],
+    singleCol: true
+  },
+  'xb6': {
+    correct: 'a',
+    options: [
+      ['a','They will make our lives better.'],
+      ['b','They will make our lives worse.'],
+      ['c','They will make our lives more boring.'],
+      ['d','They will not change our lives.']
+    ],
+    singleCol: true
+  }
+};
+
+const answeredMap = {};
+const userAnswers = {};
+
+function buildOptions(qid) {
+  const q = questions[qid];
+  const container = document.getElementById('opts-' + qid);
+  if (!container) return;
+  if (q.singleCol) container.classList.add('single-col');
+  const opts = shuffle([...q.options]);
+  container.innerHTML = '';
+  opts.forEach(([key, text]) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.dataset.key = key;
+    btn.innerHTML = `<span style="color:var(--accent);font-weight:800;margin-right:6px;">${key.toUpperCase()}.</span> ${text}`;
+    btn.onclick = () => handleAnswer(qid, key, btn, container);
+    container.appendChild(btn);
+  });
+}
+
+function handleAnswer(qid, chosen, btn, container) {
+  if (answeredMap[qid]) return;
+  answeredMap[qid] = true;
+  userAnswers[qid] = chosen;
+  const correct = questions[qid].correct;
+  const allBtns = container.querySelectorAll('.option-btn');
+  allBtns.forEach(b => { b.classList.add('answered'); });
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    playCorrect();
+    spawnConfetti();
+  } else {
+    btn.classList.add('wrong');
+    playWrong();
+    allBtns.forEach(b => {
+      if (b.dataset.key === correct) b.classList.add('correct');
+    });
+  }
+  const exp = document.getElementById('exp-' + qid);
+  if (exp) exp.classList.add('show');
+}
+
+function submitAll() {
+  // Auto answer unanswered
+  Object.keys(questions).forEach(qid => {
+    if (!answeredMap[qid]) {
+      const container = document.getElementById('opts-' + qid);
+      if (container) {
+        const allBtns = container.querySelectorAll('.option-btn');
+        const correct = questions[qid].correct;
+        answeredMap[qid] = true;
+        userAnswers[qid] = null;
+        allBtns.forEach(b => {
+          b.classList.add('answered');
+          if (b.dataset.key === correct) b.classList.add('correct');
+        });
+        const exp = document.getElementById('exp-' + qid);
+        if (exp) exp.classList.add('show');
+      }
+    }
+  });
+
+  // Count correct
+  let score = 0;
+  const total = Object.keys(questions).length;
+  Object.keys(questions).forEach(qid => {
+    if (userAnswers[qid] === questions[qid].correct) score++;
+  });
+
+  showResult(score, total);
+}
+
+function showResult(score, total) {
+  const pct = score / total;
+  let emoji, title, comment;
+  if (pct === 1) { emoji = '🏆'; title = 'THIÊN TÀI!'; comment = 'Xuất sắc! Bạn trả lời đúng tất cả câu hỏi. Robot sẽ tự hào về bạn! 🤖✨'; }
+  else if (pct >= 0.8) { emoji = '🌟'; title = 'Làm tốt lắm!'; comment = 'Gần hoàn hảo rồi! Ôn lại vài câu nữa là xuất sắc thôi! 💪'; }
+  else if (pct >= 0.6) { emoji = '😊'; title = 'Khá tốt!'; comment = 'Bạn đã hiểu bài cơ bản. Đọc lại phần giải thích để nắm chắc hơn nhé! 📚'; }
+  else if (pct >= 0.4) { emoji = '🤔'; title = 'Cố lên nhé!'; comment = 'Cần ôn thêm! Hãy đọc lại bài đọc và phần giải thích chi tiết nhé! 📖'; }
+  else { emoji = '😅'; title = 'Thử lại nào!'; comment = 'Đừng nản chí! Đọc kỹ bài và thử lại, bạn sẽ tiến bộ ngay thôi! 🚀'; }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultScore').textContent = score + '/' + total;
+  document.getElementById('resultComment').textContent = comment;
+  document.getElementById('resultOverlay').classList.add('show');
+  spawnConfetti();
+}
+
+function retryQuiz() {
+  document.getElementById('resultOverlay').classList.remove('show');
+  location.reload();
+}
+
+// ===== TRANSLATION TOGGLE =====
+function toggleTrans(id) {
+  const box = document.getElementById(id);
+  if (!box) return;
+  if (box.style.display === 'block') {
+    box.style.display = 'none';
+  } else {
+    box.style.display = 'block';
+  }
+}
+
+// ===== TIMER =====
+let timerInterval = null;
+let timeLeft = 600;
+let paused = false;
+let timerStarted = false;
+
+function startTimer() {
+  if (timerStarted) return;
+  timerStarted = true;
+  document.getElementById('btnStart').style.display = 'none';
+  document.getElementById('btnPause').style.display = '';
+  timerInterval = setInterval(() => {
+    if (!paused) {
+      timeLeft--;
+      updateTimerDisplay();
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById('timerMsg').style.display = 'block';
+        document.getElementById('btnPause').style.display = 'none';
+        document.getElementById('timerDisplay').classList.add('urgent');
+      }
+    }
+  }, 1000);
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('btnPause').textContent = paused ? '▶ Tiếp tục' : '⏸ Tạm dừng';
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timeLeft / 60).toString().padStart(2,'0');
+  const s = (timeLeft % 60).toString().padStart(2,'0');
+  const disp = document.getElementById('timerDisplay');
+  disp.textContent = m + ':' + s;
+  if (timeLeft <= 60) disp.classList.add('urgent');
+}
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded', () => {
+  Object.keys(questions).forEach(qid => buildOptions(qid));
+});
+</script>
+</body>
+</html>
