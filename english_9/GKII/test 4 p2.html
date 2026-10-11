@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Kiểm Tra Tiếng Anh - Gamification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #00C9A7;
+            --accent: #FDCB6E;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --text-dark: #2D3436;
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(-45deg, #ff9a9e, #fecfef, #a1c4fd, #c2e9fb, #FDCB6E);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            position: relative;
+        }
+
+        /* SVG Pattern Background Auto-generated */
+        .svg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><text x="20" y="40" font-size="30">🌍</text><text x="120" y="80" font-size="30">✈️</text><text x="40" y="150" font-size="30">🏔️</text><text x="150" y="180" font-size="30">📚</text><text x="80" y="100" font-size="20">✨</text></svg>');
+            animation: floatPattern 40s linear infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatPattern {
+            from { background-position: 0 0; }
+            to { background-position: 400px 400px; }
+        }
+
+        /* Top Control Bar */
+        .top-bar {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border-bottom: 2px solid var(--glass-border);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .teacher-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: #fff;
+            padding: 5px 20px;
+            border-radius: 20px;
+            color: var(--primary);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+
+        .btn-action {
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+            color: #fff;
+        }
+
+        .btn-start { background-color: var(--secondary); }
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 0 rgba(0,0,0,0.15); }
+        .btn-start:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+        
+        .btn-submit { background-color: var(--primary); }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 0 rgba(0,0,0,0.15); }
+        .btn-submit:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+
+        /* Split Screen Content */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .pane {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .pane::-webkit-scrollbar { width: 10px; }
+        .pane::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        .pane::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        /* Left Pane - Reading */
+        .passage {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .passage-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 900;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .btn-translate {
+            background-color: var(--accent);
+            color: #d35400;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #e1b12c;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-translate:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #e1b12c; }
+        .btn-translate:active { transform: translateY(2px); box-shadow: 0 2px 0 #e1b12c; }
+
+        .translation-box {
+            display: none;
+            background: #fff;
+            color: #2c3e50;
+            padding: 15px;
+            border-left: 5px solid var(--accent);
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 1.05rem;
+            font-style: italic;
+        }
+
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .glossary-table th { background: var(--primary); color: #fff; font-weight: 800; }
+        .glossary-table tr:last-child td { border-bottom: none; }
+        .glossary-table tr:hover { background: #f9f9f9; }
+
+        /* Right Pane - Exercises */
+        .question-card {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            border: 2px solid #fff;
+            transition: transform 0.3s;
+        }
+        .question-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            color: #2d3436;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: #fff;
+            border: 2px solid #dfe6e9;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #2d3436;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 5px 0 #dfe6e9;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            transform: scale(1.02) translateY(-2px);
+            border-color: var(--secondary);
+            box-shadow: 0 7px 0 var(--secondary);
+        }
+
+        .option-btn:active:not(.disabled) {
+            transform: scale(0.98) translateY(3px);
+            box-shadow: 0 2px 0 var(--secondary);
+        }
+
+        .option-btn.correct {
+            background: var(--correct);
+            color: #fff;
+            border-color: #00b894;
+            box-shadow: 0 5px 0 #00b894;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong);
+            color: #fff;
+            border-color: #d63031;
+            box-shadow: 0 5px 0 #d63031;
+            animation: shake 0.4s;
+        }
+
+        .option-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .explanation-box {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #e1f5fe;
+            border-left: 5px solid #03a9f4;
+            border-radius: 10px;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #02567a;
+        }
+        .explanation-box.show {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modal Score */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(var(--correct) 0%, var(--correct) 0%, #eee 0%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--text-dark);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+        .score-inner {
+            width: 120px;
+            height: 120px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .praise-text { font-size: 1.8rem; color: var(--primary); font-weight: 900; margin-bottom: 10px; }
+        .sub-praise { font-size: 1.1rem; color: #636e72; margin-bottom: 25px; }
+
+        #confetti-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99;
+        }
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body>
+    <div class="svg-pattern"></div>
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="top-bar">
+        <div class="teacher-name">🌟 Giáo viên tạo: Ms. Chí Nên · ☎️ 0852639652</div>
+        <div class="timer-container">
+            <button class="btn-action btn-start" id="startBtn" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
+            <div class="timer-display" id="timer">10:00</div>
+            <button class="btn-action btn-submit" onclick="submitTest()">NỘP BÀI 🎉</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="pane left-pane">
+            
+            <div class="passage">
+                <div class="passage-title">📍 PART 1: DISCOVER THE BEAUTY OF HA LONG BAY!</div>
+                <p>Read the following announcement and mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each of the numbered blanks from 13 to 16.</p>
+                <br>
+                <p>Ha Long Bay is a UNESCO World Heritage Site and one of the most stunning natural wonders in the world. Located (13) Quang Ninh Province, Vietnam, this breathtaking bay is known for its emerald waters and towering limestone islands.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans1">Vịnh Hạ Long là Di sản Thế giới được UNESCO công nhận và là một trong những kỳ quan thiên nhiên tuyệt đẹp nhất trên thế giới. Nằm ở tỉnh Quảng Ninh, Việt Nam, vịnh ngoạn mục này được biết đến với làn nước trong xanh như ngọc và những hòn đảo đá vôi cao chót vót.</div>
+                <br>
+                <p>What you’ll see:<br>
+                Majestic Limestone: Explore the unique rock formations rising dramatically from the water.<br>
+                Floating Villages: Witness traditional villages where (14) people live on the water.<br>
+                Caves: Discover hidden caves like Sung Sot (Surprise) Cave and Thien Cung (Heavenly Palace) Cave. Visit Ha Long Bay and step into a world of (15) beauty, surrounded by one of nature’s (16) extraordinary creations!</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans2">Những gì bạn sẽ thấy:<br>Đá vôi tráng lệ: Khám phá những khối đá độc đáo nhô lên một cách ấn tượng từ mặt nước.<br>Làng nổi: Chứng kiến những ngôi làng truyền thống nơi người dân sống trên mặt nước.<br>Hang động: Khám phá những hang động ẩn giấu như Hang Sửng Sốt và Hang Thiên Cung. Hãy đến thăm Vịnh Hạ Long và bước vào một thế giới của vẻ đẹp tráng lệ, được bao quanh bởi một trong những tạo tác phi thường nhất của thiên nhiên!</div>
+                
+                <table class="glossary-table">
+                    <tr><th>Vocabulary</th><th>Part of Speech</th><th>Vietnamese Meaning</th></tr>
+                    <tr><td>Stunning</td><td>Adjective</td><td>Tuyệt đẹp, lộng lẫy</td></tr>
+                    <tr><td>Breathtaking</td><td>Adjective</td><td>Ngoạn mục (đến ngộp thở)</td></tr>
+                    <tr><td>Emerald</td><td>Noun/Adjective</td><td>Màu ngọc bích</td></tr>
+                    <tr><td>Towering</td><td>Adjective</td><td>Cao chót vót</td></tr>
+                    <tr><td>Limestone</td><td>Noun</td><td>Đá vôi</td></tr>
+                    <tr><td>Majestic</td><td>Adjective</td><td>Tráng lệ, huy hoàng</td></tr>
+                    <tr><td>Dramatically</td><td>Adverb</td><td>Đột ngột, ấn tượng</td></tr>
+                    <tr><td>Witness</td><td>Verb</td><td>Chứng kiến</td></tr>
+                    <tr><td>Extraordinary</td><td>Adjective</td><td>Phi thường, kỳ diệu</td></tr>
+                    <tr><td>Creation</td><td>Noun</td><td>Tạo tác, sự sáng tạo</td></tr>
+                </table>
+            </div>
+
+            <hr style="border: 1px dashed var(--primary); margin: 30px 0;">
+
+            <div class="passage">
+                <div class="passage-title">📍 PART 2: MOUNT EVEREST</div>
+                <p>Read the following passage and mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each numbered blank from 19 to 24.</p>
+                <br>
+                <p>Mount Everest (Mt. Everest) is the highest mountain (19) the world. It is 8,843 metres high. Mt. Everest was first climbed in 1953 by Edmund Hillary and Tenzing Norgay. Every year, a lot of people want to climb Mt. Everest.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans3">Núi Everest (Mt. Everest) là ngọn núi cao nhất trên thế giới. Nó cao 8.843 mét. Núi Everest được Edmund Hillary và Tenzing Norgay chinh phục lần đầu tiên vào năm 1953. Mỗi năm, có rất nhiều người muốn leo lên núi Everest.</div>
+                <br>
+                <p>It is very dangerous to climb Mt. Everest. The air is very (20) and cold. Most people carry bottles of oxygen; they could die without it. When the oxygen bottles are empty, people throw them on the ground. (21) strong winds rip their tents, people leave them behind. They don’t have the energy to take the rubbish away. They only have enough energy to go down the mountain (22) .</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans4')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans4">Rất nguy hiểm khi leo núi Everest. Không khí rất loãng và lạnh. Hầu hết mọi người đều mang theo bình oxy; họ có thể chết nếu không có nó. Khi các bình oxy cạn kiệt, mọi người ném chúng xuống đất. Khi những cơn gió mạnh xé rách lều của họ, mọi người bỏ chúng lại. Họ không có năng lượng để mang rác đi. Họ chỉ có đủ năng lượng để đi xuống núi một cách an toàn.</div>
+                <br>
+                <p>Rubbish is a terrible problem. Since people first began to climb Mt. Everest, they have left tons and tons of rubbish on the mountain. Several groups have climbed the mountain just to (23) the rubbish. When people plan to climb the mountain, they have to plan to (24) their rubbish.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans5')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans5">Rác thải là một vấn đề tồi tệ. Kể từ khi mọi người bắt đầu leo núi Everest, họ đã để lại hàng tấn rác trên núi. Một vài nhóm đã leo lên ngọn núi chỉ để nhặt rác. Khi mọi người lên kế hoạch leo núi, họ phải lên kế hoạch mang rác của mình đi.</div>
+
+                <table class="glossary-table">
+                    <tr><th>Vocabulary</th><th>Part of Speech</th><th>Vietnamese Meaning</th></tr>
+                    <tr><td>Dangerous</td><td>Adjective</td><td>Nguy hiểm</td></tr>
+                    <tr><td>Oxygen</td><td>Noun</td><td>Khí oxy</td></tr>
+                    <tr><td>Empty</td><td>Adjective</td><td>Trống rỗng, cạn kiệt</td></tr>
+                    <tr><td>Rip</td><td>Verb</td><td>Xé rách</td></tr>
+                    <tr><td>Energy</td><td>Noun</td><td>Năng lượng</td></tr>
+                    <tr><td>Rubbish</td><td>Noun</td><td>Rác thải</td></tr>
+                    <tr><td>Terrible</td><td>Adjective</td><td>Tồi tệ, khủng khiếp</td></tr>
+                    <tr><td>Several</td><td>Determiner</td><td>Một vài, một số</td></tr>
+                    <tr><td>Plan</td><td>Verb/Noun</td><td>Lên kế hoạch / Kế hoạch</td></tr>
+                    <tr><td>Take away</td><td>Phrasal Verb</td><td>Mang đi</td></tr>
+                </table>
+            </div>
+
+            <hr style="border: 1px dashed var(--primary); margin: 30px 0;">
+
+            <div class="passage">
+                <div class="passage-title">📍 PART 3: LEARNING ENGLISH</div>
+                <p>Read the following passage and mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions from 31 to 36.</p>
+                <br>
+                <p>Learning a new language is always an excellent idea. It provides you incredible benefits that come with the backing of science! One of the most useful languages to learn is English.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans6')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans6">Học một ngôn ngữ mới luôn là một ý tưởng tuyệt vời. Nó cung cấp cho bạn những lợi ích đáng kinh ngạc được khoa học chứng minh! Một trong những ngôn ngữ hữu ích nhất để học là tiếng Anh.</div>
+                <br>
+                <p>Learning a second language is one of the best ways to keep your brain active and challenged. Studies have shown that the brain undergoes changes in electrical activity and even structure and size while learning a foreign language that do not occur when learning any other type of task or skill. Learning another language offers important cognitive benefits at any age, helping to keep the mind active and even reducing the risk of mental disease and slowing mental decline later in life.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans7')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans7">Học ngôn ngữ thứ hai là một trong những cách tốt nhất để giữ cho bộ não của bạn hoạt động và được thử thách. Các nghiên cứu đã chỉ ra rằng não bộ trải qua những thay đổi về hoạt động điện và thậm chí cả cấu trúc và kích thước khi học một ngoại ngữ, điều không xảy ra khi học bất kỳ loại nhiệm vụ hoặc kỹ năng nào khác. Học một ngôn ngữ khác mang lại những lợi ích nhận thức quan trọng ở mọi lứa tuổi, giúp giữ cho tâm trí hoạt động và thậm chí giảm nguy cơ mắc bệnh tâm thần và làm chậm sự suy giảm trí tuệ sau này trong cuộc sống.</div>
+                <br>
+                <p>When learning English as a second language, you approach new ways to think and express yourself through written and spoken words. Learning multiple languages can help you communicate more clearly in any language as you learn more about how language itself works and how to use it to promote ideas and reach out to others in a variety of social and work situations.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans8')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans8">Khi học tiếng Anh như ngôn ngữ thứ hai, bạn tiếp cận những cách mới để suy nghĩ và thể hiện bản thân thông qua lời nói và chữ viết. Học nhiều ngôn ngữ có thể giúp bạn giao tiếp rõ ràng hơn bằng bất kỳ ngôn ngữ nào vì bạn hiểu thêm về cách thức hoạt động của chính ngôn ngữ đó và cách sử dụng ngôn ngữ để thúc đẩy các ý tưởng và tiếp cận với những người khác trong nhiều tình huống xã hội và công việc.</div>
+                <br>
+                <p>The world may not have a global language, but English is the default option for countless forms of communication across the globe. That’s why one of the benefits of learning English is that it significantly boosts your hiring potential. In addition, it can offer you educational opportunities. If you desire access to some of the best schools like Harvard, Stanford, Oxford, Cambridge or MIT, then knowing English provides you an incredible edge. It’s expected that around 2 billion people around the world will learn English over the next decade.</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans9')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans9">Thế giới có thể không có một ngôn ngữ toàn cầu, nhưng tiếng Anh là lựa chọn mặc định cho vô số hình thức giao tiếp trên toàn cầu. Đó là lý do tại sao một trong những lợi ích của việc học tiếng Anh là nó làm tăng đáng kể tiềm năng được tuyển dụng của bạn. Ngoài ra, nó có thể mang lại cho bạn các cơ hội giáo dục. Nếu bạn mong muốn được tiếp cận với một số trường tốt nhất như Harvard, Stanford, Oxford, Cambridge hoặc MIT, thì việc biết tiếng Anh sẽ mang lại cho bạn một lợi thế đáng kinh ngạc. Người ta dự kiến rằng khoảng 2 tỷ người trên thế giới sẽ học tiếng Anh trong thập kỷ tới.</div>
+
+                <table class="glossary-table">
+                    <tr><th>Vocabulary</th><th>Part of Speech</th><th>Vietnamese Meaning</th></tr>
+                    <tr><td>Incredible</td><td>Adjective</td><td>Đáng kinh ngạc</td></tr>
+                    <tr><td>Undergo</td><td>Verb</td><td>Trải qua</td></tr>
+                    <tr><td>Cognitive</td><td>Adjective</td><td>Thuộc về nhận thức</td></tr>
+                    <tr><td>Decline</td><td>Noun/Verb</td><td>Sự suy giảm / Suy giảm</td></tr>
+                    <tr><td>Approach</td><td>Verb/Noun</td><td>Tiếp cận / Phương pháp</td></tr>
+                    <tr><td>Promote</td><td>Verb</td><td>Thúc đẩy, đẩy mạnh</td></tr>
+                    <tr><td>Default</td><td>Adjective</td><td>Mặc định</td></tr>
+                    <tr><td>Significantly</td><td>Adverb</td><td>Một cách đáng kể</td></tr>
+                    <tr><td>Potential</td><td>Noun/Adjective</td><td>Tiềm năng</td></tr>
+                    <tr><td>Edge</td><td>Noun</td><td>Lợi thế (trong ngữ cảnh này)</td></tr>
+                    <tr><td>Decade</td><td>Noun</td><td>Thập kỷ (10 năm)</td></tr>
+                </table>
+            </div>
+
+            <hr style="border: 1px dashed var(--primary); margin: 30px 0;">
+
+            <div class="passage">
+                <div class="passage-title">📍 PART 4: ENGLISH SPELLING</div>
+                <p>Four phrases/ sentences have been removed from the text below. For each question, mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each of the numbered blanks from 37 to 40.</p>
+                <br>
+                <p>Why does English spelling have a reputation for being difficult? English was first written down when Christian monks came to England in Anglo-Saxon times. (37) . However, English has a wide range of basic sounds (over 40) than Latin. The alphabet was too small, and so combinations of letters were needed to express the different sounds. (38) .<br><br>With the Norman invasion of England, the English language was put at risk. English survived, (39) , and many French words were introduced into the language. (40) .</p>
+                <button class="btn-translate" onclick="toggleTranslation('trans10')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-box" id="trans10">Tại sao chính tả tiếng Anh lại nổi tiếng là khó? Tiếng Anh lần đầu tiên được viết ra khi các nhà sư theo đạo Cơ đốc đến nước Anh vào thời Anglo-Saxon. (37) Họ đã sử dụng 23 chữ cái của tiếng Latinh để viết lại các âm thanh của tiếng nói Anglo-Saxon như những gì họ nghe được. Tuy nhiên, tiếng Anh có nhiều âm cơ bản (hơn 40 âm) hơn tiếng Latinh. Bảng chữ cái quá nhỏ, và do đó các sự kết hợp của các chữ cái là cần thiết để thể hiện các âm thanh khác nhau. (38) Chắc chắn là đã có những sự không nhất quán trong cách các chữ cái được kết hợp.<br><br>Với cuộc xâm lược nước Anh của người Norman, ngôn ngữ tiếng Anh đã bị đặt vào tình trạng nguy hiểm. Tiếng Anh đã sống sót, (39) nhưng cách viết của nhiều từ tiếng Anh đã thay đổi để tuân theo các quy tắc của tiếng Pháp, và nhiều từ tiếng Pháp đã được đưa vào ngôn ngữ này. (40) Kết quả là sự bất quy tắc càng nhiều hơn.</div>
+
+                <table class="glossary-table">
+                    <tr><th>Vocabulary</th><th>Part of Speech</th><th>Vietnamese Meaning</th></tr>
+                    <tr><td>Reputation</td><td>Noun</td><td>Danh tiếng (nổi tiếng về)</td></tr>
+                    <tr><td>Monk</td><td>Noun</td><td>Nhà sư, tu sĩ</td></tr>
+                    <tr><td>Combination</td><td>Noun</td><td>Sự kết hợp</td></tr>
+                    <tr><td>Express</td><td>Verb</td><td>Thể hiện, diễn đạt</td></tr>
+                    <tr><td>Inevitably</td><td>Adverb</td><td>Chắc chắn xảy ra, tất yếu</td></tr>
+                    <tr><td>Inconsistency</td><td>Noun</td><td>Sự không nhất quán</td></tr>
+                    <tr><td>Invasion</td><td>Noun</td><td>Sự xâm lược</td></tr>
+                    <tr><td>Survive</td><td>Verb</td><td>Sống sót, tồn tại</td></tr>
+                    <tr><td>Introduce</td><td>Verb</td><td>Giới thiệu, đưa vào</td></tr>
+                    <tr><td>Irregularity</td><td>Noun</td><td>Sự bất quy tắc</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="pane right-pane" id="quiz-container">
+            </div>
+    </div>
+
+    <div class="modal-overlay" id="scoreModal">
+        <div class="modal-content">
+            <div class="praise-text" id="praiseText">THIÊN TÀI! 🎉</div>
+            <div class="sub-praise" id="subPraise">Bạn đã hoàn thành xuất sắc bài kiểm tra!</div>
+            <div class="score-circle">
+                <div class="score-inner">
+                    <span id="finalScore">0/0</span>
+                </div>
+            </div>
+            <button class="btn-action btn-submit" style="width: 100%;" onclick="location.reload()">Làm lại bài nhé 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA OBJECT ---
+        const questionsData = [
+            // PART 1
+            { id: 13, text: "Question 13: Located _______ Quang Ninh Province...", options: ["in", "on", "on", "at"], correctIdx: 0,
+              explanation: "<b>1. Phân tích:</b> Đi với một tỉnh/thành phố (Quảng Ninh Province), ta dùng giới từ 'in'.<br><b>2. Tại sao loại đáp án kia:</b> 'On' dùng cho bề mặt/đường phố, 'at' dùng cho địa điểm cụ thể nhỏ hẹp.<br><b>3. Dịch:</b> Nằm ở tỉnh Quảng Ninh..." },
+            { id: 14, text: "Question 14: Witness traditional villages where _______ people live on the water.", options: ["the", "a", "an", "X (không dùng mạo từ)"], correctIdx: 3,
+              explanation: "<b>1. Phân tích:</b> 'People' ở đây mang nghĩa chung chung (người dân nói chung sống ở đó), là danh từ số nhiều đếm được nên không dùng mạo từ (Zero article - X).<br><b>2. Dịch:</b> Chứng kiến những ngôi làng truyền thống nơi người dân sống trên mặt nước." },
+            { id: 15, text: "Question 15: step into a world of _______ beauty", options: ["majestic", "enormous", "exciting", "interesting"], correctIdx: 0,
+              explanation: "<b>1. Phân tích:</b> 'majestic' (tráng lệ, huy hoàng) thường đi với 'beauty' (vẻ đẹp) để mô tả phong cảnh thiên nhiên.<br><b>2. Tại sao loại đáp án kia:</b> 'enormous' (to lớn về kích thước), 'exciting/interesting' (thú vị) không diễn tả đúng sự lộng lẫy của kỳ quan thiên nhiên.<br><b>3. Dịch:</b> ...bước vào một thế giới của vẻ đẹp tráng lệ..." },
+            { id: 16, text: "Question 16: one of nature’s _______ extraordinary creations!", options: ["greater", "greatest", "great", "most greating"], correctIdx: 1,
+              explanation: "<b>1. Phân tích ngữ pháp:</b> Cấu trúc 'one of + the/sở hữu cách + tính từ so sánh nhất + danh từ số nhiều' -> nature's <b>greatest</b> (những tạo tác vĩ đại nhất/phi thường nhất của thiên nhiên).<br><b>2. Dịch:</b> ...một trong những tạo tác phi thường lớn nhất của thiên nhiên!" },
+            
+            // PART 2 (Everest)
+            { id: 19, text: "Question 19: Mount Everest is the highest mountain _______ the world.", options: ["on", "in", "for", "to"], correctIdx: 1,
+              explanation: "<b>1. Phân tích:</b> Cụm từ cố định 'in the world' nghĩa là 'trên thế giới'.<br><b>2. Dịch:</b> Núi Everest là ngọn núi cao nhất trên thế giới." },
+            { id: 20, text: "Question 20: The air is very _______ and cold.", options: ["light", "thick", "pleasant", "thin"], correctIdx: 3,
+              explanation: "<b>1. Phân tích từ vựng:</b> Nói về không khí ở trên núi cao, ta dùng 'thin air' (không khí loãng).<br><b>2. Tại sao loại đáp án kia:</b> thick (đặc), light (nhẹ), pleasant (dễ chịu) không đúng thực tế địa lý.<br><b>3. Dịch:</b> Không khí rất loãng và lạnh." },
+            { id: 21, text: "Question 21: _______ strong winds rip their tents, people leave them behind.", options: ["Unless", "Until", "When", "Before"], correctIdx: 2,
+              explanation: "<b>1. Phân tích logic:</b> Hai mệnh đề chỉ mối quan hệ thời gian/nguyên nhân: 'Khi gió mạnh xé lều, họ bỏ lại'. Dùng 'When' (Khi).<br><b>2. Dịch:</b> Khi những cơn gió mạnh xé rách lều của họ, mọi người bỏ chúng lại." },
+            { id: 22, text: "Question 22: They only have enough energy to go down the mountain _______.", options: ["simply", "carefully", "safely", "freely"], correctIdx: 2,
+              explanation: "<b>1. Phân tích nghĩa:</b> 'Safely' (một cách an toàn) hợp lý nhất trong ngữ cảnh nguy hiểm thiếu oxy này.<br><b>2. Dịch:</b> Họ chỉ có đủ năng lượng để đi xuống núi một cách an toàn." },
+            { id: 23, text: "Question 23: Several groups have climbed the mountain just to _______ the rubbish.", options: ["get out", "pick up", "take off", "turn down"], correctIdx: 1,
+              explanation: "<b>1. Phân tích phrasal verb:</b> 'pick up' (nhặt lên) đi với 'rubbish' (rác).<br><b>2. Tại sao loại đáp án kia:</b> get out (thoát ra), take off (cởi ra/cất cánh), turn down (từ chối).<br><b>3. Dịch:</b> Vài nhóm đã leo núi chỉ để nhặt rác." },
+            { id: 24, text: "Question 24: they have to plan to _______ their rubbish.", options: ["take away", "take on", "take off", "take in"], correctIdx: 0,
+              explanation: "<b>1. Phân tích phrasal verb:</b> 'take away' nghĩa là mang đi/đem đi.<br><b>2. Dịch:</b> ...họ phải lên kế hoạch mang rác của mình đi." },
+            
+            // PART 3 (Learning English)
+            { id: 31, text: "Question 31: What is the main idea of the passage?", options: ["Ways to improve your English level", "How to keep your mind active", "The advantages and disadvantages of language learning", "The benefits of learning English"], correctIdx: 3,
+              explanation: "<b>1. Đọc hiểu ý chính:</b> Đoạn văn mở đầu 'Learning a new language is always an excellent idea...' và nêu cụ thể 'One of the most useful languages to learn is English'. Các đoạn sau liệt kê lợi ích cho não bộ, giao tiếp, việc làm.<br><b>2. Chọn D:</b> Lợi ích của việc học tiếng Anh." },
+            { id: 32, text: "Question 32: What is TRUE according to the text about learning English?", options: ["It has a negative effect on the brain", "It slows the mental decline due to aging", "It reduces brain function", "It lowers the risk of heart disease"], correctIdx: 1,
+              explanation: "<b>1. Tìm dẫn chứng:</b> Đoạn 2 ghi '...slowing mental decline later in life.' (làm chậm sự suy giảm tinh thần sau này).<br><b>2. Phân tích:</b> Đáp án B khớp hoàn toàn với thông tin bài đọc." },
+            { id: 33, text: "Question 33: Learning multiple languages makes you a better communicator because _______.", options: ["you can improve your writing and speaking skills", "you know how to get the attention of someone", "you learn more about how to promote your ideas and make contact with others", "you can communicate more effectively in your mother tongue"], correctIdx: 2,
+              explanation: "<b>1. Tìm dẫn chứng:</b> Đoạn 3: '...as you learn more about how language itself works and how to use it to promote ideas and reach out to others...'.<br><b>2. Phân tích:</b> 'make contact with others' đồng nghĩa với 'reach out to others'. Chọn C." },
+            { id: 34, text: "Question 34: The word “cognitive” in the second paragraph is CLOSEST in meaning to _______.", options: ["Mental", "Intellectual", "Emotional", "Subjectives"], correctIdx: 1,
+              explanation: "<b>1. Từ vựng:</b> 'Cognitive' (thuộc về nhận thức, trí tuệ) gần nghĩa nhất với 'Intellectual' (thuộc về trí tuệ).<br><b>2. Dịch:</b> Những lợi ích về mặt nhận thức/trí tuệ." },
+            { id: 35, text: "Question 35: What does the word 'edge' used in the third paragraph mean?", options: ["Point", "Border", "Limit", "Advantages"], correctIdx: 3,
+              explanation: "<b>1. Từ vựng ngữ cảnh:</b> 'provides you an incredible edge' -> 'edge' ở đây mang nghĩa bóng là 'lợi thế' (advantage/competitive edge).<br><b>2. Dịch:</b> ...mang lại cho bạn một lợi thế đáng kinh ngạc." },
+            { id: 36, text: "Question 36: What is NOT TRUE about the benefits of learning English?", options: ["It helps prevent dementia and Alzheimer’s", "It provides better employment opportunities", "It’s easy to use in communication", "It gives you access to the world’s best universities"], correctIdx: 2,
+              explanation: "<b>1. Phân tích:</b> Bài đọc đề cập lợi ích não bộ (A - mental disease), việc làm (B - hiring potential), đại học (D - access to best schools).<br><b>2. Loại C:</b> Bài không hề đề cập 'tiếng Anh dễ sử dụng trong giao tiếp' (It's easy to use...). Chỉ nói nó là lựa chọn mặc định." },
+
+            // PART 4 (English Spelling)
+            { id: 37, text: "Question 37: Insert the missing sentence (37):", options: ["The result was more irregularity.", "They used the 23 letters of Latin to write down the sounds of Anglo-Saxon speech as they heard it.", "Inevitably, there were inconsistencies in the way that letters were combined.", "but the spelling of many English words changed to follow French patterns."], correctIdx: 1,
+              explanation: "<b>1. Logic mạch văn:</b> Câu trước nói 'Christian monks came to England'. Câu tiếp theo nói về việc họ đã làm gì -> 'Họ sử dụng 23 chữ cái Latinh...'.<br><b>2. Dịch:</b> Họ đã sử dụng 23 chữ cái của tiếng Latinh để viết lại các âm thanh của tiếng nói Anglo-Saxon..." },
+            { id: 38, text: "Question 38: Insert the missing sentence (38):", options: ["The result was more irregularity.", "They used the 23 letters of Latin to write down the sounds of Anglo-Saxon speech as they heard it.", "Inevitably, there were inconsistencies in the way that letters were combined.", "but the spelling of many English words changed to follow French patterns."], correctIdx: 2,
+              explanation: "<b>1. Logic mạch văn:</b> Câu trước nói 'combinations of letters were needed' (cần kết hợp chữ cái). Câu C tiếp nối 'Chắc chắn là có sự không nhất quán trong cách kết hợp chữ cái'.<br><b>2. Chọn C.</b>" },
+            { id: 39, text: "Question 39: Insert the missing sentence (39):", options: ["The result was more irregularity.", "They used the 23 letters of Latin to write down the sounds of Anglo-Saxon speech as they heard it.", "Inevitably, there were inconsistencies in the way that letters were combined.", "but the spelling of many English words changed to follow French patterns."], correctIdx: 3,
+              explanation: "<b>1. Logic mạch văn:</b> 'English survived, (39) __________, and many French words were introduced...'. Câu (39) cần một vế tương phản -> 'nhưng cách viết bị thay đổi theo mẫu của Pháp'.<br><b>2. Chọn D.</b>" },
+            { id: 40, text: "Question 40: Insert the missing sentence (40):", options: ["The result was more irregularity.", "They used the 23 letters of Latin to write down the sounds of Anglo-Saxon speech as they heard it.", "Inevitably, there were inconsistencies in the way that letters were combined.", "but the spelling of many English words changed to follow French patterns."], correctIdx: 0,
+              explanation: "<b>1. Logic mạch văn:</b> Câu chốt đoạn. Sau tất cả các sự kiện thay đổi tiếng Anh ở trên, kết quả cuối cùng là gì? 'The result was more irregularity' (Kết quả là càng bất quy tắc hơn).<br><b>2. Chọn A.</b>" }
+        ];
+
+        // --- WEB AUDIO API (Sounds) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playWrong() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // --- RENDER & SHUFFLE QUESTIONS ---
+        let totalScore = 0;
+        let answeredQuestions = 0;
+
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('quiz-container');
+            let html = '';
+
+            questionsData.forEach((q, index) => {
+                // Prepare options array with original index to identify the correct one
+                let ops = q.options.map((text, idx) => ({ text, isCorrect: idx === q.correctIdx }));
+                ops = shuffleArray(ops); // Shuffle options
+
+                html += `
+                <div class="question-card" id="qcard-${q.id}">
+                    <div class="question-text">${q.text}</div>
+                    <div class="options-grid">
+                        ${ops.map((opt, i) => {
+                            const letter = String.fromCharCode(65 + i); // A, B, C, D
+                            return `<button class="option-btn" onclick="checkAnswer(this, ${q.id}, ${opt.isCorrect})">
+                                <b>${letter}.</b>&nbsp; ${opt.text}
+                            </button>`;
+                        }).join('')}
+                    </div>
+                    <div class="explanation-box" id="exp-${q.id}">
+                        <b>💡 GIẢI THÍCH CHI TIẾT:</b><br><br>
+                        ${q.explanation}
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function checkAnswer(btn, qId, isCorrect) {
+            // Prevent clicking again
+            const card = document.getElementById(`qcard-${qId}`);
+            const buttons = card.querySelectorAll('.option-btn');
+            if (buttons[0].classList.contains('disabled')) return; 
+
+            buttons.forEach(b => b.classList.add('disabled'));
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                playDing();
+                triggerConfetti();
+                totalScore++;
+            } else {
+                btn.classList.add('wrong');
+                playWrong();
+                // Find and highlight correct answer
+                buttons.forEach(b => {
+                    if(b.getAttribute('onclick').includes('true')) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            // Show explanation
+            const exp = document.getElementById(`exp-${qId}`);
+            exp.classList.add('show');
+            answeredQuestions++;
+        }
+
+        // --- UTILS & INTERACTIONS ---
+        function toggleTranslation(id) {
+            const box = document.getElementById(id);
+            if (box.style.display === 'block') {
+                box.style.display = 'none';
+            } else {
+                box.style.display = 'block';
+            }
+        }
+
+        // --- TIMER LOGIC ---
+        let timerInterval;
+        let timeLeft = 600; // 10 minutes
+        let isTimerRunning = false;
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('startBtn');
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                btn.innerText = 'TIẾP TỤC LÀM BÀI';
+                btn.style.backgroundColor = '#FDCB6E';
+            } else {
+                btn.innerText = 'TẠM DỪNG TÍNH GIỜ';
+                btn.style.backgroundColor = '#00C9A7';
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                    }
+                }, 1000);
+            }
+            isTimerRunning = !isTimerRunning;
+        }
+
+        // --- SUBMIT & SCORE ---
+        function submitTest() {
+            clearInterval(timerInterval);
+            const totalQ = questionsData.length;
+            const percentage = totalScore / totalQ;
+            
+            let title = "LÀM TỐT LẮM!";
+            let sub = "Cố gắng phát huy nhé!";
+            let color = "var(--correct)";
+            
+            if (percentage === 1) {
+                title = "THIÊN TÀI! 🏆";
+                sub = "Bạn đã đạt điểm tuyệt đối. Thật phi thường!";
+                triggerConfetti(200);
+            } else if (percentage >= 0.7) {
+                title = "XUẤT SẮC! 🌟";
+                sub = "Bạn nắm bài rất chắc chắn!";
+                triggerConfetti(100);
+            } else if (percentage >= 0.5) {
+                title = "KHÁ LẮM! 👍";
+                sub = "Cố gắng ôn tập thêm từ vựng để hoàn thiện nhé.";
+                color = "#FDCB6E";
+            } else {
+                title = "CỐ LÊN NHÉ! 💪";
+                sub = "Đừng nản chí! Hãy đọc kỹ phần giải thích chi tiết của Ms. Chí Nên · ☎️ 0852639652nhé!";
+                color = "#FF4757";
+            }
+
+            document.getElementById('praiseText').innerText = title;
+            document.getElementById('praiseText').style.color = color;
+            document.getElementById('subPraise').innerText = sub;
+            document.getElementById('finalScore').innerText = `${totalScore}/${totalQ}`;
+            
+            // Adjust circle gradient
+            const deg = (percentage * 360).toFixed(0);
+            document.querySelector('.score-circle').style.background = `conic-gradient(${color} ${deg}deg, #eee ${deg}deg)`;
+
+            document.getElementById('scoreModal').style.display = 'flex';
+        }
+
+        // --- CONFETTI EFFECT ---
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particles = [];
+        const colors = ['#00D26A', '#FDCB6E', '#FF4757', '#00C9A7', '#8854C0'];
+
+        function triggerConfetti(amount = 50) {
+            for (let i = 0; i < amount; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 100,
+                    r: Math.random() * 6 + 4,
+                    dx: Math.random() * 10 - 5,
+                    dy: Math.random() * -10 - 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10
+                });
+            }
+            animateConfetti();
+        }
+
+        function animateConfetti() {
+            requestAnimationFrame(animateConfetti);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.dy += 0.3; // gravity
+                p.x += p.dx;
+                p.y += p.dy;
+                p.tilt += 0.1;
+
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                ctx.stroke();
+
+                if (p.y > canvas.height) particles.splice(index, 1);
+            });
+        }
+
+        // Initialize App
+        window.onload = () => {
+            renderQuestions();
+            updateTimerDisplay();
+        };
+    </script>
+</body>
+</html>
