@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise 8: Communication Skills Quiz - Ms. Chí Nên</title>
+    <!-- Google Fonts: Quicksand for friendly look -->
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #8854C0; /* Purple */
+            --secondary-color: #00C9A7; /* Teal */
+            --correct-color: #00D26A; /* Green */
+            --wrong-color: #FF4757; /* Red/Orange */
+            --bg-pattern: #f0f4f8;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--bg-pattern);
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #2d3748;
+            overflow-x: hidden;
+        }
+
+        /* 3D Button Effect */
+        .btn-3d {
+            transition: all 0.1s;
+            box-shadow: 0px 6px 0px 0px rgba(0,0,0,0.2);
+            transform: translateY(0);
+        }
+
+        .btn-3d:active {
+            transform: translateY(6px);
+            box-shadow: 0px 0px 0px 0px rgba(0,0,0,0.2);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color); 
+            border-radius: 4px;
+        }
+
+        /* Animation Classes */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .shake-animation {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: var(--wrong-color) !important;
+            background-color: #ffe0e3 !important;
+            color: var(--wrong-color) !important;
+        }
+
+        .correct-animation {
+            background-color: var(--correct-color) !important;
+            color: white !important;
+            border-color: #00b359 !important;
+            box-shadow: 0px 6px 0px 0px #00b359 !important;
+            transform: scale(1.02);
+        }
+        
+        /* Options Container */
+        .option-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-card:hover:not(.disabled) {
+            border-color: var(--primary-color);
+            background-color: #f8f0ff;
+            transform: scale(1.01);
+        }
+
+        /* Feedback Box */
+        .feedback-box {
+            border-left: 5px solid;
+            transition: all 0.3s ease;
+        }
+        .feedback-correct {
+            border-color: var(--correct-color);
+            background-color: #f0fdf4;
+        }
+        .feedback-wrong {
+            border-color: var(--wrong-color);
+            background-color: #fff1f2;
+        }
+
+        .disabled {
+            pointer-events: none;
+            opacity: 0.9;
+        }
+
+        /* Utility for highlighting phonetic parts */
+        u {
+            text-decoration: none;
+            border-bottom: 2px solid var(--primary-color);
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Header / Brand -->
+    <div class="w-full max-w-4xl flex justify-between items-center mb-6">
+        <div class="bg-white px-6 py-2 rounded-full shadow-lg border-2 border-purple-200">
+            <h1 class="text-xl font-bold text-purple-700">
+                <i class="fas fa-chalkboard-teacher mr-2"></i>Ms. Chí Nên · ☎️ 0852639652
+            </h1>
+        </div>
+        <div class="bg-white px-6 py-2 rounded-full shadow-lg border-2 border-teal-200">
+            <span class="font-bold text-teal-600" id="score-display">
+                Score: 0
+            </span>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-10 text-center border-b-8 border-purple-200 animate-fade-in">
+        <div class="mb-6">
+            <i class="fas fa-comments text-6xl text-purple-500 mb-4"></i>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Exercise 8: Communication Skills</h2>
+            <p class="text-gray-500 text-lg">Luyện tập kỹ năng giao tiếp tiếng Anh qua các tình huống thực tế.</p>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 mb-8 text-left">
+            <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                <i class="fas fa-list-ol text-purple-500 mr-2"></i>
+                <span class="font-bold">10 Câu hỏi</span>
+            </div>
+            <div class="bg-teal-50 p-4 rounded-xl border border-teal-100">
+                <i class="fas fa-clock text-teal-500 mr-2"></i>
+                <span class="font-bold">Không giới hạn thời gian</span>
+            </div>
+        </div>
+
+        <button onclick="startQuiz()" class="btn-3d w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 px-8 rounded-2xl text-xl">
+            BẮT ĐẦU LÀM BÀI <i class="fas fa-play ml-2"></i>
+        </button>
+    </div>
+
+    <!-- Quiz Container (Hidden initially) -->
+    <div id="quiz-container" class="hidden w-full max-w-4xl">
+        
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 rounded-full h-4 mb-6 overflow-hidden shadow-inner">
+            <div id="progress-bar" class="bg-teal-400 h-4 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="bg-white rounded-3xl shadow-xl border-b-8 border-gray-200 overflow-hidden mb-6 relative">
+            <div class="p-6 md:p-8">
+                <!-- Question Number & Hint -->
+                <div class="flex justify-between items-start mb-4">
+                    <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg text-sm font-bold">
+                        Question <span id="current-q-num">1</span>/10
+                    </span>
+                    <div class="group relative">
+                        <i class="fas fa-lightbulb text-yellow-400 text-2xl cursor-pointer hover:scale-110 transition-transform"></i>
+                        <div class="absolute right-0 top-8 w-64 bg-yellow-50 border border-yellow-200 p-3 rounded-xl shadow-lg z-10 hidden group-hover:block text-sm text-gray-700">
+                            <i class="fas fa-info-circle mr-1"></i> <span id="hint-text">Gợi ý ở đây...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <h3 id="question-text" class="text-xl md:text-2xl font-bold text-gray-800 mb-6 leading-relaxed whitespace-pre-line">
+                    <!-- Question content goes here -->
+                </h3>
+
+                <!-- Options Grid -->
+                <div id="options-grid" class="grid grid-cols-1 gap-4">
+                    <!-- Buttons generated by JS -->
+                </div>
+            </div>
+
+            <!-- Explanation Area (Revealed after answer) -->
+            <div id="explanation-area" class="hidden bg-gray-50 border-t-2 border-gray-100 p-6 md:p-8 animate-fade-in-up">
+                <div class="feedback-header flex items-center mb-4">
+                    <div id="feedback-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-white mr-3 font-bold text-xl">
+                        <!-- Icon -->
+                    </div>
+                    <h4 id="feedback-title" class="text-xl font-bold">
+                        <!-- Đúng rồi / Tiếc quá -->
+                    </h4>
+                </div>
+                
+                <!-- Detailed Explanation Content -->
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <h5 class="text-purple-600 font-bold mb-2 uppercase text-sm"><i class="fas fa-glasses mr-1"></i> Ms. Chí Nên · ☎️ 0852639652giải thích:</h5>
+                    <div id="explanation-content" class="text-gray-700 space-y-2 leading-relaxed text-base">
+                        <!-- Dynamic Explanation -->
+                    </div>
+                </div>
+
+                <!-- Next Button -->
+                <div class="mt-6 text-right">
+                    <button id="next-btn" onclick="nextQuestion()" class="btn-3d bg-teal-500 hover:bg-teal-400 text-white font-bold py-3 px-8 rounded-xl">
+                        Câu tiếp theo <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Modal (Hidden initially) -->
+    <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl m-4 border-t-8 border-purple-500 transform transition-all scale-100">
+            <div class="mb-4 relative">
+                <div class="absolute inset-0 flex items-center justify-center opacity-20">
+                    <i class="fas fa-star text-9xl text-yellow-300"></i>
+                </div>
+                <img src="https://media.giphy.com/media/26tOZ42Mg6pbTUPVS/giphy.gif" alt="Celebration" class="w-32 h-32 rounded-full mx-auto object-cover border-4 border-white shadow-lg relative z-10" id="result-gif">
+            </div>
+            
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Hoàn thành!</h2>
+            <p class="text-gray-500 mb-6" id="result-message">Bạn đã làm rất tốt!</p>
+            
+            <div class="bg-gray-100 rounded-xl p-4 mb-6 flex justify-between items-center">
+                <div class="text-center w-1/2 border-r border-gray-300">
+                    <p class="text-xs text-gray-500 uppercase">Điểm số</p>
+                    <p class="text-3xl font-bold text-purple-600" id="final-score">0</p>
+                </div>
+                <div class="text-center w-1/2">
+                    <p class="text-xs text-gray-500 uppercase">Độ chính xác</p>
+                    <p class="text-3xl font-bold text-teal-600" id="final-percent">0%</p>
+                </div>
+            </div>
+
+            <button onclick="location.reload()" class="btn-3d w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-xl">
+                <i class="fas fa-redo mr-2"></i> Làm lại bài
+            </button>
+        </div>
+    </div>
+
+    <!-- AUDIO ELEMENTS (Generated via JS for single file, but keeping setup ready) -->
+
+    <script>
+        // --- DATA SOURCE ---
+        const rawData = {
+          "questions": [
+            {
+              "questionNumber": 1,
+              "question": "Two friends talking about vacation plans:\nAnna: “Where are you going for your summer vacation?”\nBen: “_______”",
+              "hint": "Anna đang hỏi về kế hoạch (Where... going?), câu trả lời cần nêu địa điểm hoặc dự định.",
+              "answerOptions": [
+                {
+                  "text": "I'm planning to go backpacking in Thailand.",
+                  "rationale": "Chính xác! Câu này trả lời trực tiếp cho câu hỏi 'Where' (Thái Lan) và 'going' (đang lên kế hoạch đi).\n**Dịch:**\n* **A:** Tớ đang định đi du lịch bụi ở Thái Lan.\n* **B:** Tớ không thích mùa đông. (Lạc đề)\n* **C:** Kỳ nghỉ của tớ rất tuyệt. (Sai thì - đang hỏi tương lai mà trả lời quá khứ)\n* **D:** Du lịch thì quan trọng. (Chung chung, không liên quan)",
+                  "isCorrect": true
+                },
+                {
+                  "text": "I don't like winter.",
+                  "rationale": "Sai. Không liên quan đến câu hỏi về kế hoạch mùa hè.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "My vacation was great.",
+                  "rationale": "Sai. Câu hỏi dùng thì hiện tại tiếp diễn (tương lai gần), câu trả lời dùng quá khứ đơn.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Tourism is important.",
+                  "rationale": "Sai. Câu trả lời không khớp với câu hỏi cụ thể của Anna.",
+                  "isCorrect": false
+                }
+              ]
+            },
+            {
+              "questionNumber": 2,
+              "question": "At a travel agency:\nCustomer: “I'm interested in ecotourism. Do you have any nature tours?”\nAgent: “_______”",
+              "hint": "Khách hỏi 'Có tour thiên nhiên nào không?'. Nhân viên cần trả lời 'Có' và giới thiệu tour, hoặc 'Không'.",
+              "answerOptions": [
+                {
+                  "text": "Cities are crowded.",
+                  "rationale": "Sai. Nhận xét về thành phố không liên quan đến yêu cầu của khách.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Hotels are expensive.",
+                  "rationale": "Sai. Không liên quan.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Yes, we have a 5-day tour to the national park with wildlife watching.",
+                  "rationale": "Chính xác! Câu trả lời xác nhận (Yes) và đưa ra thông tin phù hợp (national park, wildlife watching) với 'ecotourism/nature tours'.\n**Dịch:**\n* **A:** Các thành phố rất đông đúc.\n* **B:** Khách sạn đắt đỏ lắm.\n* **C:** Vâng, chúng tôi có tour 5 ngày đến vườn quốc gia kết hợp ngắm động vật hoang dã.\n* **D:** Tôi thích tour mua sắm hơn.",
+                  "isCorrect": true
+                },
+                {
+                  "text": "I prefer shopping tours.",
+                  "rationale": "Sai. Nhân viên không nên nói sở thích cá nhân mà phải phục vụ khách.",
+                  "isCorrect": false
+                }
+              ]
+            },
+            {
+              "questionNumber": 3,
+              "question": "Two tourists discussing their trip:\nMark: “What do you think about the local food here?”\nLisa: “_______”",
+              "hint": "Câu hỏi 'What do you think...?' yêu cầu đưa ra ý kiến/nhận xét.",
+              "answerOptions": [
+                {
+                  "text": "The museum is closed.",
+                  "rationale": "Sai. Lạc đề.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "It's absolutely delicious! I love trying authentic cuisine.",
+                  "rationale": "Chính xác! Đưa ra nhận xét (delicious) về đồ ăn.\n**Dịch:**\n* **A:** Bảo tàng đóng cửa rồi.\n* **B:** Nó cực kỳ ngon! Tớ rất thích thử ẩm thực chính gốc.\n* **C:** Chúng ta nên mua quà lưu niệm.\n* **D:** Hướng dẫn viên rất thân thiện.",
+                  "isCorrect": true
+                },
+                {
+                  "text": "We should buy souvenirs.",
+                  "rationale": "Sai. Lạc đề.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "The guide is friendly.",
+                  "rationale": "Sai. Đang hỏi về đồ ăn, không phải về hướng dẫn viên.",
+                  "isCorrect": false
+                }
+              ]
+            },
+            {
+              "questionNumber": 4,
+              "question": "Planning a trip:\nTom: “Should we book a package tour or travel independently?”\nSarah: “_______”",
+              "hint": "Tom đưa ra lựa chọn A hay B. Sarah cần chọn một trong hai và đưa ra lý do.",
+              "answerOptions": [
+                {
+                  "text": "The weather is nice.",
+                  "rationale": "Sai. Không trả lời câu hỏi lựa chọn.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Tourism is growing.",
+                  "rationale": "Sai. Nhận định chung chung.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Planes are faster than trains.",
+                  "rationale": "Sai. Không liên quan đến việc chọn loại hình tour.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Let's travel independently so we can be more flexible.",
+                  "rationale": "Chính xác! Sarah chọn 'travel independently' và đưa ra lý do 'flexible' (linh hoạt).\n**Dịch:**\n* **A:** Thời tiết đẹp quá.\n* **B:** Ngành du lịch đang phát triển.\n* **C:** Máy bay nhanh hơn tàu hỏa.\n* **D:** Hãy đi du lịch tự túc đi để chúng ta có thể linh hoạt hơn.",
+                  "isCorrect": true
+                }
+              ]
+            },
+            {
+              "questionNumber": 5,
+              "question": "At a hostel:\nBackpacker 1: “Have you been to the floating market yet?”\nBackpacker 2: “_______”",
+              "hint": "Câu hỏi 'Have you been... yet?' (Bạn đã đi... chưa?). Trả lời cần xác nhận Có hoặc Chưa.",
+              "answerOptions": [
+                {
+                  "text": "Not yet, but I'm planning to go tomorrow morning.",
+                  "rationale": "Chính xác! Trả lời trực tiếp 'Not yet' (Vẫn chưa) và chia sẻ kế hoạch.\n**Dịch:**\n* **A:** Vẫn chưa, nhưng tớ định đi vào sáng mai.\n* **B:** Chợ bán rau củ.\n* **C:** Tớ thích bơi lội.\n* **D:** Nhà nghỉ này rẻ.",
+                  "isCorrect": true
+                },
+                {
+                  "text": "Markets sell vegetables.",
+                  "rationale": "Sai. Đây là câu trần thuật về chức năng của chợ, không phải câu trả lời cho trải nghiệm cá nhân.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "I like swimming.",
+                  "rationale": "Sai. Lạc đề.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "The hostel is cheap.",
+                  "rationale": "Sai. Lạc đề.",
+                  "isCorrect": false
+                }
+              ]
+            },
+            {
+              "questionNumber": 6,
+              "question": "Discussing tourism impacts:\nTeacher: “What are the benefits of tourism for local communities?”\nStudent: “_______”",
+              "hint": "Câu hỏi về 'benefits' (lợi ích). Cần tìm đáp án nói về điều tích cực.",
+              "answerOptions": [
+                {
+                  "text": "Tourists take photos.",
+                  "rationale": "Sai. Đây là hành động của du khách, không hẳn là lợi ích.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Planes pollute the air.",
+                  "rationale": "Sai. Đây là tác hại (negative impact), không phải lợi ích.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "It creates jobs and brings income to local people.",
+                  "rationale": "Chính xác! Tạo việc làm (jobs) và thu nhập (income) là lợi ích kinh tế chính.\n**Dịch:**\n* **A:** Du khách chụp ảnh.\n* **B:** Máy bay làm ô nhiễm không khí.\n* **C:** Nó tạo ra việc làm và mang lại thu nhập cho người dân địa phương.\n* **D:** Khách sạn có hồ bơi.",
+                  "isCorrect": true
+                },
+                {
+                  "text": "Hotels have pools.",
+                  "rationale": "Sai. Đây là tiện ích khách sạn, không phải lợi ích cho cộng đồng.",
+                  "isCorrect": false
+                }
+              ]
+            },
+            {
+              "questionNumber": 7,
+              "question": "Friends talking about travel preferences:\nJane: “Do you prefer beach holidays or cultural tours?”\nMike: “_______”",
+              "hint": "Câu hỏi lựa chọn 'Prefer A or B?'. Mike cần chọn một cái và giải thích.",
+              "answerOptions": [
+                {
+                  "text": "Tourism is expensive.",
+                  "rationale": "Sai. Không trả lời vào trọng tâm sở thích.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "I love cultural tours where I can visit historical sites.",
+                  "rationale": "Chính xác! Mike chọn 'cultural tours' và nói lý do (thăm di tích lịch sử).\n**Dịch:**\n* **A:** Du lịch đắt đỏ lắm.\n* **B:** Tớ thích các tour văn hóa nơi tớ có thể thăm các di tích lịch sử.\n* **C:** Sân bay thì xa.\n* **D:** Hướng dẫn viên nói tiếng Anh.",
+                  "isCorrect": true
+                },
+                {
+                  "text": "The airport is far.",
+                  "rationale": "Sai. Lạc đề.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Guides speak English.",
+                  "rationale": "Sai. Lạc đề.",
+                  "isCorrect": false
+                }
+              ]
+            },
+            {
+              "questionNumber": 8,
+              "question": "At a tourism conference:\nSpeaker: “How can we promote sustainable tourism?”\nParticipant: “_______”",
+              "hint": "Câu hỏi về giải pháp (How) cho du lịch bền vững. Cần tìm đáp án mang tính hành động bảo vệ môi trường.",
+              "answerOptions": [
+                {
+                  "text": "Tourists like shopping.",
+                  "rationale": "Sai. Đây là sở thích du khách.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Hotels are full.",
+                  "rationale": "Sai. Tình trạng khách sạn.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Beaches are beautiful.",
+                  "rationale": "Sai. Mô tả cảnh quan.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "We should limit visitor numbers and educate tourists about environmental protection.",
+                  "rationale": "Chính xác! Giới hạn số lượng khách và giáo dục ý thức là biện pháp cốt lõi của du lịch bền vững.\n**Dịch:**\n* **A:** Du khách thích mua sắm.\n* **B:** Khách sạn đã kín phòng.\n* **C:** Các bãi biển rất đẹp.\n* **D:** Chúng ta nên giới hạn lượng khách và giáo dục du khách về bảo vệ môi trường.",
+                  "isCorrect": true
+                }
+              ]
+            },
+            {
+              "questionNumber": 9,
+              "question": "Two friends after a trip:\nLinda: “How was your experience with the homestay?”\nDavid: “_______”",
+              "hint": "Hỏi về trải nghiệm (How was...). Cần tính từ đánh giá (tốt/xấu).",
+              "answerOptions": [
+                {
+                  "text": "It was amazing! The host family was very welcoming.",
+                  "rationale": "Chính xác! Đánh giá tích cực (amazing) và khen ngợi chủ nhà (welcoming).\n**Dịch:**\n* **A:** Tuyệt vời lắm! Gia đình chủ nhà rất hiếu khách.\n* **B:** Homestay là những ngôi nhà. (Định nghĩa - Sai ngữ cảnh)\n* **C:** Tớ quên hộ chiếu rồi. (Không liên quan đến trải nghiệm homestay)\n* **D:** Xe buýt đã đến trễ. (Chi tiết nhỏ, không trả lời tổng quan trải nghiệm homestay)",
+                  "isCorrect": true
+                },
+                {
+                  "text": "Homestays are houses.",
+                  "rationale": "Sai. Trả lời kiểu định nghĩa.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "I forgot my passport.",
+                  "rationale": "Sai. Lạc đề.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "The bus was late.",
+                  "rationale": "Sai. Lạc đề.",
+                  "isCorrect": false
+                }
+              ]
+            },
+            {
+              "questionNumber": 10,
+              "question": "Planning activities:\nTour guide: “Would you like to join the city sightseeing tour tomorrow?”\nTourist: “_______”",
+              "hint": "Lời mời (Would you like...). Cần chấp nhận hoặc từ chối lịch sự.",
+              "answerOptions": [
+                {
+                  "text": "The city is big.",
+                  "rationale": "Sai. Nhận xét khách quan.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "Yesterday was fun.",
+                  "rationale": "Sai. Nói về quá khứ.",
+                  "isCorrect": false
+                },
+                {
+                  "text": "That sounds great! What time does it start?",
+                  "rationale": "Chính xác! Tỏ ra hứng thú (sounds great) và hỏi thêm thông tin chi tiết.\n**Dịch:**\n* **A:** Thành phố lớn thật.\n* **B:** Hôm qua vui lắm.\n* **C:** Nghe tuyệt đấy! Mấy giờ thì bắt đầu vậy?\n* **D:** Tôi không thích đi bộ. (Từ chối hơi cộc lốc, dù có thể chấp nhận trong văn nói suồng sã nhưng đáp án C lịch sự và xây dựng hội thoại tốt hơn)",
+                  "isCorrect": true
+                },
+                {
+                  "text": "I don't like walking.",
+                  "rationale": "Không tối ưu bằng đáp án C.",
+                  "isCorrect": false
+                }
+              ]
+            }
+          ]
+        };
+
+        // --- GAME LOGIC ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let shuffledQuestions = [];
+        let isAnswered = false;
+
+        const synth = window.speechSynthesis; // Just in case we need TTS later, but we use web audio for effects
+
+        // Audio Context for Generating Sounds (No external MP3 files needed!)
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playSound(type) {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                // Ding sound (High pitch sine wave)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.1); // C6
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'wrong') {
+                // Buzz sound (Low sawthooth)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // Shuffle Array (Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function formatText(text) {
+            // Converts line breaks to <br> and bold syntax **text** to <b>text</b>
+            let formatted = text.replace(/\n/g, "<br>");
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>");
+            return formatted;
+        }
+
+        function startQuiz() {
+            // Initialize Audio Context on user interaction
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            
+            // Clone and shuffle
+            shuffledQuestions = JSON.parse(JSON.stringify(rawData.questions));
+            shuffledQuestions = shuffleArray(shuffledQuestions);
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            updateScoreDisplay();
+            renderQuestion();
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('score-display').innerText = `Score: ${score}`;
+        }
+
+        function renderQuestion() {
+            isAnswered = false;
+            const qData = shuffledQuestions[currentQuestionIndex];
+            
+            // Reset UI
+            document.getElementById('explanation-area').classList.add('hidden');
+            document.getElementById('next-btn').innerText = (currentQuestionIndex === shuffledQuestions.length - 1) ? "Xem kết quả" : "Câu tiếp theo";
+            
+            // Render Text
+            document.getElementById('current-q-num').innerText = currentQuestionIndex + 1;
+            document.getElementById('question-text').innerText = qData.question;
+            document.getElementById('hint-text').innerText = qData.hint;
+
+            // Render Options
+            const optionsGrid = document.getElementById('options-grid');
+            optionsGrid.innerHTML = '';
+
+            // Map options with their original index to track correctness
+            // But we don't shuffle options here based on request, or we can. 
+            // Let's keep ABCD order as per data but ABCD usually implies fixed order unless requested.
+            // The prompt data has isCorrect flag.
+
+            qData.answerOptions.forEach((opt, index) => {
+                const btn = document.createElement('div');
+                btn.className = 'option-card p-4 md:p-5 flex items-center btn-3d transition-all';
+                btn.onclick = () => checkAnswer(index, btn, qData);
+                
+                // Option Letter
+                const letters = ['A', 'B', 'C', 'D'];
+                
+                btn.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 font-bold flex items-center justify-center mr-4 shadow-sm border border-gray-200 group-hover:bg-purple-100 group-hover:text-purple-600 transition-colors">
+                        ${letters[index]}
+                    </div>
+                    <div class="text-lg text-gray-700 font-medium flex-1">
+                        ${opt.text}
+                    </div>
+                `;
+                optionsGrid.appendChild(btn);
+            });
+
+            // Update Progress Bar
+            const progress = ((currentQuestionIndex) / shuffledQuestions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        function checkAnswer(selectedIndex, btnElement, qData) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const selectedOption = qData.answerOptions[selectedIndex];
+            const isCorrect = selectedOption.isCorrect;
+            const allBtns = document.querySelectorAll('.option-card');
+            
+            // Find the correct option index for highlighting
+            let correctIndex = -1;
+            qData.answerOptions.forEach((opt, idx) => {
+                if(opt.isCorrect) correctIndex = idx;
+            });
+
+            // Logic for Correct
+            if (isCorrect) {
+                playSound('correct');
+                score += 10;
+                updateScoreDisplay();
+                btnElement.classList.add('correct-animation');
+                
+                // Confetti
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#8854C0', '#00C9A7', '#FF4757']
+                });
+
+                showExplanation(true, qData, correctIndex);
+            } else {
+                // Logic for Wrong
+                playSound('wrong');
+                btnElement.classList.add('shake-animation');
+                
+                // Highlight the correct one
+                setTimeout(() => {
+                    allBtns[correctIndex].classList.add('correct-animation', 'border-green-500');
+                }, 400);
+
+                showExplanation(false, qData, correctIndex);
+            }
+
+            // Disable all buttons
+            allBtns.forEach(btn => btn.classList.add('disabled'));
+        }
+
+        function showExplanation(isCorrect, qData, correctIndex) {
+            const expArea = document.getElementById('explanation-area');
+            const expContent = document.getElementById('explanation-content');
+            const iconBox = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            
+            expArea.classList.remove('hidden');
+
+            if (isCorrect) {
+                iconBox.innerHTML = '<i class="fas fa-check"></i>';
+                iconBox.classList.remove('bg-red-500');
+                iconBox.classList.add('bg-green-500');
+                
+                title.innerText = "Chính xác! Tuyệt vời!";
+                title.classList.remove('text-red-500');
+                title.classList.add('text-green-600');
+                
+                expArea.classList.remove('feedback-wrong');
+                expArea.classList.add('feedback-correct');
+            } else {
+                iconBox.innerHTML = '<i class="fas fa-times"></i>';
+                iconBox.classList.remove('bg-green-500');
+                iconBox.classList.add('bg-red-500');
+                
+                title.innerText = "Tiếc quá! Đáp án đúng là:";
+                title.classList.remove('text-green-600');
+                title.classList.add('text-red-500');
+
+                expArea.classList.remove('feedback-correct');
+                expArea.classList.add('feedback-wrong');
+            }
+
+            // GET THE DETAILED RATIONALE FROM THE CORRECT OPTION
+            // Because the data stores the full analysis in the correct option's rationale
+            const correctOptionData = qData.answerOptions[correctIndex];
+            
+            // Format the text (Markdown to HTML)
+            let formattedRationale = formatText(correctOptionData.rationale);
+
+            expContent.innerHTML = formattedRationale;
+            
+            // Scroll to explanation on mobile
+            if(window.innerWidth < 768) {
+                setTimeout(() => {
+                    expArea.scrollIntoView({behavior: "smooth"});
+                }, 100);
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < shuffledQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            const modal = document.getElementById('result-modal');
+            const scoreEl = document.getElementById('final-score');
+            const percentEl = document.getElementById('final-percent');
+            const msgEl = document.getElementById('result-message');
+            const gifEl = document.getElementById('result-gif');
+
+            const totalScore = shuffledQuestions.length * 10;
+            const percentage = Math.round((score / totalScore) * 100);
+
+            scoreEl.innerText = `${score} / ${totalScore}`;
+            percentEl.innerText = `${percentage}%`;
+
+            if (percentage === 100) {
+                msgEl.innerText = "Xuất sắc! Bạn là thiên tài giao tiếp!";
+                gifEl.src = "https://media.giphy.com/media/l0HlHFRbmaZtBRhXG/giphy.gif"; // Happy dance
+            } else if (percentage >= 80) {
+                msgEl.innerText = "Làm tốt lắm! Bạn nắm rất chắc bài.";
+                gifEl.src = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"; // Clapping
+            } else if (percentage >= 50) {
+                msgEl.innerText = "Khá tốt, nhưng hãy cố gắng thêm nhé!";
+                gifEl.src = "https://media.giphy.com/media/26gsjCZpPolPr3sBy/giphy.gif"; // Okay nod
+            } else {
+                msgEl.innerText = "Đừng buồn, hãy luyện tập thêm nha!";
+                gifEl.src = "https://media.giphy.com/media/ISOckXUybVfQ4/giphy.gif"; // Sad cute
+            }
+
+            modal.classList.remove('hidden');
+            
+            // Final Confetti
+            if (percentage >= 50) {
+                const duration = 3000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#8854C0', '#00C9A7']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#8854C0', '#00C9A7']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+                }());
+            }
+        }
+    </script>
+</body>
+</html>
