@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms. Chí Nên - Premium English Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ================= CẤU HÌNH BIẾN MÀU SẮC ================= */
+        :root {
+            --text-dark: #2C3E50;
+            --correct-green: #00D26A;
+            --incorrect-red: #FF4757;
+            --glass-bg: rgba(255, 255, 255, 0.35);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 12px 32px 0 rgba(31, 38, 135, 0.15);
+            --card-radius: 20px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* ================= BACKGROUND GRADIENT ANIMATION ================= */
+        body {
+            font-family: 'Nunito', sans-serif;
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            background: linear-gradient(-45deg, #8854C0, #FDCB6E, #00C9A7, #FF9A9E);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* ================= FLOATING SVG PATTERN ================= */
+        #pattern-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+            overflow: hidden;
+        }
+        .floating-icon {
+            position: absolute;
+            bottom: -10%;
+            fill: rgba(255, 255, 255, 0.3);
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg) scale(0.8); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-120vh) rotate(360deg) scale(1.2); opacity: 0; }
+        }
+
+        /* ================= LAYOUT & UI COMPONENT ================= */
+        .container {
+            max-width: 900px; margin: 0 auto; padding: 20px;
+            position: relative; z-index: 1;
+        }
+
+        .header {
+            text-align: center; margin-bottom: 30px;
+            padding: 10px; border-radius: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            display: inline-block;
+            transform: translateX(-50%);
+            position: relative; left: 50%;
+        }
+        .header h3 {
+            font-size: 1rem; font-weight: 800; color: #fff;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            letter-spacing: 1px;
+        }
+
+        /* Thẻ câu hỏi (Glassmorphism) */
+        .question-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--card-radius);
+            padding: 35px 30px; margin-bottom: 40px;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 1.15rem; font-weight: 800; margin-bottom: 25px; line-height: 1.6;
+        }
+
+        .options-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;
+        }
+
+        /* Thẻ đáp án (Blooket Style) */
+        .option-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            padding: 20px 25px;
+            font-size: 1.08rem; font-weight: 800; color: var(--text-dark);
+            cursor: pointer; text-align: center;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 70px;
+            box-shadow: 0 8px 0 #D1D8E0; 
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            -webkit-user-select: none; user-select: none;
+        }
+        .option-card:hover { 
+            transform: scale(1.05) translateY(-4px); 
+            box-shadow: 0 12px 0 #BDC3C7; 
+            background: #ffffff;
+        }
+        .option-card:active { 
+            transform: scale(0.98) translateY(6px); 
+            box-shadow: 0 2px 0 #D1D8E0; 
+        }
+
+        /* Trạng thái đáp án */
+        .option-card.correct {
+            background-color: var(--correct-green) !important; color: white !important;
+            box-shadow: 0 8px 0 #00A352 !important;
+        }
+        .option-card.incorrect {
+            background-color: var(--incorrect-red) !important; color: white !important;
+            box-shadow: 0 8px 0 #C82333 !important;
+        }
+        .option-card.disabled { pointer-events: none; opacity: 0.7; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .shake-anim { animation: shake 0.4s ease-in-out; }
+
+        /* ================= KHUNG GIẢI THÍCH SIÊU CHI TIẾT ================= */
+        .explanation-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            padding: 25px; margin-top: 30px;
+            font-size: 1rem; line-height: 1.7;
+            border-left: 8px solid #8854C0;
+            display: none; 
+            animation: slideDown 0.4s ease-out;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* FORMAT MÀU CHỮ GIẢI THÍCH CHUẨN SƯ PHẠM */
+        .vn-translate {
+            background: #FFF3CD; color: #D35400; padding: 12px 18px; border-radius: 12px;
+            font-weight: 800; margin-bottom: 20px; border: 2px dashed #FDCB6E;
+            font-size: 1.05rem;
+        }
+        .exp-step { margin-bottom: 12px; color: #34495E; font-weight: 500; }
+        .p-word { color: #2980B9; font-weight: 900; }
+        .p-phonetic { background: #F4ECF7; color: #8E44AD; padding: 3px 8px; border-radius: 6px; font-family: monospace; font-weight: bold;}
+        .p-mean { color: #D35400; font-style: italic; font-weight: 800; }
+        .p-grammar { color: #C0392B; text-decoration: underline; text-decoration-style: wavy; font-weight: 900; }
+        .hl-green { color: #27AE60; font-weight: 900; font-size: 1.05rem; }
+        .hl-red { color: #C0392B; font-weight: 900; text-decoration: line-through; }
+
+        /* ================= BIỂN BÁO CSS ================= */
+        .css-sign { display: block; margin: 20px auto; }
+        .sign-no-parking { border: 4px solid #d63031; width: 160px; padding: 15px; border-radius: 15px; background: white; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.1);}
+        .sign-circle-slash { width: 100px; height: 100px; border: 12px solid #d63031; border-radius: 50%; position: relative; display: inline-flex; align-items: center; justify-content: center; }
+        .sign-p { font-size: 65px; font-weight: 900; color: #2d3436; font-family: sans-serif; line-height: 1; }
+        .sign-slash { position: absolute; width: 100%; height: 12px; background: #d63031; transform: rotate(45deg); }
+        .sign-text-bot { margin-top: 10px; color: #d63031; font-weight: 900; font-size: 16px; text-align: center; }
+
+        .sign-no-grass { width: 160px; height: 160px; border: 14px solid #d63031; border-radius: 50%; position: relative; background: white; overflow: hidden; margin: 10px auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .sg-grass { position: absolute; bottom: -5px; width: 100%; height: 50px; background: #00b894; clip-path: polygon(0% 100%, 0% 50%, 10% 20%, 20% 60%, 30% 10%, 40% 55%, 50% 15%, 60% 65%, 70% 5%, 80% 50%, 90% 20%, 100% 60%, 100% 100%); }
+        .sg-shoe { position: absolute; bottom: 35px; left: 30px; width: 80px; height: 40px; background: #2d3436; border-radius: 15px 40px 10px 5px; transform: rotate(-10deg); }
+        .sg-slash { position: absolute; width: 150%; height: 14px; background: #d63031; transform: rotate(-45deg); top: 70px; left: -20px; z-index: 2; }
+
+        /* ================= MODAL & NÚT NỘP BÀI ================= */
+        .submit-container { text-align: center; margin: 50px 0 40px; }
+        .submit-btn {
+            background: linear-gradient(135deg, #00C9A7, #00A352); color: white;
+            font-size: 1.3rem; font-weight: 900; padding: 20px 50px;
+            border: none; border-radius: 20px; cursor: pointer;
+            box-shadow: 0 8px 0 #007A3D; transition: all 0.2s;
+            text-transform: uppercase; letter-spacing: 1px; font-family: 'Nunito';
+        }
+        .submit-btn:hover { transform: translateY(-3px); box-shadow: 0 11px 0 #007A3D; }
+        .submit-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #007A3D; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 30px; text-align: center;
+            width: 90%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        .modal-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 25px; color: #2C3E50;}
+        .name-input {
+            width: 100%; padding: 18px; border: 3px solid #E5E5E5; border-radius: 15px;
+            font-size: 1.2rem; font-family: 'Nunito'; margin-bottom: 25px; font-weight: 700; text-align: center;
+        }
+        .name-input:focus { outline: none; border-color: #8854C0; }
+        .name-input.error { border-color: #FF4757; animation: shake 0.4s; }
+
+        .score-text { font-size: 3.5rem; font-weight: 900; color: #00D26A; margin: 15px 0; text-shadow: 3px 3px 0px rgba(0,210,106,0.2); }
+        .result-gif { width: 100%; border-radius: 20px; margin-bottom: 20px; border: 4px solid #f1f1f1; }
+        
+        /* Hiệu ứng pháo giấy */
+        .confetti { position: fixed; width: 12px; height: 12px; z-index: 9999; pointer-events: none; border-radius: 3px; }
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body>
+
+    
+
+    <div id="pattern-container"></div>
+
+    <div class="container">
+        <div class="header">
+            <h3>Giáo viên tạo: Ms. Chí Nên · ☎️ 0852639652</h3>
+        </div>
+
+        <div id="quiz-container"></div>
+
+        <div class="submit-container">
+            <button class="submit-btn" onclick="openNameModal()">🎯 NỘP BÀI & XEM KẾT QUẢ</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="nameModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Bạn tên là gì nhỉ? 🤔</h2>
+            <input type="text" id="studentName" class="name-input" placeholder="Ví dụ: Nguyễn Văn A..." onkeypress="handleNameEnter(event)">
+            <button class="submit-btn" style="width: 100%; padding: 18px; font-size: 1.1rem;" onclick="submitQuiz()">Bắt đầu xem điểm!</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="resultGreeting">🌟 THIÊN TÀI!</h2>
+            <img id="resultGif" class="result-gif" src="" alt="Meme">
+            <div style="font-size: 1.2rem; font-weight: 800; color: #7F8C8D;">Điểm số của bạn:</div>
+            <div class="score-text" id="finalScore">20 / 20</div>
+            <button class="submit-btn" style="width: 100%; padding: 18px; font-size: 1.1rem; background: #8854C0; box-shadow: 0 8px 0 #6A38A3;" onclick="location.reload()">Làm Lại Bài 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // ================= XỬ LÝ MÀN HÌNH KHÓA VÀ ÂM THANH (MỚI THÊM) =================
+        const introAudio = new Audio('https:
+
+        function checkPassword() {
+            const passInput = document.getElementById('quizPassword');
+            const pass = passInput.value.trim().toLowerCase();
+
+            // Mật khẩu mặc định là ''. Ms. Chí Nên · ☎️ 0852639652có thể sửa chữ '' bên dưới thành mật khẩu mong muốn
+            if (true) { 
+                document.getElementById('lockModal').style.display = 'none';
+                
+                // Bắt buộc phải khởi tạo context âm thanh sau khi user tương tác (click Mở Khóa)
+                initAudio(); 
+                
+                // Phát âm thanh khích lệ ngay lập tức
+                introAudio.currentTime = 0;
+                introAudio.play().catch(e => console.log("Trình duyệt chặn autoplay:", e));
+            } else {
+                passInput.classList.add('error');
+                passInput.value = '';
+                passInput.placeholder = "Mật khẩu chưa đúng, thử lại nha!";
+                setTimeout(() => passInput.classList.remove('error'), 500);
+                playHuh(); // Thêm chút hài hước nếu nhập sai
+            }
+        }
+        
+        function handlePasswordEnter(e) { if(e.key === 'Enter') checkPassword(); }
+
+        // ================= DỮ LIỆU ĐỀ BÀI VÀ GIẢI THÍCH SIÊU CHI TIẾT 4 BƯỚC =================
+        const quizData = [
+            {
+                instruction: "Mark the letter A, B, C or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+                question: "<b>Question 1.</b>", options: ["prepare", "fair", "share", "carry"], correct: 3, markText: "<u>a</u>",
+                explanation: `
+                    <div class="vn-translate">Chọn từ có phần gạch chân phát âm khác với ba từ còn lại.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Yêu cầu tìm từ có phần gạch chân (âm 'a') phát âm khác biệt so với 3 từ còn lại trong nhóm.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>prepare</span> <span class='p-phonetic'>/prɪˈpeə(r)/</span>: <span class='p-mean'>chuẩn bị</span><br>
+                    <span class='p-word'>fair</span> <span class='p-phonetic'>/feə(r)/</span>: <span class='p-mean'>công bằng</span><br>
+                    <span class='p-word'>share</span> <span class='p-phonetic'>/ʃeə(r)/</span>: <span class='p-mean'>chia sẻ</span><br>
+                    <span class='p-word'>carry</span> <span class='p-phonetic'>/ˈkæri/</span>: <span class='p-mean'>mang vác</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    Từ <span class='p-word'>carry</span> là đáp án <span class='hl-green'>Đúng</span> vì âm 'a' được phát âm là <span class='p-phonetic'>/æ/</span>.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    Các từ còn lại <span class='hl-red'>Sai</span> vì âm 'a' của chúng đều được phát âm là âm đôi <span class='p-phonetic'>/eə/</span>.</div>`
+            },
+            {
+                instruction: "Mark the letter A, B, C or D to indicate the word whose underlined part differs from the other three in pronunciation.",
+                question: "<b>Question 2.</b>", options: ["hate", "air", "chair", "hair"], correct: 0, markText: "<u>a</u>",
+                explanation: `
+                    <div class="vn-translate">Chọn từ có phần gạch chân phát âm khác với ba từ còn lại.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Đề bài tương tự, tìm từ có âm 'a' phát âm khác các từ còn lại.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>hate</span> <span class='p-phonetic'>/heɪt/</span>: <span class='p-mean'>ghét</span><br>
+                    <span class='p-word'>air</span> <span class='p-phonetic'>/eə(r)/</span>: <span class='p-mean'>không khí</span><br>
+                    <span class='p-word'>chair</span> <span class='p-phonetic'>/tʃeə(r)/</span>: <span class='p-mean'>cái ghế</span><br>
+                    <span class='p-word'>hair</span> <span class='p-phonetic'>/heə(r)/</span>: <span class='p-mean'>tóc</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    Từ <span class='p-word'>hate</span> là đáp án <span class='hl-green'>Đúng</span> vì âm gạch chân phát âm là <span class='p-phonetic'>/eɪ/</span>.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    Các từ còn lại <span class='hl-red'>Sai</span> vì âm gạch chân đều được phát âm là <span class='p-phonetic'>/eə/</span>.</div>`
+            },
+            {
+                instruction: "Mark the letter A, B, C or D to indicate the word that differs from the other three in the position of primary stress.",
+                question: "<b>Question 3.</b>", options: ["undergo", "domestic", "substantial", "investment"], correct: 0,
+                explanation: `
+                    <div class="vn-translate">Chọn từ có vị trí trọng âm chính khác với ba từ còn lại.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Yêu cầu xác định trọng âm chính rơi vào âm tiết thứ mấy và tìm từ có vị trí khác biệt.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>undergo</span> <span class='p-phonetic'>/ˌʌndəˈɡəʊ/</span>: <span class='p-mean'>trải qua</span> (Trọng âm rơi vào âm tiết 3)<br>
+                    <span class='p-word'>domestic</span> <span class='p-phonetic'>/dəˈmestɪk/</span>: <span class='p-mean'>trong nước</span> (Trọng âm rơi vào âm tiết 2)<br>
+                    <span class='p-word'>substantial</span> <span class='p-phonetic'>/səbˈstænʃl/</span>: <span class='p-mean'>đáng kể</span> (Trọng âm rơi vào âm tiết 2)<br>
+                    <span class='p-word'>investment</span> <span class='p-phonetic'>/ɪnˈvestmənt/</span>: <span class='p-mean'>sự đầu tư</span> (Trọng âm rơi vào âm tiết 2)</div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    Từ <span class='p-word'>undergo</span> là đáp án <span class='hl-green'>Đúng</span> vì nó là từ duy nhất có trọng âm rơi vào âm tiết thứ 3.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    Các đáp án còn lại <span class='hl-red'>Sai</span> vì trọng âm của chúng đều rơi vào âm tiết thứ 2.</div>`
+            },
+            {
+                instruction: "Mark the letter A, B, C or D to indicate the word that differs from the other three in the position of primary stress.",
+                question: "<b>Question 4.</b>", options: ["awful", "cartoon", "boring", "channel"], correct: 1,
+                explanation: `
+                    <div class="vn-translate">Chọn từ có vị trí trọng âm chính khác với ba từ còn lại.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Tìm từ có trọng âm chính khác nhóm.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>awful</span> <span class='p-phonetic'>/ˈɔːfl/</span>: <span class='p-mean'>tồi tệ</span> (Trọng âm 1)<br>
+                    <span class='p-word'>cartoon</span> <span class='p-phonetic'>/kɑːˈtuːn/</span>: <span class='p-mean'>phim hoạt hình</span> (Trọng âm 2)<br>
+                    <span class='p-word'>boring</span> <span class='p-phonetic'>/ˈbɔːrɪŋ/</span>: <span class='p-mean'>nhàm chán</span> (Trọng âm 1)<br>
+                    <span class='p-word'>channel</span> <span class='p-phonetic'>/ˈtʃænl/</span>: <span class='p-mean'>kênh</span> (Trọng âm 1)</div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>cartoon</span> là đáp án <span class='hl-green'>Đúng</span> vì trọng âm rơi vào âm tiết thứ 2. <span class='p-grammar'>Quy tắc:</span> Các từ có hậu tố "-oon" thì trọng âm thường rơi vào chính âm tiết chứa nó.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    Các từ còn lại <span class='hl-red'>Sai</span> vì trọng âm của chúng đều rơi vào âm tiết đầu tiên.</div>`
+            },
+            {
+                instruction: "Indicate the correct answer to each of the following questions.",
+                question: "<b>Question 5.</b> The robot will _______of the flowers in the garden.", options: ["be careful", "take note", "take care", "carry"], correct: 2,
+                explanation: `
+                    <div class="vn-translate">Robot sẽ chăm sóc những bông hoa trong khu vườn.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Chọn cụm từ phù hợp điền vào chỗ trống kết hợp với giới từ "of".</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>be careful</span>: <span class='p-mean'>cẩn thận</span><br>
+                    <span class='p-word'>take note</span>: <span class='p-mean'>ghi chú</span><br>
+                    <span class='p-word'>take care</span>: <span class='p-mean'>chăm sóc</span><br>
+                    <span class='p-word'>carry</span>: <span class='p-mean'>mang vác</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>take care</span> là đáp án <span class='hl-green'>Đúng</span> vì kết hợp với giới từ phía sau tạo thành <span class='p-grammar'>Collocation: take care of</span> (chăm sóc ai/cái gì). Vừa chuẩn ngữ pháp vừa hợp ngữ nghĩa làm vườn.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>be careful</span> sai vì thường đi với giới từ "with" hoặc "about". <span class='hl-red'>take note</span> và <span class='hl-red'>carry</span> sai hoàn toàn về mặt ngữ nghĩa, không đi kèm giới từ "of" trong trường hợp này.</div>`
+            },
+            {
+                instruction: "Indicate the correct answer to each of the following questions.",
+                question: "<b>Question 6.</b> A: What would you like to drink? B: I _______have a lemonade, please.", options: ["will be", "will", "won’t", "won’t be"], correct: 1,
+                explanation: `
+                    <div class="vn-translate">A: Bạn muốn uống gì? B: Cho tôi một ly nước chanh nhé.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Chọn trợ động từ đúng để hoàn thành câu gọi đồ uống tại nhà hàng/quán nước.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>will be</span>: <span class='p-mean'>sẽ là</span><br>
+                    <span class='p-word'>will</span>: <span class='p-mean'>sẽ</span><br>
+                    <span class='p-word'>won’t</span>: <span class='p-mean'>sẽ không</span><br>
+                    <span class='p-word'>won’t be</span>: <span class='p-mean'>sẽ không là</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>will</span> là đáp án <span class='hl-green'>Đúng</span> vì trong Tiếng Anh, ta sử dụng thì Tương lai đơn (<span class='p-grammar'>Will + V-nguyên thể</span>) để diễn tả một quyết định, lời yêu cầu được đưa ra ngay tại thời điểm nói (gọi món).</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>will be</span> sai cấu trúc vì theo sau đã có động từ "have". <span class='hl-red'>won't</span> sai nghĩa vì người nói đang muốn yêu cầu đồ uống (khẳng định) chứ không phải từ chối.</div>`
+            },
+            {
+                instruction: "Indicate the correct answer to each of the following questions.",
+                question: "<b>Question 7.</b> Asia is Earth’s largest and most populous ____________.", options: ["island", "country", "ocean", "continent"], correct: 3,
+                explanation: `
+                    <div class="vn-translate">Châu Á là lục địa lớn nhất và đông dân nhất trên Trái Đất.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Điền danh từ chỉ định nghĩa địa lý chính xác cho "Châu Á" (Asia).</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>island</span>: <span class='p-mean'>hòn đảo</span><br>
+                    <span class='p-word'>country</span>: <span class='p-mean'>quốc gia</span><br>
+                    <span class='p-word'>ocean</span>: <span class='p-mean'>đại dương</span><br>
+                    <span class='p-word'>continent</span>: <span class='p-mean'>lục địa / châu lục</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>continent</span> là đáp án <span class='hl-green'>Đúng</span> vì kiến thức thực tế địa lý xác nhận Châu Á (Asia) là một châu lục.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    Các đáp án còn lại <span class='hl-red'>Sai</span> vì Châu Á không phải là một hòn đảo nhỏ, không phải là một quốc gia đơn lẻ, và càng không phải là đại dương chứa nước.</div>`
+            },
+            {
+                instruction: "Indicate the correct answer to each of the following questions.",
+                question: "<b>Question 8.</b> Our city is very crowded. How about ______?", options: ["your", "you", "yours", "me"], correct: 2,
+                explanation: `
+                    <div class="vn-translate">Thành phố của chúng tôi rất đông đúc. Còn của bạn thì sao?</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Chọn từ thích hợp để hoàn thành câu hỏi về "thành phố của bạn".</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>your</span>: <span class='p-mean'>của bạn</span> (Tính từ sở hữu)<br>
+                    <span class='p-word'>you</span>: <span class='p-mean'>bạn</span> (Đại từ nhân xưng)<br>
+                    <span class='p-word'>yours</span>: <span class='p-mean'>cái của bạn</span> (Đại từ sở hữu)<br>
+                    <span class='p-word'>me</span>: <span class='p-mean'>tôi</span> (Đại từ tân ngữ)</div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>yours</span> là đáp án <span class='hl-green'>Đúng</span> vì trong câu này, ta cần một <span class='p-grammar'>Đại từ sở hữu (Possessive Pronoun)</span> để thay thế cho cụm "your city" nhằm tránh sự lặp từ lủng củng. (Yours = Your city).</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>your</span> sai vì tính từ sở hữu luôn bắt buộc phải có Danh từ theo sau nó. <span class='hl-red'>you</span> và <span class='hl-red'>me</span> sai vì ta đang so sánh "thành phố" với "thành phố", không thể so sánh "thành phố" với "con người" được.</div>`
+            },
+            {
+                instruction: "Indicate the correct answer to each of the following questions.",
+                question: "<b>Question 9.</b> My robot ______ computer games very well. I can’t win it.", options: ["plays", "helps", "does", "learnt"], correct: 0,
+                explanation: `
+                    <div class="vn-translate">Robot của tôi chơi game máy tính rất giỏi. Tôi không thể thắng nó.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Chọn động từ kết hợp với "computer games".</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>plays</span>: <span class='p-mean'>chơi</span><br>
+                    <span class='p-word'>helps</span>: <span class='p-mean'>giúp đỡ</span><br>
+                    <span class='p-word'>does</span>: <span class='p-mean'>làm</span><br>
+                    <span class='p-word'>learnt</span>: <span class='p-mean'>đã học</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>plays</span> là đáp án <span class='hl-green'>Đúng</span> vì ta có <span class='p-grammar'>Collocation cố định: play computer games</span> (chơi trò chơi điện tử). Động từ chia thêm "s" vì chủ ngữ "My robot" là ngôi thứ 3 số ít ở thì Hiện tại đơn.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    Các từ <span class='hl-red'>helps, does, learnt</span> đều sai vì khi ghép với từ "games" sẽ không tạo ra cụm từ có nghĩa hợp lý trong tiếng Anh.</div>`
+            },
+            {
+                instruction: "Indicate the correct answer to each of the following questions.",
+                question: "<b>Question 10.</b> I bought the _____ souvenir I could afford.", options: ["most expensive", "expensive", "more expensive", "expensives"], correct: 0,
+                explanation: `
+                    <div class="vn-translate">Tôi đã mua món quà lưu niệm đắt nhất mà tôi có thể chi trả.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Chia hình thức đúng của tính từ "expensive" để hoàn thiện câu.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>most expensive</span>: <span class='p-mean'>đắt nhất</span> (So sánh nhất)<br>
+                    <span class='p-word'>expensive</span>: <span class='p-mean'>đắt tiền</span> (Tính từ gốc)<br>
+                    <span class='p-word'>more expensive</span>: <span class='p-mean'>đắt hơn</span> (So sánh hơn)<br>
+                    <span class='p-word'>expensives</span>: <span class='p-mean'>từ không tồn tại</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>most expensive</span> là đáp án <span class='hl-green'>Đúng</span> vì trước khoảng trống có mạo từ xác định <span class='p-grammar'>"the"</span>, đây là dấu hiệu đặc trưng bắt buộc phải dùng cấu trúc So sánh nhất (Superlative) của tính từ dài.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>expensive</span> sai vì thiếu dạng so sánh khi có "the". <span class='hl-red'>more expensive</span> sai vì so sánh hơn thường đi với "than", không đi kèm mạo từ "the". <span class='hl-red'>expensives</span> sai hoàn toàn vì tính từ không có hình thức số nhiều thêm "s".</div>`
+            },
+            {
+                instruction: "Indicate the correct answer to each of the following questions.",
+                question: "<b>Question 11.</b> If you bring water bottles to a picnic, what ______types of bottles?", options: ["do you bring", "should you bring", "are you bringing", "you will bring"], correct: 1,
+                explanation: `
+                    <div class="vn-translate">Nếu bạn mang chai nước tới buổi dã ngoại, bạn nên mang loại chai nào?</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Chọn cấu trúc mệnh đề chính cho Câu điều kiện loại 1 dạng câu hỏi xin lời khuyên.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>do you bring</span>: <span class='p-mean'>bạn mang</span><br>
+                    <span class='p-word'>should you bring</span>: <span class='p-mean'>bạn nên mang</span><br>
+                    <span class='p-word'>are you bringing</span>: <span class='p-mean'>bạn đang mang</span><br>
+                    <span class='p-word'>you will bring</span>: <span class='p-mean'>bạn sẽ mang</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>should you bring</span> là đáp án <span class='hl-green'>Đúng</span>. Thứ nhất, câu gốc có từ để hỏi "what" và dấu chấm hỏi "?", do đó bắt buộc phải <span class='p-grammar'>đảo trợ động từ lên trước chủ ngữ</span>. Thứ hai, dùng "should" thể hiện việc hỏi xin một lời khuyên chân thành rất phù hợp với ngữ cảnh dã ngoại.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>you will bring</span> sai nghiêm trọng vì chưa đảo ngữ. <span class='hl-red'>do you bring</span> và <span class='hl-red'>are you bringing</span> sai về sắc thái nghĩa vì không mang tính chất đưa ra lời khuyên.</div>`
+            },
+            {
+                instruction: "Indicate the correct answer to each of the following questions.",
+                question: "<b>Question 12.</b> Waiter: “Are you ready to order, sir?” – Mr. John: ‘ ___________”", options: ["Thanks, I’ve really had enough.", "Ok, here is my bill.", "Sure, it’s delicious.", "Yes, I’d like a salad and some chicken."], correct: 3,
+                explanation: `
+                    <div class="vn-translate">Bồi bàn: "Ngài đã sẵn sàng gọi món chưa?" - Ông John: "Vâng, tôi muốn một phần salad và một ít thịt gà."</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Chọn câu đáp lại lời mời gọi món của phục vụ bàn.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-mean'>Cảm ơn, tôi thực sự đã ăn đủ rồi.</span><br>
+                    <span class='p-mean'>Được thôi, hóa đơn của tôi đây.</span><br>
+                    <span class='p-mean'>Chắc chắn rồi, nó rất ngon.</span><br>
+                    <span class='p-mean'>Vâng, tôi muốn một phần salad và một ít thịt gà.</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    Câu D là đáp án <span class='hl-green'>Đúng</span> vì sử dụng cấu trúc lịch sự kinh điển trong nhà hàng <span class='p-grammar'>"I'd like + món ăn"</span> để phản hồi lại chính xác lời mời gọi món.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>A</span> sai vì khách mới đến chưa hề ăn. <span class='hl-red'>B</span> sai vì hóa đơn (bill) là do phục vụ đưa, khách không giữ hóa đơn sẵn. <span class='hl-red'>C</span> sai vì khách chưa nếm đồ ăn nên chưa thể khen ngon.</div>`
+            },
+            {
+                instruction: "Put the sentences (a-c) in the correct order, then fill in the blank to make a logical text.",
+                question: "<b>Question 17:</b> I went shopping for a new phone yesterday, but things didn’t go as planned. _________<br><br>a. When I arrived at the store, I found out that the phone model I wanted was out of stock.<br>b. I spent some time looking at other options, but I couldn’t find anything I liked.<br>c. After a long search, I decided to go to a different store to find the right phone.", options: ["a-b-c", "b-a-c", "c-a-b", "b-c-a"], correct: 0,
+                explanation: `
+                    <div class="vn-translate">Hôm qua tôi đi mua điện thoại mới, nhưng mọi việc không như dự định. _________</div>
+                    <div class="exp-step"><strong>1. Dịch 3 câu cần sắp xếp:</strong><br>
+                    a. Khi tôi đến cửa hàng, tôi phát hiện mẫu điện thoại mình muốn đã hết hàng.<br>
+                    b. Tôi dành một chút thời gian xem các lựa chọn khác, nhưng không tìm thấy gì ưng ý.<br>
+                    c. Sau một hồi tìm kiếm lâu, tôi quyết định sang một cửa hàng khác để tìm đúng chiếc điện thoại đó.</div>
+                    <div class="exp-step"><strong>2. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>a-b-c</span> là đáp án <span class='hl-green'>Đúng</span> vì diễn biến tuân thủ cực kỳ chặt chẽ logic thời gian: Bước chân vào quán -> Phát hiện hết hàng -> Cố gắng tìm mẫu thay thế -> Thất vọng nên phải di chuyển sang quán thứ hai.</div>
+                    <div class="exp-step"><strong>3. Tại sao các đáp án còn lại sai?</strong><br>
+                    Các đáp án còn lại <span class='hl-red'>Sai</span> vì phá vỡ sự mạch lạc của dòng thời gian (Ví dụ: chưa tìm mẫu thay thế đã bỏ đi sang quán khác).</div>`
+            },
+            {
+                instruction: "Choose the sentence that you can end the text (in Question 17) most appropriately.",
+                question: "<b>Question 18:</b>", options: ["I ended up buying a different model that was on sale.", "The new store had a great selection, and I found the perfect phone.", "I was disappointed but decided to return to the original store later.", "I went home and decided to shop online for a better deal."], correct: 1,
+                explanation: `
+                    <div class="vn-translate">Chọn câu kết thúc phù hợp nhất cho đoạn văn ở Câu 17.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Viết tiếp đoạn kết có hậu cho câu chuyện đi mua điện thoại dang dở ở trên.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-mean'>Cuối cùng tôi đã mua một mẫu điện thoại khác đang được giảm giá.</span><br>
+                    <span class='p-mean'>Cửa hàng mới có rất nhiều sự lựa chọn tuyệt vời, và tôi đã tìm thấy chiếc điện thoại hoàn hảo.</span><br>
+                    <span class='p-mean'>Tôi rất thất vọng nhưng quyết định sẽ quay lại cửa hàng ban đầu vào lúc khác.</span><br>
+                    <span class='p-mean'>Tôi về nhà và quyết định mua sắm trực tuyến để có giá hời hơn.</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    Đáp án B là <span class='hl-green'>Đúng</span> vì có tính <span class='p-grammar'>liên kết mạch lạc (Cohesion)</span> tuyệt đối: Cụm từ "The new store" kết nối trực tiếp với hành động "go to a different store" ở ngay câu cuối cùng của bài 17.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>A</span> mâu thuẫn vì nhân vật đã kiên quyết bỏ đi tìm "right phone" chứ không chấp nhận mẫu thay thế. <span class='hl-red'>C và D</span> sai logic hoàn cảnh vì nhân vật đã di chuyển tới cửa hàng thứ hai rồi, không thể tự nhiên "quay lại quán đầu" hay "về nhà" mà bỏ qua việc miêu tả quán thứ hai.</div>`
+            },
+            {
+                instruction: "Indicate the sentence that is closest in meaning to the original sentence.",
+                question: "<b>Question 25.</b> The black dress is more expensive than the white one.", options: ["The white dress is cheaper than the black one.", "The white dress is so expensive as the black one.", "The white dress is more cheap than the black one.", "The white dress is no more expensive than the black one."], correct: 0,
+                explanation: `
+                    <div class="vn-translate">Chiếc váy đen đắt tiền hơn chiếc váy trắng.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Chọn câu có ý nghĩa tương đương với câu gốc (đảo ngược vị trí so sánh).</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-mean'>Chiếc váy trắng rẻ hơn chiếc váy đen.</span><br>
+                    <span class='p-mean'>Sai ngữ pháp (so ... as chỉ dùng trong câu phủ định).</span><br>
+                    <span class='p-mean'>Sai cấu trúc (cheap là tính từ ngắn).</span><br>
+                    <span class='p-mean'>Chiếc váy trắng không đắt hơn chiếc váy đen.</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    Đáp án A là <span class='hl-green'>Đúng</span> vì áp dụng kiến thức từ vựng trái nghĩa: <span class='p-grammar'>expensive</span> (đắt) ><span class='p-grammar'>cheap</span> (rẻ). Suy luận logic: A đắt hơn B thì chắc chắn B rẻ hơn A.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>B</span> sai ngữ pháp cơ bản. <span class='hl-red'>C</span> sai vì "cheap" thêm "er" (cheaper), không dùng "more". <span class='hl-red'>D</span> sai nghĩa vì "không đắt hơn" có thể bao hàm ý nghĩa "bằng giá nhau", không tương đương 100% câu gốc.</div>`
+            },
+            {
+                instruction: "Indicate the sentence that is closest in meaning to the original sentence.",
+                question: "<b>Question 26.</b> According to me, English is easier than Maths.", options: ["According the me, Maths is so easier as English.", "According to me, English is so easy as Maths.", "According to me, English the easiest than Maths.", "According to me, Maths is not as easy as English."], correct: 3,
+                explanation: `
+                    <div class="vn-translate">Theo tôi, Tiếng Anh dễ hơn Toán.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Tương tự câu trên, viết lại câu dựa vào so sánh hơn.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-mean'>Sai giới từ "the" và sai hỗn hợp cấu trúc.</span><br>
+                    <span class='p-mean'>Tiếng Anh dễ bằng Toán (Sai nghĩa gốc).</span><br>
+                    <span class='p-mean'>Sai ngữ pháp (easiest không đi với than).</span><br>
+                    <span class='p-mean'>Toán không dễ bằng Tiếng Anh.</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    Đáp án D là <span class='hl-green'>Đúng</span> vì áp dụng công thức chuyển đổi kinh điển trong Tiếng Anh: <span class='p-grammar'>A hơn B (A easier than B) => B không bằng A (B is not as easy as A)</span>.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    Các đáp án A, B, C <span class='hl-red'>Sai</span> hoàn toàn vì lỗi ngữ pháp cơ bản (so ... as chỉ dùng ở câu phủ định, cấp so sánh nhất không dùng than...).</div>`
+            },
+            {
+                instruction: "Indicate the sentence that is made from the given cues.",
+                question: "<b>Question 27.</b> robots / able / guard / houses / when / we / be / away", options: ["Robots are able to guard our houses when we are away.", "Robots will be able to guard our houses when we are away.", "Robots be able to guard our houses when we be away.", "Robots will able guard our houses when we are away."], correct: 1,
+                explanation: `
+                    <div class="vn-translate">Robot sẽ có khả năng canh gác nhà của chúng ta khi chúng ta đi vắng.</div>
+                    <div class="exp-step"><strong>1. Dịch từ gợi ý:</strong> Dựng câu hoàn chỉnh dựa trên các từ cho sẵn.</div>
+                    <div class="exp-step"><strong>2. Tại sao đáp án đúng là đúng?</strong><br>
+                    Đáp án B là <span class='hl-green'>Đúng</span>. Câu này mang sắc thái dự đoán một khả năng xảy ra trong tương lai, nên phải dùng thì Tương lai đơn với cấu trúc <span class='p-grammar'>will be able to + Động từ nguyên thể</span>.</div>
+                    <div class="exp-step"><strong>3. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>A</span> sai thì (Hiện tại đơn không thể hiện dự đoán). <span class='hl-red'>C</span> sai vì không chia động từ "be" thành "are". <span class='hl-red'>D</span> sai vì thiếu động từ to be sau chữ will (will be able).</div>`
+            },
+            {
+                instruction: "Indicate the sentence that is made from the given cues.",
+                question: "<b>Question 28.</b> future / robots / able / do / many / thing / like / humans", options: ["In the future, robots are able to do many things like humans.", "In the future, robots will able to do many things like humans", "In the future, robots will be able to do many things like humans.", "In the future, robots able doing many things like humans."], correct: 2,
+                explanation: `
+                    <div class="vn-translate">Trong tương lai, robot sẽ có khả năng làm nhiều thứ giống con người.</div>
+                    <div class="exp-step"><strong>1. Dịch từ gợi ý:</strong> Dựng câu hoàn chỉnh dựa trên các từ cho sẵn.</div>
+                    <div class="exp-step"><strong>2. Tại sao đáp án đúng là đúng?</strong><br>
+                    Đáp án C là <span class='hl-green'>Đúng</span>. Dấu hiệu nhận biết rõ ràng nhất là trạng từ thời gian <span class='p-grammar'>In the future (Trong tương lai)</span>, bắt buộc câu phải chia thì Tương lai đơn (will be able to do).</div>
+                    <div class="exp-step"><strong>3. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>A</span> sai thì (Hiện tại đơn). <span class='hl-red'>B</span> sai vì thiếu động từ "be". <span class='hl-red'>D</span> sai toàn bộ cấu trúc cơ bản của cụm able to do.</div>`
+            },
+            {
+                instruction: "Read the following sign or notice and mark the letter A, B, C or D to indicate the correct answer.",
+                question: "<b>Question 29:</b><br>", options: ["No passing after 5:30 pm", "Parking from 8:30 am to 5:30 pm", "No parking from 8:30 am to 5:30 pm", "No passing from 8:30 am to 5:30 pm"], correct: 2,
+                signHtml: `<div class="css-sign"><div class="sign-no-parking"><div class="sign-circle-slash"><div class="sign-p">P</div><div class="sign-slash"></div></div><div class="sign-text-bot">8:30 AM<br>TO 5:30 PM</div></div></div>`,
+                explanation: `
+                    <div class="vn-translate">Cấm đỗ xe từ 8:30 sáng đến 5:30 chiều.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Quan sát biển báo giao thông và chọn ý nghĩa chính xác nhất.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>No passing...</span>: <span class='p-mean'>Không được vượt qua...</span><br>
+                    <span class='p-word'>Parking from...</span>: <span class='p-mean'>Cho phép đỗ xe từ...</span><br>
+                    <span class='p-word'>No parking from...</span>: <span class='p-mean'>Cấm đỗ xe từ...</span><br>
+                    <span class='p-word'>No passing from...</span>: <span class='p-mean'>Không được vượt từ...</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>No parking</span> là đáp án <span class='hl-green'>Đúng</span>. Biểu tượng chữ <span class='p-grammar'>P (Parking)</span> bị vòng tròn đỏ gạch chéo đè lên biểu thị sự nghiêm cấm (No). Thời gian quy định khớp với khung giờ ghi trên biển.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>No passing</span> sai vì "Passing" nghĩa là vượt xe, không liên quan đến chữ P. <span class='hl-red'>Parking from...</span> sai vì thiếu chữ "No", hiểu nhầm ý nghĩa cấm đoán của biển báo.</div>`
+            },
+            {
+                instruction: "Read the following sign or notice and mark the letter A, B, C or D to indicate the correct answer.",
+                question: "<b>Question 30:</b><br>", options: ["Don’t step on grass", "Don’t run in class", "No smoking", "Take off your shoes"], correct: 0,
+                signHtml: `<div class="css-sign"><div class="sign-no-grass"><div class="sg-grass"></div><div class="sg-shoe"></div><div class="sg-slash"></div></div></div>`,
+                explanation: `
+                    <div class="vn-translate">Đừng dẫm lên bãi cỏ / Cấm đi lên cỏ.</div>
+                    <div class="exp-step"><strong>1. Dịch đề bài:</strong> Chọn ý nghĩa đúng nhất cho biển báo được cho.</div>
+                    <div class="exp-step"><strong>2. Phân tích 4 đáp án:</strong><br>
+                    <span class='p-word'>Don’t step on grass</span>: <span class='p-mean'>Đừng dẫm lên cỏ</span><br>
+                    <span class='p-word'>Don’t run in class</span>: <span class='p-mean'>Đừng chạy trong lớp</span><br>
+                    <span class='p-word'>No smoking</span>: <span class='p-mean'>Cấm hút thuốc</span><br>
+                    <span class='p-word'>Take off your shoes</span>: <span class='p-mean'>Cởi giày của bạn ra</span></div>
+                    <div class="exp-step"><strong>3. Tại sao đáp án đúng là đúng?</strong><br>
+                    <span class='p-word'>Don’t step on grass</span> là đáp án <span class='hl-green'>Đúng</span> vì hình vẽ trực quan miêu tả một chiếc ủng đen đang đạp lên bãi cỏ, kết hợp với vạch gạch chéo đỏ biểu thị mệnh lệnh <span class='p-grammar'>nghiêm cấm (Prohibition)</span>.</div>
+                    <div class="exp-step"><strong>4. Tại sao các đáp án còn lại sai?</strong><br>
+                    <span class='hl-red'>Don’t run in class</span> và <span class='hl-red'>No smoking</span> sai hoàn toàn vì không liên quan đến hình ảnh. <span class='hl-red'>Take off your shoes</span> sai vì đây không phải biển báo yêu cầu cởi giày (nếu yêu cầu thì sẽ không có vạch đỏ gạch chéo cấm đoán).</div>`
+            }
+        ];
+
+        // ================= HỆ THỐNG AUDIO TIÊN TIẾN =================
+        let audioCtx; 
+        
+        // Khởi tạo context khi user tương tác lần đầu
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        // Âm thanh khi làm ĐÚNG (Web Audio API - Tiếng Ting Ting trong trẻo)
+        function playDing() {
+            initAudio(); 
+            const osc = audioCtx.createOscillator(); 
+            const gain = audioCtx.createGain(); 
+            osc.connect(gain); gain.connect(audioCtx.destination); 
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(900, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(1400, audioCtx.currentTime + 0.1); 
+            gain.gain.setValueAtTime(0.6, audioCtx.currentTime); 
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4); 
+            osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        // Âm thanh Huh meme khi làm SAI (Dùng MP3 theo yêu cầu, fallback Web Audio nếu lỗi mạng)
+        const huhSound = new Audio('https:
+        function playHuh() {
+            huhSound.currentTime = 0;
+            huhSound.play().catch(() => {
+                initAudio();
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); 
+                osc.connect(gain); gain.connect(audioCtx.destination); 
+                osc.type = 'sawtooth'; 
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime); 
+                osc.frequency.linearRampToValueAtTime(80, audioCtx.currentTime + 0.2); 
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime); 
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); 
+                osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.2);
+            });
+        }
+
+        // ================= HIỆU ỨNG THỊ GIÁC =================
+        function playConfetti(x, y) {
+            playDing();
+            for(let i=0; i<45; i++) {
+                let conf = document.createElement('div'); 
+                conf.className = 'confetti';
+                conf.style.left = x + 'px'; conf.style.top = y + 'px'; 
+                conf.style.backgroundColor = `hsl(${Math.random()*360}, 100%, 55%)`; 
+                document.body.appendChild(conf);
+                
+                let angle = Math.random() * Math.PI * 2; 
+                let velocity = Math.random() * 12 + 6; 
+                let vx = Math.cos(angle) * velocity; 
+                let vy = Math.sin(angle) * velocity - 12;
+                
+                let animate = setInterval(() => { 
+                    let curX = parseFloat(conf.style.left); 
+                    let curY = parseFloat(conf.style.top); 
+                    vy += 0.6; // Trọng lực
+                    conf.style.left = curX + vx + 'px'; 
+                    conf.style.top = curY + vy + 'px'; 
+                    conf.style.transform = `rotate(${curX*2}deg)`; 
+                    if(curY > window.innerHeight) { clearInterval(animate); conf.remove(); } 
+                }, 20);
+            }
+        }
+
+        // Tạo Background Pattern nổi
+        function generateFloatingSVGs() {
+            const patternBg = document.getElementById('pattern-container');
+            const svgs = [
+                `<svg viewBox="0 0 24 24" width="30"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></svg>`, // Ngôi sao
+                `<svg viewBox="0 0 24 24" width="30"><path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/></svg>`, // Mũ tốt nghiệp
+                `<svg viewBox="0 0 24 24" width="25"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,19.93C7.05,19.43 4,16.05 4,12C4,7.95 7.05,4.57 11,4.07V19.93M13,4.07C16.95,4.57 20,7.95 20,12C20,16.05 16.95,19.43 13,19.93V4.07Z"/></svg>` // Hình bán nguyệt
+            ];
+            
+            for (let i = 0; i < 25; i++) {
+                const icon = document.createElement('div');
+                icon.className = 'floating-icon';
+                icon.innerHTML = svgs[Math.floor(Math.random() * svgs.length)];
+                icon.style.left = Math.random() * 100 + 'vw';
+                icon.style.animationDuration = (Math.random() * 8 + 10) + 's';
+                icon.style.animationDelay = Math.random() * 10 + 's';
+                patternBg.appendChild(icon);
+            }
+        }
+
+        // Hàm xáo trộn mảng thuật toán Fisher-Yates (Theo yêu cầu)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) { 
+                const j = Math.floor(Math.random() * (i + 1)); 
+                [array[i], array[j]] = [array[j], array[i]]; 
+            } 
+            return array;
+        }
+
+        // ================= RENDER BÀI KIỂM TRA =================
+        let score = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = quizData.length;
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+
+            quizData.forEach((data, index) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.id = `q${index}`;
+
+                // Header Instruction
+                const instDiv = document.createElement('div');
+                instDiv.className = 'question-text';
+                instDiv.innerHTML = `<span style="display:block; font-size: 1.05rem; color: #8854C0; font-weight:900; text-transform:uppercase; margin-bottom: 15px;">${data.instruction}</span>` + data.question;
+                card.appendChild(instDiv);
+
+                // Biển báo nếu có
+                if(data.signHtml) {
+                    card.querySelector('.question-text').innerHTML += data.signHtml;
+                }
+
+                const grid = document.createElement('div');
+                grid.className = 'options-grid';
+
+                // Trích xuất & Xáo trộn Đáp án ngẫu nhiên
+                const optionsWithState = data.options.map((opt, optIndex) => {
+                    let text = opt;
+                    if(data.markText) {
+                        text = opt.replace(new RegExp(data.markText.replace(/<\/?u>/g, ''), 'g'), data.markText);
+                    }
+                    return { text: text, originalIndex: optIndex, isCorrect: optIndex === data.correct };
+                });
+                
+                shuffleArray(optionsWithState); // Thực thi xáo trộn
+
+                // Vẽ các nút đáp án (Không hiển thị A, B, C, D)
+                optionsWithState.forEach(optData => {
+                    const optionBtn = document.createElement('div');
+                    optionBtn.className = 'option-card';
+                    optionBtn.innerHTML = optData.text; 
+                    optionBtn.onclick = (e) => handleSelectAnswer(index, optData, optionBtn, e);
+                    grid.appendChild(optionBtn);
+                });
+
+                card.appendChild(grid);
+
+                // Khung giải thích siêu chi tiết
+                const expDiv = document.createElement('div');
+                expDiv.className = 'explanation-box';
+                expDiv.id = `explanation-${index}`;
+                expDiv.innerHTML = data.explanation;
+                card.appendChild(expDiv);
+
+                container.appendChild(card);
+            });
+        }
+
+        // ================= XỬ LÝ SỰ KIỆN CHỌN ĐÁP ÁN =================
+        function handleSelectAnswer(qIndex, optData, clickedBtn, event) {
+            initAudio(); 
+            const card = document.getElementById(`q${qIndex}`);
+            const optionsDivs = card.querySelectorAll('.option-card');
+
+            // Khóa toàn bộ các nút trong câu này lại
+            optionsDivs.forEach(div => div.classList.add('disabled'));
+
+            if (optData.isCorrect) {
+                clickedBtn.classList.add('correct');
+                playConfetti(event.clientX, event.clientY);
+                score++;
+            } else {
+                clickedBtn.classList.add('incorrect');
+                clickedBtn.classList.add('shake-anim');
+                playHuh(); // Kích hoạt âm thanh HUH meme!
+                
+                // Hiển thị nút Đúng để học sinh biết
+                optionsDivs.forEach(div => {
+                    if(div.innerHTML === getOptionText(qIndex, quizData[qIndex].correct)) {
+                        div.classList.add('correct');
+                    }
+                });
+            }
+
+            // Tự động mở khung giải thích chi tiết ngay lập tức
+            const expDiv = document.getElementById(`explanation-${qIndex}`);
+            expDiv.style.display = 'block';
+            
+            answeredQuestions++;
+        }
+
+        function getOptionText(qIndex, originalIndex) {
+            const data = quizData[qIndex];
+            const opt = data.options[originalIndex];
+            if(data.markText) {
+                return opt.replace(new RegExp(data.markText.replace(/<\/?u>/g, ''), 'g'), data.markText);
+            }
+            return opt;
+        }
+
+        // ================= LOGIC NỘP BÀI & KẾT QUẢ =================
+        function openNameModal() {
+            if(answeredQuestions < totalQuestions) {
+                if(!confirm(`Úi! Bạn mới trả lời ${answeredQuestions}/${totalQuestions} câu hỏi. Bạn có chắc chắn muốn nộp bài sớm không?`)) return;
+            }
+            document.getElementById('nameModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('studentName').focus(), 100);
+        }
+
+        function handleNameEnter(e) { if(e.key === 'Enter') submitQuiz(); }
+
+        function submitQuiz() {
+            const name = document.getElementById('studentName').value.trim();
+            const nameInput = document.getElementById('studentName');
+
+            if (!name) {
+                nameInput.classList.add('error');
+                nameInput.placeholder = "Ủa, nhập tên vào đây mới xem điểm được nè...";
+                setTimeout(() => nameInput.classList.remove('error'), 500);
+                return;
+            }
+
+            document.getElementById('nameModal').style.display = 'none';
+            showResult(name);
+        }
+
+        function showResult(studentName) {
+            initAudio(); 
+            document.getElementById('resultModal').style.display = 'flex';
+            
+            let percent = (score / totalQuestions) * 100;
+            const greetingH2 = document.getElementById('resultGreeting');
+            const scoreDiv = document.getElementById('finalScore');
+            const gifImg = document.getElementById('resultGif');
+
+            // Cấu hình linh hoạt thông điệp & GIF meme
+            if (percent === 100) {
+                greetingH2.innerHTML = `🌟 THIÊN TÀI! ${studentName} xuất sắc tuyệt đối!`;
+                gifImg.src = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; 
+                setTimeout(playDing, 0); setTimeout(playDing, 300); setTimeout(playDing, 600);
+            } else if (percent >= 60) {
+                greetingH2.innerHTML = `🔥 Rất Tuyệt Vời! ${studentName} làm tốt lắm!`;
+                gifImg.src = "https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif"; 
+                playDing();
+            } else {
+                greetingH2.innerHTML = `💪 Cố gắng lên nhé! ${studentName} ôn lại bài kỹ hơn xíu nha!`;
+                gifImg.src = "https://media.giphy.com/media/d2lcHJTG5Tscg/giphy.gif"; 
+                playHuh();
+            }
+
+            scoreDiv.innerText = `${score} / ${totalQuestions}`;
+        }
+
+        // ================= INITIALIZE KHỞI CHẠY =================
+        window.onload = () => {
+            generateFloatingSVGs();
+            renderQuiz();
+        };
+
+    </script>
+</body>
+</html>
