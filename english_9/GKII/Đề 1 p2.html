@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive English Test - Gamification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* CSS VARIABLES & DYNAMIC THEME */
+        :root {
+            --primary: #8854C0; /* Pastel Purple */
+            --secondary: #00C9A7; /* Pastel Teal */
+            --accent: #FDCB6E; /* Bright Yellow */
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --text-dark: #2d3436;
+            --bg-card: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(-45deg, var(--primary), var(--secondary), var(--accent), #ff9a9e);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-dark);
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* SVG Emoji Background Pattern */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            /* SVG encoded with emojis: 🌍 ✈️ 📚 🌟 */
+            background-image: url("data:image/svg+xml,%3Csvg width='150' height='150' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='40' font-size='30'%3E🌍%3C/text%3E%3Ctext x='80' y='90' font-size='30'%3E✈️%3C/text%3E%3Ctext x='30' y='130' font-size='25'%3E📚%3C/text%3E%3Ctext x='110' y='30' font-size='20'%3E🌟%3C/text%3E%3C/svg%3E");
+            opacity: 0.15;
+            animation: floatPattern 40s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes floatPattern {
+            from { background-position: 0 0; }
+            to { background-position: 300px 300px; }
+        }
+
+        /* HEADER */
+        header {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+        .header-title p {
+            margin: 0;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #636e72;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #timer-display {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--wrong);
+            background: #ffeaa7;
+            padding: 5px 15px;
+            border-radius: 10px;
+            border: 2px solid var(--accent);
+        }
+
+        .btn-start {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #00b894;
+            transition: all 0.1s;
+        }
+        .btn-start:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #00b894;
+        }
+
+        /* MAIN LAYOUT: SPLIT SCREEN */
+        main {
+            display: flex;
+            height: calc(100vh - 70px);
+            position: relative;
+            z-index: 10;
+        }
+
+        .pane {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .pane::-webkit-scrollbar { width: 8px; }
+        .pane::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        .left-pane { border-right: 3px dashed rgba(255,255,255,0.5); }
+        
+        /* READING CONTENT */
+        .passage-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+
+        .passage-title {
+            color: var(--primary);
+            text-transform: uppercase;
+            font-weight: 900;
+            font-size: 1.4rem;
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+
+        .translate-btn {
+            background: #fff;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-block;
+            transition: 0.3s;
+        }
+        .translate-btn:hover { background: var(--primary); color: #fff; }
+
+        .translation-content {
+            display: none;
+            background: #fdf6e3;
+            padding: 15px;
+            border-left: 5px solid var(--primary);
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #444;
+            border-radius: 0 10px 10px 0;
+        }
+
+        /* GLOSSARY TABLE */
+        .glossary-wrapper {
+            margin-top: 20px;
+            background: #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid var(--accent);
+        }
+        .glossary-wrapper h4 {
+            background: var(--accent);
+            margin: 0;
+            padding: 10px;
+            text-align: center;
+            color: #d63031;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #ffeaa7; }
+
+        /* EXERCISES */
+        .question-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+        }
+        
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: #fff;
+            border: 2px solid #dfe6e9;
+            border-bottom: 6px solid #dfe6e9;
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--secondary);
+            border-bottom-color: var(--secondary);
+        }
+
+        .option-btn:active {
+            transform: translateY(4px);
+            border-bottom-width: 2px;
+        }
+
+        .option-btn.correct {
+            background: #e3fbec;
+            border-color: var(--correct);
+            border-bottom-color: var(--correct);
+            color: #009432;
+        }
+
+        .option-btn.wrong {
+            background: #ffebed;
+            border-color: var(--wrong);
+            border-bottom-color: var(--wrong);
+            color: #c23616;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+        }
+
+        .explanation-box {
+            display: none;
+            margin-top: 15px;
+            background: #e0f7fa;
+            border-left: 5px solid #00bcd4;
+            padding: 15px;
+            border-radius: 0 10px 10px 0;
+            font-size: 1rem;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #FF9A9E, #FECFEF);
+            color: #d63031;
+            font-size: 1.5rem;
+            font-weight: 900;
+            padding: 15px;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 8px 0 #e17055;
+            cursor: pointer;
+            margin-bottom: 40px;
+            transition: 0.2s;
+        }
+        .submit-btn:hover { filter: brightness(1.1); }
+        .submit-btn:active { transform: translateY(8px); box-shadow: 0 0 0 #e17055; }
+
+        /* MODAL RESULT */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes scaleUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .score-text { font-size: 4rem; font-weight: 900; color: var(--primary); margin: 10px 0; }
+        .comment-text { font-size: 1.5rem; color: #636e72; font-weight: bold; }
+
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1 style="font-size: 1.5rem;">ENGLISH CHALLENGE 🚀</h1>
+            <p>Giáo viên tạo: Ms. Chí Nên · ☎️ 0852639652</p>
+        </div>
+        <div class="timer-container">
+            <div id="timer-display">10:00</div>
+            <button class="btn-start" id="btn-timer" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="pane left-pane" id="reading-pane">
+            
+            <div class="passage-card">
+                <div class="passage-title">FUTURE CAREER DEVELOPMENT</div>
+                <p>1. Keep <b>(13)________</b> evolving with new technologies to stay relevant.</p>
+                <p>2. Consider <b>(14)________</b> certifications that will benefit your career.</p>
+                <p>3. <b>(15)________</b> advice from mentors can help you navigate challenges.</p>
+                <p>4. Be ready to tackle <b>(16)________</b> in a rapidly changing job market.</p>
+                
+                <button class="translate-btn" onclick="toggleTranslation('trans1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans1">
+                    <b>BẢN DỊCH ĐẦY ĐỦ:</b><br>
+                    1. Hãy tiếp tục tiến hóa (phát triển) cùng các công nghệ mới để không bị tụt hậu.<br>
+                    2. Hãy cân nhắc các chứng chỉ có thể mang lại lợi ích cho sự nghiệp của bạn.<br>
+                    3. Việc tìm kiếm lời khuyên từ những người cố vấn có thể giúp bạn vượt qua các thử thách.<br>
+                    4. Hãy sẵn sàng giải quyết những khó khăn trong một thị trường việc làm thay đổi nhanh chóng.
+                </div>
+
+                <div class="glossary-wrapper">
+                    <h4>📚 Glossary (Từ vựng học thuật)</h4>
+                    <table>
+                        <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                        <tr><td>Evolve</td><td>Verb (v)</td><td>Tiến hóa, phát triển</td></tr>
+                        <tr><td>Relevant</td><td>Adjective (adj)</td><td>Thích đáng, có liên quan (không bị tụt hậu)</td></tr>
+                        <tr><td>Certification</td><td>Noun (n)</td><td>Chứng chỉ, giấy chứng nhận</td></tr>
+                        <tr><td>Benefit</td><td>Verb (v) / Noun (n)</td><td>Mang lại lợi ích / Lợi ích</td></tr>
+                        <tr><td>Mentor</td><td>Noun (n)</td><td>Người cố vấn, người hướng dẫn</td></tr>
+                        <tr><td>Navigate</td><td>Verb (v)</td><td>Điều hướng, giải quyết (khó khăn)</td></tr>
+                        <tr><td>Challenge</td><td>Noun (n)</td><td>Thử thách, thách thức</td></tr>
+                        <tr><td>Tackle</td><td>Verb (v)</td><td>Giải quyết, đối mặt (vấn đề)</td></tr>
+                        <tr><td>Rapidly</td><td>Adverb (adv)</td><td>Một cách nhanh chóng</td></tr>
+                        <tr><td>Market</td><td>Noun (n)</td><td>Thị trường</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="passage-card">
+                <div class="passage-title">HA LONG BAY - A NATURAL WONDER</div>
+                <p>Ha Long Bay is a UNESCO World Heritage Site and popular travel <b>(19)________</b> in Quang Ninh Province, Vietnam. The bay features thousands of limestone karsts and isles in <b>(20)________</b> shapes and sizes.</p>
+                
+                <p>Ha Long Bay is a center of a larger zone which <b>(21)________</b> Bai Tu Long Bay to the northeast, and Cat Ba Island to the southwest.</p>
+                <p>Ha Long Bay has an area of around 1,553km2, including 1,960 - 2,000 islets, most of <b>(22)________</b> are limestone. The core of the bay has an area of 334km2 with a high density of 775 islets. The limestone in this bay has gone through 500 million years of <b>(23)________</b> in different conditions and environments. The evolution of the karst in this bay has taken 20 million years <b>(24)________</b> the impact of the tropical wet climate.</p>
+
+                <button class="translate-btn" onclick="toggleTranslation('trans2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans2">
+                    <b>BẢN DỊCH ĐẦY ĐỦ:</b><br>
+                    Vịnh Hạ Long là Di sản Thế giới được UNESCO công nhận và là <b>điểm đến</b> du lịch nổi tiếng ở tỉnh Quảng Ninh, Việt Nam. Vịnh có hàng ngàn núi đá vôi và hòn đảo nhỏ với hình dáng và kích thước <b>đa dạng</b>. Vịnh Hạ Long là trung tâm của một khu vực rộng lớn hơn <b>bao gồm</b> Vịnh Bái Tử Long ở phía đông bắc và Đảo Cát Bà ở phía tây nam.<br><br>
+                    Vịnh Hạ Long có diện tích khoảng 1.553km2, bao gồm 1.960 - 2.000 hòn đảo nhỏ, hầu hết trong <b>số đó</b> là đá vôi. Phần lõi của vịnh có diện tích 334km2 với mật độ dày đặc gồm 775 hòn đảo. Đá vôi ở vịnh này đã trải qua 500 triệu năm <b>hình thành</b> trong các điều kiện và môi trường khác nhau. Sự tiến hóa của địa hình karst trong vịnh này đã mất 20 triệu năm <b>dưới</b> tác động của khí hậu nhiệt đới ẩm.
+                </div>
+
+                <div class="glossary-wrapper">
+                    <h4>📚 Glossary (Từ vựng học thuật)</h4>
+                    <table>
+                        <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                        <tr><td>Heritage Site</td><td>Noun phrase</td><td>Khu di sản</td></tr>
+                        <tr><td>Destination</td><td>Noun (n)</td><td>Điểm đến</td></tr>
+                        <tr><td>Feature</td><td>Verb (v)</td><td>Có nét đặc trưng, bao gồm</td></tr>
+                        <tr><td>Limestone karst</td><td>Noun phrase</td><td>Núi đá vôi/ Địa hình cac-xtơ</td></tr>
+                        <tr><td>Islet</td><td>Noun (n)</td><td>Hòn đảo nhỏ</td></tr>
+                        <tr><td>Density</td><td>Noun (n)</td><td>Mật độ</td></tr>
+                        <tr><td>Core</td><td>Noun (n)</td><td>Phần lõi, trung tâm</td></tr>
+                        <tr><td>Evolution</td><td>Noun (n)</td><td>Sự tiến hóa, sự phát triển</td></tr>
+                        <tr><td>Impact</td><td>Noun (n)</td><td>Tác động, sự ảnh hưởng</td></tr>
+                        <tr><td>Tropical</td><td>Adjective (adj)</td><td>Thuộc về nhiệt đới</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="passage-card">
+                <div class="passage-title">ENGLISH AS A GLOBAL LANGUAGE</div>
+                <p>People often talk about English as a global language or lingua franca. With more than 350 million people around the world speaking English as a first language and more than 430 million speaking it as a second language, there are English speakers in most countries around the world. Why is English so popular, though? And why has it become a global language?</p>
+                
+                <p>People often call English the international language of business, and it’s increasingly true as international trade expands every year, bringing new countries into contact. Most multinational companies require a certain degree of English proficiency from potential employees so in order to get a position with a top company, more and more people are learning English.</p>
+                <p>If your ambitions lie in science or medicine, you can’t neglect English either. Much of the technical terminology is based on English words, and if you want to learn about the latest developments and discoveries from around the world, you’ll read about them in journals and research reports published in English, no matter whether the scientists who wrote them are from China or Norway.</p>
+                <p>If you want a career in travel, English is absolutely essential. As the international language of aviation, pilots and cabin crew all need to speak English. Even if you’re not up in the air, speaking English accurately will ensure you are able to communicate with clients and suppliers all over the world.</p>
+                <p>So, what’s stopping you from learning this global language? With all the English resources available on the internet and so many other English speakers around the world to practice with, there’s never been a better time to start learning English. Pick up a book, learn a few words, or even start a course today and take your first steps towards becoming one of nearly 800 million English speakers in the world.</p>
+                <p><i>(Adapted from: englishlive.ef.com/blog/english-in-the-real-world)</i></p>
+
+                <button class="translate-btn" onclick="toggleTranslation('trans3')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans3">
+                    <b>BẢN DỊCH ĐẦY ĐỦ:</b><br>
+                    Mọi người thường nói về tiếng Anh như một ngôn ngữ toàn cầu hoặc ngôn ngữ chung (lingua franca). Với hơn 350 triệu người trên khắp thế giới nói tiếng Anh như ngôn ngữ thứ nhất và hơn 430 triệu người nói tiếng Anh như ngôn ngữ thứ hai, có những người nói tiếng Anh ở hầu hết các quốc gia trên thế giới. Tuy nhiên, tại sao tiếng Anh lại phổ biến như vậy? Và tại sao nó trở thành ngôn ngữ toàn cầu?<br><br>
+                    Mọi người thường gọi tiếng Anh là ngôn ngữ kinh doanh quốc tế, và điều này ngày càng đúng khi thương mại quốc tế mở rộng mỗi năm, đưa các quốc gia mới kết nối với nhau. Hầu hết các công ty đa quốc gia yêu cầu một mức độ thành thạo tiếng Anh nhất định từ các nhân viên tiềm năng, vì vậy để có được vị trí ở một công ty hàng đầu, ngày càng có nhiều người học tiếng Anh.<br><br>
+                    Nếu tham vọng của bạn nằm ở khoa học hoặc y học, bạn cũng không thể phớt lờ tiếng Anh. Phần lớn thuật ngữ kỹ thuật dựa trên các từ tiếng Anh, và nếu bạn muốn tìm hiểu về những phát triển và khám phá mới nhất từ khắp nơi trên thế giới, bạn sẽ đọc về chúng trong các tạp chí và báo cáo nghiên cứu được xuất bản bằng tiếng Anh...<br><br>
+                    Nếu bạn muốn có một sự nghiệp trong ngành du lịch, tiếng Anh là vô cùng cần thiết. Là ngôn ngữ quốc tế của ngành hàng không, phi công và phi hành đoàn đều cần nói tiếng Anh...<br><br>
+                    Vậy, điều gì đang ngăn cản bạn học ngôn ngữ toàn cầu này? Với tất cả các nguồn tài nguyên tiếng Anh có sẵn trên internet... hãy tiến những bước đầu tiên để trở thành một trong gần 800 triệu người nói tiếng Anh trên thế giới.
+                </div>
+
+                <div class="glossary-wrapper">
+                    <h4>📚 Glossary (Từ vựng học thuật)</h4>
+                    <table>
+                        <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                        <tr><td>Lingua franca</td><td>Noun phrase</td><td>Ngôn ngữ chung (dùng giữa những người khác tiếng mẹ đẻ)</td></tr>
+                        <tr><td>Expand</td><td>Verb (v)</td><td>Mở rộng</td></tr>
+                        <tr><td>Multinational</td><td>Adjective (adj)</td><td>Đa quốc gia</td></tr>
+                        <tr><td>Proficiency</td><td>Noun (n)</td><td>Sự thành thạo, giỏi giang</td></tr>
+                        <tr><td>Potential</td><td>Adjective (adj)</td><td>Tiềm năng</td></tr>
+                        <tr><td>Ambition</td><td>Noun (n)</td><td>Tham vọng, hoài bão</td></tr>
+                        <tr><td>Neglect</td><td>Verb (v)</td><td>Phớt lờ, bỏ bê</td></tr>
+                        <tr><td>Terminology</td><td>Noun (n)</td><td>Thuật ngữ chuyên ngành</td></tr>
+                        <tr><td>Aviation</td><td>Noun (n)</td><td>Ngành hàng không</td></tr>
+                        <tr><td>Essential</td><td>Adjective (adj)</td><td>Thiết yếu, vô cùng quan trọng</td></tr>
+                    </table>
+                </div>
+            </div>
+
+             <div class="passage-card">
+                <div class="passage-title">FACE-TO-FACE CONVERSATION</div>
+                <p>Face-to-face conversation is a two-way process. You speak to me, <b>(37)________</b>. Two-way communication depends on having a coding system that is understood by both sender and receiver, and an agreed convention about signaling the beginning and end of the message. <b>(38)________</b>; the convention that one person speaks at a time may seem too obvious to mention. In fact, the signals used in conversation and meetings are often non- verbal. <b>(39)________</b>. A sharp intake of breath may signal the desire to interrupt, catching the chairman’s eye may indicate the desire to speak in a formal setting like a debate, a clenched fist may indicate anger. <b>(40)________</b></p>
+                <br>
+                <p><b>Phrases to fill in:</b><br>
+                A. For example, lowering the pitch of the voice may mean the end of a sentence.<br>
+                B. When these visual signals are not possible, more formal signals may be needed.<br>
+                C. I reply to you and so on.<br>
+                D. In speech, the coding system is the language like English or Spanish.</p>
+
+                <button class="translate-btn" onclick="toggleTranslation('trans4')">Mở dịch đoạn này 🌟</button>
+                <div class="translation-content" id="trans4">
+                    <b>BẢN DỊCH ĐẦY ĐỦ:</b><br>
+                    Trò chuyện trực tiếp là một quá trình hai chiều. Bạn nói với tôi, <b>(37) tôi trả lời bạn và cứ thế tiếp tục.</b> Giao tiếp hai chiều phụ thuộc vào việc có một hệ thống mã hóa được cả người gửi và người nhận hiểu, và một quy ước thống nhất về việc ra hiệu bắt đầu và kết thúc thông điệp. <b>(38) Trong lời nói, hệ thống mã hóa chính là ngôn ngữ như tiếng Anh hoặc tiếng Tây Ban Nha</b>; quy ước rằng một người nói tại một thời điểm có vẻ quá hiển nhiên để đề cập tới. Thực tế, các tín hiệu được sử dụng trong các cuộc trò chuyện và cuộc họp thường là phi ngôn ngữ. <b>(39) Ví dụ, việc hạ giọng trầm xuống có thể có nghĩa là kết thúc một câu.</b> Việc hít thở mạnh có thể báo hiệu mong muốn ngắt lời, bắt gặp ánh mắt của chủ tọa có thể cho thấy mong muốn phát biểu trong một bối cảnh trang trọng như cuộc tranh luận, bàn tay nắm chặt có thể cho thấy sự tức giận. <b>(40) Khi những tín hiệu hình ảnh này không khả thi, có thể cần những tín hiệu chính thức hơn.</b>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="pane right-pane" id="exercise-pane">
+            <h2 style="color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); text-align: center; font-size: 2rem;">VƯỢT CHƯỚNG NGẠI VẬT 🏆</h2>
+            <div id="questions-container"></div>
+            <button class="submit-btn" onclick="submitTest()">NỘP BÀI & XEM ĐIỂM 🚀</button>
+        </div>
+    </main>
+
+    <div class="modal" id="result-modal">
+        <div class="modal-content">
+            <h2>🎉 HOÀN THÀNH BÀI THI 🎉</h2>
+            <div class="score-text" id="final-score">0/0</div>
+            <div class="comment-text" id="final-comment">Đang tính điểm...</div>
+            <br>
+            <button class="btn-start" onclick="location.reload()">LÀM LẠI TỪ ĐẦU 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        // --- WEB AUDIO API CHO HIỆU ỨNG ÂM THANH (Không dùng link ngoài) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playCorrectSound() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playWrongSound() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        // --- HIỆU ỨNG CONFETTI ĐƠN GIẢN TRỰC TIẾP BẰNG DOM ---
+        function shootConfetti() {
+            for(let i=0; i<30; i++) {
+                let conf = document.createElement('div');
+                conf.style.position = 'fixed';
+                conf.style.width = '10px';
+                conf.style.height = '10px';
+                conf.style.backgroundColor = ['#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#ff69b4'][Math.floor(Math.random()*5)];
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = '-10px';
+                conf.style.zIndex = '9999';
+                conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                document.body.appendChild(conf);
+
+                let duration = Math.random() * 2 + 1;
+                conf.animate([
+                    { transform: 'translate3d(0,0,0) rotate(0deg)', opacity: 1 },
+                    { transform: `translate3d(${Math.random()*200-100}px, 100vh, 0) rotate(${Math.random()*720}deg)`, opacity: 0 }
+                ], { duration: duration * 1000, easing: 'cubic-bezier(.37,0,.63,1)' });
+
+                setTimeout(() => conf.remove(), duration * 1000);
+            }
+        }
+
+        // --- DATA BÀI TẬP & GIẢI THÍCH CHI TIẾT ---
+        const questionsData = [
+            // PART 1
+            {
+                id: 13, text: "Question 13: Keep ________ evolving with new technologies to stay relevant.",
+                options: [ {ans: "up", isCorrect: true}, {ans: "to", isCorrect: false}, {ans: "for", isCorrect: false}, {ans: "with", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Cụm động từ <b>'keep up'</b> mang nghĩa là tiếp tục, duy trì tốc độ hoặc theo kịp điều gì đó. Trong ngữ cảnh này, 'Keep up evolving...' khuyên bạn hãy liên tục duy trì sự phát triển.<br>- Các đáp án còn lại không tạo thành cụm từ có nghĩa hợp lý với động từ V-ing phía sau."
+            },
+            {
+                id: 14, text: "Question 14: Consider ________ certifications that will benefit your career.",
+                options: [ {ans: "the", isCorrect: false}, {ans: "a", isCorrect: false}, {ans: "x (no article)", isCorrect: true}, {ans: "an", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Từ 'certifications' đang ở dạng số nhiều (có 's'). Do đó ta không thể dùng 'a/an'.<br>- Đây là một lời khuyên chung chung về 'các chứng chỉ' chưa xác định cụ thể, nên ta không dùng mạo từ 'the'.<br>=> <b>Chọn C: Không dùng mạo từ (x)</b>."
+            },
+            {
+                id: 15, text: "Question 15: ________ advice from mentors can help you navigate challenges.",
+                options: [ {ans: "Seeking", isCorrect: true}, {ans: "Ignoring", isCorrect: false}, {ans: "Avoiding", isCorrect: false}, {ans: "Resisting", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết (Dựa vào nghĩa):</b><br>A. Seeking (Tìm kiếm) - B. Ignoring (Phớt lờ) - C. Avoiding (Tránh né) - D. Resisting (Chống cự).<br>- Câu này nói về 'lời khuyên từ người cố vấn giúp vượt qua khó khăn' -> Hành động tích cực. Do đó phải chọn <b>A. Seeking</b> (Việc tìm kiếm lời khuyên...)."
+            },
+            {
+                id: 16, text: "Question 16: Be ready to tackle ________ in a rapidly changing job market.",
+                options: [ {ans: "difficult", isCorrect: false}, {ans: "difficulty", isCorrect: false}, {ans: "difficulties", isCorrect: true}, {ans: "to difficulty", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Sau động từ 'tackle' (giải quyết) cần một Danh từ đóng vai trò tân ngữ.<br>- 'difficult' là tính từ (Loại).<br>- Giữa 'difficulty' (số ít) và 'difficulties' (số nhiều), bối cảnh nói về những khó khăn chung chung, đếm được trong thị trường việc làm, nên ta dùng danh từ số nhiều. Chọn <b>C. difficulties</b>."
+            },
+            // PART 2
+            {
+                id: 19, text: "Question 19: Ha Long Bay is a UNESCO World Heritage Site and popular travel ________ in Quang Ninh Province.",
+                options: [ {ans: "situation", isCorrect: false}, {ans: "destination", isCorrect: true}, {ans: "direction", isCorrect: false}, {ans: "ground", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Cụm từ cố định (Collocation): <b>'travel destination'</b> nghĩa là điểm đến du lịch.<br>- Các đáp án khác: situation (tình huống), direction (phương hướng), ground (mặt đất) hoàn toàn sai nghĩa."
+            },
+            {
+                id: 20, text: "Question 20: The bay features thousands of limestone karsts and isles in ________ shapes and sizes.",
+                options: [ {ans: "various", isCorrect: true}, {ans: "complex", isCorrect: false}, {ans: "exciting", isCorrect: false}, {ans: "original", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- 'various shapes and sizes' là một cụm từ rất phổ biến, mang nghĩa 'đa dạng về hình dáng và kích thước'. Hạ Long nổi tiếng với hàng ngàn hòn đảo to nhỏ mang đủ loại hình thù khác nhau, nên 'various' là chính xác nhất."
+            },
+            {
+                id: 21, text: "Question 21: Ha Long Bay is a center of a larger zone which ________ Bai Tu Long Bay to the northeast...",
+                options: [ {ans: "offers", isCorrect: false}, {ans: "includes", isCorrect: true}, {ans: "consists", isCorrect: false}, {ans: "covers", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- <b>Include (v): Bao gồm</b> (đứng ngay trước tân ngữ mà không cần giới từ).<br>- 'consists' luôn phải đi với giới từ 'of' (consist of). Ở đây không có 'of' nên loại C.<br>- Nghĩa của câu: 'Vùng rộng lớn này bao gồm vịnh Bái Tử Long...'"
+            },
+            {
+                id: 22, text: "Question 22: ...including 1,960 - 2,000 islets, most of ________ are limestone.",
+                options: [ {ans: "them", isCorrect: false}, {ans: "those", isCorrect: false}, {ans: "which", isCorrect: true}, {ans: "whom", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Đây là cấu trúc Mệnh đề quan hệ không xác định, thay thế cho danh từ chỉ vật 'islets' (các hòn đảo) ở phía trước.<br>- Dùng đại từ quan hệ <b>'which'</b> sau giới từ 'of'. (most of which: hầu hết trong số chúng).<br>- Không dùng 'them' vì đây là 2 mệnh đề nối với nhau bằng dấu phẩy, bắt buộc phải dùng đại từ quan hệ."
+            },
+            {
+                id: 23, text: "Question 23: The limestone in this bay has gone through 500 million years of ________ in different conditions.",
+                options: [ {ans: "formation", isCorrect: true}, {ans: "foundation", isCorrect: false}, {ans: "establishment", isCorrect: false}, {ans: "contribution", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- <b>formation (n): sự hình thành</b>. Núi đá vôi phải trải qua quá trình 'hình thành' về mặt địa chất trong 500 triệu năm.<br>- foundation / establishment thường dùng cho thành lập công ty, tổ chức.<br>- contribution: sự đóng góp (sai nghĩa)."
+            },
+            {
+                id: 24, text: "Question 24: The evolution of the karst... has taken 20 million years ________ the impact of the tropical wet climate.",
+                options: [ {ans: "in", isCorrect: false}, {ans: "of", isCorrect: false}, {ans: "for", isCorrect: false}, {ans: "under", isCorrect: true} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Cụm từ cố định: <b>'under the impact of...'</b> (Dưới tác động của...).<br>- Nghĩa câu: Quá trình tiến hóa tốn 20 triệu năm *dưới tác động* của khí hậu nhiệt đới."
+            },
+            // PART 3
+            {
+                id: 31, text: "Question 31: What is the main idea of the passage?",
+                options: [ 
+                    {ans: "A. The history of the English language", isCorrect: false}, 
+                    {ans: "B. Why English is a global language and its importance in various fields.", isCorrect: true}, 
+                    {ans: "C. How many people speak English worldwide", isCorrect: false}, 
+                    {ans: "D. The challenges of learning English as a second language", isCorrect: false} 
+                ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Xuyên suốt bài đọc, tác giả đặt câu hỏi 'Tại sao tiếng Anh lại trở thành ngôn ngữ toàn cầu?' (Đoạn 1), sau đó chứng minh tầm quan trọng của nó trong Kinh doanh (Đoạn 2), Khoa học - Y học (Đoạn 3), và Du lịch - Hàng không (Đoạn 4). Do đó, đáp án B bao quát chính xác nội dung toàn bài."
+            },
+            {
+                id: 32, text: "Question 32: Why are more and more people learning English?",
+                options: [ 
+                    {ans: "A. Be hired by a top company", isCorrect: true}, 
+                    {ans: "B. Expand international trade", isCorrect: false}, 
+                    {ans: "C. Require a certain degree", isCorrect: false}, 
+                    {ans: "D. Make contact with foreigners.", isCorrect: false} 
+                ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Dẫn chứng trong bài ở Đoạn 2: '...so in order to get a position with a top company, more and more people are learning English.' (để có được vị trí ở một công ty hàng đầu, ngày càng có nhiều người học tiếng Anh).<br>-> Đáp án A là chính xác (Be hired = get a position)."
+            },
+            {
+                id: 33, text: "Question 33: The noun “steps” used in the phrase “take your first steps” means ________.",
+                options: [ {ans: "A. Movements", isCorrect: false}, {ans: "B. actions", isCorrect: true}, {ans: "C. feet", isCorrect: false}, {ans: "D. stages", isCorrect: false} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Thành ngữ 'take steps' không có nghĩa là đếm bước chân (feet/movements) mà mang nghĩa bóng là <b>'thực hiện các hành động' (take actions)</b> để đạt được mục tiêu. 'take your first steps' = thực hiện những hành động/bước đi đầu tiên."
+            },
+            {
+                id: 34, text: "Question 34: Which of the following statements is NOT TRUE in the passage?",
+                options: [ 
+                    {ans: "A. Speaking English fluently is necessary even if you are on the ground staff", isCorrect: false}, 
+                    {ans: "B. You can learn English from online resources or other English speakers.", isCorrect: false}, 
+                    {ans: "C. It’s better to take online English classes than physical classes.", isCorrect: true}, 
+                    {ans: "D. There are nearly 800 million English speakers, both as a first and second language.", isCorrect: false} 
+                ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Bài đọc KHÔNG HỀ đề cập đến việc 'học online thì tốt hơn học trực tiếp tại lớp' (It's better to take online classes than physical classes). Tác giả chỉ nói có rất nhiều tài nguyên trên internet để học. Do đó thông tin C là KHÔNG CÓ THẬT trong bài."
+            },
+            {
+                id: 35, text: "Question 35: Why is English important if you want to pursue a medical career?",
+                options: [ 
+                    {ans: "A. Because all journals of the world are published in English", isCorrect: false}, 
+                    {ans: "B. Because most medical research is written by English scientists", isCorrect: false}, 
+                    {ans: "C. Because medicine conferences are often held in English", isCorrect: false}, 
+                    {ans: "D. Because many medical terms are English.", isCorrect: true} 
+                ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Dẫn chứng Đoạn 3: 'Much of the technical terminology is based on English words...' (Phần lớn thuật ngữ kỹ thuật dựa trên các từ tiếng Anh).<br>-> Do đó chọn D (Terminology = terms)."
+            },
+            {
+                id: 36, text: "Question 36: The word “essential” is OPPOSITE in meaning to ________.",
+                options: [ {ans: "A. Important", isCorrect: false}, {ans: "B. vital", isCorrect: false}, {ans: "C. crucial", isCorrect: false}, {ans: "D. worthless", isCorrect: true} ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- 'Essential' (adj) nghĩa là vô cùng quan trọng, thiết yếu.<br>- Important, Vital, Crucial đều là từ ĐỒNG NGHĨA (Synonyms).<br>- Yêu cầu tìm từ TRÁI NGHĨA (Opposite) -> <b>Worthless (vô giá trị, không có ích lợi gì)</b> là đáp án đúng."
+            },
+             // PART 4
+             {
+                id: 37, text: "Question 37: You speak to me, (37) ________.",
+                options: [ 
+                    {ans: "A. For example, lowering the pitch...", isCorrect: false}, 
+                    {ans: "B. When these visual signals are not possible...", isCorrect: false}, 
+                    {ans: "C. I reply to you and so on", isCorrect: true}, 
+                    {ans: "D. In speech, the coding system is the language...", isCorrect: false} 
+                ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Câu trước: 'Face-to-face conversation is a two-way process.' (Giao tiếp là quá trình 2 chiều).<br>- Vế tiếp: 'You speak to me,' (Bạn nói với tôi) -> Rất logic khi tiếp nối bằng <b>'I reply to you and so on' (Tôi trả lời bạn và cứ thế)</b>. Chọn C."
+            },
+            {
+                id: 38, text: "Question 38: ...and an agreed convention about signaling the beginning and end of the message. (38)________; the convention that one person speaks at a time...",
+                options: [ 
+                    {ans: "A. For example, lowering the pitch...", isCorrect: false}, 
+                    {ans: "B. When these visual signals are not possible...", isCorrect: false}, 
+                    {ans: "C. I reply to you and so on", isCorrect: false}, 
+                    {ans: "D. In speech, the coding system is the language like English or Spanish", isCorrect: true} 
+                ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Câu ngay phía trước đang bàn về 'coding system' (hệ thống mã hóa).<br>- Đáp án D bổ nghĩa trực tiếp cho khái niệm này: 'Trong lời nói, hệ thống mã hóa chính là ngôn ngữ như tiếng Anh hoặc TBN'. Chọn D."
+            },
+            {
+                id: 39, text: "Question 39: In fact, the signals used in conversation and meetings are often non- verbal. (39) ________. A sharp intake of breath may signal...",
+                options: [ 
+                    {ans: "A. For example, lowering the pitch of the voice may mean the end of a sentence.", isCorrect: true}, 
+                    {ans: "B. When these visual signals are not possible...", isCorrect: false}, 
+                    {ans: "C. I reply to you and so on", isCorrect: false}, 
+                    {ans: "D. In speech, the coding system is...", isCorrect: false} 
+                ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Câu trước nhắc đến tín hiệu 'non-verbal' (phi ngôn từ - âm điệu, ngôn ngữ cơ thể, không phải bằng từ vựng).<br>- Câu tiếp theo liệt kê các ví dụ: hít thở, bắt ánh mắt. Do đó, điền đáp án A (Ví dụ, việc hạ giọng...) vào đầu chuỗi ví dụ này là hợp lý nhất."
+            },
+            {
+                id: 40, text: "Question 40: ...catching the chairman’s eye... a clenched fist may indicate anger. (40)________",
+                options: [ 
+                    {ans: "A. For example, lowering the pitch...", isCorrect: false}, 
+                    {ans: "B. When these visual signals are not possible, more formal signals may be needed.", isCorrect: true}, 
+                    {ans: "C. I reply to you and so on", isCorrect: false}, 
+                    {ans: "D. In speech, the coding system is...", isCorrect: false} 
+                ],
+                explanation: "<b>Giải thích chi tiết:</b><br>- Các ví dụ ngay đằng trước (bắt ánh mắt, bàn tay nắm chặt) đều là <b>'visual signals' (tín hiệu hình ảnh / thị giác)</b>.<br>- Do đó, câu kết đoạn B: 'Khi những tín hiệu hình ảnh này không khả thi, cần tín hiệu chính thức hơn' là câu chốt đoạn hoàn hảo."
+            }
+        ];
+
+        // --- THUẬT TOÁN SHUFFLE (Trộn ngẫu nhiên đáp án) ---
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        let userScore = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = questionsData.length;
+        let isTimerRunning = false;
+        let timeLeft = 600; // 10 phút = 600s
+        let timerInterval;
+
+        // --- RENDER BÀI TẬP ---
+        const container = document.getElementById('questions-container');
+        
+        questionsData.forEach((q, index) => {
+            let shuffledOptions = shuffleArray([...q.options]);
+
+            let card = document.createElement('div');
+            card.className = 'question-card';
+            
+            let qText = document.createElement('div');
+            qText.className = 'question-text';
+            qText.innerHTML = q.text;
+            card.appendChild(qText);
+
+            let grid = document.createElement('div');
+            grid.className = 'options-grid';
+
+            let expBox = document.createElement('div');
+            expBox.className = 'explanation-box';
+            expBox.innerHTML = q.explanation;
+
+            shuffledOptions.forEach(opt => {
+                let btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `<span style="margin-right: 10px; font-size:1.2rem;">🔹</span> ${opt.ans}`;
+                
+                btn.onclick = function() {
+                    // Nếu đã trả lời câu này thì bỏ qua
+                    if(card.classList.contains('answered')) return;
+                    card.classList.add('answered');
+                    answeredQuestions++;
+
+                    if(opt.isCorrect) {
+                        btn.classList.add('correct');
+                        btn.innerHTML = `✅ ${opt.ans}`;
+                        playCorrectSound();
+                        shootConfetti();
+                        userScore++;
+                    } else {
+                        btn.classList.add('wrong');
+                        btn.innerHTML = `❌ ${opt.ans}`;
+                        playWrongSound();
+                        
+                        // Tự động bôi xanh đáp án đúng
+                        let allBtns = grid.querySelectorAll('.option-btn');
+                        allBtns.forEach(b => {
+                            if(b.dataset.correct === "true") {
+                                b.classList.add('correct');
+                                b.innerHTML = `✅ (Đáp án đúng) ${b.innerText.replace('🔹 ', '')}`;
+                            }
+                        });
+                    }
+                    
+                    // Hiện giải thích
+                    expBox.style.display = 'block';
+                };
+
+                btn.dataset.correct = opt.isCorrect;
+                grid.appendChild(btn);
+            });
+
+            card.appendChild(grid);
+            card.appendChild(expBox);
+            container.appendChild(card);
+        });
+
+        // --- LOGIC HẸN GIỜ ---
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer');
+            if(!isTimerRunning) {
+                isTimerRunning = true;
+                btn.innerText = "TẠM DỪNG";
+                btn.style.background = "#e17055";
+                btn.style.boxShadow = "0 4px 0 #d63031";
+                
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    let m = Math.floor(timeLeft / 60);
+                    let s = timeLeft % 60;
+                    document.getElementById('timer-display').innerText = `${m < 10 ? '0':''}${m}:${s < 10 ? '0':''}${s}`;
+                    
+                    if(timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm nốt, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm phần này trong 10 phút thôi nha.");
+                    }
+                }, 1000);
+            } else {
+                isTimerRunning = false;
+                clearInterval(timerInterval);
+                btn.innerText = "TIẾP TỤC BẤM GIỜ";
+                btn.style.background = "#00C9A7";
+                btn.style.boxShadow = "0 4px 0 #00b894";
+            }
+        }
+
+        // --- TOGGLE BẢN DỊCH ---
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            if(el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        // --- NỘP BÀI & NHẬN XÉT ---
+        function submitTest() {
+            if(answeredQuestions < totalQuestions) {
+                let cf = confirm("Bạn vẫn chưa làm hết bài. Bạn có chắc chắn muốn nộp bài lúc này không?");
+                if(!cf) return;
+            }
+
+            clearInterval(timerInterval); // Dừng thời gian
+
+            const modal = document.getElementById('result-modal');
+            const scoreEl = document.getElementById('final-score');
+            const cmtEl = document.getElementById('final-comment');
+
+            scoreEl.innerText = `${userScore}/${totalQuestions}`;
+
+            // Sinh lời nhận xét dựa trên điểm
+            let percent = userScore / totalQuestions;
+            if(percent === 1) {
+                cmtEl.innerText = "🌟 XUẤT SẮC! BẠN LÀ MỘT THIÊN TÀI NGÔN NGỮ! 🌟";
+                cmtEl.style.color = "#00D26A";
+            } else if (percent >= 0.7) {
+                cmtEl.innerText = "🔥 RẤT TỐT! LÀM TỐT LẮM BẠN YÊU! 🔥";
+                cmtEl.style.color = "#0984e3";
+            } else if (percent >= 0.5) {
+                cmtEl.innerText = "👍 KHÁ LẮM! CỐ GẮNG THÊM MỘT CHÚT NỮA NHÉ! 👍";
+                cmtEl.style.color = "#fdcb6e";
+            } else {
+                cmtEl.innerText = "💪 ĐỪNG NẢN LÒNG! HÃY ĐỌC KỸ PHẦN GIẢI THÍCH VÀ LÀM LẠI NHÉ! 💪";
+                cmtEl.style.color = "#d63031";
+            }
+
+            modal.style.display = 'flex';
+            shootConfetti();
+            shootConfetti(); // Bắn 2 lần cho hoành tráng
+        }
+    </script>
+</body>
+</html>
+
+
