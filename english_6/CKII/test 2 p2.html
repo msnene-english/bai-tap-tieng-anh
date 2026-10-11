@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms. Chí Nên - English Master Quiz</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Nunito', sans-serif; }
+
+        body {
+            background: linear-gradient(135deg, #43c6ac, #f8ffae);
+            background-size: 300% 300%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
+
+        /* ================= GIAO DIỆN MÀN HÌNH KHÓA ================= */
+        #passwordModal {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(5,2,15,0.92); backdrop-filter: blur(20px);
+        }
+        .pw-card {
+            background: linear-gradient(160deg, rgba(40,10,70,0.95) 0%, rgba(15,5,30,0.98) 100%);
+            border: 1.5px solid rgba(240,192,64,0.4); border-radius: 24px; padding: 48px 40px 40px; 
+            max-width: 440px; width: 93%; text-align: center; position: relative; overflow: hidden;
+            box-shadow: 0 0 60px rgba(106,5,114,0.6), 0 0 120px rgba(240,192,64,0.1), inset 0 1px 0 rgba(240,192,64,0.15);
+        }
+        .pw-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #6A0572, #F0C040, #6A0572);
+        }
+        .pw-crest { font-size: 4rem; margin-bottom: 8px; display: block; }
+        .pw-title { font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700; color: #F0C040; margin-bottom: 6px; letter-spacing: 1px; }
+        .pw-sub   { font-size: .87rem; color: rgba(200,200,212,0.6); margin-bottom: 24px; }
+        .pw-input {
+            width: 100%; padding: 13px 20px; border-radius: 12px;
+            border: 1.5px solid rgba(240,192,64,0.3); background: rgba(255,255,255,0.05);
+            color: #FFE082; font-size: 1rem; font-family: 'Nunito', sans-serif;
+            outline: none; letter-spacing: 3px; text-align: center; transition: all .3s;
+        }
+        .pw-input:focus { border-color: #F0C040; box-shadow: 0 0 0 3px rgba(240,192,64,0.15); }
+        .pw-input.error { border-color: #FF4757; box-shadow: 0 0 0 3px rgba(255,71,87,0.25); animation: shake .4s ease; }
+        .pw-input::placeholder { color: rgba(200,200,212,0.3); letter-spacing: 1px; }
+        .pw-btn {
+            width: 100%; padding: 14px; margin-top: 14px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #6A0572 0%, #9B1FA8 40%, #F0C040 100%);
+            color: #fff; font-size: 1rem; font-weight: 700; font-family: 'Cinzel', serif;
+            cursor: pointer; letter-spacing: .5px; transition: transform .2s;
+        }
+        .pw-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(106,5,114,0.7); }
+        .pw-err { color: #ff8a9a; font-size: .84rem; margin-top: 10px; display: none; font-weight: 700; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 15%,45%,75%{transform:translateX(-6px)} 30%,60%,90%{transform:translateX(6px)} }
+
+        /* ================= MÀN HÌNH CHÍNH ================= */
+        #mainContent {
+            display: block; height: 100vh; width: 100vw;
+        }
+
+        /* Floating Background */
+        .floating-bg {
+            position: fixed; width: 100vw; height: 100vh; top: 0; left: 0; z-index: -1; pointer-events: none;
+        }
+        .emoji {
+            position: absolute; font-size: 40px; opacity: 0.6;
+            animation: float 10s ease-in-out infinite;
+        }
+        .e1 { left: 10%; animation-delay: 0s; font-size: 50px; }
+        .e2 { left: 30%; animation-delay: 2s; font-size: 35px; }
+        .e3 { left: 50%; animation-delay: 4s; font-size: 60px; }
+        .e4 { left: 70%; animation-delay: 1s; font-size: 45px; }
+        .e5 { left: 90%; animation-delay: 3s; font-size: 55px; }
+
+        @keyframes float {
+            0% { transform: translateY(110vh) rotate(0deg); }
+            100% { transform: translateY(-20vh) rotate(360deg); }
+        }
+
+        /* Split Screen Layout */
+        header {
+            text-align: center; padding: 10px; font-weight: 800; color: #1f5145;
+            letter-spacing: 1px; font-size: 14px; background: rgba(255,255,255,0.3); backdrop-filter: blur(5px);
+        }
+
+        .container {
+            display: flex; height: calc(100vh - 40px); width: 100%; gap: 20px; padding: 20px;
+        }
+
+        .panel {
+            flex: 1; height: 100%; overflow-y: auto; padding: 25px;
+            background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: var(--glass-shadow);
+        }
+
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        /* Reading Styling */
+        .passage { margin-bottom: 40px; }
+        .passage h2 { color: #0d9488; text-transform: uppercase; font-size: 22px; text-align: center; margin-bottom: 15px; }
+        .passage p { font-size: 18px; line-height: 1.8; margin-bottom: 15px; text-align: justify; }
+        .blank { display: inline-block; width: 60px; border-bottom: 2px dashed #0d9488; text-align: center; font-weight: bold; color: #0d9488;}
+
+        .btn-trans {
+            background: #fff; border: 2px solid #fde047; padding: 8px 15px; border-radius: 12px;
+            font-weight: bold; color: #ca8a04; cursor: pointer; transition: 0.3s; margin-bottom: 15px; font-size: 14px;
+        }
+        .btn-trans:hover { background: #fef08a; transform: translateY(-2px); }
+        .translation { display: none; background: rgba(253, 224, 71, 0.3); padding: 15px; border-radius: 12px; margin-bottom: 15px; font-style: italic; color: #422006; border-left: 4px solid #facc15;}
+
+        /* Glossary Styling */
+        .glossary { margin-top: 20px; background: rgba(255,255,255,0.6); border-radius: 15px; padding: 15px; }
+        .glossary h3 { color: #0f766e; margin-bottom: 10px; font-size: 16px; text-align: center;}
+        .glossary table { width: 100%; border-collapse: collapse; font-size: 14px;}
+        .glossary th, .glossary td { border: 1px solid #99f6e4; padding: 8px; text-align: left; }
+        .glossary th { background: #14b8a6; color: white; }
+
+        /* Quiz Styling */
+        .question-card {
+            background: rgba(255,255,255,0.7); border-radius: 15px; padding: 20px; margin-bottom: 25px;
+            border: 1px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s;
+        }
+        .question-text { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #1e293b; }
+        
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .opt-btn {
+            background: white; border: 2px solid #e2e8f0; padding: 12px; border-radius: 12px;
+            font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; color: #334155;
+        }
+        .opt-btn:hover { border-color: #94a3b8; transform: scale(1.02); }
+        .opt-btn.correct { background: #4ade80; color: white; border-color: #22c55e; }
+        .opt-btn.incorrect { background: #f87171; color: white; border-color: #ef4444; }
+        .opt-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        /* Explanation Styling Standard */
+        .explanation {
+            display: none; margin-top: 15px; background: #f8fafc; padding: 15px; border-radius: 12px;
+            border-left: 5px solid #3b82f6; font-size: 15px; line-height: 1.6;
+        }
+        .explanation ul { list-style: none; padding-left: 0; margin: 10px 0; }
+        .explanation li { margin-bottom: 5px; }
+        
+        /* Master Colors */
+        .p-word { color: #1d4ed8; font-weight: bold; }
+        .p-mean { color: #c2410c; font-weight: bold; }
+        .p-grammar { color: #b91c1c; text-decoration: underline red; text-underline-offset: 4px; font-weight: bold; }
+        .hl-green { color: #16a34a; font-weight: bold; }
+        .hl-red { color: #dc2626; text-decoration: line-through; font-weight: bold; }
+        
+        .quote { background: #e0f2fe; padding: 8px; border-radius: 8px; font-style: italic; color: #0369a1; display: block; margin: 10px 0;}
+
+        /* Submit Area */
+        .submit-btn {
+            display: block; width: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444);
+            color: white; font-size: 20px; font-weight: 900; padding: 15px; border: none;
+            border-radius: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            transition: 0.3s; margin-top: 20px;
+        }
+        .submit-btn:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6); }
+
+        /* Result Modal */
+        #resultModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 100;
+            justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 20px; text-align: center;
+            width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { 0% {transform: scale(0.5); opacity:0;} 100% {transform: scale(1); opacity:1;} }
+        .modal-content input { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 10px; margin-bottom: 15px; font-size: 16px; text-align: center;}
+        .modal-content button { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: bold;}
+        .score-text { font-size: 40px; font-weight: 900; color: #10b981; margin: 10px 0; }
+        #result-gif { width: 100%; border-radius: 15px; margin-top: 15px; }
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body>
+
+    
+
+    <div id="mainContent">
+        <div class="floating-bg">
+            <div class="emoji e1">♻️</div>
+            <div class="emoji e2">⛩️</div>
+            <div class="emoji e3">🐶</div>
+            <div class="emoji e4">🦅</div>
+            <div class="emoji e5">🌿</div>
+        </div>
+
+        <header>Giáo viên tạo: Ms. Chí Nên · ☎️ 0852639652</header>
+
+        <div class="container">
+            <div class="panel" id="left-panel">
+                
+                <div class="passage">
+                    <h2>♻️ School Recycling Program</h2>
+                    <p>Our school is starting a new Recycling Program to help protect the environment. Students are encouraged to bring recyclable materials such as paper, plastic bottles, and cans. Recycling bins will be placed (13) <span class="blank">____</span> the schoolyard and classrooms.</p>
+                    <button class="btn-trans" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                    <div class="translation">Trường chúng ta đang bắt đầu một Chương trình Tái chế mới để giúp bảo vệ môi trường. Học sinh được khuyến khích mang đến các vật liệu có thể tái chế như giấy, chai nhựa và lon. Các thùng rác tái chế sẽ được đặt (13) ____ sân trường và các lớp học.</div>
+
+                    <p>Important rules:<br>
+                    - Clean all items before placing them in the bins.<br>
+                    - Do not mix different types of (14) <span class="blank">____</span>.<br>
+                    - Large boxes should be flattened before disposal.<br>
+                    - (15) <span class="blank">____</span> your classmates to recycle correctly.<br>
+                    - Follow (16) <span class="blank">____</span> school’s recycling guidelines.</p>
+                    <button class="btn-trans" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                    <div class="translation">Các quy tắc quan trọng:<br>
+                    - Làm sạch tất cả các món đồ trước khi cho vào thùng.<br>
+                    - Không trộn lẫn các loại (14) ____ khác nhau.<br>
+                    - Các hộp lớn nên được làm phẳng trước khi vứt bỏ.<br>
+                    - (15) ____ các bạn cùng lớp của bạn tái chế đúng cách.<br>
+                    - Tuân theo các hướng dẫn tái chế của (16) ____ trường học.</div>
+
+                    <div class="glossary">
+                        <h3>📚 Glossary: Environment & Recycling</h3>
+                        <table>
+                            <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                            <tr><td>Recyclable</td><td>(adj)</td><td>Có thể tái chế</td></tr>
+                            <tr><td>Environment</td><td>(n)</td><td>Môi trường</td></tr>
+                            <tr><td>Encourage</td><td>(v)</td><td>Khuyến khích</td></tr>
+                            <tr><td>Material</td><td>(n)</td><td>Vật liệu, chất liệu</td></tr>
+                            <tr><td>Flatten</td><td>(v)</td><td>Làm phẳng, đập bẹp</td></tr>
+                            <tr><td>Disposal</td><td>(n)</td><td>Sự vứt bỏ, tẩu tán</td></tr>
+                            <tr><td>Guideline</td><td>(n)</td><td>Nguyên tắc chỉ đạo, hướng dẫn</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <hr style="border: 1px dashed #cbd5e1; margin: 30px 0;">
+
+                <div class="passage">
+                    <h2>⛩️ Tokyo City</h2>
+                    <p>Tokyo, the capital of Japan, is a big city. The city is filled (19) <span class="blank">____</span> factories, large office buildings, banks, restaurants, and shops of all sizes. It is a (20) <span class="blank">____</span> for Japanese art, and is home to more than 100 colleges and universities. </p>
+                    <button class="btn-trans" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                    <div class="translation">Tokyo, thủ đô của Nhật Bản, là một thành phố lớn. Thành phố này chứa đầy (19) ____ các nhà máy, tòa nhà văn phòng lớn, ngân hàng, nhà hàng và cửa hàng đủ mọi kích cỡ. Đây là một (20) ____ về nghệ thuật Nhật Bản, và là nơi tọa lạc của hơn 100 trường cao đẳng và đại học.</div>
+
+                    <p>The city is (21) <span class="blank">____</span> an important seaport. Most Japanese companies have (22) <span class="blank">____</span> main offices in Tokyo. At the heart of Tokyo is the Imperial Palace. This is the place (23) <span class="blank">____</span> the Emperor of Japan lives with his family. Tokyo is one of the world’s biggest and most crowded (24) <span class="blank">____</span>.</p>
+                    <button class="btn-trans" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                    <div class="translation">Thành phố này (21) ____ là một cảng biển quan trọng. Hầu hết các công ty Nhật Bản đều có trụ sở chính của (22) ____ tại Tokyo. Ở trung tâm Tokyo là Hoàng cung. Đây là nơi (23) ____ Hoàng đế Nhật Bản sống cùng gia đình. Tokyo là một trong những (24) ____ lớn nhất và đông đúc nhất thế giới.</div>
+
+                    <div class="glossary">
+                        <h3>📚 Glossary: Urban & Geography</h3>
+                        <table>
+                            <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                            <tr><td>Capital</td><td>(n)</td><td>Thủ đô</td></tr>
+                            <tr><td>Seaport</td><td>(n)</td><td>Cảng biển</td></tr>
+                            <tr><td>Imperial Palace</td><td>(n)</td><td>Hoàng cung</td></tr>
+                            <tr><td>Emperor</td><td>(n)</td><td>Hoàng đế</td></tr>
+                            <tr><td>Crowded</td><td>(adj)</td><td>Đông đúc</td></tr>
+                            <tr><td>Fill with</td><td>(phr)</td><td>Đầy ắp với</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <hr style="border: 1px dashed #cbd5e1; margin: 30px 0;">
+
+                <div class="passage">
+                    <h2>🏀 How to train your dog to play basketball</h2>
+                    <p>Start by getting your dog to fetch a ball and bring it to you. If your dog can't do that, you should stop now. Your dog will probably not make a great basketball player. Instead of taking the ball directly from the dog, hold a box or container at ground level and make the dog drop the ball into the box. Give the dog a treat every time she correctly drops the ball in the container.</p>
+                    <button class="btn-trans" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                    <div class="translation">Bắt đầu bằng việc để chó của bạn đi nhặt một quả bóng và mang nó lại cho bạn. Nếu chó của bạn không thể làm điều đó, bạn nên dừng lại ngay bây giờ. Chó của bạn có lẽ sẽ không trở thành một cầu thủ bóng rổ giỏi. Thay vì lấy bóng trực tiếp từ chó, hãy cầm một cái hộp hoặc đồ chứa ở ngang mặt đất và làm cho chó thả bóng vào trong hộp. Cho chó một phần thưởng (đồ ăn vặt) mỗi khi nó thả bóng đúng vào thùng chứa.</div>
+
+                    <p>All good dog tricks should be learned in small steps. Every time the dog brings the ball back to you, raise the box up off the ground just a little bit more. Soon the dog will have to stand on her hind legs to reach it. Don't forget to reward the dog every time. Once the dog has learned to drop the ball in the container, try using a basketball hoop instead of a box. To begin with, keep the hoop low to the ground. Then gradually raise the height. Reward the dog with a treat each time she gets a basket. Pretty soon your dog will start jumping to reach the hoop and a basketball star will be born!</p>
+                    <button class="btn-trans" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                    <div class="translation">Tất cả những trò ảo thuật hay của chó đều nên được học theo từng bước nhỏ. Mỗi khi chó mang bóng về cho bạn, hãy nâng chiếc hộp lên khỏi mặt đất một chút. Chẳng mấy chốc, con chó sẽ phải đứng trên hai chân sau của nó để chạm tới hộp. Đừng quên thưởng cho chó mỗi lần như vậy. Khi chó đã học được cách thả bóng vào thùng, hãy thử sử dụng vòng rổ thay vì hộp. Để bắt đầu, hãy giữ vòng rổ thấp gần mặt đất. Sau đó tăng dần chiều cao. Thưởng cho chó một món ăn vặt mỗi khi nó ném trúng rổ. Rất nhanh thôi, chó của bạn sẽ bắt đầu nhảy lên để với tới rổ và một ngôi sao bóng rổ sẽ ra đời!</div>
+
+                    <div class="glossary">
+                        <h3>📚 Glossary: Training & Animals</h3>
+                        <table>
+                            <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                            <tr><td>Fetch</td><td>(v)</td><td>Tìm và mang về</td></tr>
+                            <tr><td>Container</td><td>(n)</td><td>Thùng/đồ chứa</td></tr>
+                            <tr><td>Treat</td><td>(n)</td><td>Phần thưởng (đồ ăn)</td></tr>
+                            <tr><td>Hind legs</td><td>(n)</td><td>Hai chân sau</td></tr>
+                            <tr><td>Reward</td><td>(v/n)</td><td>Thưởng/phần thưởng</td></tr>
+                            <tr><td>Gradually</td><td>(adv)</td><td>Một cách từ từ, dần dần</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <hr style="border: 1px dashed #cbd5e1; margin: 30px 0;">
+
+                <div class="passage">
+                    <h2>🦅 Wildlife in Danger</h2>
+                    <p>Nowadays people are more aware that wildlife all over the world is in danger. Many species of animals are threatened and could easily become extinct if (37) <span class="blank">____</span>. There are many reasons for this. In some cases, animals are hunted for their fur or for other valuable parts of their bodies. (38) <span class="blank">____</span>.</p>
+                    <button class="btn-trans" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                    <div class="translation">Ngày nay, mọi người nhận thức rõ hơn rằng động vật hoang dã trên toàn thế giới đang gặp nguy hiểm. Nhiều loài động vật đang bị đe dọa và có thể dễ dàng tuyệt chủng nếu (37) ____. Có nhiều lý do cho việc này. Trong một số trường hợp, động vật bị săn bắt để lấy lông hoặc các bộ phận có giá trị khác trên cơ thể chúng. (38) ____.</div>
+
+                    <p>For many animals and birds, the problem is that their habitat – (39) <span class="blank">____</span> – is disappearing. More land is used for farms, for houses or industry, and there are fewer open spaces than there once were. Farmers use powerful chemicals to help them grow better crops, but these chemicals pollute the environment and harm the wildlife. (40) <span class="blank">____</span> – human beings – will soon be the only ones left, unless we can solve this problem.</p>
+                    <button class="btn-trans" onclick="toggleTrans(this)">Mở dịch đoạn này 🌟</button>
+                    <div class="translation">Đối với nhiều loài động vật và chim, vấn đề là môi trường sống của chúng – (39) ____ – đang biến mất. Ngày càng có nhiều đất được sử dụng cho trang trại, nhà ở hoặc công nghiệp, và có ít không gian mở hơn so với trước đây. Nông dân sử dụng các hóa chất mạnh để giúp họ trồng trọt tốt hơn, nhưng những hóa chất này làm ô nhiễm môi trường và gây hại cho động vật hoang dã. (40) ____ – con người – sẽ sớm là những sinh vật duy nhất còn sót lại, trừ khi chúng ta có thể giải quyết vấn đề này.</div>
+
+                    <div class="glossary">
+                        <h3>📚 Glossary: Wildlife Conservation</h3>
+                        <table>
+                            <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                            <tr><td>Aware</td><td>(adj)</td><td>Nhận thức được</td></tr>
+                            <tr><td>Threatened</td><td>(adj)</td><td>Bị đe dọa</td></tr>
+                            <tr><td>Extinct</td><td>(adj)</td><td>Tuyệt chủng</td></tr>
+                            <tr><td>Valuable</td><td>(adj)</td><td>Có giá trị</td></tr>
+                            <tr><td>Habitat</td><td>(n)</td><td>Môi trường sống</td></tr>
+                            <tr><td>Pollute</td><td>(v)</td><td>Làm ô nhiễm</td></tr>
+                            <tr><td>Human being</td><td>(n)</td><td>Con người, nhân loại</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="panel" id="right-panel">
+                <h2 style="text-align: center; color: #b45309; margin-bottom: 20px;">🎮 LÀM BÀI TẬP BÊN DƯỚI NHÉ</h2>
+                <div id="quiz-container"></div>
+                <button class="submit-btn" onclick="submitQuiz()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultModal">
+        <div class="modal-content" id="modal-form">
+            <h2>Nhập tên để xem điểm nhé! 🌟</h2>
+            <p style="margin-bottom: 15px; color: #64748b;">Ms. Chí Nên · ☎️ 0852639652 đang chờ kết quả của bạn</p>
+            <input type="text" id="student-name" placeholder="Tên siêu nhân của bạn là gì?">
+            <button onclick="showScore()">Xem kết quả ngay!</button>
+        </div>
+        <div class="modal-content" id="modal-result" style="display: none;">
+            <h2 id="r-name"></h2>
+            <div class="score-text" id="r-score"></div>
+            <p id="r-comment" style="font-size: 18px; font-weight: bold; color: #d97706;"></p>
+            <img id="result-gif" src="" alt="Meme">
+            <button style="margin-top: 15px; background: #10b981;" onclick="location.reload()">Làm lại từ đầu</button>
+        </div>
+    </div>
+
+<script>
+    // ================= XỬ LÝ MÀN HÌNH KHÓA =================
+    const _k  = [99, 111, 103, 97, 110, 103, 100, 97, 116, 100, 105, 101, 109, 99, 97, 111]; 
+    const _pw = _k.map(c => String.fromCharCode(c)).join('');
+
+    function checkPassword() {
+        const inp = document.getElementById('pwInput');
+        const err = document.getElementById('pwErr');
+        
+        if (inp.value === _pw) {
+            // 1. Ẩn màn hình khóa và hiện nội dung bài
+            document.getElementById('passwordModal').style.display = 'none';
+            const main = document.getElementById('mainContent');
+            if(main) main.style.display = 'block';
+            
+            // 2. PHÁT FILE ÂM THANH NHẮC NHỞ KHÍCH LỆ
+            const encouragAudio = new Audio('https:
+            encouragAudio.play().catch(e => console.log("Lỗi phát âm thanh: ", e));
+            
+        } else {
+            // Xử lý sai mật khẩu
+            inp.classList.remove('error'); void inp.offsetWidth; inp.classList.add('error');
+            err.style.display = 'block'; setTimeout(() => inp.classList.remove('error'), 500);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const pwInput = document.getElementById('pwInput');
+        if(pwInput) pwInput.addEventListener('keydown', e => { if (e.key==='Enter') checkPassword(); });
+    });
+
+    // ================= AUDIO CHO GAME =================
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+    const wrongSound = new Audio('https:
+
+    function playDing() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+        osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); 
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function playWrongSound() {
+        wrongSound.currentTime = 0;
+        wrongSound.play().catch(e => console.log("Trình duyệt chặn autoplay", e));
+    }
+
+    function toggleTrans(btn) {
+        const transDiv = btn.nextElementSibling;
+        if(transDiv.style.display === 'block') {
+            transDiv.style.display = 'none';
+            btn.innerHTML = 'Mở dịch đoạn này 🌟';
+        } else {
+            transDiv.style.display = 'block';
+            btn.innerHTML = 'Đóng bản dịch 🙈';
+        }
+    }
+
+    // ================= DATA BÀI TẬP =================
+    const quizData = [
+        // Passage 1
+        {
+            id: 13, text: "Question 13: Recycling bins will be placed ____ the schoolyard and classrooms.", correct: "around",
+            options: ["at", "in", "around", "on"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Các thùng rác tái chế sẽ được đặt _____ sân trường và lớp học.</p>
+                <ul>
+                    <li>at (tại) <span class="hl-red">❌ Sai vì "at" chỉ một điểm cụ thể, không hợp diễn tả việc đặt rải rác khắp sân.</span></li>
+                    <li>in (trong) <span class="hl-red">❌ Sai vì đặt "trong" sân trường dùng được, nhưng thiếu sắc thái rải rác.</span></li>
+                    <li>around (xung quanh) <span class="hl-green">✅ Đúng.</span></li>
+                    <li>on (trên) <span class="hl-red">❌ Sai.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "Recycling bins will be placed around the schoolyard and classrooms."</span>
+                <p>👉 <strong>Dịch:</strong> Các thùng tái chế sẽ được đặt <span class="hl-green">xung quanh</span> sân trường và các lớp học.</p>
+                <p><span class="p-grammar">Giới từ chỉ vị trí:</span> <span class="p-word">around</span> mang nghĩa <span class="p-mean">xung quanh, rải rác khắp nơi</span> rất phù hợp với việc bố trí thùng rác.</p>
+            `
+        },
+        {
+            id: 14, text: "Question 14: Do not mix different types of ____.", correct: "materials",
+            options: ["garbage", "materials", "waste", "paper"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Không trộn lẫn các loại _____ khác nhau.</p>
+                <ul>
+                    <li>garbage (rác thải) <span class="hl-red">❌ Sai vì bài viết dùng từ khóa khác ở câu trước.</span></li>
+                    <li>materials (vật liệu) <span class="hl-green">✅ Đúng. Cụ thể là vật liệu tái chế.</span></li>
+                    <li>waste (chất thải) <span class="hl-red">❌ Sai vì từ này thường chỉ rác bỏ đi chung chung, không sát với câu trước.</span></li>
+                    <li>paper (giấy) <span class="hl-red">❌ Sai vì giấy chỉ là một loại vật liệu, không đại diện cho tất cả.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng (Câu trước): "Students are encouraged to bring recyclable materials... Do not mix different types of materials."</span>
+                <p>👉 <strong>Dịch:</strong> Học sinh được khuyến khích mang đến các <span class="hl-green">vật liệu</span> có thể tái chế... Không trộn lẫn các loại <span class="hl-green">vật liệu</span> khác nhau.</p>
+                <p><span class="p-grammar">Từ vựng theo ngữ cảnh (Context clues):</span> Từ <span class="p-word">materials</span> (<span class="p-mean">vật liệu</span>) lặp lại ý của câu trước đó.</p>
+            `
+        },
+        {
+            id: 15, text: "Question 15: ____ your classmates to recycle correctly.", correct: "Remind",
+            options: ["Invite", "Remind", "Say", "Speak"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> _____ các bạn cùng lớp của bạn tái chế đúng cách.</p>
+                <ul>
+                    <li>Invite (Mời) <span class="hl-red">❌ Sai vì "invite someone to do sth" thường dùng khi rủ rê tham gia tiệc/sự kiện.</span></li>
+                    <li>Remind (Nhắc nhở) <span class="hl-green">✅ Đúng. Cấu trúc Remind sb to do sth.</span></li>
+                    <li>Say (Nói) <span class="hl-red">❌ Sai ngữ pháp vì "say" không đi kèm trực tiếp với tân ngữ chỉ người (phải là say TO sb).</span></li>
+                    <li>Speak (Nói chuyện) <span class="hl-red">❌ Sai ngữ pháp, "speak TO sb".</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "Remind your classmates to recycle correctly."</span>
+                <p>👉 <strong>Dịch:</strong> Hãy <span class="hl-green">nhắc nhở</span> các bạn cùng lớp của bạn tái chế đúng cách.</p>
+                <p><span class="p-grammar">Cấu trúc V + Object + To V:</span> <span class="p-word">Remind someone to do something</span> mang nghĩa <span class="p-mean">nhắc nhở ai đó làm gì</span>.</p>
+            `
+        },
+        {
+            id: 16, text: "Question 16: Follow ___ school’s recycling guidelines.", correct: "the",
+            options: ["the", "a", "an", "some"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Tuân theo các hướng dẫn tái chế của _____ trường học.</p>
+                <ul>
+                    <li>the (mạo từ xác định) <span class="hl-green">✅ Đúng vì "trường học" ở đây đã xác định (trường của chúng ta).</span></li>
+                    <li>a/an (một) <span class="hl-red">❌ Sai vì đây không phải là một ngôi trường bất kỳ.</span></li>
+                    <li>some (vài) <span class="hl-red">❌ Sai ngữ nghĩa.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "Follow the school’s recycling guidelines."</span>
+                <p>👉 <strong>Dịch:</strong> Tuân theo các hướng dẫn tái chế của <span class="hl-green">nhà trường</span> (ngôi trường mà người viết và người đọc đều biết).</p>
+                <p><span class="p-grammar">Mạo từ xác định (Definite Article):</span> <span class="p-word">The</span> (<span class="p-mean">cái, con, người... đã xác định</span>) được dùng khi cả người nói và người nghe đều biết đối tượng đang được nhắc tới.</p>
+            `
+        },
+        // Passage 2
+        {
+            id: 19, text: "Question 19: The city is filled ____ factories...", correct: "with",
+            options: ["with", "so", "in", "of"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Thành phố này chứa đầy _____ các nhà máy...</p>
+                <ul>
+                    <li>with (với) <span class="hl-green">✅ Đúng. Cấu trúc be filled with.</span></li>
+                    <li>so (vì vậy) <span class="hl-red">❌ Sai ngữ pháp và nghĩa.</span></li>
+                    <li>in (trong) <span class="hl-red">❌ Sai cấu trúc.</span></li>
+                    <li>of (của) <span class="hl-red">❌ Sai vì "full of" mới đi với "of", còn "filled" đi với "with".</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "The city is filled with factories, large office buildings..."</span>
+                <p>👉 <strong>Dịch:</strong> Thành phố này <span class="hl-green">chứa đầy (với)</span> các nhà máy, tòa nhà văn phòng lớn...</p>
+                <p><span class="p-grammar">Cấu trúc đi kèm (Collocation):</span> <span class="p-word">Be filled with</span> có nghĩa là <span class="p-mean">chứa đầy, ngập tràn cái gì</span>. Chú ý bẫy: <span class="hl-red">Full of = Filled with</span>.</p>
+            `
+        },
+        {
+            id: 20, text: "Question 20: It is a ____ for Japanese art...", correct: "center",
+            options: ["house", "city", "center", "capital"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Đây là một _____ về nghệ thuật Nhật Bản...</p>
+                <ul>
+                    <li>house (ngôi nhà) <span class="hl-red">❌ Sai. Ít dùng "a house for art" theo nghĩa trung tâm hội tụ.</span></li>
+                    <li>city (thành phố) <span class="hl-red">❌ Sai. Đã lặp lại từ city quá nhiều.</span></li>
+                    <li>center (trung tâm) <span class="hl-green">✅ Đúng. "a center for sth" - trung tâm của cái gì.</span></li>
+                    <li>capital (thủ đô) <span class="hl-red">❌ Sai ngữ nghĩa trong ngữ cảnh này.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "It is a center for Japanese art..."</span>
+                <p>👉 <strong>Dịch:</strong> Đây là một <span class="hl-green">trung tâm</span> về nghệ thuật Nhật Bản...</p>
+                <p><span class="p-grammar">Từ vựng (Vocabulary):</span> <span class="p-word">Center</span> (<span class="p-mean">Trung tâm</span>) dùng để chỉ nơi hội tụ tinh hoa, sự kiện hay các hoạt động chính.</p>
+            `
+        },
+        {
+            id: 21, text: "Question 21: The city is ____ an important seaport.", correct: "also",
+            options: ["and", "also", "but", "so"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Thành phố này _____ là một cảng biển quan trọng.</p>
+                <ul>
+                    <li>and (và) <span class="hl-red">❌ Sai ngữ pháp vì "and" dùng nối 2 vế/từ, không đứng giữa to be và cụm danh từ như vậy.</span></li>
+                    <li>also (cũng) <span class="hl-green">✅ Đúng. Thêm thông tin bổ sung.</span></li>
+                    <li>but (nhưng) <span class="hl-red">❌ Sai vì 2 câu mang tính chất liệt kê ưu điểm, không mang nghĩa trái ngược.</span></li>
+                    <li>so (vì thế) <span class="hl-red">❌ Sai ngữ nghĩa.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "The city is also an important seaport."</span>
+                <p>👉 <strong>Dịch:</strong> Thành phố này <span class="hl-green">cũng</span> là một cảng biển quan trọng.</p>
+                <p><span class="p-grammar">Trạng từ bổ nghĩa (Adverb):</span> <span class="p-word">Also</span> (<span class="p-mean">cũng, ngoài ra</span>) đứng sau động từ "to be" để bổ sung thêm thông tin song song với các ý trước.</p>
+            `
+        },
+        {
+            id: 22, text: "Question 22: Most Japanese companies have ____ main offices in Tokyo.", correct: "their",
+            options: ["its", "their", "theirs", "some"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Hầu hết các công ty Nhật Bản đều có trụ sở chính của _____ tại Tokyo.</p>
+                <ul>
+                    <li>its (của nó) <span class="hl-red">❌ Sai vì "companies" là danh từ số nhiều.</span></li>
+                    <li>their (của họ/của chúng) <span class="hl-green">✅ Đúng. Tính từ sở hữu cho danh từ số nhiều.</span></li>
+                    <li>theirs (của họ - đại từ sở hữu) <span class="hl-red">❌ Sai vì theo sau đang là danh từ "main offices", cần tính từ sở hữu chứ không dùng đại từ.</span></li>
+                    <li>some (vài) <span class="hl-red">❌ Sai ngữ nghĩa.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "Most Japanese companies have their main offices in Tokyo."</span>
+                <p>👉 <strong>Dịch:</strong> Hầu hết các công ty Nhật Bản đều có trụ sở chính của <span class="hl-green">họ/chúng</span> tại Tokyo.</p>
+                <p><span class="p-grammar">Tính từ sở hữu (Possessive Adjectives):</span> Chủ ngữ là "companies" (số nhiều) nên tính từ sở hữu tương ứng là <span class="p-word">their</span> (<span class="p-mean">của chúng/của họ</span>).</p>
+            `
+        },
+        {
+            id: 23, text: "Question 23: This is the place ____ the Emperor of Japan lives...", correct: "where",
+            options: ["what", "where", "which", "for"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Đây là nơi _____ Hoàng đế Nhật Bản sống...</p>
+                <ul>
+                    <li>what (cái gì) <span class="hl-red">❌ Sai. Không dùng "what" thay thế cho nơi chốn.</span></li>
+                    <li>where (nơi mà) <span class="hl-green">✅ Đúng. Trạng từ quan hệ thay thế cho "the place".</span></li>
+                    <li>which (cái mà) <span class="hl-red">❌ Sai. Nếu dùng "which" thì phải có giới từ (in which), vì vế sau "lives" cần giới từ chỉ nơi chốn.</span></li>
+                    <li>for (cho) <span class="hl-red">❌ Sai.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "This is the place where the Emperor of Japan lives with his family."</span>
+                <p>👉 <strong>Dịch:</strong> Đây là nơi <span class="hl-green">mà</span> Hoàng đế Nhật Bản sống cùng gia đình.</p>
+                <p><span class="p-grammar">Mệnh đề quan hệ (Relative Clause):</span> Trạng từ quan hệ <span class="p-word">where</span> (<span class="p-mean">nơi mà</span>) dùng để thay thế cho danh từ chỉ nơi chốn "the place".</p>
+            `
+        },
+        {
+            id: 24, text: "Question 24: Tokyo is one of the world’s biggest and most crowded ____.", correct: "cities",
+            options: ["city", "a city", "cities", "the cities"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Tokyo là một trong những _____ lớn nhất và đông đúc nhất thế giới.</p>
+                <ul>
+                    <li>city (thành phố - số ít) <span class="hl-red">❌ Sai vì cấu trúc "one of" (một trong những) phải đi với danh từ số nhiều.</span></li>
+                    <li>a city <span class="hl-red">❌ Sai tương tự.</span></li>
+                    <li>cities (các thành phố) <span class="hl-green">✅ Đúng.</span></li>
+                    <li>the cities <span class="hl-red">❌ Sai vì trước đó đã có sở hữu cách "world's", không dùng thêm mạo từ "the" trước danh từ.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "Tokyo is one of the world’s biggest and most crowded cities."</span>
+                <p>👉 <strong>Dịch:</strong> Tokyo là một trong những <span class="hl-green">thành phố</span> lớn nhất và đông đúc nhất thế giới.</p>
+                <p><span class="p-grammar">Cấu trúc One of the + Noun (số nhiều):</span> <span class="p-word">One of the + N(plural)</span> (<span class="p-mean">Một trong những...</span>) luôn yêu cầu danh từ phía sau phải ở dạng số nhiều.</p>
+            `
+        },
+        // Passage 3
+        {
+            id: 31, text: "Question 31: What is the main idea of the passage?", correct: "Dogs can learn how to play basketball through training.",
+            options: [
+                "Dogs can learn how to play basketball through training.",
+                "Some dogs are born knowing how to play basketball.",
+                "You should only teach tricks to big dogs.",
+                "Teaching dogs basketball is impossible."
+            ],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Ý chính của đoạn văn là gì?</p>
+                <ul>
+                    <li>A. Chó có thể học cách chơi bóng rổ thông qua huấn luyện. <span class="hl-green">✅ Đúng. Toàn bộ bài miêu tả quá trình từng bước.</span></li>
+                    <li>B. Một số con chó sinh ra đã biết chơi bóng rổ. <span class="hl-red">❌ Sai. Bài viết nhấn mạnh việc huấn luyện (train).</span></li>
+                    <li>C. Bạn chỉ nên dạy các trò ảo thuật cho chó lớn. <span class="hl-red">❌ Sai vì bài không đề cập đến kích thước chó.</span></li>
+                    <li>D. Dạy chó chơi bóng rổ là không thể. <span class="hl-red">❌ Sai. Cuối bài nói "a basketball star will be born" (có thể thành công).</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: Toàn bộ bài hướng dẫn từng bước: "Start by getting your dog to fetch..." -> "All good dog tricks should be learned in small steps..." -> "Once the dog has learned... try using a basketball hoop".</span>
+                <p>👉 <strong>Dịch:</strong> Đoạn văn tóm lược cách <span class="hl-green">huấn luyện chó</span> từng bước một để ném bóng vào rổ.</p>
+                <p><span class="p-grammar">Kỹ năng Đọc hiểu (Reading skill):</span> Ý chính (Main idea) thường được phản ánh qua tiêu đề bài đọc: <span class="p-word">How to train your dog to play basketball</span> (<span class="p-mean">Làm thế nào để huấn luyện chó chơi bóng rổ</span>).</p>
+            `
+        },
+        {
+            id: 32, text: "Question 32: What is the CLOSEST of fetch in the passage?", correct: "Bring back",
+            options: ["Kick", "Chase", "Bring back", "Hide"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Từ nào GẦN NGHĨA nhất với "fetch" trong đoạn văn?</p>
+                <ul>
+                    <li>Kick (Đá) <span class="hl-red">❌ Sai. Chó không đá bóng bằng chân.</span></li>
+                    <li>Chase (Đuổi theo) <span class="hl-red">❌ Sai. Đuổi theo nhưng chưa mang về thì không phải là "fetch".</span></li>
+                    <li>Bring back (Mang về) <span class="hl-green">✅ Đúng. Đồng nghĩa với "fetch".</span></li>
+                    <li>Hide (Giấu) <span class="hl-red">❌ Sai.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "Start by getting your dog to fetch a ball and bring it to you."</span>
+                <p>👉 <strong>Dịch:</strong> Bắt đầu bằng việc để chó của bạn <span class="hl-green">đi nhặt (mang về)</span> một quả bóng và mang nó lại cho bạn.</p>
+                <p><span class="p-grammar">Từ vựng (Vocabulary):</span> Động từ <span class="p-word">fetch</span> có nghĩa là đi lấy thứ gì đó và <span class="p-mean">mang trở lại (bring back)</span> cho chủ.</p>
+            `
+        },
+        {
+            id: 33, text: "Question 33: What is the OPPOSITE of reward in the passage?", correct: "Punish",
+            options: ["Punish", "Train", "Encourage", "Teach"],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Từ TRÁI NGHĨA của "reward" trong đoạn văn là gì?</p>
+                <ul>
+                    <li>Punish (Trừng phạt) <span class="hl-green">✅ Đúng. Trái nghĩa với thưởng là phạt.</span></li>
+                    <li>Train (Huấn luyện) <span class="hl-red">❌ Sai.</span></li>
+                    <li>Encourage (Khuyến khích) <span class="hl-red">❌ Sai. Đây là từ gần nghĩa (đồng nghĩa tương đối).</span></li>
+                    <li>Teach (Dạy) <span class="hl-red">❌ Sai.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "Reward the dog with a treat each time she gets a basket."</span>
+                <p>👉 <strong>Dịch:</strong> <span class="hl-green">Thưởng</span> cho chó một món ăn vặt mỗi khi nó ném trúng rổ.</p>
+                <p><span class="p-grammar">Từ vựng trái nghĩa (Antonyms):</span> <span class="p-word">Reward</span> (<span class="p-mean">phần thưởng/thưởng</span>) có từ trái nghĩa là <span class="p-word">Punish</span> (<span class="p-mean">trừng phạt</span>).</p>
+            `
+        },
+        {
+            id: 34, text: "Question 34: Which of the following is NOT true according to the passage?", correct: "All dogs can learn to play basketball.",
+            options: [
+                "Dogs should be rewarded when they drop the ball in the container.",
+                "The hoop should be raised gradually over time.",
+                "All dogs can learn to play basketball.",
+                "The training starts with a box before moving to a hoop."
+            ],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Điều nào sau đây KHÔNG ĐÚNG theo đoạn văn?</p>
+                <ul>
+                    <li>A. Chó nên được thưởng khi thả bóng vào thùng. <span class="hl-red">❌ Sai vì điều này có thật trong bài.</span></li>
+                    <li>B. Vòng rổ nên được nâng dần lên. <span class="hl-red">❌ Sai vì bài có nhắc tới "gradually raise the height".</span></li>
+                    <li>C. Tất cả các con chó đều có thể học chơi bóng rổ. <span class="hl-green">✅ Đúng là câu KHÔNG ĐÚNG so với bài, vì bài nói nếu nó không biết "fetch" thì nó sẽ không thể thành cầu thủ giỏi.</span></li>
+                    <li>D. Huấn luyện bắt đầu bằng cái hộp trước khi chuyển sang vòng rổ. <span class="hl-red">❌ Sai vì điều này có thật.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "If your dog can't do that, you should stop now. Your dog will probably not make a great basketball player."</span>
+                <p>👉 <strong>Dịch:</strong> Nếu chó của bạn không thể làm điều đó, bạn nên dừng lại ngay. Chó của bạn có lẽ sẽ <span class="hl-green">không trở thành một cầu thủ bóng rổ giỏi</span>.</p>
+                <p><span class="p-grammar">Kỹ năng Đọc quét (Scanning):</span> Thông tin <span class="p-word">All dogs</span> (<span class="p-mean">Tất cả loài chó</span>) là một cái bẫy tuyệt đối hóa sai sự thật so với nội dung bài.</p>
+            `
+        },
+        {
+            id: 35, text: "Question 35: At the start of training, where should the ball be dropped?", correct: "Into a box or container.",
+            options: [
+                "Directly into the hoop.",
+                "Into a box or container.",
+                "Onto the ground.",
+                "Into the trainer’s hands."
+            ],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Khi bắt đầu huấn luyện, bóng nên được thả vào đâu?</p>
+                <ul>
+                    <li>A. Trực tiếp vào vòng rổ. <span class="hl-red">❌ Sai. Vòng rổ là bước sau.</span></li>
+                    <li>B. Vào một cái hộp hoặc thùng chứa. <span class="hl-green">✅ Đúng.</span></li>
+                    <li>C. Xuống mặt đất. <span class="hl-red">❌ Sai.</span></li>
+                    <li>D. Vào tay huấn luyện viên. <span class="hl-red">❌ Sai vì bài viết dặn "Thay vì lấy bóng trực tiếp...".</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "Instead of taking the ball directly from the dog, hold a box or container at ground level and make the dog drop the ball into the box."</span>
+                <p>👉 <strong>Dịch:</strong> Thay vì lấy bóng trực tiếp từ chó, hãy cầm một <span class="hl-green">cái hộp hoặc đồ chứa</span> ở ngang mặt đất và làm cho chó thả bóng vào trong hộp.</p>
+                <p><span class="p-grammar">Đọc tìm chi tiết (Detail question):</span> Rất rõ ràng ở đoạn 1, bước đầu tiên (start) là dùng <span class="p-word">box or container</span> (<span class="p-mean">hộp hoặc thùng chứa</span>).</p>
+            `
+        },
+        {
+            id: 36, text: "Question 36: Why should the basketball hoop be kept low at first?", correct: "So the dog can easily learn to drop the ball in.",
+            options: [
+                "So the dog does not get scared.",
+                "So the dog can easily learn to drop the ball in.",
+                "Because small dogs cannot jump high.",
+                "Because dogs do not like high places."
+            ],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Tại sao lúc đầu vòng rổ bóng rổ nên được để thấp?</p>
+                <ul>
+                    <li>A. Để chó không bị sợ. <span class="hl-red">❌ Sai. Không có chi tiết này.</span></li>
+                    <li>B. Để chó có thể dễ dàng học cách thả bóng vào. <span class="hl-green">✅ Đúng. Liên kết với logic "từng bước nhỏ" (small steps).</span></li>
+                    <li>C. Vì những con chó nhỏ không thể nhảy cao. <span class="hl-red">❌ Sai. Không đề cập giống chó to hay nhỏ.</span></li>
+                    <li>D. Vì chó không thích nơi cao. <span class="hl-red">❌ Sai.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "All good dog tricks should be learned in small steps... To begin with, keep the hoop low to the ground. Then gradually raise the height."</span>
+                <p>👉 <strong>Dịch:</strong> Tất cả những trò ảo thuật hay của chó đều nên được học theo <span class="hl-green">từng bước nhỏ</span>... Để bắt đầu, hãy giữ vòng rổ thấp. Sau đó tăng dần chiều cao.</p>
+                <p><span class="p-grammar">Suy luận (Inference):</span> Việc giữ vòng thấp lúc đầu (low to the ground) giúp con vật <span class="p-word">easily learn</span> (<span class="p-mean">dễ dàng tiếp thu</span>) nguyên lý thả bóng, sau đó mới thử thách độ cao.</p>
+            `
+        },
+        // Passage 4
+        {
+            id: 37, text: "Question 37: Choose the best phrase/sentence to fill in blank (37)", correct: "we do not make an effort to protect them",
+            options: [
+                "we do not make an effort to protect them",
+                "the place where they live",
+                "Some birds, such as parrots, are caught alive, and sold as pets.",
+                "The most successful animals on earth"
+            ],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Chọn cụm từ/câu phù hợp nhất điền vào chỗ trống (37): Many species of animals are threatened and could easily become extinct if (37) ____.</p>
+                <ul>
+                    <li>A. we do not make an effort to protect them (chúng ta không nỗ lực bảo vệ chúng) <span class="hl-green">✅ Đúng về mặt ngữ pháp (mệnh đề If) và ngữ nghĩa.</span></li>
+                    <li>B. the place where they live (nơi chúng sống) <span class="hl-red">❌ Sai vì sau "if" cần một mệnh đề nguyên nhân hợp lý, không phải cụm danh từ lửng lơ.</span></li>
+                    <li>C/D <span class="hl-red">❌ Sai hoàn toàn ngữ nghĩa.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "...could easily become extinct if we do not make an effort to protect them."</span>
+                <p>👉 <strong>Dịch:</strong> Nhiều loài động vật đang bị đe dọa và có thể dễ dàng tuyệt chủng nếu <span class="hl-green">chúng ta không nỗ lực bảo vệ chúng</span>.</p>
+                <p><span class="p-grammar">Câu điều kiện loại 1 (Conditional Type 1):</span> Cấu trúc <span class="p-word">If + S + V(hiện tại)</span> mô tả một khả năng có thật ở tương lai (tuyệt chủng <span class="p-mean">nếu không bảo vệ</span>).</p>
+            `
+        },
+        {
+            id: 38, text: "Question 38: Choose the best phrase/sentence to fill in blank (38)", correct: "Some birds, such as parrots, are caught alive, and sold as pets.",
+            options: [
+                "we do not make an effort to protect them",
+                "the place where they live",
+                "Some birds, such as parrots, are caught alive, and sold as pets.",
+                "The most successful animals on earth"
+            ],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Chọn cụm từ/câu điền vào chỗ trống (38). Câu trước là: "animals are hunted for their fur or for other valuable parts of their bodies".</p>
+                <ul>
+                    <li>A/B/D <span class="hl-red">❌ Không khớp logic liệt kê các nguyên nhân động vật bị săn bắt.</span></li>
+                    <li>C. Some birds, such as parrots, are caught alive, and sold as pets. <span class="hl-green">✅ Đúng vì câu trước nói về săn bắt thú lấy lông/thịt, câu này bổ sung thêm việc bắt chim sống bán làm thú cưng.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "In some cases, animals are hunted for their fur... Some birds, such as parrots, are caught alive, and sold as pets."</span>
+                <p>👉 <strong>Dịch:</strong> Trong một số trường hợp, động vật bị săn bắt để lấy lông... <span class="hl-green">Một số loài chim, chẳng hạn như vẹt, bị bắt sống và bán làm thú cưng</span>.</p>
+                <p><span class="p-grammar">Tính mạch lạc (Coherence):</span> Câu C cung cấp thêm một <span class="p-word">example</span> (<span class="p-mean">ví dụ</span>) song song với câu trước về các hành vi đe dọa động vật hoang dã.</p>
+            `
+        },
+        {
+            id: 39, text: "Question 39: Choose the best phrase/sentence to fill in blank (39)", correct: "the place where they live",
+            options: [
+                "we do not make an effort to protect them",
+                "the place where they live",
+                "Some birds, such as parrots, are caught alive, and sold as pets.",
+                "The most successful animals on earth"
+            ],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Chọn cụm từ/câu điền vào chỗ trống (39). "...their habitat – (39) ____ – is disappearing."</p>
+                <ul>
+                    <li>A/C/D <span class="hl-red">❌ Sai hoàn toàn ngữ nghĩa.</span></li>
+                    <li>B. the place where they live (nơi chúng sống) <span class="hl-green">✅ Đúng vì cụm từ nằm giữa 2 dấu gạch ngang (– ... –) đóng vai trò giải thích nghĩa cho từ "habitat".</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "...the problem is that their habitat – the place where they live – is disappearing."</span>
+                <p>👉 <strong>Dịch:</strong> ...vấn đề là môi trường sống của chúng – <span class="hl-green">nơi mà chúng sinh sống</span> – đang biến mất.</p>
+                <p><span class="p-grammar">Đồng vị ngữ (Appositive):</span> Cụm từ <span class="p-word">the place where they live</span> giải thích định nghĩa chính xác cho danh từ <span class="p-mean">môi trường sống</span> (habitat) đứng ngay trước nó.</p>
+            `
+        },
+        {
+            id: 40, text: "Question 40: Choose the best phrase/sentence to fill in blank (40)", correct: "The most successful animals on earth",
+            options: [
+                "we do not make an effort to protect them",
+                "the place where they live",
+                "Some birds, such as parrots, are caught alive, and sold as pets.",
+                "The most successful animals on earth"
+            ],
+            explain: `
+                <p><strong>Dịch câu hỏi:</strong> Chọn cụm từ/câu điền vào chỗ trống (40). "(40) ____ – human beings – will soon be the only ones left..."</p>
+                <ul>
+                    <li>A/B/C <span class="hl-red">❌ Sai ngữ pháp và nghĩa.</span></li>
+                    <li>D. The most successful animals on earth (Những động vật thành công nhất trên trái đất) <span class="hl-green">✅ Đúng. Cụm danh từ này làm chủ ngữ chính, được làm rõ bởi cụm "human beings" đứng giữa 2 dấu gạch ngang.</span></li>
+                </ul>
+                <span class="quote">🔍 Dẫn chứng: "The most successful animals on earth – human beings – will soon be the only ones left..."</span>
+                <p>👉 <strong>Dịch:</strong> <span class="hl-green">Loài động vật thành công nhất trên trái đất</span> – con người – sẽ sớm là những sinh vật duy nhất còn sót lại...</p>
+                <p><span class="p-grammar">Cấu trúc chủ ngữ (Subject structure):</span> Cụm <span class="p-word">The most successful animals on earth</span> (<span class="p-mean">loài động vật thành công nhất trên trái đất</span>) là chủ ngữ số nhiều, hô ứng với "human beings" phía sau.</p>
+            `
+        }
+    ];
+
+    let score = 0;
+    let answeredQuestions = 0;
+    const totalQuestions = quizData.length;
+
+    function shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    const quizContainer = document.getElementById('quiz-container');
+    
+    quizData.forEach((q, index) => {
+        const qCard = document.createElement('div');
+        qCard.className = 'question-card';
+        qCard.innerHTML = `<div class="question-text">${q.text}</div>`;
+        
+        const optionsGrid = document.createElement('div');
+        optionsGrid.className = 'options-grid';
+        
+        let shuffledOpts = shuffleArray([...q.options]);
+        
+        shuffledOpts.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => handleAnswer(btn, opt, q.correct, qCard, q.explain);
+            optionsGrid.appendChild(btn);
+        });
+
+        const explanationDiv = document.createElement('div');
+        explanationDiv.className = 'explanation';
+        explanationDiv.innerHTML = q.explain;
+
+        qCard.appendChild(optionsGrid);
+        qCard.appendChild(explanationDiv);
+        quizContainer.appendChild(qCard);
+    });
+
+    function handleAnswer(btn, selected, correct, qCard, explainHTML) {
+        const allBtns = qCard.querySelectorAll('.opt-btn');
+        allBtns.forEach(b => b.disabled = true);
+        
+        const explanationDiv = qCard.querySelector('.explanation');
+
+        if(selected === correct) {
+            btn.classList.add('correct');
+            playDing();
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+            score++;
+        } else {
+            btn.classList.add('incorrect');
+            qCard.classList.add('shake');
+            playWrongSound(); // Dùng file âm thanh "huh" bạn yêu cầu
+            
+            allBtns.forEach(b => {
+                if(b.innerText === correct) b.classList.add('correct');
+            });
+        }
+        
+        explanationDiv.style.display = 'block';
+        answeredQuestions++;
+    }
+
+    function submitQuiz() {
+        if(answeredQuestions < totalQuestions) {
+            alert(`Oops! Bạn mới làm ${answeredQuestions}/${totalQuestions} câu. Hãy làm hết trước khi nộp nhé!`);
+            return;
+        }
+        document.getElementById('resultModal').style.display = 'flex';
+        document.getElementById('modal-form').style.display = 'block';
+        document.getElementById('modal-result').style.display = 'none';
+    }
+
+    function showScore() {
+        const nameInput = document.getElementById('student-name').value.trim();
+        if(!nameInput) {
+            alert("Bạn chưa nhập tên kìa! 🥺");
+            return;
+        }
+
+        document.getElementById('modal-form').style.display = 'none';
+        document.getElementById('modal-result').style.display = 'block';
+        
+        document.getElementById('r-name').innerText = `✨ Xin chào siêu nhân: ${nameInput} ✨`;
+        document.getElementById('r-score').innerText = `${score} / ${totalQuestions}`;
+
+        const percentage = score / totalQuestions;
+        let comment = "";
+        let gifSrc = "";
+
+        if(percentage === 1) {
+            comment = "Ms. Chí Nên · ☎️ 0852639652: THIÊN TÀI LÀ ĐÂY!!! Tuyệt đối 100% 🏆🔥";
+            gifSrc = "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif"; 
+            confetti({ particleCount: 300, spread: 100, origin: { y: 0.3 } });
+        } else if (percentage >= 0.6) {
+            comment = "Ms. Chí Nên · ☎️ 0852639652: Rất tốt! Cố gắng chút nữa là hoàn hảo nhé! 🌟👍";
+            gifSrc = "https://media.giphy.com/media/11ISwbgCxEzMyY/giphy.gif"; 
+        } else {
+            comment = "Ms. Chí Nên · ☎️ 0852639652: Đừng buồn nhé, xem kỹ lại giải thích và làm lại nào! 💪🥺";
+            gifSrc = "https://media.giphy.com/media/d2lcHJTG5Tscg/giphy.gif"; 
+        }
+
+        document.getElementById('r-comment').innerText = comment;
+        document.getElementById('result-gif').src = gifSrc;
+    }
+</script>
+
+</body>
+</html>
