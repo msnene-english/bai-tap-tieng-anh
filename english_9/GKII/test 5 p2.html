@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Mastery Quiz - Gamification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: rgba(255, 255, 255, 0.25);
+            --border: rgba(255, 255, 255, 0.4);
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --text-dark: #2d3436;
+            --text-light: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            /* DYNAMIC THEME: Loang màu Pastel liên tục */
+            background: linear-gradient(-45deg, #a18cd1, #fbc2eb, #8fd3f4, #84fab0);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* DYNAMIC THEME: SVG Pattern lơ lửng */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="250" height="250"><text x="20" y="40" font-size="35" opacity="0.8">🌴</text><text x="150" y="80" font-size="30" opacity="0.8">📚</text><text x="60" y="160" font-size="40" opacity="0.8">✈️</text><text x="180" y="200" font-size="35" opacity="0.8">🌊</text><text x="100" y="100" font-size="25" opacity="0.8">✨</text><text x="220" y="30" font-size="30" opacity="0.8">🎯</text></svg>');
+            background-repeat: repeat;
+            opacity: 0.3;
+            z-index: -1;
+            animation: floatBackground 40s linear infinite;
+        }
+
+        @keyframes floatBackground {
+            from { background-position: 0 0; }
+            to { background-position: 500px 500px; }
+        }
+
+        /* Glassmorphism Classes */
+        .glass {
+            background: var(--primary);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        /* Header / Top Control Bar */
+        header {
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            margin: 10px 20px;
+        }
+
+        .teacher-info {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            background: rgba(255,255,255,0.4);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #timer-display {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #2d3436;
+            background: rgba(255,255,255,0.6);
+            padding: 8px 20px;
+            border-radius: 15px;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+
+        .btn-action {
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .btn-start { background: #6c5ce7; }
+        .btn-start:hover { background: #5b4bc4; transform: translateY(2px); box-shadow: 0 4px 0 rgba(0,0,0,0.15); }
+        .btn-submit { background: #e84393; display: block; width: 100%; margin-top: 20px; font-size: 1.3rem; padding: 15px;}
+        .btn-submit:hover { background: #d63080; transform: translateY(2px); box-shadow: 0 4px 0 rgba(0,0,0,0.15); }
+
+        /* Split Screen Layout */
+        .main-container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 0 20px 20px 20px;
+            overflow: hidden;
+        }
+
+        .pane {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            scroll-behavior: smooth;
+        }
+
+        .pane::-webkit-scrollbar { width: 8px; }
+        .pane::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); border-radius: 10px;}
+        .pane::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        /* Reading Passage Styles */
+        .passage-section { margin-bottom: 40px; }
+        .passage-title { font-size: 1.4rem; font-weight: 900; margin-bottom: 15px; color: #2d3436; text-shadow: 1px 1px 2px rgba(255,255,255,0.5);}
+        .paragraph-box {
+            background: rgba(255,255,255,0.4);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .btn-translate {
+            background: #ffeaa7;
+            color: #d35400;
+            border: none;
+            padding: 6px 15px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            box-shadow: 0 4px 0 rgba(211, 84, 0, 0.2);
+            transition: all 0.2s;
+        }
+        .btn-translate:hover { transform: translateY(2px); box-shadow: 0 2px 0 rgba(211, 84, 0, 0.2); }
+
+        .translation-box {
+            display: none;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #2c3e50;
+            border-left: 4px solid #00b894;
+        }
+
+        /* Glossary Table */
+        .glossary-wrapper { margin-top: 20px; margin-bottom: 30px;}
+        .glossary-title { font-size: 1.2rem; font-weight: 800; color: #6c5ce7; margin-bottom: 10px;}
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: rgba(255,255,255,0.5);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        th { background: rgba(108, 92, 231, 0.2); font-weight: 800; color: #2d3436; }
+        td:first-child { font-weight: 700; color: #d63031; }
+
+        /* Exercise Styles */
+        .question-card {
+            background: rgba(255,255,255,0.6);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .question-text {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            color: #2d3436;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid transparent;
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #2d3436;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            border-color: #74b9ff;
+        }
+
+        .option-btn:disabled { cursor: not-allowed; }
+        
+        .option-btn.correct {
+            background: var(--correct);
+            color: white;
+            border-color: #00b894;
+            box-shadow: 0 5px 0 #00b894;
+        }
+        
+        .option-btn.wrong {
+            background: var(--wrong);
+            color: white;
+            border-color: #d63031;
+            box-shadow: 0 5px 0 #d63031;
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .explanation-box {
+            display: none;
+            background: #fffdf2;
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 15px;
+            font-size: 1rem;
+            line-height: 1.6;
+            border: 2px dashed #fdcb6e;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Modal Overlay for Results */
+        #result-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white; padding: 40px; border-radius: 30px; text-align: center;
+            max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        .modal-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: #6c5ce7; }
+        .modal-score { font-size: 4rem; font-weight: 900; color: #e84393; margin: 20px 0; }
+        .modal-message { font-size: 1.2rem; font-weight: 700; margin-bottom: 30px; color: #2d3436; }
+        
+        .btn-restart {
+            background: #00b894; color: white; border: none; padding: 15px 30px;
+            font-size: 1.2rem; font-weight: 800; border-radius: 20px; cursor: pointer;
+            box-shadow: 0 6px 0 #009477; transition: 0.2s;
+        }
+        .btn-restart:hover { transform: translateY(2px); box-shadow: 0 4px 0 #009477; }
+
+        /* Confetti Canvas */
+        #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+    </style>
+
+<style>#lockModal, #passwordModal, #pwModal, .modal-overlay[id*="lock"], .modal-overlay[id*="pass"] { display: none !important; visibility: hidden !important; pointer-events: none !important; z-index: -9999 !important; }</style>
+</head>
+<body>
+
+    <canvas id="confetti"></canvas>
+
+    <header class="glass">
+        <div class="teacher-info">🎓 Giáo viên tạo: Ms. Chí Nên · ☎️ 0852639652</div>
+        <div class="timer-container">
+            <div id="timer-display">10:00</div>
+            <button id="btn-timer" class="btn-action btn-start" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="pane glass" id="left-pane">
+            </div>
+
+        <div class="pane glass" id="right-pane">
+            <div id="questions-container"></div>
+            <button class="btn-action btn-submit" onclick="submitQuiz()" style="display: none;" id="btn-submit">🎉 NỘP BÀI 🎉</button>
+        </div>
+    </div>
+
+    <div id="result-modal">
+        <div class="modal-content">
+            <div class="modal-title">TỔNG KẾT BÀI THI</div>
+            <div class="modal-score" id="final-score">0/0</div>
+            <div class="modal-message" id="final-message"></div>
+            <button class="btn-restart" onclick="location.reload()">LÀM LẠI BÀI</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // DỮ LIỆU ĐỀ BÀI (TEACHER'S BRAIN)
+        // ==========================================
+        const quizData = [
+            {
+                id: "passage1",
+                title: "📝 Part 1: English Center Opening (Questions 13-16)",
+                instruction: "Read the following announcement and choose the correct option.",
+                paragraphs: [
+                    {
+                        text: "We are excited to open our new English Language Center! We offer courses for all levels, from beginners to (13) ......... students. Our friendly teachers will help you with speaking, listening, reading and writing.",
+                        vi: "Chúng tôi rất vui mừng khai trương Trung tâm Anh ngữ mới! Chúng tôi cung cấp các khóa học cho mọi trình độ, từ người mới bắt đầu đến học viên nâng cao. Các giáo viên thân thiện của chúng tôi sẽ giúp bạn luyện nói, nghe, đọc và viết."
+                    },
+                    {
+                        text: "Join us now to enjoy special discounts and free trial classes. For more details, visit our (14) ......... website or call us at 0963499933. We are looking forward (15) ......... you. Let’s start learning together (16) ......... our new center!",
+                        vi: "Hãy tham gia ngay bây giờ để được hưởng các ưu đãi giảm giá đặc biệt và các lớp học thử miễn phí. Để biết thêm chi tiết, hãy truy cập trang web của chúng tôi hoặc gọi cho chúng tôi theo số 0963499933. Chúng tôi rất mong được gặp bạn. Hãy cùng nhau bắt đầu học tập tại trung tâm mới của chúng tôi nhé!"
+                    }
+                ],
+                glossary: [
+                    { word: "Excited", pos: "adj", vi: "Hào hứng, vui mừng" },
+                    { word: "Beginner", pos: "n", vi: "Người mới bắt đầu" },
+                    { word: "Discount", pos: "n", vi: "Sự giảm giá" },
+                    { word: "Trial", pos: "n/adj", vi: "Sự học thử, thử nghiệm" },
+                    { word: "Detail", pos: "n", vi: "Chi tiết" }
+                ],
+                questions: [
+                    {
+                        id: 13, text: "Question 13: ... from beginners to (13) ......... students.",
+                        options: [
+                            { text: "A. advance", correct: false },
+                            { text: "B. advanced", correct: true },
+                            { text: "C. advancing", correct: false },
+                            { text: "D. advancement", correct: false }
+                        ],
+                        explanation: "<b>1. Phân tích từ vựng:</b><br>A. advance (v/n): tiến lên, sự tiến bộ.<br>B. advanced (adj): nâng cao, trình độ cao.<br>C. advancing (v-ing): đang tiến lên.<br>D. advancement (n): sự thăng tiến.<br><b>2. Tại sao chọn B?</b><br>Vị trí ô trống nằm trước danh từ 'students' (học viên), do đó ta cần một tính từ (Adjective) để bổ nghĩa. 'Advanced students' mang nghĩa là 'học viên trình độ cao', tương phản với 'beginners' (người mới bắt đầu) ở vế trước."
+                    },
+                    {
+                        id: 14, text: "Question 14: ... visit our (14) ......... website...",
+                        options: [
+                            { text: "A. a", correct: false },
+                            { text: "B. an", correct: false },
+                            { text: "C. the", correct: false },
+                            { text: "D. X (No article)", correct: true }
+                        ],
+                        explanation: "<b>1. Kiến thức ngữ pháp: Mạo từ (Articles) & Tính từ sở hữu</b><br><b>2. Tại sao chọn D (Không điền gì)?</b><br>Trước ô trống đã có từ 'our' (của chúng tôi) - đây là một tính từ sở hữu. Trong tiếng Anh, khi đã dùng tính từ sở hữu (my, your, his, her, our, their...) thì <b>KHÔNG</b> được dùng thêm mạo từ (a/an/the) trước danh từ nữa. Cụm đúng chỉ là 'our website' (trang web của chúng tôi)."
+                    },
+                    {
+                        id: 15, text: "Question 15: We are looking forward (15) ......... you.",
+                        options: [
+                            { text: "A. to meet", correct: false },
+                            { text: "B. meeting", correct: false },
+                            { text: "C. to meeting", correct: true },
+                            { text: "D. meet", correct: false }
+                        ],
+                        explanation: "<b>1. Cấu trúc ngữ pháp quan trọng:</b><br>Ta có cấu trúc cố định: <b>Look forward to + V-ing / Noun</b> (Mong đợi, mong ngóng điều gì/làm gì).<br><b>2. Tại sao chọn C?</b><br>Dựa vào cấu trúc trên, sau 'look forward' bắt buộc phải là giới từ 'to' đi kèm với một động từ thêm đuôi '-ing'. Vì vậy 'to meeting' là đáp án duy nhất chính xác."
+                    },
+                    {
+                        id: 16, text: "Question 16: Let’s start learning together (16) ......... our new center!",
+                        options: [
+                            { text: "A. at", correct: true },
+                            { text: "B. in", correct: false },
+                            { text: "C. on", correct: false },
+                            { text: "D. by", correct: false }
+                        ],
+                        explanation: "<b>1. Phân tích giới từ chỉ địa điểm:</b><br>A. at: tại (một địa điểm cụ thể, nơi chốn cụ thể).<br>B. in: bên trong (không gian kín).<br>C. on: trên bề mặt.<br><b>2. Tại sao chọn A?</b><br>'Our new center' (trung tâm mới của chúng tôi) chỉ một địa điểm làm việc/học tập cụ thể. Cụm từ phổ biến là 'at the center' (tại trung tâm). Do đó dùng 'at' là chính xác nhất."
+                    }
+                ]
+            },
+            {
+                id: "passage2",
+                title: "🗣️ Part 2: Language Learning Journey (Questions 19-24)",
+                instruction: "Read the passage and choose the correct option for each blank.",
+                paragraphs: [
+                    {
+                        text: "When learning a new language, it’s important to communicate with native speakers. This helps you pick up their pronunciation and get used (19) ......... different accents. Sometimes, you might figure out what a word means from the context. If you aren’t sure, don’t hesitate to (20) ......... the word in a dictionary or even translate it back to your own language to get a clue.",
+                        vi: "Khi học một ngôn ngữ mới, việc giao tiếp với người bản xứ là rất quan trọng. Điều này giúp bạn học được cách phát âm của họ và làm quen với các giọng điệu khác nhau. Đôi khi, bạn có thể đoán được nghĩa của một từ dựa vào ngữ cảnh. Nếu bạn không chắc chắn, đừng ngần ngại tra cứu từ đó trong từ điển hoặc thậm chí dịch ngược lại ngôn ngữ mẹ đẻ của bạn để tìm manh mối."
+                    },
+                    {
+                        text: "But remember that everyone may make mistakes when learning something new! In fact, making mistakes is an important part of the learning process. It shows you where you need to focus. Don’t be afraid to practise with native speakers, even (21) ......... you have difficulty (22) ......... yourself. They’ll likely appreciate your efforts and be happy to give your tips.",
+                        vi: "Nhưng hãy nhớ rằng ai cũng có thể mắc sai lầm khi học một điều gì đó mới! Trên thực tế, phạm sai lầm là một phần quan trọng của quá trình học tập. Nó cho bạn biết bạn cần tập trung vào đâu. Đừng ngại thực hành với người bản xứ, ngay cả khi bạn gặp khó khăn trong việc diễn đạt ý mình. Rất có thể họ sẽ đánh giá cao nỗ lực của bạn và sẵn lòng cho bạn những lời khuyên."
+                    },
+                    {
+                        text: "Learning a new language can be a journey with (23) ......... . It’s a process that requires patience, practice and perseverance. It’s not about perfection, but progress. Keep communicating, keep making mistakes, and keep learning and our efforts will pay off. Conversations in your new (24) ......... will become second nature, and you’ll surprise yourself with your confidence.",
+                        vi: "Học một ngôn ngữ mới có thể là một hành trình có những thăng trầm. Đó là một quá trình đòi hỏi sự kiên nhẫn, thực hành và lòng kiên trì. Vấn đề không phải là sự hoàn hảo, mà là sự tiến bộ. Hãy tiếp tục giao tiếp, tiếp tục mắc lỗi, và tiếp tục học hỏi rồi những nỗ lực của chúng ta sẽ được đền đáp. Các cuộc trò chuyện bằng ngôn ngữ mới của bạn sẽ trở thành bản năng thứ hai, và bạn sẽ tự làm mình ngạc nhiên với sự tự tin của bản thân."
+                    }
+                ],
+                glossary: [
+                    { word: "Pronunciation", pos: "n", vi: "Cách phát âm" },
+                    { word: "Accent", pos: "n", vi: "Giọng điệu (vùng miền)" },
+                    { word: "Hesitate", pos: "v", vi: "Do dự, ngần ngại" },
+                    { word: "Appreciate", pos: "v", vi: "Trân trọng, đánh giá cao" },
+                    { word: "Perseverance", pos: "n", vi: "Sự kiên trì, bền bỉ" },
+                    { word: "Pay off", pos: "phrasal v", vi: "Đem lại kết quả tốt, đền đáp" },
+                    { word: "Second nature", pos: "idiom", vi: "Bản năng, thói quen dễ dàng" }
+                ],
+                questions: [
+                    {
+                        id: 19, text: "Question 19: ... pick up their pronunciation and get used (19) ......... different accents.",
+                        options: [
+                            { text: "A. to", correct: true },
+                            { text: "B. with", correct: false },
+                            { text: "C. for", correct: false },
+                            { text: "D. in", correct: false }
+                        ],
+                        explanation: "<b>1. Cấu trúc ngữ pháp:</b><br>Ta có cụm từ cố định: <b>get used to + V-ing/Noun</b> nghĩa là 'dần quen với việc gì/cái gì'.<br><b>2. Tại sao chọn A?</b><br>Phía sau là cụm danh từ 'different accents' (các giọng điệu khác nhau). Áp dụng đúng cấu trúc trên, ta điền giới từ 'to'. Dịch: '...và làm quen với các giọng điệu khác nhau.'"
+                    },
+                    {
+                        id: 20, text: "Question 20: ... don’t hesitate to (20) ......... the word in a dictionary...",
+                        options: [
+                            { text: "A. give up", correct: false },
+                            { text: "B. write down", correct: false },
+                            { text: "C. look up", correct: true },
+                            { text: "D. get by", correct: false }
+                        ],
+                        explanation: "<b>1. Phân tích Phrasal verbs (Cụm động từ):</b><br>A. give up: từ bỏ.<br>B. write down: viết ra, ghi chú.<br>C. look up: tra cứu (từ điển, thông tin).<br>D. get by: xoay sở để sống/làm việc qua ngày.<br><b>2. Tại sao chọn C?</b><br>Ngữ cảnh câu là '...in a dictionary' (trong từ điển). Hành động phù hợp nhất khi dùng từ điển là 'tra cứu từ vựng'. Do đó, 'look up' là đáp án chính xác."
+                    },
+                    {
+                        id: 21, text: "Question 21: Don’t be afraid to practise with native speakers, even (21) ......... you have difficulty...",
+                        options: [
+                            { text: "A. though", correct: false },
+                            { text: "B. as", correct: false },
+                            { text: "C. how", correct: false },
+                            { text: "D. if", correct: true }
+                        ],
+                        explanation: "<b>1. Phân tích liên từ:</b><br>Cụm từ <b>even if</b> mang nghĩa là 'ngay cả khi, dẫu cho' (chỉ một giả định có thể xảy ra).<br>Trong khi đó, 'even though' mang nghĩa 'mặc dù' (chỉ một sự thật hiển nhiên).<br><b>2. Tại sao chọn D?</b><br>Câu văn khuyên: 'Đừng ngại thực hành..., ngay cả khi (even if) bạn gặp khó khăn'. Đây là một giả định tình huống xảy ra trong tương lai/hiện tại, ghép 'even if' là mượt mà và chính xác nhất về nghĩa."
+                    },
+                    {
+                        id: 22, text: "Question 22: ... even if you have difficulty (22) ......... yourself.",
+                        options: [
+                            { text: "A. express", correct: false },
+                            { text: "B. expressing", correct: true },
+                            { text: "C. expressed", correct: false },
+                            { text: "D. to express", correct: false }
+                        ],
+                        explanation: "<b>1. Cấu trúc ngữ pháp:</b><br>Ghi nhớ cấu trúc: <b>have difficulty + (in) + V-ing</b> (Gặp khó khăn trong việc làm gì).<br><b>2. Tại sao chọn B?</b><br>Động từ 'express' (diễn đạt) cần được chuyển sang dạng V-ing theo cấu trúc trên. Chọn 'expressing'. Dịch: 'ngay cả khi bạn gặp khó khăn trong việc diễn đạt bản thân'."
+                    },
+                    {
+                        id: 23, text: "Question 23: Learning a new language can be a journey with (23) ......... .",
+                        options: [
+                            { text: "A. dark and light", correct: false },
+                            { text: "B. ups and downs", correct: true },
+                            { text: "C. black and white", correct: false },
+                            { text: "D. facts and figures", correct: false }
+                        ],
+                        explanation: "<b>1. Thành ngữ (Idioms):</b><br>A. Không có thành ngữ này phổ biến.<br>B. <b>ups and downs</b>: sự thăng trầm (những lúc tốt đẹp và tồi tệ).<br>C. black and white: rõ ràng (như trắng với đen).<br>D. facts and figures: thông tin, số liệu chính xác.<br><b>2. Tại sao chọn B?</b><br>Hành trình học ngôn ngữ luôn có lúc dễ tiếp thu (ups) và lúc nản chí (downs). Cụm 'ups and downs' mô tả hoàn hảo tính chất của quá trình học tập này."
+                    },
+                    {
+                        id: 24, text: "Question 24: Conversations in your new (24) ......... will become second nature...",
+                        options: [
+                            { text: "A. tone", correct: false },
+                            { text: "B. stress", correct: false },
+                            { text: "C. pronunciation", correct: false },
+                            { text: "D. tongue", correct: true }
+                        ],
+                        explanation: "<b>1. Phân tích từ vựng:</b><br>A. tone: tông giọng.<br>B. stress: trọng âm / căng thẳng.<br>C. pronunciation: sự phát âm.<br>D. tongue: cái lưỡi, hoặc <b>ngôn ngữ</b> (ví dụ: mother tongue - tiếng mẹ đẻ).<br><b>2. Tại sao chọn D?</b><br>Trong văn cảnh này, tác giả đang dùng cách nói ẩn dụ/đồng nghĩa. 'Your new tongue' ở đây chính là cách diễn đạt văn vẻ cho 'your new language' (ngôn ngữ mới của bạn). Việc trò chuyện bằng ngôn ngữ mới sẽ trở thành bản năng (second nature)."
+                    }
+                ]
+            },
+            {
+                id: "passage3",
+                title: "🌴 Part 3: Tropical Paradise - Phu Quoc Island (Questions 31-36)",
+                instruction: "Read the passage and choose the correct answer to each question.",
+                paragraphs: [
+                    {
+                        text: "After only 50 minutes flying from Ho Chi Minh City, you will set foot on the tropical paradise of Vietnam and the world: Phu Quoc Island.",
+                        vi: "Chỉ sau 50 phút bay từ Thành phố Hồ Chí Minh, bạn sẽ đặt chân lên thiên đường nhiệt đới của Việt Nam và thế giới: Đảo Phú Quốc."
+                    },
+                    {
+                        text: "The island has a roughly triangular shape with a north-south length of 50km and a west-east width of 25km. A great part of the terrain is filled with beautiful sandy beaches, but there is a mountainous region with 99 peaks, among which the Peak of Chua Mountain is the tallest one at 603 meters. Due to Phu Quoc’s location in the Gulf of Thailand, its climate is sub-equatorial with temperate weather all year round, making trips to Phu Quoc possible any time in the year. However, the best time to travel to this island is during the dry season, from November until March, when the sky is blue and clear and the rains are away.",
+                        vi: "Hòn đảo có hình dạng gần giống hình tam giác với chiều dài Bắc-Nam là 50km và chiều rộng Tây-Đông là 25km. Phần lớn địa hình được bao phủ bởi những bãi biển đầy cát tuyệt đẹp, nhưng cũng có một khu vực đồi núi với 99 ngọn núi, trong đó Đỉnh Núi Chúa là cao nhất với 603 mét. Do vị trí của Phú Quốc nằm trong Vịnh Thái Lan, khí hậu ở đây là cận xích đạo với thời tiết ôn hòa quanh năm, giúp cho các chuyến đi đến Phú Quốc có thể thực hiện vào bất kỳ thời điểm nào trong năm. Tuy nhiên, thời điểm tuyệt vời nhất để du lịch hòn đảo này là vào mùa khô, từ tháng 11 đến tháng 3, khi bầu trời trong xanh và không có những cơn mưa."
+                    },
+                    {
+                        text: "Phu Quoc is most famous for its cuisines and a natural wonderful coastline. The most famous food of Phu Quoc is fish sauce, which has become quite popular all over Vietnam and the world. Besides, another thing worth trying there is the spicy yet interesting black pepper. However, the factor that will definitely intrigue you to visit Phu Quoc is its untouched coastline featuring several heavenly beaches. They have yet to be explored to their full ability, but this fact might be actually positive as it gives the shores a romantic beauty that you can find in nowhere else in the world.",
+                        vi: "Phú Quốc nổi tiếng nhất với nền ẩm thực và đường bờ biển tự nhiên tuyệt vời. Món ăn nổi tiếng nhất của Phú Quốc là nước mắm, thứ đã trở nên khá phổ biến trên toàn Việt Nam và thế giới. Bên cạnh đó, một thứ khác đáng để thử ở đây là hạt tiêu đen cay nồng nhưng thú vị. Tuy nhiên, yếu tố chắc chắn sẽ thu hút bạn đến thăm Phú Quốc chính là đường bờ biển hoang sơ có nhiều bãi biển đẹp như thiên đường. Chúng vẫn chưa được khai thác hết tiềm năng, nhưng thực tế này lại có thể là một điểm tích cực vì nó mang lại cho bờ biển một vẻ đẹp lãng mạn mà bạn không thể tìm thấy ở bất kỳ nơi nào khác trên thế giới."
+                    }
+                ],
+                glossary: [
+                    { word: "Paradise", pos: "n", vi: "Thiên đường" },
+                    { word: "Triangular", pos: "adj", vi: "Hình tam giác" },
+                    { word: "Terrain", pos: "n", vi: "Địa hình" },
+                    { word: "Sub-equatorial", pos: "adj", vi: "Cận xích đạo" },
+                    { word: "Temperate", pos: "adj", vi: "Ôn hòa" },
+                    { word: "Intrigue", pos: "v", vi: "Hấp dẫn, kích thích sự tò mò" },
+                    { word: "Untouched", pos: "adj", vi: "Hoang sơ, chưa bị đụng chạm" }
+                ],
+                questions: [
+                    {
+                        id: 31, text: "Question 31: What is the main idea of the passage?",
+                        options: [
+                            { text: "A. The sub-equatorial climate of Phu Quoc Island", correct: false },
+                            { text: "B. When is the best time to travel to Phu Quoc Island.", correct: false },
+                            { text: "C. Phu Quoc is most famous for its cuisines and a natural wonderful coastline.", correct: false },
+                            { text: "D. Some appealing attractions of Phu Quoc Island.", correct: true }
+                        ],
+                        explanation: "<b>Dạng câu hỏi Main Idea (Ý chính):</b><br>A, B, C đều chỉ là những ý nhỏ lẻ tẻ được nhắc đến trong từng đoạn văn (Khí hậu ở đoạn 2, Thời điểm du lịch đoạn 2, Ẩm thực đoạn 3).<br>Đáp án D (Một số điểm thu hút hấp dẫn của đảo Phú Quốc) bao quát được toàn bộ nội dung bài: từ vị trí, địa hình, thời tiết, cho đến món ăn và các bãi biển hoang sơ tuyệt đẹp."
+                    },
+                    {
+                        id: 32, text: "Question 32: The word intrigue in paragraph 3 is CLOSEST in meaning to ......... .",
+                        options: [
+                            { text: "A. Attract", correct: true },
+                            { text: "B. promote", correct: false },
+                            { text: "C. inspire", correct: false },
+                            { text: "D. pay attention to", correct: false }
+                        ],
+                        explanation: "<b>Dạng câu hỏi Từ vựng (Vocabulary):</b><br>Dựa vào ngữ cảnh đoạn 3: '...the factor that will definitely <b>intrigue</b> you to visit Phu Quoc is its untouched coastline...' (Tuy nhiên, yếu tố chắc chắn sẽ... bạn đến thăm Phú Quốc là đường bờ biển hoang sơ).<br>A. attract (v): thu hút.<br>B. promote (v): thúc đẩy.<br>C. inspire (v): truyền cảm hứng.<br>D. pay attention to (v): chú ý đến.<br>Nghĩa của từ 'intrigue' (hấp dẫn, gợi sự tò mò) gần nhất với từ 'attract' (thu hút)."
+                    },
+                    {
+                        id: 33, text: "Question 33: According to the passage, Phu Quoc Island ......... .",
+                        options: [
+                            { text: "A. Has both beaches and mountains", correct: true },
+                            { text: "B. doesn’t have many tourist attractions", correct: false },
+                            { text: "C. has the tallest mountain in Vietnam", correct: false },
+                            { text: "D. doesn’t have rains all the year round", correct: false }
+                        ],
+                        explanation: "<b>Dạng câu hỏi Tìm chi tiết (Detail):</b><br>A. Có cả bãi biển và núi -> <b>ĐÚNG</b>. Dẫn chứng đoạn 2: '...filled with beautiful sandy <b>beaches</b>, but there is a <b>mountainous region</b>...'<br>B. Sai vì bài viết liệt kê rất nhiều điểm du lịch.<br>C. Sai. Núi Chúa là cao nhất ở Phú Quốc (among which the Peak of Chua Mountain is the tallest one), chứ không phải cao nhất Việt Nam.<br>D. Sai. Mưa không có quanh năm, chỉ là mùa khô từ tháng 11 đến tháng 3 (when the rains are away)."
+                    },
+                    {
+                        id: 34, text: "Question 34: Tourists can visit Phu Quoc anytime in the year thanks to ......... .",
+                        options: [
+                            { text: "A. its location by the sea", correct: false },
+                            { text: "B. its friendly local people", correct: false },
+                            { text: "C. its temperate climate", correct: true },
+                            { text: "D. its dry season", correct: false }
+                        ],
+                        explanation: "<b>Dạng câu hỏi Tìm chi tiết:</b><br>Câu hỏi: Du khách có thể thăm Phú Quốc bất kỳ lúc nào trong năm nhờ vào điều gì?<br>Dẫn chứng đoạn 2: '...its climate is sub-equatorial with <b>temperate weather</b> all year round, making trips to Phu Quoc possible any time in the year.' (khí hậu ôn hòa quanh năm giúp các chuyến đi có thể thực hiện bất cứ lúc nào).<br>Do đó, chọn C (khí hậu ôn hòa của nó)."
+                    },
+                    {
+                        id: 35, text: "Question 35: Which of the following statements is NOT true?",
+                        options: [
+                            { text: "A. Phu Quoc Island is located in the Gulf of Thailand.", correct: false },
+                            { text: "B. The beaches in Phu Quoc Island have been explored to their full potentials.", correct: true },
+                            { text: "C. Phu Quoc’s dry season begins from November and lasts through March.", correct: false },
+                            { text: "D. The island is roughly triangular in shape.", correct: false }
+                        ],
+                        explanation: "<b>Dạng câu hỏi Tìm thông tin SAI (NOT true):</b><br>A. Đúng (Due to Phu Quoc’s location in the Gulf of Thailand).<br>C. Đúng (dry season, from November until March).<br>D. Đúng (The island has a roughly triangular shape).<br>B. Sai so với bài. Đoạn 3 nói về các bãi biển: 'They have <b>yet to be explored</b> to their full ability' (Chúng <b>VẪN CHƯA</b> được khai thác hết tiềm năng). Đáp án B nói đã được khai thác hết (have been explored) là sai sự thật. Khoanh B."
+                    },
+                    {
+                        id: 36, text: "Question 36: The word wonderful in paragraph 2 is OPPOSITE in meaning to ......... .",
+                        options: [
+                            { text: "A. magnificent", correct: false },
+                            { text: "B. breathtaking", correct: false },
+                            { text: "C. fantastic", correct: false },
+                            { text: "D. awful", correct: true }
+                        ],
+                        explanation: "<b>Dạng câu hỏi Tìm từ TRÁI NGHĨA (Opposite):</b><br>Từ 'wonderful' mang nghĩa là tuyệt vời, rất tốt.<br>A. magnificent: tráng lệ, tuyệt đẹp (Đồng nghĩa).<br>B. breathtaking: đẹp nghẹt thở (Đồng nghĩa).<br>C. fantastic: tuyệt diệu (Đồng nghĩa).<br>D. awful: tồi tệ, kinh khủng (TRÁI NGHĨA).<br>Đề bài yêu cầu tìm từ Trái nghĩa, do đó chọn D."
+                    }
+                ]
+            },
+            {
+                id: "passage4",
+                title: "✉️ Part 4: The Art of Letter Writing (Questions 37-40)",
+                instruction: "Four phrases/sentences have been removed from the text below. Choose the correct option that best fits each numbered blank.",
+                paragraphs: [
+                    {
+                        text: "In the past, Vietnamese people used to send messages by writing letters. They would carefully express their thoughts on paper, (37) ......... . Writing letters was a process that took time and patience, but it was deeply appreciated because of the personal touch it offered.",
+                        vi: "Trong quá khứ, người Việt Nam từng gửi tin nhắn bằng cách viết thư. Họ sẽ cẩn thận bày tỏ suy nghĩ của mình lên giấy, (37) rồi đặt thư vào phong bì và gửi qua dịch vụ bưu điện. Viết thư là một quá trình đòi hỏi thời gian và sự kiên nhẫn, nhưng nó được đánh giá rất cao vì sự kết nối cá nhân mà nó mang lại."
+                    },
+                    {
+                        text: "Nowadays, things have changed dramatically. New tools like emails and instant messages (38) ......... . They offer speed and convenience, allowing people to communicate in real time, irrespective of geographical boundaries.",
+                        vi: "Ngày nay, mọi thứ đã thay đổi chóng mặt. Các công cụ mới như email và tin nhắn tức thời (38) đã trở thành một phần quan trọng trong giao tiếp hàng ngày của chúng ta. Chúng mang lại tốc độ và sự tiện lợi, cho phép mọi người giao tiếp theo thời gian thực, bất kể ranh giới địa lý."
+                    },
+                    {
+                        text: "However, some traditions haven’t changed completely. Some (39) ......... . They think that handwritten letters are special because they should express the writer’s feelings, making the communication more personal and sincere.",
+                        vi: "Tuy nhiên, một số truyền thống chưa hoàn toàn thay đổi. Một số (39) người vẫn thích viết thư bằng tay. Họ cho rằng những bức thư viết tay rất đặc biệt vì chúng thể hiện được cảm xúc của người viết, khiến cuộc giao tiếp trở nên cá nhân và chân thành hơn."
+                    },
+                    {
+                        text: "In summary, even though technology has revolutionised the way we communicate, the tradition of writing letters holds a special place in Vietnamese culture. People still find something special in putting their thoughts on paper and sending them to others and (40) ......... .",
+                        vi: "Tóm lại, mặc dù công nghệ đã cách mạng hóa cách chúng ta giao tiếp, truyền thống viết thư vẫn giữ một vị trí đặc biệt trong văn hóa Việt Nam. Người ta vẫn tìm thấy điều gì đó đặc biệt khi viết những suy nghĩ của mình ra giấy và gửi cho người khác và (40) điều đó tạo ra một sự kết nối cá nhân mà chúng ta không thể làm được với giao tiếp kỹ thuật số."
+                    }
+                ],
+                glossary: [
+                    { word: "Patience", pos: "n", vi: "Sự kiên nhẫn" },
+                    { word: "Dramatically", pos: "adv", vi: "Một cách đột ngột, đáng kể" },
+                    { word: "Irrespective of", pos: "prep phrase", vi: "Bất kể, không phân biệt" },
+                    { word: "Geographical", pos: "adj", vi: "Thuộc về địa lý" },
+                    { word: "Sincere", pos: "adj", vi: "Chân thành" },
+                    { word: "Revolutionise", pos: "v", vi: "Cách mạng hóa" }
+                ],
+                questions: [
+                    {
+                        id: 37, text: "Question 37: They would carefully express their thoughts on paper, (37) ......... .",
+                        options: [
+                            { text: "A. Put the letters in envelopes, and send them through the postal service.", correct: true },
+                            { text: "B. Have become an important part of our daily communication", correct: false },
+                            { text: "C. People still enjoy writing letters by hand", correct: false },
+                            { text: "D. It creates a personal connection that we cannot do with digital communication", correct: false }
+                        ],
+                        explanation: "<b>Phân tích logic đoạn văn:</b><br>Đoạn 1 miêu tả quá trình gửi thư thời xưa. Sau khi 'viết suy nghĩ lên giấy' (express thoughts on paper), hành động tiếp theo theo logic vật lý sẽ là 'đặt thư vào phong bì và gửi qua bưu điện' (Put the letters in envelopes...). Do đó chọn A."
+                    },
+                    {
+                        id: 38, text: "Question 38: New tools like emails and instant messages (38) ......... .",
+                        options: [
+                            { text: "A. Put the letters in envelopes, and send them through the postal service.", correct: false },
+                            { text: "B. Have become an important part of our daily communication", correct: true },
+                            { text: "C. People still enjoy writing letters by hand", correct: false },
+                            { text: "D. It creates a personal connection that we cannot do with digital communication", correct: false }
+                        ],
+                        explanation: "<b>Phân tích ngữ pháp & logic:</b><br>Chủ ngữ của câu là 'New tools like emails and instant messages' (số nhiều). Ta cần một Động từ để hoàn thành câu. Đáp án B bắt đầu bằng động từ 'Have become' ghép vào cực kỳ hợp lý: 'Các công cụ mới... đã trở thành một phần quan trọng của giao tiếp hàng ngày'."
+                    },
+                    {
+                        id: 39, text: "Question 39: However, some traditions haven’t changed completely. Some (39) ......... .",
+                        options: [
+                            { text: "A. Put the letters in envelopes, and send them through the postal service.", correct: false },
+                            { text: "B. Have become an important part of our daily communication", correct: false },
+                            { text: "C. People still enjoy writing letters by hand", correct: true },
+                            { text: "D. It creates a personal connection that we cannot do with digital communication", correct: false }
+                        ],
+                        explanation: "<b>Phân tích đại từ:</b><br>Từ 'Some' ở đây đóng vai trò là Đại từ (vài người). Phía sau cần một mệnh đề giải thích hành động của họ. Ngay câu sau tác giả viết 'They think that...' (Họ nghĩ rằng...). Vậy 'Some' ở đây chính là 'Some people' -> Đáp án C: 'Một vài người vẫn thích tự tay viết thư' tạo nên sự liên kết logic chặt chẽ."
+                    },
+                    {
+                        id: 40, text: "Question 40: People still find something special in putting their thoughts on paper and sending them to others and (40) ......... .",
+                        options: [
+                            { text: "A. Put the letters in envelopes, and send them through the postal service.", correct: false },
+                            { text: "B. Have become an important part of our daily communication", correct: false },
+                            { text: "C. People still enjoy writing letters by hand", correct: false },
+                            { text: "D. It creates a personal connection that we cannot do with digital communication", correct: true }
+                        ],
+                        explanation: "<b>Phân tích logic câu kết:</b><br>Đoạn cuối đang tổng kết về giá trị của thư tay. Từ 'and' dùng để nối thêm một ý bổ sung cho việc 'gửi thư cho người khác'. Ý D: 'Nó tạo ra sự kết nối cá nhân mà giao tiếp kỹ thuật số không làm được' là lời chốt hạ hoàn hảo cho sự đối lập giữa viết thư tay và email trong toàn bộ bài văn."
+                    }
+                ]
+            }
+        ];
+
+        // ==========================================
+        // SYSTEM VARIABLES
+        // ==========================================
+        let timerInterval;
+        let timeLeft = 600; // 10 minutes
+        let isTimerRunning = false;
+        let userAnswers = {}; 
+        const totalQuestions = quizData.reduce((acc, curr) => acc + curr.questions.length, 0);
+
+        // ==========================================
+        // WEB AUDIO API (SOUND EFFECTS)
+        // ==========================================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playDing() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playWrong() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+            
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        // ==========================================
+        // CONFETTI EFFECT
+        // ==========================================
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+
+        function triggerConfetti() {
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height / 2 - 50,
+                    r: Math.random() * 6 + 2,
+                    dx: Math.random() * 4 - 2,
+                    dy: Math.random() * 4 + 2,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`
+                });
+            }
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.x += p.dx; p.y += p.dy;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color; ctx.fill();
+                if (p.y > canvas.height) particles.splice(index, 1);
+            });
+            requestAnimationFrame(animateConfetti);
+        }
+        animateConfetti();
+
+        // ==========================================
+        // TIMER LOGIC
+        // ==========================================
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer');
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                btn.innerText = "TIẾP TỤC";
+                btn.style.background = "#f39c12";
+                isTimerRunning = false;
+            } else {
+                if (audioCtx.state === 'suspended') audioCtx.resume(); // Khởi tạo audio khi user tương tác lần đầu
+                timerInterval = setInterval(updateTimer, 1000);
+                btn.innerText = "TẠM DỪNG";
+                btn.style.background = "#e74c3c";
+                isTimerRunning = true;
+            }
+        }
+
+        function updateTimer() {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                document.getElementById('timer-display').innerText = "00:00";
+                alert("Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                return;
+            }
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+        }
+
+        // ==========================================
+        // UTILITIES
+        // ==========================================
+        function shuffleArray(array) {
+            let shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function toggleTranslation(btn) {
+            const transBox = btn.nextElementSibling;
+            if (transBox.style.display === "block") {
+                transBox.style.display = "none";
+                btn.innerText = "Mở dịch đoạn này 🌟";
+            } else {
+                transBox.style.display = "block";
+                btn.innerText = "Đóng bản dịch ❌";
+            }
+        }
+
+        // ==========================================
+        // CORE RENDERING ENGINE
+        // ==========================================
+        function initApp() {
+            const leftPane = document.getElementById('left-pane');
+            const rightPane = document.getElementById('questions-container');
+
+            quizData.forEach((passage) => {
+                // RENDER TRÁI (READING)
+                let passageHTML = `
+                    <div class="passage-section">
+                        <div class="passage-title">${passage.title}</div>
+                        <p style="font-style: italic; margin-bottom: 10px; color: #555;">${passage.instruction}</p>
+                `;
+
+                passage.paragraphs.forEach(para => {
+                    passageHTML += `
+                        <div class="paragraph-box">
+                            ${para.text}
+                            <br>
+                            <button class="btn-translate" onclick="toggleTranslation(this)">Mở dịch đoạn này 🌟</button>
+                            <div class="translation-box">${para.vi}</div>
+                        </div>
+                    `;
+                });
+
+                // RENDER GLOSSARY
+                if (passage.glossary && passage.glossary.length > 0) {
+                    passageHTML += `
+                        <div class="glossary-wrapper">
+                            <div class="glossary-title">💡 Bảng Từ Vựng Cần Nhớ:</div>
+                            <table>
+                                <tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa Tiếng Việt</th></tr>
+                    `;
+                    passage.glossary.forEach(word => {
+                        passageHTML += `<tr><td>${word.word}</td><td>${word.pos}</td><td>${word.vi}</td></tr>`;
+                    });
+                    passageHTML += `</table></div>`;
+                }
+                passageHTML += `</div><hr style="border: 1px dashed rgba(255,255,255,0.5); margin: 30px 0;">`;
+                leftPane.innerHTML += passageHTML;
+
+                // RENDER PHẢI (QUESTIONS)
+                let qHTML = `<div class="passage-title" style="font-size: 1.2rem; color: #e84393;">Questions for ${passage.title.split(':')[0]}</div>`;
+                
+                passage.questions.forEach(q => {
+                    let shuffledOptions = shuffleArray(q.options);
+                    qHTML += `
+                        <div class="question-card" id="q-${q.id}">
+                            <div class="question-text">${q.text}</div>
+                            <div class="options-grid">
+                    `;
+                    shuffledOptions.forEach((opt, index) => {
+                        // Pass JSON stringified object to inline onclick securely
+                        const isCorrStr = opt.correct ? 'true' : 'false';
+                        qHTML += `<button class="option-btn" onclick="handleAnswer(${q.id}, ${isCorrStr}, this)">${opt.text}</button>`;
+                    });
+                    qHTML += `
+                            </div>
+                            <div class="explanation-box" id="expl-${q.id}">
+                                <div style="font-weight: 800; color: #d63031; margin-bottom: 5px;">📖 Giải thích chi tiết:</div>
+                                ${q.explanation}
+                            </div>
+                        </div>
+                    `;
+                });
+                qHTML += `<hr style="border: 1px dashed rgba(255,255,255,0.5); margin: 30px 0;">`;
+                rightPane.innerHTML += qHTML;
+            });
+            
+            document.getElementById('btn-submit').style.display = 'block';
+        }
+
+        // ==========================================
+        // INTERACTION LOGIC
+        // ==========================================
+        function handleAnswer(qId, isCorrect, btnElement) {
+            const card = document.getElementById(`q-${qId}`);
+            const buttons = card.querySelectorAll('.option-btn');
+            
+            // Disable all buttons in this question
+            buttons.forEach(b => b.disabled = true);
+
+            // Ghi nhận điểm
+            if (userAnswers[qId] === undefined) {
+                userAnswers[qId] = isCorrect ? 1 : 0;
+            }
+
+            // Hiệu ứng âm thanh và hình ảnh
+            if (isCorrect) {
+                btnElement.classList.add('correct');
+                playDing();
+                triggerConfetti();
+            } else {
+                btnElement.classList.add('wrong');
+                playWrong();
+                // Tự động tìm và bôi xanh đáp án đúng
+                buttons.forEach(b => {
+                    // Dựa vào HTML onclick attribute để tìm đúng
+                    if (b.getAttribute('onclick').includes('true')) {
+                        b.classList.add('correct');
+                    }
+                });
+            }
+
+            // Hiện giải thích chi tiết
+            const expl = document.getElementById(`expl-${qId}`);
+            expl.style.display = 'block';
+        }
+
+        function submitQuiz() {
+            clearInterval(timerInterval);
+            let score = Object.values(userAnswers).reduce((a, b) => a + b, 0);
+            const modal = document.getElementById('result-modal');
+            const scoreEl = document.getElementById('final-score');
+            const msgEl = document.getElementById('final-message');
+
+            scoreEl.innerText = `${score} / ${totalQuestions}`;
+
+            let ratio = score / totalQuestions;
+            if (ratio === 1) {
+                msgEl.innerText = "🏆 THIÊN TÀI! Bạn đã đạt điểm tuyệt đối. Xuất sắc!";
+                msgEl.style.color = "#00b894";
+                for(let i=0; i<5; i++) setTimeout(triggerConfetti, i*300);
+            } else if (ratio >= 0.8) {
+                msgEl.innerText = "🌟 LÀM TỐT LẮM! Kiến thức của bạn rất vững chắc.";
+                msgEl.style.color = "#0984e3";
+                triggerConfetti();
+            } else if (ratio >= 0.5) {
+                msgEl.innerText = "👍 KHÁ LẮM! Hãy đọc lại phần giải thích để khắc phục lỗi sai nhé.";
+                msgEl.style.color = "#fdcb6e";
+            } else {
+                msgEl.innerText = "💪 CỐ LÊN NHÉ! Học tiếng Anh là một hành trình dài. Hãy đọc kỹ phần dịch và giải thích nha.";
+                msgEl.style.color = "#d63031";
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        // Khởi chạy khi load trang
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
