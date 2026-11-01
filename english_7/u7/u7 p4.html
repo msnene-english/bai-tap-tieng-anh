@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Tập Tiếng Anh - Ms Mai An ULIS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* === DYNAMIC THEME & BASE STYLES === */
+        :root {
+            --primary-color: #3B82F6; /* Sky Blue */
+            --secondary-color: #FBBF24; /* Amber/Yellow for contrast */
+            --correct-color: #00D26A;
+            --wrong-color: #FF4757;
+            --bg-gradient: radial-gradient(circle at center, #E0F2FE 0%, #BAE6FD 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-gradient),
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="250" height="250" opacity="0.3"><text x="40" y="80" font-size="40">🚗</text><text x="150" y="180" font-size="40">🚦</text></svg>');
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll, use split panes */
+            color: #333;
+        }
+
+        /* === TOP CONTROL BAR === */
+        #top-bar {
+            height: 60px;
+            background-color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .author-tag {
+            font-weight: 800;
+            color: var(--primary-color);
+            background: #EFF6FF;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 2px solid var(--primary-color);
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #timer-display {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--wrong-color);
+            min-width: 90px;
+            text-align: center;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: 800;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #2563EB;
+            transition: all 0.1s ease;
+        }
+
+        .btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0 #2563EB;
+        }
+
+        .btn-pause { background-color: var(--secondary-color); box-shadow: 0 5px 0 #D97706; }
+        .btn-pause:active { box-shadow: 0 0px 0 #D97706; }
+
+        /* === SPLIT SCREEN LAYOUT === */
+        #main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            width: 100%;
+        }
+
+        .pane {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        #left-pane {
+            border-right: 4px dashed #93C5FD;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(5px);
+        }
+
+        #right-pane {
+            background: transparent;
+        }
+
+        /* Scrollbar Styling for Gamification feel */
+        ::-webkit-scrollbar { width: 12px; }
+        ::-webkit-scrollbar-track { background: #E0F2FE; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #93C5FD; border-radius: 10px; border: 3px solid #E0F2FE; }
+
+        /* === READING PASSAGE STYLES === */
+        .passage-box {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 0 #E2E8F0;
+            margin-bottom: 30px;
+            font-size: 1.15rem;
+            line-height: 1.8;
+            border: 2px solid #E2E8F0;
+        }
+
+        .passage-title {
+            color: var(--primary-color);
+            font-weight: 900;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+        }
+
+        .translate-btn {
+            background: #8B5CF6;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #6D28D9;
+            margin-top: 15px;
+            display: block;
+        }
+        .translate-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #6D28D9; }
+
+        .translation-content {
+            display: none;
+            background: #F3F4F6;
+            padding: 15px;
+            border-radius: 15px;
+            margin-top: 15px;
+            border-left: 5px solid #8B5CF6;
+            font-size: 1.05rem;
+            color: #4B5563;
+            font-style: italic;
+        }
+
+        /* === GLOSSARY STYLES === */
+        .glossary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid #E2E8F0;
+        }
+        .glossary-table th { background: var(--primary-color); color: white; padding: 12px; text-align: left; }
+        .glossary-table td { background: white; padding: 12px; border-bottom: 1px solid #E2E8F0; font-weight: 600; }
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        /* === EXERCISE STYLES === */
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 0 #E2E8F0;
+            border: 2px solid #E2E8F0;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: #1E293B;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: #F8FAFC;
+            border: 3px solid #CBD5E1;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            position: relative;
+        }
+
+        .option-btn:hover {
+            transform: scale(1.02);
+            border-color: var(--primary-color);
+            background: #EFF6FF;
+        }
+
+        .option-btn.correct {
+            background: var(--correct-color);
+            color: white;
+            border-color: #00A352;
+            box-shadow: 0 5px 0 #00A352;
+            pointer-events: none;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong-color);
+            color: white;
+            border-color: #D63031;
+            box-shadow: 0 5px 0 #D63031;
+            pointer-events: none;
+            animation: shake 0.4s;
+        }
+
+        /* Shake Animation */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Explanation Box */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            background: #FFFBEB;
+            border: 2px solid #FDE68A;
+            border-radius: 15px;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .explanation-box h4 {
+            color: #D97706;
+            font-weight: 900;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .submit-btn-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .btn-submit {
+            background: var(--secondary-color);
+            color: #78350F;
+            font-size: 1.5rem;
+            padding: 15px 40px;
+            box-shadow: 0 8px 0 #D97706;
+            border-radius: 20px;
+        }
+
+        /* Modal Overlay */
+        #result-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            width: 400px;
+            box-shadow: 0 15px 0 rgba(0,0,0,0.1);
+            animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes scaleIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            background: var(--primary-color);
+            color: white;
+            font-size: 3rem;
+            font-weight: 900;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            border: 8px solid #DBEAFE;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .feedback-text {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--correct-color);
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <div class="author-tag">👩‍🏫 Giáo viên: Ms Mai An ULIS</div>
+        <div class="timer-container">
+            <button id="btn-timer" class="btn" onclick="startTimer()">▶ BẮT ĐẦU TÍNH GIỜ</button>
+            <button id="btn-pause" class="btn btn-pause" style="display:none;" onclick="togglePause()">⏸ Tạm Dừng</button>
+            <div id="timer-display">10:00</div>
+        </div>
+    </div>
+
+    <div id="main-container">
+        
+        <div id="left-pane" class="pane">
+            
+            <div class="passage-box">
+                <div class="passage-title">📖 Passage 1: Driving Behaviors</div>
+                <p>
+                    Read the following passage and mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions from 31 to 36.<br><br>
+                    Who are the best drivers? According to a recent survey, young and inexperienced drivers are the most likely to have an accident. Older drivers are more careful. Young men have the worst accident records of all. They often choose faster cars with bigger engines. One of the most interesting facts in the survey is that passengers have an effect on the driver. When young male drivers have their friends in the car, their driving becomes worse. When their wife or girlfriend is in the car, however, their driving is better. But this is not true for women. Their driving is more dangerous when their husband or boyfriend is in the car. However, if their small children are riding in the car, they drive more slowly and safely.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('trans1')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
+                <div id="trans1" class="translation-content">
+                    Ai là những người lái xe giỏi nhất? Theo một cuộc khảo sát gần đây, những tài xế trẻ và thiếu kinh nghiệm là những người dễ gặp tai nạn nhất. Những người lái xe lớn tuổi thì cẩn thận hơn. Nam giới trẻ tuổi có hồ sơ tai nạn tệ nhất trong tất cả. Họ thường chọn những chiếc ô tô chạy nhanh hơn với động cơ lớn hơn. Một trong những sự thật thú vị nhất trong cuộc khảo sát là hành khách có ảnh hưởng đến người lái xe. Khi các nam tài xế trẻ có bạn bè đi cùng trên xe, việc lái xe của họ trở nên tệ hơn. Tuy nhiên, khi vợ hoặc bạn gái của họ ở trên xe, việc lái xe của họ lại tốt hơn. Nhưng điều này không đúng với phụ nữ. Việc lái xe của họ trở nên nguy hiểm hơn khi chồng hoặc bạn trai của họ ở trên xe. Dù vậy, nếu có trẻ nhỏ đi cùng trên xe, họ sẽ lái xe chậm và an toàn hơn.
+                </div>
+
+                <table class="glossary-table">
+                    <thead><tr><th>Vocabulary</th><th>Type</th><th>Vietnamese Meaning</th></tr></thead>
+                    <tbody>
+                        <tr><td>Inexperienced</td><td>(adj)</td><td>Thiếu kinh nghiệm, non nớt</td></tr>
+                        <tr><td>Accident</td><td>(n)</td><td>Tai nạn, sự cố</td></tr>
+                        <tr><td>Record</td><td>(n)</td><td>Hồ sơ, kỷ lục, thành tích</td></tr>
+                        <tr><td>Passenger</td><td>(n)</td><td>Hành khách (người đi cùng)</td></tr>
+                        <tr><td>Effect</td><td>(n)</td><td>Ảnh hưởng, tác động</td></tr>
+                        <tr><td>Behavior</td><td>(n)</td><td>Hành vi, cách cư xử</td></tr>
+                        <tr><td>Survey</td><td>(n)</td><td>Cuộc khảo sát, điều tra</td></tr>
+                        <tr><td>Dangerous</td><td>(adj)</td><td>Nguy hiểm, không an toàn</td></tr>
+                        <tr><td>Safely</td><td>(adv)</td><td>Một cách an toàn</td></tr>
+                        <tr><td>Engine</td><td>(n)</td><td>Động cơ, cỗ máy</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="passage-box">
+                <div class="passage-title">📖 Passage 2: Traffic Jams</div>
+                <p>
+                    Four phrases/ sentences have been removed from the text below. For each question, mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each of the numbered blanks from 37 to 40.<br><br>
+                    For many years, Raze has been driving to work and back every weekday. Every morning, on his way to work, especially during the rush hour, <strong>(37) ......</strong>. The situation is even worse in the evening when he drives home. All the traffic comes to stop when there is an accident or a car has broken down and blocks a lane. In winter, <strong>(38) ......</strong>, many car accidents with injuries can take a number of hours to clear the road. <strong>(39) ......</strong>, he listens to music on the radio to calm his nerves. His boss and his wife know that if he is late, <strong>(40) ......</strong>.
+                </p>
+                <button class="translate-btn" onclick="toggleTranslation('trans2')">✨ BẢN DỊCH ĐẦY ĐỦ</button>
+                <div id="trans2" class="translation-content">
+                    Trong nhiều năm, Raze đã lái xe đi làm và trở về nhà vào mỗi ngày trong tuần. Mỗi buổi sáng, trên đường đi làm, đặc biệt là trong giờ cao điểm, <strong>(37) các đường cao tốc thường rất đông đúc</strong>. Tình hình thậm chí còn tệ hơn vào buổi tối khi anh ấy lái xe về nhà. Mọi phương tiện giao thông đều phải dừng lại khi có tai nạn hoặc một chiếc xe bị hỏng và chắn ngang một làn đường. Vào mùa đông, <strong>(38) đặc biệt là khi trời có tuyết</strong>, nhiều vụ tai nạn xe hơi có người bị thương có thể mất vài giờ để dọn dẹp đường. <strong>(39) Khi Raza bị kẹt trong một vụ tắc đường nghiêm trọng</strong>, anh ấy nghe nhạc trên đài để làm dịu thần kinh (giữ bình tĩnh). Sếp và vợ anh ấy biết rằng nếu anh ấy đến trễ, <strong>(40) anh ấy có lẽ đang bị kẹt xe</strong>.
+                </div>
+
+                <table class="glossary-table">
+                    <thead><tr><th>Vocabulary</th><th>Type</th><th>Vietnamese Meaning</th></tr></thead>
+                    <tbody>
+                        <tr><td>Weekday</td><td>(n)</td><td>Ngày trong tuần (T2 - T6)</td></tr>
+                        <tr><td>Rush hour</td><td>(n)</td><td>Giờ cao điểm</td></tr>
+                        <tr><td>Highway</td><td>(n)</td><td>Đường cao tốc</td></tr>
+                        <tr><td>Crowded</td><td>(adj)</td><td>Đông đúc, chật chội</td></tr>
+                        <tr><td>Situation</td><td>(n)</td><td>Tình huống, hoàn cảnh</td></tr>
+                        <tr><td>Break down</td><td>(phr. v)</td><td>Bị hỏng (máy móc, xe cộ)</td></tr>
+                        <tr><td>Block</td><td>(v)</td><td>Chặn, cản trở, làm kẹt</td></tr>
+                        <tr><td>Injury</td><td>(n)</td><td>Chấn thương, vết thương</td></tr>
+                        <tr><td>Calm</td><td>(v)</td><td>Làm dịu, trấn an</td></tr>
+                        <tr><td>Nerve</td><td>(n)</td><td>Dây thần kinh (calm nerves: giữ bình tĩnh)</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="right-pane" class="pane">
+            <div id="quiz-container">
+                </div>
+
+            <div class="submit-btn-container">
+                <button class="btn btn-submit" onclick="submitQuiz()">🏆 NỘP BÀI TỔNG KẾT</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-modal">
+        <div class="modal-content">
+            <h2 style="color: #1E293B; margin-bottom: 20px;">KẾT QUẢ CỦA BẠN</h2>
+            <div class="score-circle" id="final-score">0/10</div>
+            <div class="feedback-text" id="feedback-msg">Tuyệt vời!</div>
+            <p style="color: #64748B; margin-bottom: 20px;">Ms Mai An rất tự hào về bạn! Hãy xem lại phần giải thích chi tiết ở bên cạnh nhé.</p>
+            <button class="btn" style="width: 100%;" onclick="closeModal()">Đóng & Xem lại bài</button>
+        </div>
+    </div>
+
+    <script>
+        // === AUDIO SYNTHESIZER (No external links needed, 100% reliable) ===
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                // Ding sound
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else {
+                // Buzzer sound (téo tèo tèo)
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        }
+
+        // === TIMER LOGIC ===
+        let timeInSeconds = 10 * 60; 
+        let timerInterval;
+        let isTimerRunning = false;
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeInSeconds / 60).toString().padStart(2, '0');
+            const s = (timeInSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+        }
+
+        function startTimer() {
+            document.getElementById('btn-timer').style.display = 'none';
+            document.getElementById('btn-pause').style.display = 'inline-block';
+            isTimerRunning = true;
+            
+            timerInterval = setInterval(() => {
+                if(!isTimerRunning) return;
+                timeInSeconds--;
+                updateTimerDisplay();
+                if(timeInSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                }
+            }, 1000);
+        }
+
+        function togglePause() {
+            isTimerRunning = !isTimerRunning;
+            document.getElementById('btn-pause').innerText = isTimerRunning ? "⏸ Tạm Dừng" : "▶ Tiếp Tục";
+            document.getElementById('btn-pause').style.backgroundColor = isTimerRunning ? "var(--secondary-color)" : "var(--primary-color)";
+        }
+
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // === QUIZ DATA & MS MAI AN'S EXPLANATIONS ===
+        const questions = [
+            {
+                id: 31,
+                text: "Question 31. What is the main idea of the passage?",
+                options: [
+                    "Older drivers are more careful than younger drivers.",
+                    "Passengers can influence a driver’s behavior.",
+                    "Young men prefer faster cars with bigger engines.",
+                    "Women drive more safely when their children are in the car."
+                ],
+                correct: "Passengers can influence a driver’s behavior.",
+                explanation: `
+                    <strong>1. Phân tích Dịch nghĩa:</strong> Câu hỏi tìm Ý chính của đoạn văn.<br>
+                    <strong>2. Tại sao chọn đáp án này?</strong><br>
+                    Mặc dù các đáp án khác đều có xuất hiện trong bài, nhưng chúng chỉ là ý nhỏ bổ trợ. Câu chốt bao quát toàn bộ bài nằm ở: <em>"One of the most interesting facts in the survey is that passengers have an effect on the driver."</em> (Hành khách có ảnh hưởng đến người lái xe). Sau đó, nguyên đoạn văn phía sau đưa ra hàng loạt dẫn chứng về việc nam/nữ lái xe thế nào khi chở bạn bè, người yêu, hoặc trẻ con.<br>
+                    => <strong>"Passengers can influence a driver’s behavior"</strong> (Hành khách có thể ảnh hưởng tới hành vi của tài xế) là ý chính xác nhất bao trùm đoạn!
+                `
+            },
+            {
+                id: 32,
+                text: "Question 32. Which word is closest in meaning to “effect” as used in the text?",
+                options: ["Impact", "problem", "accident", "safety"],
+                correct: "Impact",
+                explanation: `
+                    <strong>1. Phân tích Từ vựng:</strong><br>
+                    - effect (n): ảnh hưởng, tác động.<br>
+                    - impact (n): tác động, ảnh hưởng mạnh.<br>
+                    - problem (n): vấn đề.<br>
+                    - accident (n): tai nạn.<br>
+                    - safety (n): sự an toàn.<br>
+                    <strong>2. Tại sao chọn?</strong> Rõ ràng "effect" mang nghĩa tương đồng nhất với "impact". Cả hai từ đều dùng để chỉ sự tác động của yếu tố này lên yếu tố khác.
+                `
+            },
+            {
+                id: 33,
+                text: "Question 33. According to the survey, who is the most likely to have an accident?",
+                options: [
+                    "Young and inexperienced drivers",
+                    "Old and inexperienced drivers",
+                    "Young and old female drivers",
+                    "Old and inexperienced men"
+                ],
+                correct: "Young and inexperienced drivers",
+                explanation: `
+                    <strong>1. Dịch câu hỏi:</strong> Theo khảo sát, ai là người dễ gặp tai nạn nhất?<br>
+                    <strong>2. Dẫn chứng rành rành trong bài:</strong> Ngay câu thứ 2 của bài đọc: <em>"According to a recent survey, <strong>young and inexperienced drivers</strong> are the most likely to have an accident."</em> (Theo khảo sát gần đây, tài xế trẻ và thiếu kinh nghiệm là người dễ gặp tai nạn nhất). Nhìn là khoanh luôn nha các trò!
+                `
+            },
+            {
+                id: 34,
+                text: "Question 34. Who has an effect on drivers?",
+                options: ["Parents", "policemen", "families", "passengers"],
+                correct: "passengers",
+                explanation: `
+                    <strong>1. Dịch câu hỏi:</strong> Ai có ảnh hưởng lên tài xế?<br>
+                    <strong>2. Dẫn chứng:</strong> Câu thứ 5 trong bài: <em>"One of the most interesting facts in the survey is that <strong>passengers</strong> have an effect on the driver."</em><br>
+                    => Chọn "passengers" (hành khách).
+                `
+            },
+            {
+                id: 35,
+                text: "Question 35. When young male drivers have their wife or girlfriend in the car, they drive ____.",
+                options: ["Worse", "slowly", "better", "fast"],
+                correct: "better",
+                explanation: `
+                    <strong>1. Dịch câu hỏi:</strong> Khi nam tài xế trẻ có vợ hoặc bạn gái trên xe, họ lái xe như thế nào?<br>
+                    <strong>2. Dẫn chứng:</strong> Hãy quét mắt tìm từ khóa "wife or girlfriend". Bài viết ghi rõ: <em>"When their wife or girlfriend is in the car, however, their driving is <strong>better</strong>."</em><br>
+                    => Cứ chở bạn gái là tâm lý muốn thể hiện sự ga-lăng và an toàn nên lái tốt hơn (better) nhé!
+                `
+            },
+            {
+                id: 36,
+                text: "Question 36. The word “they” in the last sentence refers to _________.",
+                options: ["Women", "husbands", "boyfriends", "small children"],
+                correct: "Women",
+                explanation: `
+                    <strong>1. Ngữ pháp Quy chiếu (Reference):</strong> Đại từ "they" sẽ thay thế cho danh từ số nhiều ở câu ngay trước nó hoặc vế trước nó.<br>
+                    <strong>2. Phân tích câu:</strong> Dò từ câu trước: <em>"But this is not true for <strong>women</strong>. Their driving is more dangerous... However, if their small children are riding in the car, <strong>they</strong> drive more slowly and safely."</em><br>
+                    "They" ở đây thực hiện hành động "drive" (lái xe). Trẻ con (small children) thì không thể lái xe được, nên "they" ở đây chắc chắn chỉ "Women" (Những người phụ nữ).
+                `
+            },
+            {
+                id: 37,
+                text: "Question 37. Every morning, on his way to work, especially during the rush hour, ________.",
+                options: [
+                    "he is probably stuck a traffic",
+                    "the highways are usually crowded",
+                    "particularly when it snows",
+                    "When Raza is stuck in a heavy traffic jam"
+                ],
+                correct: "the highways are usually crowded",
+                explanation: `
+                    <strong>1. Phân tích Ngữ cảnh:</strong> Câu đang mô tả việc đi làm buổi sáng, đặc biệt vào giờ cao điểm ("rush hour").<br>
+                    <strong>2. Loại trừ:</strong> Giờ cao điểm thì đương nhiên đường sá phải đông đúc. Đáp án "the highways are usually crowded" (các đường cao tốc thường đông đúc) ghép vào vừa khít về nghĩa và ngữ pháp (tạo thành mệnh đề chính cho trạng ngữ chỉ thời gian phía trước).
+                `
+            },
+            {
+                id: 38,
+                text: "Question 38. In winter, ________, many car accidents with injuries can take a number of hours to clear the road.",
+                options: [
+                    "he is probably stuck a traffic",
+                    "the highways are usually crowded",
+                    "particularly when it snows",
+                    "When Raza is stuck in a heavy traffic jam"
+                ],
+                correct: "particularly when it snows",
+                explanation: `
+                    <strong>1. Key word:</strong> "In winter" (Vào mùa đông).<br>
+                    <strong>2. Liên kết logic:</strong> Mùa đông thì liên quan chặt chẽ đến hiện tượng thời tiết nào? Chính là "snows" (tuyết rơi).<br>
+                    => Ghép vào: Vào mùa đông, <strong>đặc biệt là khi trời có tuyết</strong>, nhiều vụ tai nạn... Câu vô cùng hợp lý về mặt logic tự nhiên!
+                `
+            },
+            {
+                id: 39,
+                text: "Question 39. ________, he listens to music on the radio to calm his nerves.",
+                options: [
+                    "he is probably stuck a traffic",
+                    "the highways are usually crowded",
+                    "particularly when it snows",
+                    "When Raza is stuck in a heavy traffic jam"
+                ],
+                correct: "When Raza is stuck in a heavy traffic jam",
+                explanation: `
+                    <strong>1. Phân tích:</strong> Phía sau là hành động "he listens to music... to calm his nerves" (anh ấy nghe nhạc để giữ bình tĩnh). Khi nào người ta cần bình tĩnh khi đang lái xe? Chính là lúc bị tắc đường!<br>
+                    <strong>2. Ghép vào:</strong> <strong>Khi Raza bị kẹt trong một vụ tắc đường nghiêm trọng</strong>, anh ấy nghe nhạc... (Hợp lý 100%).
+                `
+            },
+            {
+                id: 40,
+                text: "Question 40. His boss and his wife know that if he is late, ________.",
+                options: [
+                    "he is probably stuck a traffic",
+                    "the highways are usually crowded",
+                    "particularly when it snows",
+                    "When Raza is stuck in a heavy traffic jam"
+                ],
+                correct: "he is probably stuck a traffic",
+                explanation: `
+                    <strong>1. Câu điều kiện loại 1:</strong> "if he is late" (nếu anh ấy trễ). Trễ thì nguyên nhân do đâu theo bài đọc này? Do tắc đường!<br>
+                    <strong>2. Ghép vào:</strong> Sếp và vợ anh ấy biết rằng nếu anh ấy trễ, <strong>anh ấy có lẽ đang bị kẹt xe</strong> (he is probably stuck a traffic). Cực chuẩn xác!
+                `
+            }
+        ];
+
+        let score = 0;
+        let answeredQuestions = 0;
+
+        // Shuffle Array Function
+        function shuffleArray(array) {
+            let curId = array.length, temp, randId;
+            while (0 !== curId) {
+                randId = Math.floor(Math.random() * curId);
+                curId -= 1;
+                temp = array[curId];
+                array[curId] = array[randId];
+                array[randId] = temp;
+            }
+            return array;
+        }
+
+        // Render Questions
+        const quizContainer = document.getElementById('quiz-container');
+
+        questions.forEach((q, index) => {
+            const shuffledOptions = shuffleArray([...q.options]); // Shuffle a copy
+            
+            let optionsHTML = '';
+            shuffledOptions.forEach(opt => {
+                optionsHTML += `<div class="option-btn" onclick="checkAnswer(this, ${q.id}, '${opt.replace(/'/g, "\\'")}')">${opt}</div>`;
+            });
+
+            const qHTML = `
+                <div class="question-card" id="qcard-${q.id}">
+                    <div class="question-text">${q.text}</div>
+                    <div class="options-grid">
+                        ${optionsHTML}
+                    </div>
+                    <div class="explanation-box" id="exp-${q.id}">
+                        <h4>💡 Ms Mai An Giải Thích:</h4>
+                        ${q.explanation}
+                    </div>
+                </div>
+            `;
+            quizContainer.innerHTML += qHTML;
+        });
+
+        // Check Answer Logic
+        function checkAnswer(element, qId, selectedOption) {
+            const questionData = questions.find(q => q.id === qId);
+            const parentCard = document.getElementById(`qcard-${qId}`);
+            const allOptions = parentCard.querySelectorAll('.option-btn');
+            
+            // Disable all options in this question
+            allOptions.forEach(btn => btn.style.pointerEvents = 'none');
+
+            if (selectedOption === questionData.correct) {
+                // CORRECT
+                element.classList.add('correct');
+                playSound('correct');
+                score++;
+                
+                // Confetti trigger
+                const rect = element.getBoundingClientRect();
+                confetti({
+                    particleCount: 50,
+                    spread: 60,
+                    origin: { 
+                        x: (rect.left + rect.width / 2) / window.innerWidth, 
+                        y: (rect.top + rect.height / 2) / window.innerHeight 
+                    }
+                });
+            } else {
+                // WRONG
+                element.classList.add('wrong');
+                playSound('wrong');
+                
+                // Highlight the correct one immediately
+                allOptions.forEach(btn => {
+                    if(btn.innerText === questionData.correct) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            // Show explanation
+            document.getElementById(`exp-${qId}`).style.display = 'block';
+            answeredQuestions++;
+        }
+
+        // Final Submit Logic
+        function submitQuiz() {
+            if (answeredQuestions < questions.length) {
+                if(!confirm("Bạn chưa hoàn thành tất cả các câu hỏi! Bạn có chắc chắn muốn nộp bài không?")) {
+                    return;
+                }
+            }
+
+            // Stop timer
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+
+            const modal = document.getElementById('result-modal');
+            const scoreDisplay = document.getElementById('final-score');
+            const feedbackMsg = document.getElementById('feedback-msg');
+
+            scoreDisplay.innerText = `${score}/${questions.length}`;
+
+            // Grading Logic
+            if (score === questions.length) {
+                feedbackMsg.innerText = "🌟 Thiên tài xuất chúng! 100 điểm không có nhưng!";
+                confetti({ particleCount: 150, spread: 100, origin: { y: 0.3 } });
+            } else if (score >= questions.length * 0.7) {
+                feedbackMsg.innerText = "🔥 Làm tốt lắm! Cố gắng chút nữa là hoàn hảo!";
+                confetti({ particleCount: 80, spread: 80, origin: { y: 0.4 } });
+            } else if (score >= questions.length * 0.5) {
+                feedbackMsg.innerText = "💪 Khá khen! Đừng quên xem lại lỗi sai nhé!";
+            } else {
+                feedbackMsg.innerText = "📚 Cố lên nhé! Ms Mai An tin bạn sẽ làm tốt hơn ở lần sau!";
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms Mai An ULIS - Traffic Rules Reading Test</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3498db; /* Blue */
+            --secondary: #f1c40f; /* Yellow */
+            --correct: #00D26A;
+            --correct-shadow: #00a854;
+            --incorrect: #FF4757;
+            --incorrect-shadow: #cc3945;
+            --bg-color: #f0f8ff;
+            --text: #2d3436;
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+            height: 100vh;
+            color: var(--text);
+            overflow: hidden;
+            background-color: var(--bg-color);
+            /* DYNAMIC SVG BACKGROUND: Chủ đề Giao thông */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><text x="50" y="50" font-size="30" opacity="0.15">🚗</text><text x="250" y="150" font-size="40" opacity="0.15">🚦</text><text x="100" y="300" font-size="35" opacity="0.15">🛣️</text><text x="350" y="350" font-size="30" opacity="0.15">🛑</text></svg>'), radial-gradient(circle at top left, #e0f2fe, #bae6fd);
+        }
+
+        /* HEADER NHỎ */
+        .teacher-header {
+            position: fixed;
+            top: 10px;
+            left: 20px;
+            background: var(--secondary);
+            color: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-family: 'Quicksand', sans-serif;
+            z-index: 1000;
+            box-shadow: 0 4px 0 #d4ac0d;
+            font-size: 14px;
+        }
+
+        /* TIMER BAR */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: white;
+            padding: 10px 30px;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timer-display {
+            font-size: 24px;
+            font-weight: 900;
+            font-family: 'Quicksand', sans-serif;
+            color: var(--primary);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .btn-timer {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-family: 'Nunito', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #2980b9;
+            transition: all 0.1s;
+        }
+        .btn-timer:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #2980b9;
+        }
+
+        /* SPLIT SCREEN LAYOUT */
+        .container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            padding-top: 60px; /* Space for top bar */
+            box-sizing: border-box;
+        }
+
+        .left-panel, .right-panel {
+            flex: 1;
+            height: 100%;
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .left-panel {
+            border-right: 3px dashed #b2bec3;
+        }
+
+        /* SCROLLBAR STYLING */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #b2bec3; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #636e72; }
+
+        /* READING PASSAGE STYLING */
+        .passage-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            line-height: 1.8;
+            font-size: 16px;
+        }
+        .passage-title {
+            color: var(--primary);
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .paragraph { margin-bottom: 15px; text-align: justify; }
+
+        /* TRANSLATE BUTTON */
+        .btn-translate {
+            background: #e17055;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d63031;
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-translate:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #d63031;
+        }
+        .translation-content {
+            display: none;
+            background: #ffeaa7;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            color: #d35400;
+            font-style: italic;
+            border-left: 4px solid #e17055;
+        }
+
+        /* GLOSSARY TABLE */
+        .glossary {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .glossary th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            font-family: 'Quicksand', sans-serif;
+        }
+        .glossary td {
+            background: white;
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .glossary tr:last-child td { border-bottom: none; }
+        .word-en { font-weight: bold; color: var(--primary); }
+        .word-type { color: #e17055; font-size: 0.9em; }
+
+        /* EXERCISE CARD (Gamified) */
+        .question-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+        .question-text {
+            font-weight: 800;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-family: 'Quicksand', sans-serif;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .option-btn {
+            background: white;
+            border: 2px solid #dfe6e9;
+            padding: 15px 20px;
+            border-radius: 15px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #dfe6e9;
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            align-items: center;
+        }
+        .option-btn span {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #f1f2f6;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 15px;
+            font-weight: bold;
+            color: #57606f;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            border-color: var(--primary);
+        }
+        .option-btn:active:not(:disabled) {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 #dfe6e9;
+        }
+        
+        /* Trạng thái đúng / sai */
+        .option-btn.correct {
+            background: var(--correct);
+            color: white;
+            border-color: var(--correct);
+            box-shadow: 0 5px 0 var(--correct-shadow);
+        }
+        .option-btn.correct span { background: rgba(255,255,255,0.2); color: white; }
+        
+        .option-btn.incorrect {
+            background: var(--incorrect);
+            color: white;
+            border-color: var(--incorrect);
+            box-shadow: 0 5px 0 var(--incorrect-shadow);
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        .option-btn.incorrect span { background: rgba(255,255,255,0.2); color: white; }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        /* EXPLANATION BOX */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            background: #f8f9fa;
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            padding: 20px;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .exp-title {
+            color: var(--primary);
+            font-weight: 900;
+            font-family: 'Quicksand', sans-serif;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .exp-content { font-size: 15px; line-height: 1.6; }
+        .exp-content strong { color: #d63031; }
+        .exp-quote {
+            background: #e1f5fe;
+            padding: 10px;
+            border-left: 4px solid var(--primary);
+            margin: 10px 0;
+            font-style: italic;
+        }
+
+        /* SUBMIT BUTTON & MODAL */
+        .submit-container { text-align: center; margin: 40px 0; }
+        .btn-submit {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+            font-size: 22px;
+            font-weight: 900;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #4a3f9e;
+            font-family: 'Quicksand', sans-serif;
+            transition: all 0.2s;
+        }
+        .btn-submit:active { transform: translateY(8px); box-shadow: 0 0 0 #4a3f9e; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .result-modal {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .result-modal.show { transform: scale(1); }
+        .score-circle {
+            width: 150px; height: 150px;
+            border-radius: 50%;
+            background: var(--secondary);
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            font-weight: 900;
+            color: #333;
+            border: 8px solid white;
+            box-shadow: 0 0 0 8px var(--secondary);
+        }
+        .feedback-text { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 10px; }
+        .feedback-subtext { color: #636e72; margin-bottom: 20px; }
+        
+        /* CONFETTI CANVAS */
+        #confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1500; }
+        
+        /* TOAST ALERT */
+        .toast {
+            position: fixed; top: 20px; right: -300px;
+            background: #ff7675; color: white; padding: 15px 25px;
+            border-radius: 10px; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: right 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 3000; max-width: 300px;
+        }
+        .toast.show { right: 20px; }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .container { flex-direction: column; height: auto; padding-top: 80px; }
+            .left-panel, .right-panel { height: auto; overflow: visible; }
+            .left-panel { border-right: none; border-bottom: 3px dashed #b2bec3; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="teacher-header">👩‍🏫 Ms Mai An ULIS</div>
+
+    <div class="top-bar">
+        <div class="timer-display" id="timer">10:00</div>
+        <button class="btn-timer" id="btn-timer-control" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ</button>
+    </div>
+
+    <canvas id="confetti"></canvas>
+    <div id="toast" class="toast"></div>
+
+    <div class="container">
+        <div class="left-panel">
+            
+            <div class="passage-card">
+                <div class="passage-title">PASSAGE 1</div>
+                <div class="paragraph">
+                    <strong>Read the following passage and mark the letter A, B, C or D on your answer sheet to indicate the correct answer to each of the following questions from 31 to 36.</strong>
+                </div>
+                <div class="paragraph">
+                    <strong>Key Points to Remember on Traffic Rules in England</strong><br>
+                    Below are some key points you need to remember when you travel in England.
+                </div>
+                <div class="paragraph">
+                    <strong>The general rule of keeping left:</strong> When you are driving on a road which is a two-way road, you need to allow the traffic from the opposite direction to pass from your right side. Similarly, all the vehicles in your lane also need to be given the right side to overtake.
+                </div>
+                <div class="paragraph">
+                    <strong>When you turn:</strong> When you are taking a turn, always keep to your turning side, meaning when turning right, get to the right side of the road and do the same when turning to the left.
+                </div>
+                <div class="paragraph">
+                    <strong>Do not park:</strong> Surely, you want to park your vehicle as fast as you can, but that doesn't mean you leave your car on the side of the road. Find the parking near your building and park it there. If parking is not available, make sure you are not parking near the bus stand, school, or hospital entrance.
+                </div>
+                <div class="paragraph">
+                    <strong>Do not drive:</strong> When you are going on a one-way road, you cannot reverse your vehicle.
+                </div>
+                <div class="paragraph">
+                    <strong>Use indicators:</strong> When you are changing lanes, overtaking the other can or taking a turn always use turn signals or indicators to make the following drivers know about your man.
+                </div>
+                <div class="paragraph">
+                    <strong>Do not cross the stop lines:</strong> As the traffic signal, when you get to stop your vehicle due to a red signal, make sure you are not keeping your car on the stop line or on the pedestrian crossing.
+                </div>
+
+                <button class="btn-translate" onclick="toggleTranslation('trans1')">👁️ XEM BẢN DỊCH ĐẦY ĐỦ</button>
+                <div class="translation-content" id="trans1">
+                    <strong>Những điểm chính cần nhớ về Luật giao thông ở Anh</strong><br>
+                    Dưới đây là một số điểm chính bạn cần nhớ khi đi du lịch ở Anh.<br><br>
+                    <strong>Quy tắc chung về việc đi bên trái:</strong> Khi bạn đang lái xe trên đường hai chiều, bạn cần để các phương tiện đi ngược chiều vượt qua từ phía bên phải của bạn. Tương tự, tất cả các phương tiện trong làn đường của bạn cũng cần được nhường khoảng trống bên phải để vượt.<br><br>
+                    <strong>Khi bạn rẽ:</strong> Khi bạn rẽ, hãy luôn đi sát về phía bạn muốn rẽ, nghĩa là khi rẽ phải, hãy đi sang mép đường bên phải và làm tương tự khi rẽ trái.<br><br>
+                    <strong>Không đỗ xe bừa bãi:</strong> Chắc chắn là bạn muốn đỗ xe càng nhanh càng tốt, nhưng điều đó không có nghĩa là bạn để xe ngay bên vệ đường. Hãy tìm bãi đỗ xe gần tòa nhà của bạn và đỗ ở đó. Nếu không có bãi đỗ xe, hãy đảm bảo rằng bạn không đỗ xe gần trạm xe buýt, trường học hoặc cổng bệnh viện.<br><br>
+                    <strong>Không lái xe:</strong> Khi bạn đang đi trên đường một chiều, bạn không được phép lùi xe.<br><br>
+                    <strong>Sử dụng đèn xi-nhan:</strong> Khi bạn chuyển làn, vượt xe khác hoặc rẽ, hãy luôn sử dụng tín hiệu rẽ hoặc đèn xi-nhan để cho những tài xế đi phía sau biết về ý định của bạn.<br><br>
+                    <strong>Không vượt vạch dừng:</strong> Theo tín hiệu giao thông, khi bạn phải dừng xe vì đèn đỏ, hãy đảm bảo rằng bạn không đỗ xe đè lên vạch dừng hoặc trên vạch kẻ đường dành cho người đi bộ.
+                </div>
+
+                <table class="glossary">
+                    <tr><th>Từ vựng (Vocabulary)</th><th>Loại từ (POS)</th><th>Nghĩa tiếng Việt (Meaning)</th></tr>
+                    <tr><td class="word-en">Opposite</td><td class="word-type">adj</td><td>Đối diện, ngược chiều</td></tr>
+                    <tr><td class="word-en">Overtake</td><td class="word-type">v</td><td>Vượt (xe khác)</td></tr>
+                    <tr><td class="word-en">Vehicle</td><td class="word-type">n</td><td>Phương tiện giao thông</td></tr>
+                    <tr><td class="word-en">Available</td><td class="word-type">adj</td><td>Có sẵn, trống (chỗ đỗ xe)</td></tr>
+                    <tr><td class="word-en">Entrance</td><td class="word-type">n</td><td>Cổng vào, lối vào</td></tr>
+                    <tr><td class="word-en">Reverse</td><td class="word-type">v</td><td>Lùi (xe), đảo ngược</td></tr>
+                    <tr><td class="word-en">Indicator</td><td class="word-type">n</td><td>Đèn báo rẽ (đèn xi-nhan)</td></tr>
+                    <tr><td class="word-en">Pedestrian</td><td class="word-type">n</td><td>Người đi bộ</td></tr>
+                    <tr><td class="word-en">Intersection</td><td class="word-type">n</td><td>Ngã tư, giao lộ (từ mở rộng)</td></tr>
+                    <tr><td class="word-en">Accessible</td><td class="word-type">adj</td><td>Có thể tiếp cận được</td></tr>
+                </table>
+            </div>
+
+            <div class="passage-card">
+                <div class="passage-title">PASSAGE 2</div>
+                <div class="paragraph">
+                    <strong>Four phrases/ sentences have been removed from the text below. For each question, mark the letter A, B, C or D on your answer sheet to indicate the correct option that best fits each of the numbered blanks from 37 to 40.</strong>
+                </div>
+                <div class="paragraph">
+                    Traffic congestion is when vehicles travel slower because there is too much traffic on roads. This makes trip times longer and increases queueing. <strong>(37) _____</strong>. Congestion may result from a decrease in capacity, for example accidents on the road or roads being closed. <strong>(38) _______</strong>. Increased traffic, for example, by many cars leaving a sports stadium at the same time, can also cause congestion.
+                </div>
+                <div class="paragraph">
+                    Where congestion is common, <strong>(39) _____</strong>. Cars may be banned in certain districts or certain times, or made to carry passengers or pay a fee, or people may use public transport, <strong>(40) _____</strong>.
+                </div>
+                <div class="paragraph" style="background: #f1f2f6; padding: 15px; border-radius: 10px; font-weight: bold;">
+                    A. Which travel independently of car traffic and are not affected by traffic jams.<br>
+                    B. This is also known as a traffic jam.<br>
+                    C. Bad road layouts can also restrict capacity.<br>
+                    D. Several methods are used to relieve it.
+                </div>
+
+                <button class="btn-translate" onclick="toggleTranslation('trans2')">👁️ XEM BẢN DỊCH ĐẦY ĐỦ</button>
+                <div class="translation-content" id="trans2">
+                    Tắc nghẽn giao thông là khi các phương tiện di chuyển chậm hơn vì có quá nhiều xe cộ trên đường. Điều này làm cho thời gian di chuyển dài hơn và tăng tình trạng xếp hàng chờ đợi. <strong>(37) Điều này còn được gọi là kẹt xe (traffic jam)</strong>. Tắc nghẽn có thể bắt nguồn từ việc giảm sức chứa của đường, ví dụ như tai nạn trên đường hoặc đường bị phong tỏa. <strong>(38) Việc bố trí đường sá tồi tệ cũng có thể hạn chế sức chứa</strong>. Lưu lượng giao thông tăng lên, ví dụ, do nhiều ô tô rời khỏi một sân vận động thể thao cùng lúc, cũng có thể gây ra tắc nghẽn.<br><br>
+                    Ở những nơi tắc nghẽn phổ biến, <strong>(39) một số phương pháp được sử dụng để giảm bớt nó</strong>. Ô tô có thể bị cấm ở một số quận nhất định hoặc vào những thời điểm nhất định, hoặc bị bắt buộc phải chở thêm hành khách hoặc trả phí, hoặc người dân có thể sử dụng phương tiện giao thông công cộng, <strong>(40) những phương tiện di chuyển độc lập với giao thông ô tô và không bị ảnh hưởng bởi kẹt xe</strong>.
+                </div>
+
+                <table class="glossary">
+                    <tr><th>Từ vựng (Vocabulary)</th><th>Loại từ (POS)</th><th>Nghĩa tiếng Việt (Meaning)</th></tr>
+                    <tr><td class="word-en">Congestion</td><td class="word-type">n</td><td>Sự tắc nghẽn, kẹt xe</td></tr>
+                    <tr><td class="word-en">Queueing</td><td class="word-type">n</td><td>Sự xếp hàng, nối đuôi nhau</td></tr>
+                    <tr><td class="word-en">Decrease</td><td class="word-type">n/v</td><td>Sự suy giảm / Làm giảm</td></tr>
+                    <tr><td class="word-en">Capacity</td><td class="word-type">n</td><td>Sức chứa, công suất</td></tr>
+                    <tr><td class="word-en">Restrict</td><td class="word-type">v</td><td>Hạn chế, thu hẹp</td></tr>
+                    <tr><td class="word-en">Relieve</td><td class="word-type">v</td><td>Làm dịu, giảm bớt (căng thẳng/tắc nghẽn)</td></tr>
+                    <tr><td class="word-en">Ban</td><td class="word-type">v</td><td>Cấm</td></tr>
+                    <tr><td class="word-en">District</td><td class="word-type">n</td><td>Quận, khu vực</td></tr>
+                    <tr><td class="word-en">Independently</td><td class="word-type">adv</td><td>Một cách độc lập, không phụ thuộc</td></tr>
+                    <tr><td class="word-en">Layout</td><td class="word-type">n</td><td>Cách bố trí, sơ đồ (đường sá)</td></tr>
+                </table>
+            </div>
+
+        </div> <div class="right-panel">
+            
+            <div id="quiz-container">
+                </div>
+
+            <div class="submit-container">
+                <button class="btn-submit" onclick="submitQuiz()">🎉 NỘP BÀI 🎉</button>
+            </div>
+
+        </div> </div>
+
+    <div class="modal-overlay" id="result-modal">
+        <div class="result-modal" id="result-content">
+            <div class="score-circle" id="score-display">0/10</div>
+            <div class="feedback-text" id="feedback-text">Tuyệt vời!</div>
+            <div class="feedback-subtext" id="feedback-subtext">Bạn là một chuyên gia giao thông thực thụ!</div>
+            <button class="btn-timer" onclick="closeModal()">Xem Lại Bài Làm</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. DỮ LIỆU CÂU HỎI VÀ GIẢI THÍCH CHI TIẾT
+        // ==========================================
+        const quizData = [
+            {
+                id: 31,
+                text: "Question 31. What is the main idea of the passage?",
+                options: [
+                    "A. Parking rules in England",
+                    "B. Key traffic rules to follow in England.",
+                    "C. The importance of using turn signals",
+                    "D. Rules for overtaking on English roads"
+                ],
+                correct: 1, // Index 1 is B
+                explanation: `
+                    <strong>Dịch câu hỏi:</strong> Ý chính của đoạn văn là gì?<br>
+                    <strong>Phân tích đáp án:</strong><br>
+                    - A. Quy tắc đỗ xe ở Anh (Chỉ nằm ở 1 đoạn nhỏ "Do not park" -> Ý quá hẹp).<br>
+                    - <strong>B. Những luật giao thông chính cần tuân thủ ở Anh (Chính xác).</strong> Ngay từ tiêu đề và câu mở đầu: "Key Points to Remember on Traffic Rules in England" đã bao trùm toàn bộ bài đọc.<br>
+                    - C. Tầm quan trọng của việc dùng đèn xi-nhan (Chỉ nằm ở đoạn "Use indicators" -> Ý quá hẹp).<br>
+                    - D. Luật vượt xe trên đường ở Anh (Chỉ là một chi tiết nhỏ).<br>
+                    <div class="exp-quote"><strong>Dẫn chứng:</strong> Tiêu đề bài đọc: "Key Points to Remember on Traffic Rules in England".</div>
+                `
+            },
+            {
+                id: 32,
+                text: "Question 32. Which word in passage has the same meaning as “changing direction”",
+                options: [
+                    "A. Overtaking",
+                    "B. Turning",
+                    "C. Parking",
+                    "D. Crossing"
+                ],
+                correct: 1,
+                explanation: `
+                    <strong>Dịch câu hỏi:</strong> Từ nào trong đoạn văn có cùng nghĩa với "thay đổi hướng đi" (changing direction)?<br>
+                    <strong>Phân tích từ vựng:</strong><br>
+                    - A. Overtaking (v): vượt xe khác (đi nhanh hơn và qua mặt).<br>
+                    - <strong>B. Turning (v): rẽ, quay hướng. Bằng nghĩa với "changing direction".</strong><br>
+                    - C. Parking (v): đỗ xe.<br>
+                    - D. Crossing (v): băng qua (đường).<br>
+                    <div class="exp-quote">Vì vậy chọn B là đáp án chính xác nhất về mặt ngữ nghĩa.</div>
+                `
+            },
+            {
+                id: 33,
+                text: "Question 33. Which word in the passage is the OPPOSITE of “stop”",
+                options: [
+                    "A. Reverse",
+                    "B. Turn",
+                    "C. Go",
+                    "D. Park"
+                ],
+                correct: 2,
+                explanation: `
+                    <strong>Dịch câu hỏi:</strong> Từ nào trong đoạn văn TRÁI NGHĨA với "stop" (dừng lại)?<br>
+                    <strong>Phân tích từ vựng:</strong><br>
+                    - A. Reverse (v): lùi lại.<br>
+                    - B. Turn (v): rẽ.<br>
+                    - <strong>C. Go (v): đi, di chuyển. Trái nghĩa hoàn toàn với "stop" (dừng).</strong><br>
+                    - D. Park (v): đỗ xe (cũng mang tính chất dừng lại).<br>
+                    <div class="exp-quote">Rất dễ dàng nhận ra "Go" (đi) là trái nghĩa của "Stop" (dừng). Chọn C.</div>
+                `
+            },
+            {
+                id: 34,
+                text: "Question 34. Which of the following is NOT TRUE according to the passage?",
+                options: [
+                    "A. You must park your vehicle in a proper parking area",
+                    "B. You should use indicators when changing lanes or overtaking.",
+                    "C. It is allowed to reverse on a one-way road if necessary.",
+                    "D. You must not cross the stop line at a red signal."
+                ],
+                correct: 2,
+                explanation: `
+                    <strong>Dịch câu hỏi:</strong> Điều nào sau đây KHÔNG ĐÚNG theo đoạn văn?<br>
+                    <strong>Phân tích:</strong><br>
+                    - A. Phải đỗ xe ở khu vực đỗ xe hợp lý. (Đúng theo bài: "Find the parking near your building...")<br>
+                    - B. Nên dùng đèn xi nhan khi chuyển làn/vượt. (Đúng theo bài: "...always use turn signals or indicators...")<br>
+                    - <strong>C. Được phép lùi xe trên đường 1 chiều nếu cần thiết. (SAI thông tin).</strong> Bài đọc ghi rõ tuyệt đối KHÔNG được lùi.<br>
+                    - D. Không được vượt vạch dừng khi đèn đỏ. (Đúng theo bài: "...not keeping your car on the stop line...")<br>
+                    <div class="exp-quote"><strong>Dẫn chứng đoạn "Do not drive":</strong> "When you are going on a one-way road, you <strong>cannot reverse</strong> your vehicle."</div>
+                `
+            },
+            {
+                id: 35,
+                text: "Question 35. According to the passage, what should you do when driving on a two-way road?",
+                options: [
+                    "A. Keep to the right side of the road.",
+                    "B. Allow traffic from the opposite direction to pass on your right.",
+                    "C. Drive in the middle of the road to avoid accidents.",
+                    "D. Park your car on the side of the road if needed."
+                ],
+                correct: 1,
+                explanation: `
+                    <strong>Dịch câu hỏi:</strong> Theo đoạn văn, bạn nên làm gì khi lái xe trên đường hai chiều?<br>
+                    <strong>Phân tích:</strong><br>
+                    - A. Đi bên phải đường (Sai, ở Anh luật chung là đi bên trái "keeping left").<br>
+                    - <strong>B. Cho phép phương tiện ngược chiều đi qua ở phía bên phải của bạn. (Chính xác).</strong><br>
+                    - C. Lái xe ở giữa đường... (Sai, rất nguy hiểm và không có trong bài).<br>
+                    - D. Đỗ xe bên vệ đường... (Sai, bài đọc cấm "leave your car on the side of the road").<br>
+                    <div class="exp-quote"><strong>Dẫn chứng đoạn "keeping left":</strong> "...you need to <strong>allow the traffic from the opposite direction to pass from your right side</strong>."</div>
+                `
+            },
+            {
+                id: 36,
+                text: "Question 36. Why is it important to avoid parking near a school, hospital, or bus stand?",
+                options: [
+                    "A. Because there are no parking spots available.",
+                    "B. To ensure that important areas remain accessible.",
+                    "C. It is a rule only in England.",
+                    "D. Parking in those areas is not safe for the car."
+                ],
+                correct: 1,
+                explanation: `
+                    <strong>Dịch câu hỏi:</strong> Tại sao việc tránh đỗ xe gần trường học, bệnh viện hoặc trạm xe buýt lại quan trọng?<br>
+                    <strong>Phân tích:</strong> Đây là một câu hỏi suy luận (Inference).<br>
+                    - A. Vì không có chỗ trống (Sai logic).<br>
+                    - <strong>B. Để đảm bảo những khu vực quan trọng này vẫn luôn có thể tiếp cận được (không bị tắc nghẽn). (Đúng).</strong> Xe buýt cần đón khách, bệnh viện cần chỗ cho xe cứu thương, trường học cần an toàn cho học sinh.<br>
+                    - C. Đây chỉ là luật ở Anh (Sai, đây là luật phổ biến).<br>
+                    - D. Đỗ ở đó không an toàn cho xe ô tô (Không phải lý do chính yếu).<br>
+                    <div class="exp-quote">Dù bài đọc không viết trực tiếp chữ "accessible", nhưng ngữ cảnh "make sure you are not parking near the bus stand, school, or hospital entrance" yêu cầu người lái xe không cản trở lối ra vào (entrance) của các cơ sở trọng yếu này.</div>
+                `
+            },
+            {
+                id: 37,
+                text: "Question 37. Choose the sentence that best fits the blank (37).<br><em>Traffic congestion is when vehicles travel slower... This makes trip times longer and increases queueing. (37) _____.</em>",
+                options: [
+                    "A. Which travel independently of car traffic and are not affected by traffic jams.",
+                    "B. This is also known as a traffic jam.",
+                    "C. Bad road layouts can also restrict capacity.",
+                    "D. Several methods are used to relieve it."
+                ],
+                correct: 1,
+                explanation: `
+                    <strong>Phân tích chỗ trống (37):</strong><br>
+                    Đoạn trước đó đang định nghĩa "Traffic congestion" (Tắc nghẽn giao thông) là gì và hậu quả của nó (đi chậm, xếp hàng). Chỗ trống này cần một câu tiếp tục bổ sung ý nghĩa định danh cho hiện tượng này.<br>
+                    - <strong>Chọn B: "Điều này còn được biết đến với tên gọi là kẹt xe (traffic jam)."</strong> Rất phù hợp về mặt logic định nghĩa.<br>
+                    - Loại A (đại từ quan hệ Which không có danh từ phù hợp phía trước).<br>
+                    - Loại C (Nói về bố cục đường sá, chưa hợp rơ với đoạn định nghĩa).<br>
+                    - Loại D (Nói về giải pháp, trong khi đoạn này đang nói về nguyên nhân/định nghĩa).
+                `
+            },
+            {
+                id: 38,
+                text: "Question 38. Choose the sentence that best fits the blank (38).<br><em>Congestion may result from a decrease in capacity, for example accidents... (38) _______.</em>",
+                options: [
+                    "A. Which travel independently of car traffic and are not affected by traffic jams.",
+                    "B. This is also known as a traffic jam.",
+                    "C. Bad road layouts can also restrict capacity.",
+                    "D. Several methods are used to relieve it."
+                ],
+                correct: 2,
+                explanation: `
+                    <strong>Phân tích chỗ trống (38):</strong><br>
+                    Câu trước đó: "Congestion may result from a decrease in capacity..." (Tắc nghẽn có thể do việc giảm sức chứa của đường, ví dụ như tai nạn).<br>
+                    Do đó, câu tiếp theo phải bổ sung thêm một lý do khác gây ra việc "giảm sức chứa" (capacity).<br>
+                    - <strong>Chọn C: "Bad road layouts can also restrict capacity." (Bố cục đường sá tồi tệ cũng có thể hạn chế sức chứa).</strong> Từ khóa "capacity" lặp lại, tạo sự liên kết mạch lạc (Cohesion) tuyệt vời.<br>
+                `
+            },
+            {
+                id: 39,
+                text: "Question 39. Choose the sentence that best fits the blank (39).<br><em>Where congestion is common, (39) _____. Cars may be banned in certain districts...</em>",
+                options: [
+                    "A. Which travel independently of car traffic and are not affected by traffic jams.",
+                    "B. This is also known as a traffic jam.",
+                    "C. Bad road layouts can also restrict capacity.",
+                    "D. Several methods are used to relieve it."
+                ],
+                correct: 3,
+                explanation: `
+                    <strong>Phân tích chỗ trống (39):</strong><br>
+                    Câu phía sau liền kề đưa ra các ví dụ: "Cars may be banned... pay a fee... use public transport" (Cấm ô tô, trả phí, dùng phương tiện công cộng). Đây chính là các <strong>phương pháp/giải pháp</strong>.<br>
+                    Vì vậy, câu điền vào (39) phải là một câu giới thiệu (topic sentence) cho các phương pháp này.<br>
+                    - <strong>Chọn D: "Several methods are used to relieve it." (Nhiều phương pháp được sử dụng để giảm bớt nó).</strong> "it" ở đây thay thế cho "congestion" (tắc nghẽn). Hoàn toàn hợp lý!<br>
+                `
+            },
+            {
+                id: 40,
+                text: "Question 40. Choose the sentence that best fits the blank (40).<br><em>...or people may use public transport, (40) _____.</em>",
+                options: [
+                    "A. Which travel independently of car traffic and are not affected by traffic jams.",
+                    "B. This is also known as a traffic jam.",
+                    "C. Bad road layouts can also restrict capacity.",
+                    "D. Several methods are used to relieve it."
+                ],
+                correct: 0,
+                explanation: `
+                    <strong>Phân tích chỗ trống (40):</strong><br>
+                    Chỗ trống đứng sau dấu phẩy và cụm từ "public transport" (phương tiện giao thông công cộng). Ta cần một mệnh đề quan hệ để bổ nghĩa cho danh từ này.<br>
+                    - <strong>Chọn A: "Which travel independently of car traffic and are not affected by traffic jams." (Những phương tiện này di chuyển độc lập và không bị ảnh hưởng bởi kẹt xe).</strong> Đại từ "Which" thay thế hoàn hảo cho "public transport". (Ví dụ: tàu điện ngầm, tàu trên cao).<br>
+                `
+            }
+        ];
+
+        // ==========================================
+        // 2. LOGIC RENDER CÂU HỎI VÀ TƯƠNG TÁC
+        // ==========================================
+        const quizContainer = document.getElementById('quiz-container');
+        let userAnswers = new Array(quizData.length).fill(null);
+        let audioCtx;
+
+        // Khởi tạo Audio Context khi người dùng tương tác lần đầu
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playDing() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playBuzzer() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        function renderQuiz() {
+            let html = '';
+            quizData.forEach((q, qIndex) => {
+                html += `
+                <div class="question-card" id="q-card-${qIndex}">
+                    <div class="question-text">${q.text}</div>
+                    <div class="options-grid">
+                `;
+                
+                const labels = ['A', 'B', 'C', 'D'];
+                q.options.forEach((opt, optIndex) => {
+                    // Extract letter and content
+                    const optText = opt.substring(3);
+                    html += `
+                        <button class="option-btn" id="btn-${qIndex}-${optIndex}" onclick="selectAnswer(${qIndex}, ${optIndex})">
+                            <span>${labels[optIndex]}</span> ${optText}
+                        </button>
+                    `;
+                });
+
+                html += `
+                    </div>
+                    <div class="explanation-box" id="exp-${qIndex}">
+                        <div class="exp-title">💡 GIẢI THÍCH CHI TIẾT CỦA CÔ MAI AN</div>
+                        <div class="exp-content">${q.explanation}</div>
+                    </div>
+                </div>
+                `;
+            });
+            quizContainer.innerHTML = html;
+        }
+
+        function selectAnswer(qIndex, optIndex) {
+            initAudio();
+            if (userAnswers[qIndex] !== null) return; // Đã trả lời thì khóa
+
+            userAnswers[qIndex] = optIndex;
+            const correctIndex = quizData[qIndex].correct;
+            
+            // Lấy tất cả các nút của câu này
+            const buttons = document.querySelectorAll(`#q-card-${qIndex} .option-btn`);
+            
+            // Disable tất cả các nút
+            buttons.forEach(btn => btn.disabled = true);
+
+            // Kiểm tra Đúng/Sai
+            if (optIndex === correctIndex) {
+                // ĐÚNG
+                document.getElementById(`btn-${qIndex}-${optIndex}`).classList.add('correct');
+                playDing();
+                fireConfettiSmall();
+            } else {
+                // SAI
+                document.getElementById(`btn-${qIndex}-${optIndex}`).classList.add('incorrect');
+                // Hiện luôn đáp án đúng
+                document.getElementById(`btn-${qIndex}-${correctIndex}`).classList.add('correct');
+                playBuzzer();
+            }
+
+            // Hiện giải thích chi tiết
+            document.getElementById(`exp-${qIndex}`).style.display = 'block';
+        }
+
+        // ==========================================
+        // 3. LOGIC TIMER (ĐẾM NGƯỢC)
+        // ==========================================
+        let timeLeft = 600; // 10 phút = 600 giây
+        let timerInterval;
+        let isTimerRunning = false;
+        const timerDisplay = document.getElementById('timer');
+        const btnTimer = document.getElementById('btn-timer-control');
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            timerDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 5000);
+        }
+
+        function toggleTimer() {
+            initAudio(); // Initialize audio on first click
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                btnTimer.textContent = 'TIẾP TỤC LÀM BÀI';
+                btnTimer.style.background = '#e67e22'; // Orange
+                isTimerRunning = false;
+            } else {
+                btnTimer.textContent = '⏸ TẠM DỪNG';
+                btnTimer.style.background = '#e74c3c'; // Red
+                isTimerRunning = true;
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        btnTimer.textContent = 'HẾT GIỜ';
+                        btnTimer.disabled = true;
+                        btnTimer.style.background = '#95a5a6';
+                        showToast("⏰ Đã hết giờ làm bài. Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                        playBuzzer();
+                    }
+                }, 1000);
+            }
+        }
+
+        function toggleTranslation(id) {
+            const el = document.getElementById(id);
+            if (el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        // ==========================================
+        // 4. HIỆU ỨNG PHÁO GIẤY (CONFETTI)
+        // ==========================================
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+
+        function random(min, max) { return Math.random() * (max - min) + min; }
+
+        function createParticles(x, y, amount) {
+            const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6'];
+            for (let i = 0; i < amount; i++) {
+                particles.push({
+                    x: x || canvas.width / 2,
+                    y: y || canvas.height / 2,
+                    r: random(5, 15),
+                    dx: random(-10, 10),
+                    dy: random(-15, 5),
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.floor(Math.random() * 10) - 10,
+                    tiltAngle: 0,
+                    tiltAngleInc: (Math.random() * 0.07) + 0.05
+                });
+            }
+        }
+
+        function animateConfetti() {
+            requestAnimationFrame(animateConfetti);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((p, index) => {
+                p.tiltAngle += p.tiltAngleInc;
+                p.y += (Math.cos(p.tiltAngle) + 3 + p.r / 2) / 2;
+                p.x += Math.sin(p.tiltAngle) * 2;
+                
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.r, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r);
+                ctx.stroke();
+
+                if (p.y > canvas.height) particles.splice(index, 1);
+            });
+        }
+        animateConfetti();
+
+        function fireConfettiSmall() { createParticles(window.innerWidth / 1.5, window.innerHeight / 2, 30); }
+        function fireConfettiBig() { createParticles(window.innerWidth / 2, 100, 150); }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // ==========================================
+        // 5. NỘP BÀI VÀ CHẤM ĐIỂM
+        // ==========================================
+        function submitQuiz() {
+            clearInterval(timerInterval);
+            let score = 0;
+            let unAnswered = 0;
+
+            userAnswers.forEach((ans, index) => {
+                if (ans === null) unAnswered++;
+                else if (ans === quizData[index].correct) score++;
+            });
+
+            if (unAnswered > 0) {
+                const confirmSubmit = confirm(`Bạn còn ${unAnswered} câu chưa làm. Bạn có chắc chắn muốn nộp bài không?`);
+                if (!confirmSubmit) {
+                    // Nếu người dùng chọn Cancel, khôi phục lại đồng hồ nếu trước đó đang chạy
+                    if(timeLeft > 0 && btnTimer.textContent === '⏸ TẠM DỪNG') toggleTimer(); 
+                    return; 
+                }
+            }
+
+            // Tính toán feedback
+            const percent = score / quizData.length;
+            let title = "", subtext = "";
+            if (percent === 1) {
+                title = "🏆 THIÊN TÀI!"; subtext = "Bạn đạt điểm TUYỆT ĐỐI! Thật đáng kinh ngạc!";
+                fireConfettiBig(); playDing(); setTimeout(playDing, 200);
+            } else if (percent >= 0.8) {
+                title = "🌟 XUẤT SẮC!"; subtext = "Bạn đã làm rất tốt! Chỉ một chút xíu nữa là hoàn hảo.";
+                fireConfettiBig(); playDing();
+            } else if (percent >= 0.5) {
+                title = "👍 KHÁ LẮM!"; subtext = "Nền tảng của bạn rất ổn. Cùng xem lại các câu sai ở phần giải thích nhé!";
+            } else {
+                title = "💪 CỐ LÊN NHÉ!"; subtext = "Đừng nản chí! Hãy đọc kỹ lại phần dịch nghĩa và giải thích của cô An để rút kinh nghiệm nha.";
+            }
+
+            document.getElementById('score-display').textContent = `${score}/${quizData.length}`;
+            document.getElementById('feedback-text').textContent = title;
+            document.getElementById('feedback-subtext').textContent = subtext;
+            
+            document.getElementById('result-modal').style.display = 'flex';
+            setTimeout(() => document.getElementById('result-content').classList.add('show'), 10);
+        }
+
+        function closeModal() {
+            document.getElementById('result-content').classList.remove('show');
+            setTimeout(() => document.getElementById('result-modal').style.display = 'none', 300);
+        }
+
+        // Init
+        renderQuiz();
+
+    </script>
+</body>
+</html>
