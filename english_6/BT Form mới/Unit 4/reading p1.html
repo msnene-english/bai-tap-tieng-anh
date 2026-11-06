@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 Pixel Quest Reading — Unit 4: Neighbourhood | English 6 | Ms. Chí Nên</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+ --ink:#23324A;--dim:#5D6B85;
+ --sky:#2FA3EE;--sky-d:#1366A8;
+ --coral:#FF7A1A;--coral-d:#C2520E;
+ --pink:#FF4D8D;--pink-d:#C42A68;
+ --sun:#FFC531;--sun-d:#9A6A00;
+ --mint:#2FBF4A;--mint-d:#167A2B;
+ --lilac:#8F6BFF;--lilac-d:#5B3BD0;
+ --card:#FFFFFF;--edge:#CFE3F5;
+ --good:#1B9C5A;--good-bg:#DDF7E6;
+ --bad:#E0503C;--bad-bg:#FFE6E0;
+ --pix:'Press Start 2P',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;color:var(--ink);min-height:100vh;overflow-x:hidden;
+ background:linear-gradient(180deg,#45BEFF 0%,#78D3FF 34%,#AEE8FF 68%,#DDF6FF 100%);background-attachment:fixed}
+/* ── pixel sprites (box-shadow art) ── */
+.spr{position:relative}
+.spr>i{position:absolute;display:block}
+#sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.pcl{position:absolute;left:0;animation:pcl linear infinite}
+@keyframes pcl{0%{transform:translateX(-160px)}100%{transform:translateX(110vw)}}
+.coin{position:absolute;animation:bob 2.2s ease-in-out infinite}
+.coin .spr{animation:coinSpin 1.2s linear infinite}
+@keyframes coinSpin{0%,100%{transform:scaleX(1)}25%{transform:scaleX(.4)}50%{transform:scaleX(.08)}75%{transform:scaleX(.4)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.blk{position:absolute;display:flex}
+.qb,.brk{width:44px;height:44px;position:relative;flex:none}
+.qb{background:#FFB627;border:4px solid #7A3E00;box-shadow:inset -4px -4px 0 #D9822B,inset 4px 4px 0 #FFE08A;
+ font-family:var(--pix);color:#fff;font-size:18px;display:grid;place-items:center;text-shadow:2px 2px 0 #7A3E00;animation:qbump 3.4s infinite}
+.qb::before{content:'';position:absolute;inset:3px;background:radial-gradient(circle,#7A3E00 1.6px,transparent 2px) 0 0/30px 30px}
+@keyframes qbump{0%,84%,100%{transform:translateY(0)}88%{transform:translateY(-12px)}92%{transform:translateY(0)}}
+.qb .pop{position:absolute;left:8px;top:-6px;opacity:0;animation:qpop 3.4s infinite}
+@keyframes qpop{0%,85%{opacity:0;transform:translateY(0)}88%{opacity:1;transform:translateY(-34px)}96%{opacity:1;transform:translateY(-58px)}100%{opacity:0;transform:translateY(-64px)}}
+.brk{border:3px solid #6E2A08;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='%23D9732F'/%3E%3Cpath d='M0 0h32v2H0zM0 16h32v2H0zM0 0h2v16H0zM16 16h2v16h-2z' fill='%238E3E14'/%3E%3Cpath d='M2 2h14v2H2zM18 18h14v2H18zM2 18h14v2H2z' fill='%23F3A56C'/%3E%3C/svg%3E") 0 0/19px 19px}
+.ctrl{position:absolute;animation:ctrlSw 3s ease-in-out infinite alternate}
+@keyframes ctrlSw{from{transform:rotate(-8deg) translateY(0)}to{transform:rotate(8deg) translateY(-10px)}}
+.up{position:absolute;bottom:-40px;animation:up linear infinite}
+@keyframes up{0%{transform:translateY(0);opacity:0}10%{opacity:1}80%{opacity:.9}100%{transform:translateY(-92vh);opacity:0}}
+/* ── ground: grass + bricks, pipes, bins, hero, mobs ── */
+#ground{position:fixed;left:0;right:0;bottom:0;height:170px;z-index:1;pointer-events:none;overflow:hidden}
+#ground .dirt{position:absolute;left:0;right:0;bottom:0;height:56px;
+ background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Crect width='32' height='32' fill='%23D9732F'/%3E%3Cpath d='M0 0h32v2H0zM0 16h32v2H0zM0 0h2v16H0zM16 16h2v16h-2z' fill='%238E3E14'/%3E%3Cpath d='M2 2h14v2H2zM18 18h14v2H18zM2 18h14v2H2z' fill='%23F3A56C'/%3E%3C/svg%3E") 0 0/28px 28px}
+#ground .grass{position:absolute;left:0;right:0;bottom:56px;height:12px;background:repeating-linear-gradient(90deg,#4CD14C 0 12px,#3DBA3D 12px 24px);border-top:4px solid #1E7F2B}
+#ground .grass::before{content:'';position:absolute;left:0;right:0;top:-12px;height:8px;
+ background:linear-gradient(90deg,transparent 0 4px,#4CD14C 4px 8px,transparent 8px 20px,#3DBA3D 20px 24px,transparent 24px) 0 0/40px 8px repeat-x}
+.pipe{position:absolute;bottom:68px;width:54px}
+.pipe .lip{position:relative;height:24px;margin:0 -7px;border:4px solid #0F4D18;
+ background:linear-gradient(90deg,#1E8A2E 0 10%,#7CF08A 10% 26%,#33C24B 26% 78%,#1E8A2E 78%)}
+.pipe .tube{border:4px solid #0F4D18;border-top:none;background:linear-gradient(90deg,#1E8A2E 0 10%,#7CF08A 10% 24%,#33C24B 24% 76%,#1E8A2E 76%)}
+.pipe .pc2{position:absolute;left:14px;top:-10px;opacity:0;animation:pipeCoin 4.6s infinite}
+@keyframes pipeCoin{0%,70%{opacity:0;transform:translateY(20px)}76%{opacity:1;transform:translateY(-40px)}86%{opacity:1;transform:translateY(-70px)}94%{opacity:0;transform:translateY(-20px)}100%{opacity:0}}
+.bin{position:absolute;bottom:68px;width:32px;height:40px;border:3px solid #1A2440;border-radius:2px 2px 6px 6px;
+ display:grid;place-items:center;color:#fff;font-size:18px;font-weight:900;line-height:1;box-shadow:inset -5px 0 0 rgba(0,0,0,.18),inset 5px 0 0 rgba(255,255,255,.25)}
+.bin::before{content:'';position:absolute;top:-11px;left:-7px;right:-7px;height:7px;background:inherit;border:3px solid #1A2440;border-radius:2px}
+.bin::after{content:'';position:absolute;top:-17px;left:9px;width:8px;height:5px;border:3px solid #1A2440;border-bottom:none}
+.hero{position:absolute;left:0;bottom:68px;animation:runR linear infinite}
+.hero .jp{animation:jump 3.2s ease-in-out infinite}
+.hero .fa,.hero .fb{animation:frA .36s steps(1) infinite}
+.hero .fb{position:absolute;left:0;top:0;animation-name:frB}
+@keyframes frA{0%{opacity:1}50%{opacity:0}}
+@keyframes frB{0%{opacity:0}50%{opacity:1}}
+@keyframes jump{0%,52%,100%{transform:translateY(0)}64%{transform:translateY(-74px)}72%{transform:translateY(-78px)}84%{transform:translateY(0)}}
+@keyframes runR{0%{transform:translateX(-8vw)}100%{transform:translateX(108vw)}}
+.mob{position:absolute;left:0;bottom:68px;animation:walkL linear infinite}
+.mob .sq{transform-origin:50% 100%;animation:squish .6s ease-in-out infinite}
+@keyframes squish{0%,100%{transform:scale(1,1)}50%{transform:scale(1.12,.86)}}
+.mob .wb{animation:wob .5s ease-in-out infinite alternate}
+@keyframes wob{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
+@keyframes walkL{0%{transform:translateX(106vw)}100%{transform:translateX(-10vw)}}
+@media(max-width:820px){#ground{height:130px}.blk,.ctrl,.up{display:none}.bin{transform:scale(.8);transform-origin:50% 100%}}
+/* ── sticky note ── */
+.note{position:sticky;top:0;z-index:50;padding:8px 16px;text-align:center;
+ background:linear-gradient(90deg,#FF4D6D,#FF9F1C 50%,#2FA3EE);box-shadow:0 4px 0 #1A2440}
+.note .in{display:flex;align-items:center;gap:10px;max-width:1400px;margin:0 auto;justify-content:center}
+.note .tg{flex:none;background:#FFF6C9;color:#7A3E00;font-weight:900;font-size:.8rem;padding:3px 13px;border:3px solid #7A3E00;border-radius:4px;white-space:nowrap;box-shadow:2px 2px 0 #7A3E00}
+.note .tx{color:#fff;font-weight:800;font-size:1rem;line-height:1.5;text-shadow:0 1px 4px rgba(0,0,0,.35);transition:opacity .25s}
+/* ── header ── */
+header{position:relative;z-index:10;max-width:1380px;margin:16px auto 10px;background:var(--card);
+ border:4px solid #1A2440;border-radius:14px;box-shadow:6px 6px 0 #FFB627;
+ padding:16px 26px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+header::before{content:'🎮';position:absolute;top:-20px;left:-12px;font-size:1.9rem;transform:rotate(-14deg)}
+header::after{content:'🏆';position:absolute;bottom:-16px;right:120px;font-size:1.6rem}
+header h1{font-family:'Baloo 2',cursive;font-size:clamp(1.15rem,2.6vw,1.6rem);font-weight:800;color:var(--sky-d);line-height:1.3}
+header h1 .p1{font-family:var(--pix);font-size:.62rem;vertical-align:middle;background:#FF4D6D;color:#fff;padding:5px 8px;margin-left:8px;border:3px solid #1A2440;box-shadow:2px 2px 0 #1A2440}
+header .sub{font-size:.9rem;color:var(--dim);margin-top:4px;font-weight:700}
+header .by{display:inline-block;margin-top:6px;background:linear-gradient(135deg,#FFE27A,#9BE8A8);color:#24452A;
+ font-weight:900;font-size:.84rem;padding:5px 14px;border-radius:999px}
+.hright{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.gauge{position:relative;background:radial-gradient(circle at 35% 30%,#FFF7C2,#FFD23F 70%,#F0A800);border:4px solid #7A3E00;border-radius:50%;width:86px;height:86px;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:4px 4px 0 #1A2440;flex:none}
+.gauge::before{content:'🪙';position:absolute;top:-13px;right:-6px;font-size:17px}
+.gauge .num{font-family:'Baloo 2',cursive;font-size:1.25rem;color:#5A2E00;font-weight:800;line-height:1}
+.gauge .lbl{font-size:.6rem;font-weight:900;color:#7A3E00;letter-spacing:.05em;text-transform:uppercase}
+/* ── layout ── */
+.main{position:relative;z-index:5;max-width:1380px;margin:0 auto;display:flex;gap:20px;padding:6px 16px 42px;align-items:flex-start}
+.lp,.rp{max-height:calc(100vh - 150px);overflow-y:auto}
+.lp{flex:0 0 47%}
+.rp{flex:1;min-width:0}
+.lp::-webkit-scrollbar,.rp::-webkit-scrollbar{width:9px}
+.lp::-webkit-scrollbar-thumb,.rp::-webkit-scrollbar-thumb{background:#FFB627;border-radius:2px;border:2px solid #7A3E00}
+.slbl{font-family:'Baloo 2',cursive;font-size:1.15rem;font-weight:800;color:var(--sky-d);margin-bottom:12px;display:flex;align-items:center;gap:10px;
+ background:rgba(255,255,255,.85);border-radius:8px;padding:2px 12px;border:3px solid #1A2440}
+.slbl::after{content:'';flex:1;height:8px;background:repeating-linear-gradient(90deg,#FFD23F 0 8px,transparent 8px 16px)}
+@media(max-width:940px){.main{flex-direction:column}.lp{flex:1 1 auto;width:100%}.lp,.rp{max-height:none}}
+/* ── passage cards ── */
+.pc{position:relative;background:var(--card);border:4px solid var(--edge);border-radius:14px;padding:28px 20px 16px;margin:22px 0 24px;box-shadow:6px 6px 0 rgba(26,36,64,.22)}
+.pc .stamp{position:absolute;top:-22px;right:18px;width:54px;height:54px;border-radius:10px;background:radial-gradient(circle at 35% 30%,#fff,#FFF3D1);
+ border:4px solid currentColor;display:grid;place-items:center;font-size:25px;box-shadow:3px 3px 0 #1A2440}
+.lvl{position:absolute;top:-15px;left:18px;font-family:var(--pix);font-size:.62rem;background:#FFD23F;color:#5A2E00;border:3px solid #5A2E00;padding:6px 9px;box-shadow:3px 3px 0 #5A2E00}
+.ptitle{font-family:'Baloo 2',cursive;font-size:1.25rem;font-weight:800;margin-bottom:4px}
+.pins{font-size:.92rem;color:var(--dim);font-style:italic;font-weight:700;margin-bottom:12px;line-height:1.6}
+.pblk{border-left:7px solid;border-radius:10px;padding:12px 14px 4px;margin:16px 0;position:relative}
+.pblk .em{position:absolute;top:-13px;right:10px;font-size:1.2rem;background:#fff;border:3px solid #1A2440;border-radius:8px;width:34px;height:34px;display:grid;place-items:center;box-shadow:2px 2px 0 #1A2440}
+.paragraph{font-size:1.22rem;line-height:1.95;margin-bottom:10px;text-align:justify}
+.paragraph b{padding:1px 6px;border-radius:7px;white-space:nowrap}
+.btr{font-family:'Baloo 2',cursive;font-size:.85rem;background:linear-gradient(135deg,#FFE27A,#9BE8A8);border:3px solid #1E7F2B;color:#1E4A24;
+ padding:5px 16px;border-radius:10px;cursor:pointer;transition:.15s;font-weight:800;display:block;margin:6px 0 12px;box-shadow:3px 3px 0 #1E7F2B}
+.btr:hover{transform:translate(1px,1px);box-shadow:2px 2px 0 #1E7F2B}
+.translation{display:none;margin-bottom:12px;font-size:1rem;line-height:1.8;color:#2E3F5A;background:#FFFDF3;border-left:4px solid var(--sun);border-radius:0 12px 12px 0;padding:10px 14px;font-style:italic}
+.gl{margin-top:12px;background:var(--card);border:3px solid var(--edge);border-radius:12px;overflow:hidden}
+.gl h3{font-family:'Baloo 2',cursive;font-size:1rem;font-weight:800;color:#fff;margin:0;padding:8px 14px}
+table.gtb{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.93rem}
+.gtb tr{border-top:1px dotted var(--edge)}
+.gtb tr:nth-child(even){background:#F4F9FF}
+.gtb td,.gtb th{padding:7px 12px;text-align:left;vertical-align:top}
+.gtb th{font-weight:800;font-size:.82rem;color:var(--dim)}
+.gtb .gw{font-weight:900;color:var(--sky-d)}
+.gtb .gp{color:var(--lilac-d);font-weight:700;font-size:.86rem}
+/* ── quiz cards ── */
+.sec{background:rgba(255,255,255,.96);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:6px 6px 0 rgba(26,36,64,.22);border:4px solid var(--edge)}
+.sech{font-family:'Baloo 2',cursive;font-size:1.12rem;font-weight:800;margin-bottom:2px}
+.secs{font-size:.88rem;color:var(--dim);font-style:italic;font-weight:700;margin-bottom:12px;line-height:1.55}
+.q{background:#FCFDFF;border:2px solid #DCE9F5;border-left:7px solid var(--sky);border-radius:12px;padding:14px;margin-bottom:14px}
+.q .qt{font-weight:800;font-size:1.14rem;line-height:1.75}
+.q .qt b{padding:1px 6px;border-radius:7px;white-space:nowrap;background:#FFF1B8;color:#8A5A00}
+.qn{display:inline-block;background:var(--qc,var(--sky));color:#fff;min-width:34px;text-align:center;border:2px solid #1A2440;border-radius:4px;padding:5px 7px;margin-right:9px;
+ font-family:var(--pix);font-size:.66rem;line-height:1;vertical-align:2px;box-shadow:2px 2px 0 #1A2440}
+.og{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px}
+.ob{background:#fff;color:var(--ink);border:2px solid #D5E5F3;border-radius:10px;padding:11px 13px;
+ font-family:'Nunito';font-weight:800;font-size:1.05rem;cursor:pointer;text-align:left;line-height:1.5;transition:.14s;box-shadow:0 3px 0 #D5E5F3}
+.ob:hover:not(.dn){transform:translateY(-2px);border-color:var(--qc,var(--sky))}
+.ob.dn{cursor:default}
+.ob.ok{background:var(--good-bg);border-color:var(--good);color:#0b6b3c;box-shadow:0 3px 0 #9fe3bd}
+.ob.no{background:var(--bad-bg);border-color:var(--bad);color:#a31832;box-shadow:0 3px 0 #f7bac5}
+.ex{display:none;margin-top:12px;background:#fff;border:2px solid #E1ECF6;border-radius:12px;padding:14px;font-size:.98rem;line-height:1.85}
+.ex.on{display:block;animation:pop .3s}
+@keyframes pop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.shk{animation:shk .42s}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+/* ── explanation content ── */
+.vnt{margin-bottom:10px;padding:9px 13px;border-radius:12px;background:#FFF5D6;border-left:5px solid var(--sun);font-weight:700;line-height:1.7}
+.ex ol{margin:0;padding-left:22px}
+.ex ol>li{margin:10px 0;line-height:1.75;padding-left:4px}
+.ex ol>li::marker{font-weight:900;color:var(--pink-d)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}}
+.grid2>div{border:2px solid #D6E4F0;border-radius:12px;padding:8px 11px;background:#FBFDFF;line-height:1.7;font-size:.97rem}
+.grid2>div.gk{border-color:var(--good);background:var(--good-bg);box-shadow:0 0 0 3px rgba(27,156,90,.14)}
+.p-word{color:#1E6FD9;font-weight:800}
+.hl-green{color:#11924E;font-weight:900}
+.hl-red{color:#D8334A;font-weight:900}
+.wt{display:inline-block;margin:0 3px;padding:0 7px;border-radius:6px;font-size:.78em;font-weight:700;background:rgba(110,100,160,.14);color:#5B5480}
+.p-phonetic{padding:0 6px;border-radius:6px;background:#F1E8FF;color:#7A3FC8;font-weight:700}
+.p-mean{color:#B5532E;font-weight:700}
+.p-grammar{display:inline;line-height:1.95;padding:3px 8px 3px 2px;border-radius:8px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.hx0{background:#FFF3B0}.hx1{background:#D6ECFF}.hx2{background:#FFDDEE}
+.hx3{background:#DDF7D0}.hx4{background:#EBDFFF}.hx5{background:#FFE4CC}
+.qe0{color:#1D4ED8;font-weight:800}.qe1{color:#C2185B;font-weight:800}.qe2{color:#0F8A5F;font-weight:800}.qe3{color:#7C3AED;font-weight:800}.qe4{color:#D9480F;font-weight:800}.qe5{color:#0E7490;font-weight:800}
+.frame{margin-top:10px;padding:10px 13px;border-radius:14px;background:#fff;border:2px dashed var(--edge);line-height:1.75}
+.frame i{color:var(--dim)}
+.dk{margin-top:12px;padding:11px 13px;border-radius:14px;background:#FFFBEF;border-left:5px solid var(--sun)}
+.dict{margin-top:7px;display:flex;flex-wrap:wrap;gap:8px}
+.dict a{display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border-radius:999px;font-size:.9rem;font-weight:800;text-decoration:none;color:#fff;transition:transform .15s;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.dict a:hover{transform:translateY(-2px)}
+.dict a.d0{background:linear-gradient(135deg,#FF4D8D,#FF9F1C)}.dict a.d1{background:linear-gradient(135deg,#2FBF4A,#2FA3EE)}
+.dict a.d2{background:linear-gradient(135deg,#2FA3EE,#6A7BFF)}.dict a.d3{background:linear-gradient(135deg,#8F6BFF,#FF4D8D)}
+.say{margin-top:7px;font-size:.9rem;color:var(--dim)}
+/* ── submit / modal ── */
+.sw{text-align:center;padding:16px 0 8px}
+.sbtn{font-family:'Baloo 2',cursive;font-size:1.08rem;font-weight:800;color:#fff;background:linear-gradient(135deg,#FF7A1A,#FF4D6D);border:4px solid #1A2440;
+ padding:12px 34px;border-radius:12px;cursor:pointer;transition:.15s;box-shadow:5px 5px 0 #FFB627}
+.sbtn:hover{transform:translate(2px,2px);box-shadow:3px 3px 0 #FFB627}
+.ov{display:none;position:fixed;inset:0;z-index:100;background:rgba(20,40,80,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px}
+.ov.on{display:flex}
+.mb{position:relative;background:var(--card);border:4px solid #1A2440;border-radius:16px;padding:26px 28px;max-width:460px;width:100%;
+ text-align:center;box-shadow:7px 7px 0 #FFB627;animation:popin .3s ease}
+@keyframes popin{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.mb h2{font-family:'Baloo 2',cursive;font-size:1.3rem;font-weight:800;color:var(--sky-d);margin-bottom:14px}
+.mb input{width:100%;font-family:'Nunito';font-size:1rem;font-weight:700;padding:12px 14px;background:#fff;border:2.5px solid var(--edge);border-radius:12px;color:var(--ink);text-align:center;outline:none;margin-bottom:10px}
+.mb input:focus{border-color:var(--sky)}
+.err{color:var(--bad);font-size:.85rem;font-weight:800;margin-bottom:8px;display:none}
+.err.show{display:block}
+.rname{font-size:1.05rem;font-weight:800;color:var(--pink-d);margin-bottom:6px}
+.rscore{font-family:'Baloo 2',cursive;font-size:2.6rem;font-weight:800;color:var(--sky-d);line-height:1;margin:6px 0}
+.rs10{font-size:1rem;font-weight:800;color:var(--ink);margin-bottom:9px}
+.rgif{width:190px;margin:10px auto;display:block;border:3px solid #1A2440;box-shadow:4px 4px 0 #FFB627;border-radius:10px}
+.rcmt{font-size:.96rem;line-height:1.75;background:#FFF8DE;border:2.5px dashed var(--edge);border-radius:14px;padding:12px 14px;margin:12px 0}
+.bcl{font-family:'Nunito';font-size:.88rem;font-weight:800;background:transparent;border:2.5px solid var(--edge);color:var(--ink);padding:10px 24px;border-radius:12px;cursor:pointer}
+.cn{position:fixed;top:-16px;z-index:200;pointer-events:none;animation:cf 2.4s forwards}
+@keyframes cf{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(108vh) rotate(700deg);opacity:0}}
+.foot{position:relative;z-index:5;text-align:center;margin:20px auto 182px;max-width:900px;font-size:.92rem;color:var(--ink);font-weight:800;line-height:1.7;
+ background:rgba(255,255,255,.92);border:3px solid #1A2440;border-radius:12px;padding:10px 16px;box-shadow:4px 4px 0 #FFB627}
+@media(max-width:820px){.foot{margin-bottom:136px}}
+/* ── school & amusement park props ── */
+.fw{position:absolute;bottom:68px;width:96px;height:106px}
+.fw .lg{position:absolute;top:47px;left:44px;width:8px;height:64px;background:#8F6BFF;border:2px solid #1A2440;transform-origin:50% 0}
+.fw .lg.a{transform:rotate(27deg)}.fw .lg.b{transform:rotate(-27deg)}
+.fw .wh{position:absolute;left:4px;top:3px;width:88px;height:88px;border-radius:50%;border:5px solid #1A2440;
+ background:repeating-conic-gradient(#1A2440 0 3deg,transparent 3deg 45deg);animation:fwSpin 16s linear infinite}
+.fw .wh::before{content:'';position:absolute;inset:9px;border-radius:50%;border:3px dashed #FF4D6D}
+.fw .wh::after{content:'';position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;background:#FFD23F;border:3px solid #1A2440;border-radius:3px}
+.fw .wh i{position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-6.5px;border:2px solid #1A2440;border-radius:2px}
+@keyframes fwSpin{to{transform:rotate(360deg)}}
+.bk{position:absolute;bottom:68px}
+@media(max-width:820px){.fw{transform:scale(.72);transform-origin:50% 100%}}
+.obox{background:#FFFBEB;border:3px dashed var(--sun-d);border-radius:12px;padding:10px 14px;margin:6px 0 16px;color:var(--ink);font-weight:700;line-height:1.85;font-size:1.02rem}
+.obox .obh{font-family:'Baloo 2',cursive;font-weight:800;color:var(--sun-d);margin-bottom:2px}
+.obox b{display:inline-block;min-width:26px;color:#fff;background:var(--lilac);border:2px solid #1A2440;border-radius:4px;font-family:var(--pix);font-size:.6rem;padding:4px 5px;margin-right:8px;text-align:center;vertical-align:2px}
+.bld{position:absolute;bottom:68px;border:4px solid #1A2440;border-bottom:none;box-shadow:inset -7px 0 0 rgba(0,0,0,.18);
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='18'%3E%3Crect x='3' y='3' width='9' height='10' fill='%23FFE27A' stroke='%231A2440' stroke-width='2'/%3E%3C/svg%3E");background-size:16px 18px;background-position:3px 8px}
+.bld::before{content:'';position:absolute;top:-10px;left:-6px;right:-6px;height:6px;background:#1A2440;border-radius:2px}
+.bld::after{content:'';position:absolute;top:-24px;left:50%;width:4px;height:14px;margin-left:-2px;background:#1A2440}
+.flg .spr{transform-origin:0 100%;animation:flgW 1.6s ease-in-out infinite alternate}
+@keyframes flgW{from{transform:skewY(-2deg)}to{transform:skewY(2deg)}}
+@media(max-width:820px){.bld{transform:scale(.72);transform-origin:50% 100%}}
+</style>
+<style>body{overflow:auto!important;}</style></head>
+<body>
+<div id="sky"></div>
+<div id="ground">
+ <div id="gdeco"></div>
+ <div class="grass"></div>
+ <div class="dirt"></div>
+</div>
+
+<div class="note"><div class="in">
+ <span class="tg">🎮 MS NHẮN</span>
+ <span class="tx" id="msTx">🎮 Lớp 6 mình ơi, sẵn sàng chưa? Pixel Quest Reading có 18 câu (câu 1 → 18) về Unit 4: Neighbourhood — nhặt đủ 18 đồng xu vàng để phá đảo nhé! 🏘️</span>
+</div></div>
+
+<header>
+ <div>
+  <h1>🎮 Pixel Quest Reading · Câu 1 → 18 🪙<span class="p1">PLAYER 1</span></h1>
+  <div class="by">👩‍🏫 Giáo viên tạo: Ms. Chí Nên &nbsp;·&nbsp; ☎️ 0852639652 &nbsp;·&nbsp; Khoá tiếng Anh lớp 1 → 12</div>
+  <div class="sub">Unit 4: Neighbourhood · English 6 · Level 1: My Wonderful Neighbourhood (1-4) · Level 2: Charity Shop (5-8) · Level 3: Pedestrian Subway (9-12) · Level 4: My Neighbourhood (13-18)</div>
+ </div>
+ <div class="hright"><div><span id="sc" style="display:none"></span><div class="gauge"><div class="num" id="lv">0/18</div><div class="lbl">Điểm</div></div></div></div>
+</header>
+
+<div class="main">
+<div class="lp">
+ <div class="slbl">📖 Bài đọc</div>
+
+ <div class="pc" style="border-color:var(--sky);color:var(--sky)">
+  <div class="lvl">LEVEL 1</div>
+  <div class="stamp">🏘️</div>
+  <div class="ptitle" style="color:var(--sky-d)">Exercise 11 · Passage 1: My Wonderful Neighbourhood!</div>
+  <div class="pins">Đọc đoạn văn rồi chọn từ đúng điền vào mỗi chỗ trống (1) → (4).</div>
+
+  <div class="pblk" style="border-color:var(--sky);background:#EEF8FF;color:var(--ink)">
+   <div class="em">🏘️</div>
+   <div class="paragraph">Hi everyone! Let's talk about your neighbourhood. Is it <b style="background:#D6ECFF;color:var(--sky-d)">___(1)___</b> or quiet? My neighbourhood is great! There are shops, a park, and a market. I often walk <b style="background:#D6ECFF;color:var(--sky-d)">___(2)___</b> the park with my dog. It's so much fun! My neighbourhood is also <b style="background:#D6ECFF;color:var(--sky-d)">___(3)___</b> than the city center because it has a beautiful art gallery. My favourite place in the neighbourhood is the <b style="background:#D6ECFF;color:var(--sky-d)">___(4)___</b>. Tell us about it!</div>
+   <button class="btr" onclick="toggleTranslation('trans1')">Mở dịch đoạn này 🌟</button>
+   <div class="translation" id="trans1">Chào mọi người! Hãy cùng nói về khu dân cư của bạn. Nó ồn ào hay yên tĩnh? Khu của tôi rất tuyệt! Có các cửa hàng, một công viên, và một khu chợ. Tôi thường đi dạo trong công viên với chú chó của mình. Thật là vui! Khu dân cư của tôi cũng tốt hơn trung tâm thành phố vì nó có một phòng tranh nghệ thuật tuyệt đẹp. Bạn có một địa điểm yêu thích nào trong khu dân cư của bạn không? Hãy kể cho chúng tôi nghe nhé!</div>
+  </div>
+ </div>
+
+ <div class="pc" style="border-color:var(--mint);color:var(--mint)">
+  <div class="lvl">LEVEL 2</div>
+  <div class="stamp">🛍️</div>
+  <div class="ptitle" style="color:var(--mint-d)">Passage 2: Our Neighborhood Charity Shop!</div>
+  <div class="pins">Đọc đoạn văn rồi chọn từ đúng điền vào mỗi chỗ trống (1) → (4).</div>
+
+  <div class="pblk" style="border-color:var(--mint);background:#ECFBEF;color:var(--ink)">
+   <div class="em">🛍️</div>
+   <div class="paragraph">Do you want to help people and find great things? Visit our local charity shop! It's very <b style="background:#C9F2D2;color:var(--mint-d)">___(1)___</b> for everyone. You can donate old clothes or books. People buy these items, and the money helps local charities. Our shop is <b style="background:#C9F2D2;color:var(--mint-d)">___(2)___</b> than a regular shop because prices are lower. You can find unique items <b style="background:#C9F2D2;color:var(--mint-d)">___(3)___</b> a good price. Come and support our community <b style="background:#C9F2D2;color:var(--mint-d)">___(4)___</b>!</div>
+   <button class="btr" onclick="toggleTranslation('trans2')">Mở dịch đoạn này 🌟</button>
+   <div class="translation" id="trans2">Bạn có muốn giúp đỡ mọi người và tìm kiếm những món đồ tuyệt vời không? Hãy ghé thăm cửa hàng từ thiện địa phương của chúng tôi! Nó rất thuận tiện cho mọi người. Bạn có thể quyên góp quần áo hoặc sách cũ. Mọi người mua những món đồ này, và số tiền đó sẽ giúp đỡ các tổ chức từ thiện địa phương. Cửa hàng của chúng tôi rẻ hơn một cửa hàng thông thường vì giá cả thấp hơn. Bạn có thể tìm thấy những món đồ độc đáo với mức giá tốt. Hãy đến và ủng hộ sự nghiệp của cộng đồng chúng ta nhé!</div>
+  </div>
+ </div>
+
+ <div class="pc" style="border-color:var(--coral);color:var(--coral)">
+  <div class="lvl" style="background:#FFD9B0;color:#7A3400;border-color:#7A3400;box-shadow:3px 3px 0 #7A3400">LEVEL 3</div>
+  <div class="stamp">🚇</div>
+  <div class="ptitle" style="color:var(--coral-d)">Passage 3: Understanding Your Neighborhood — The Pedestrian Subway</div>
+  <div class="pins">Đọc đoạn văn rồi chọn từ đúng điền vào mỗi chỗ trống (1) → (4).</div>
+
+  <div class="pblk" style="border-color:var(--coral);background:#FFF3EA;color:var(--ink)">
+   <div class="em">🚇</div>
+   <div class="paragraph">Have you ever wondered about the special tunnels under the road? These are pedestrian subways! They make crossing busy streets much <b style="background:#FFE0C7;color:var(--coral-d)">___(1)___</b>. It's safer to use them than walking on the street. Our neighborhood has a subway, and it's even <b style="background:#FFE0C7;color:var(--coral-d)">___(2)___</b> than the old one downtown. You can find it <b style="background:#FFE0C7;color:var(--coral-d)">___(3)___</b> the big supermarket. Using these subways is a great example of <b style="background:#FFE0C7;color:var(--coral-d)">___(4)___</b> urban planning.</div>
+   <button class="btr" onclick="toggleTranslation('trans3')">Mở dịch đoạn này 🌟</button>
+   <div class="translation" id="trans3">Bạn có bao giờ tự hỏi về những đường hầm đặc biệt dưới lòng đường không? Đó là những đường hầm cho người đi bộ! Chúng làm cho việc băng qua những con phố đông đúc trở nên dễ dàng hơn nhiều. Sử dụng chúng an toàn hơn so với việc đi bộ trên đường. Khu dân cư của chúng ta có một đường hầm, và nó thậm chí còn tốt hơn cái cũ ở trung tâm thành phố. Bạn có thể tìm thấy nó ở gần siêu thị lớn. Việc sử dụng các đường hầm này là một ví dụ tuyệt vời về quy hoạch đô thị hiện đại.</div>
+  </div>
+ </div>
+
+ <div class="pc" style="border-color:var(--lilac);color:var(--lilac)">
+  <div class="lvl" style="background:#C9B8FF;color:#2B1A6B;border-color:#2B1A6B;box-shadow:3px 3px 0 #2B1A6B">LEVEL 4</div>
+  <div class="stamp">🏡</div>
+  <div class="ptitle" style="color:var(--lilac-d)">Exercise 12: My Neighbourhood</div>
+  <div class="pins">Đọc đoạn văn rồi chọn từ đúng điền vào mỗi chỗ trống (1) → (6).</div>
+
+  <div class="pblk" style="border-color:var(--lilac);background:#F5F0FF;color:var(--ink)">
+   <div class="em">🏡</div>
+   <div class="paragraph">My name is Nick. My neighbourhood is not in the city. It's in the suburbs. It is very peaceful and quiet. It is a new neighbourhood, and there are a lot of big houses and some apartment buildings. There are a lot of big trees and there aren't many cars so the streets are very <b style="background:#E5DBFF;color:var(--lilac-d)">___(1)___</b>. There's a park <b style="background:#E5DBFF;color:var(--lilac-d)">___(2)___</b> my neighbourhood, which has a small playground for children. I like to play baseball there with my friends after school.</div>
+   <button class="btr" onclick="toggleTranslation('trans4_1')">Mở dịch đoạn này 🌟</button>
+   <div class="translation" id="trans4_1">Tên tôi là Nick. Khu dân cư của tôi không nằm trong thành phố. Nó nằm ở vùng ngoại ô. Nó rất thanh bình và yên tĩnh. Đây là một khu dân cư mới, và có rất nhiều ngôi nhà lớn cùng một vài tòa chung cư. Có rất nhiều cây cổ thụ và không có nhiều ô tô nên đường phố rất sạch sẽ. Có một công viên trong khu dân cư của tôi, nơi có một sân chơi nhỏ cho trẻ em. Tôi thích chơi bóng chày ở đó với bạn bè sau giờ học.</div>
+  </div>
+
+  <div class="pblk" style="border-color:var(--lilac);background:#F5F0FF;color:var(--ink)">
+   <div class="em">🛡️</div>
+   <div class="paragraph">There aren't any restaurants, bars or cinemas <b style="background:#E5DBFF;color:var(--lilac-d)">___(3)___</b> my road. But, if you go to Main Street, you can find a lot of things to <b style="background:#E5DBFF;color:var(--lilac-d)">___(4)___</b>. I like my neighbourhood because it is very safe. There is no <b style="background:#E5DBFF;color:var(--lilac-d)">___(5)___</b> and all of my neighbours take care of <b style="background:#E5DBFF;color:var(--lilac-d)">___(6)___</b>. I think I am lucky to live in my neighbourhood.</div>
+   <button class="btr" onclick="toggleTranslation('trans4_2')">Mở dịch đoạn này 🌟</button>
+   <div class="translation" id="trans4_2">Không có bất kỳ nhà hàng, quán bar hay rạp chiếu phim nào trên con đường của tôi. Nhưng, nếu bạn đi đến Đường Chính (Main Street), bạn có thể tìm thấy rất nhiều thứ để làm. Tôi thích khu dân cư của mình vì nó rất an toàn. Không có tội phạm và tất cả những người hàng xóm của tôi đều quan tâm chăm sóc lẫn nhau. Tôi nghĩ mình thật may mắn khi được sống trong khu dân cư này.</div>
+  </div>
+ </div>
+
+ <div class="pc" style="border-color:var(--sun);color:var(--sun-d)">
+  <div class="stamp">📚</div>
+  <div class="ptitle" style="color:var(--sun-d)">Academic Glossary — Unit 4: Neighbourhood</div>
+  <div class="pins">Ôn lại các từ vựng quan trọng xuất hiện trong cả 4 đoạn văn trên nhé!</div>
+
+  <div class="gl"><h3 style="background:linear-gradient(90deg,var(--sun-d),var(--sun))">📚 Glossary — Unit 4</h3>
+   <table class="gtb"><tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa tiếng Việt</th></tr>
+    <tr><td class="gw">neighbourhood</td><td class="gp">Noun</td><td>khu dân cư, khu vực lân cận</td></tr>
+    <tr><td class="gw">gallery</td><td class="gp">Noun</td><td>phòng trưng bày nghệ thuật</td></tr>
+    <tr><td class="gw">charity</td><td class="gp">Noun</td><td>tổ chức từ thiện, lòng nhân thiện</td></tr>
+    <tr><td class="gw">donate</td><td class="gp">Verb</td><td>quyên góp, hiến tặng</td></tr>
+    <tr><td class="gw">community</td><td class="gp">Noun</td><td>cộng đồng</td></tr>
+    <tr><td class="gw">pedestrian</td><td class="gp">Noun</td><td>người đi bộ</td></tr>
+    <tr><td class="gw">subway</td><td class="gp">Noun</td><td>đường hầm, tàu điện ngầm</td></tr>
+    <tr><td class="gw">urban</td><td class="gp">Adjective</td><td>thuộc về đô thị, thành thị</td></tr>
+    <tr><td class="gw">suburb</td><td class="gp">Noun</td><td>vùng ngoại ô</td></tr>
+    <tr><td class="gw">crime</td><td class="gp">Noun</td><td>tội phạm, hành vi phạm tội</td></tr>
+   </table>
+  </div>
+ </div>
+</div>
+
+<div class="rp">
+ <div class="slbl">🎯 18 câu hỏi</div>
+ <div id="app"></div>
+ <div class="sw"><button class="sbtn" onclick="openName()">🎯 NỘP BÀI TÍNH ĐIỂM &amp; XEM KẾT QUẢ</button></div>
+</div>
+</div>
+
+<div class="foot">🎮 Bài tập của <b>Ms. Chí Nên</b> · Đăng ký khoá tiếng Anh lớp 1 → 12: <b>☎️ 0852639652</b> để được trải nghiệm hệ thống web học tập đẹp, sinh động — chấm điểm tự động, giải chi tiết từng câu, học vui như chơi game mỗi ngày!</div>
+
+<div class="ov" id="ovN"><div class="mb">
+ <h2>📮 Con ghi tên vào đây nhé!</h2>
+ <input id="nIn" placeholder="Ví dụ: Nguyễn Văn A" autocomplete="off" maxlength="50">
+ <div class="err" id="nEm">⚠️ Con chưa nhập tên kìa! Nhập tên rồi mới xem điểm được nha.</div>
+ <button class="sbtn" style="margin-top:12px;font-size:1rem;padding:11px 26px" onclick="showResult()">🚀 Xem kết quả</button>
+</div></div>
+
+<div class="ov" id="ovR"><div class="mb" style="max-width:480px">
+ <div class="rname" id="rn"></div>
+ <div class="rscore"><span id="rSc">0</span>/<span id="rTt">0</span></div>
+ <div class="rs10">🎓 Quy đổi: <span id="r10">0</span>/10 điểm</div>
+ <img class="rgif" id="rGif" src="" alt="">
+ <div class="rcmt" id="rMs"></div>
+ <button class="bcl" onclick="closeR()">Đóng &amp; xem lại bài</button>
+</div></div>
+
+<script>
+/* ══ cảnh thế giới game pixel ══ */
+function rnd(a,b){return a+Math.random()*(b-a)}
+function SPR(rows,pal,s){var sh=[];
+ rows.forEach(function(r,y){for(var x=0;x<r.length;x++){var c=pal[r.charAt(x)];if(c)sh.push(((x+1)*s)+'px '+((y+1)*s)+'px 0 '+c)}});
+ return '<div class="spr" style="width:'+(rows[0].length*s)+'px;height:'+(rows.length*s)+'px"><i style="left:-'+s+'px;top:-'+s+'px;width:'+s+'px;height:'+s+'px;box-shadow:'+sh.join(',')+'"></i></div>'}
+var CLOUD=['_____wwww_______','___wwwwwww_www__','__wwwwwwwwwwwww_','_wwwwwwwwwwwwwww','wwwwwwwwwwwwwwww','_bbbbbbbbbbbbbb_'];
+var COIN=['__ddd__','_dyyyd_','dyywyyd','dyywyyd','dyywyyd','dyywyyd','dyywyyd','_dyyyd_','__ddd__'];
+var HERO_A=['__cccccc__','_cccccccc_','_cCCCCCCCC','_hssssss__','_hskssks__','_hssssss__','__ssssss__','_oooooooo_','sooooooos_','__bbbbbb__','__bb__bb__','_ff____ff_'];
+var HERO_B=['__cccccc__','_cccccccc_','_cCCCCCCCC','_hssssss__','_hskssks__','_hssssss__','__ssssss__','_oooooooo_','_soooooos_','__bbbbbb__','___bbbb___','___ffff___'];
+var SLIME=['___gggg___','__gLgggg__','_gLgggggg_','_gggggggg_','gggkggkggg','gggkggkggg','gggggggggg','_GGGGGGGG_'];
+var MUSH=['___rrrr___','_rrwwrrrr_','rrwwwrrwwr','rrrwrrrwwr','rrrrrrrrrr','__ssssss__','__skssks__','__ssssss__','_ff____ff_'];
+var HEART=['_rr_rr_','rwrrrrr','rrrrrrr','_rrrrr_','__rrr__','___r___'];
+var STAR=['___y___','___y___','yyyyyyy','_yyyyy_','__yyy__','_yy_yy_','yy___yy'];
+var PAD=['__pppppppppp__','_pppkppppprppp','ppkkkpppyppbpp','pppkppppppgppp','pppppPPPPppppp','_pppp____pppp_','__pp______pp__'];
+var BOOK=['_rrrrrrrrrr_','rwwwwwwwwwwr','rrrrrrrrrrrr','__bbbbbbbbbb','_bwwwwwwwwwb','_bbbbbbbbbbb','gggggggggg__','gwwwwwwwwwg_','gggggggggg__'];
+var PC={w:'#FFFFFF',b:'#CDEBFF'},PCO={d:'#A86A00',y:'#FFD23F',w:'#FFF7C2'},
+ PH={c:'#1E6FD9',C:'#0F4A9E',h:'#6B3A1E',s:'#FFC99A',k:'#23324A',o:'#FF6B1A',b:'#2B3A8C',f:'#6B3A1E'},
+ PS1={g:'#5BD65B',L:'#D4FFCC',k:'#1D3B1D',G:'#2E9A3A'},PS2={g:'#5AB8FF',L:'#DDF2FF',k:'#16304F',G:'#2A7BC4'},
+ PM={r:'#FF4D6D',w:'#FFFFFF',s:'#FFE6C7',k:'#23324A',f:'#8A4B1E'},
+ PHT={r:'#FF4D6D',w:'#FFC2CF'},PST={y:'#FFD23F'},PPD={p:'#8F6BFF',P:'#6B4CE0',k:'#2B2050',r:'#FF4D6D',y:'#FFD23F',b:'#2FA3EE',g:'#34C759'},
+ PBK={r:'#FF4D6D',b:'#2FA3EE',g:'#2FBF4A',w:'#FFF7E0'};
+var TROPHY=['y_yyyyyy_y','yyywyyyyyy','y_ywyyyy_y','__yyyyyy__','___yyyy___','____dd____','____dd____','___dddd___','__bbbbbb__','__bbbbbb__'];
+var FLAG=['kRRRRRRR_','kRRRyRRRR','kRRyyyRRR','kRRRyRRRR','kRRRRRRR_','k________','k________','k________','k________','k________','k________','k________','k________','k________','kkk______'];
+var PTR={y:'#FFD23F',w:'#FFF7C2',d:'#C98A00',b:'#7A3E00'},PFL={k:'#1A2440',R:'#FF4D6D',y:'#FFD23F'};
+function BLD(left,w,h,c){return '<div class="bld" style="left:'+left+';width:'+w+'px;height:'+h+'px;background-color:'+c+'"></div>'}
+function FW(left,dur){var cs=['#FF4D6D','#FFD23F','#2FBF4A','#2FA3EE'],g='';
+ for(var k=0;k<8;k++)g+='<i style="background:'+cs[k%4]+';transform:rotate('+(k*45)+'deg) translateY(-37px)"></i>';
+ return '<div class="fw" style="left:'+left+'"><div class="lg a"></div><div class="lg b"></div><div class="wh" style="animation-duration:'+dur+'s">'+g+'</div></div>'}
+(function(){var h='',sky=document.getElementById('sky');
+ for(var i=0;i<5;i++)h+='<div class="pcl" style="top:'+rnd(5,46).toFixed(0)+'vh;animation-duration:'+rnd(70,110).toFixed(0)+'s;animation-delay:-'+rnd(0,70).toFixed(0)+'s">'+SPR(CLOUD,PC,i%2?5:7)+'</div>';
+ var CO=[['left:2.4vw;top:30vh',0],['left:5vw;top:36vh',.3],['left:2.4vw;top:44vh',.6],['right:2.6vw;top:62vh',.2],['right:5.2vw;top:68vh',.5],['right:2.6vw;top:24vh',.8]];
+ CO.forEach(function(c){h+='<div class="coin" style="'+c[0]+';animation-delay:-'+c[1]+'s">'+SPR(COIN,PCO,4)+'</div>'});
+ h+='<div class="blk" style="left:1.6vw;top:17vh"><div class="brk"></div><div class="qb">?<div class="pop">'+SPR(COIN,PCO,3)+'</div></div></div>';
+ h+='<div class="blk" style="right:1.6vw;top:44vh"><div class="qb" style="animation-delay:-1.6s">?<div class="pop" style="animation-delay:-1.6s">'+SPR(COIN,PCO,3)+'</div></div><div class="brk"></div></div>';
+ h+='<div class="blk" style="right:3vw;top:13vh"><div class="brk"></div></div>';
+ h+='<div class="ctrl" style="left:2vw;top:58vh">'+SPR(PAD,PPD,5)+'</div>';
+ for(var i=0;i<8;i++){var side=i%2?'right:'+rnd(1,6).toFixed(1):'left:'+rnd(1,6).toFixed(1);
+  h+='<div class="up" style="'+side+'vw;animation-duration:'+rnd(11,17).toFixed(0)+'s;animation-delay:-'+rnd(0,16).toFixed(0)+'s">'+SPR(i%3?HEART:STAR,i%3?PHT:PST,4)+'</div>'}
+ sky.innerHTML=h;
+ h='';
+ var PI=[['left:4vw',44],['left:47vw',64],['right:4vw',84]];
+ PI.forEach(function(p,i){h+='<div class="pipe" style="'+p[0]+'"><div class="pc2" style="animation-delay:-'+(i*1.5)+'s">'+SPR(COIN,PCO,3)+'</div><div class="lip"></div><div class="tube" style="height:'+p[1]+'px"></div></div>'});
+ h+=BLD('10.6vw',58,76,'#5B7BD6')+BLD('14.6vw',46,56,'#FF7A1A')+BLD('56vw',50,64,'#2FBF4A')+BLD('60vw',60,78,'#8F6BFF')+FW('70vw',20);
+ h+='<div class="bk" style="left:22vw">'+SPR(TROPHY,PTR,4)+'</div><div class="bk flg" style="left:81vw">'+SPR(FLAG,PFL,4)+'</div>';
+ h+='<div class="hero" style="animation-duration:26s"><div class="jp"><div class="fa">'+SPR(HERO_A,PH,4)+'</div><div class="fb">'+SPR(HERO_B,PH,4)+'</div></div></div>';
+ h+='<div class="hero" style="animation-duration:26s;animation-delay:-13s"><div class="jp" style="animation-delay:-1.4s"><div class="fa">'+SPR(HERO_A,PH,4)+'</div><div class="fb">'+SPR(HERO_B,PH,4)+'</div></div></div>';
+ var MB=[[SLIME,PS1,'sq',34,4],[MUSH,PM,'wb',44,4],[SLIME,PS2,'sq',52,4],[MUSH,PM,'wb',38,3]];
+ MB.forEach(function(m,i){h+='<div class="mob" style="animation-duration:'+m[3]+'s;animation-delay:-'+(i*m[3]/MB.length*2.2%m[3]).toFixed(1)+'s"><div class="'+m[2]+'">'+SPR(m[0],m[1],m[4])+'</div></div>'});
+ document.getElementById('gdeco').innerHTML=h;
+})();
+
+/* ══ âm thanh ══ */
+var AC=null;
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC}
+function ding(){var c=ac();if(!c)return;var t=c.currentTime;[988,1318.5,1975.5].forEach(function(f,i){var o=c.createOscillator(),g=c.createGain();o.type='square';o.frequency.value=f;o.connect(g);g.connect(c.destination);var s=t+i*0.08;g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(.09,s+.02);g.gain.exponentialRampToValueAtTime(.0001,s+.28);o.start(s);o.stop(s+.3)})}
+var DUCK_URL='https://hoctienganhcungcomaianulis.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Ti%E1%BA%BFng%20V%E1%BB%8Bt%20k%C3%AAu%20meme%20mp3.mp3';
+function buzz(){try{var a=new Audio(DUCK_URL);a.volume=.75;a.play().catch(function(){})}catch(e){}}
+function conf(){var cs=['#FF4D6D','#FFD23F','#2FBF4A','#2FA3EE','#8F6BFF'];
+ for(var i=0;i<50;i++){var d=document.createElement('div');d.className='cn';
+  d.style.cssText='left:'+(Math.random()*100)+'vw;width:10px;height:10px;background:'+cs[i%5]+';opacity:.95';
+  document.body.appendChild(d);(function(d){setTimeout(function(){d.remove()},2500)})(d)}}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function toggleTranslation(id){
+ var el=document.getElementById(id);
+ if(el.style.display==='block'){el.style.display='none';}else{el.style.display='block';}
+}
+
+/* ══ lời giải ══ */
+function OPT(w,pos,ipa,vi,ok){return {w:w,pos:pos||'',ipa:ipa||'',vi:vi,ok:ok?1:0}}
+function grid2(opts){
+ return '<div class="grid2">'+opts.map(function(o){
+  var cls=o.ok?'hl-green':'p-word';
+  var pos=o.pos?' <span class="wt">'+o.pos+'</span>':'';
+  var ipa=o.ipa?' <span class="p-phonetic">/'+o.ipa+'/</span>':'';
+  return '<div'+(o.ok?' class="gk"':'')+'>'+(o.ok?'✅ ':'')+'<span class="'+cls+'">'+o.w+'</span>'+pos+ipa+'<br>= <span class="p-mean">'+o.vi+'</span></div>';
+ }).join('')+'</div>';
+}
+var hxI=0;
+function ln(txt){
+ var cls='hx'+(hxI++%6),qeI=0;
+ txt=txt.replace(/"([^"]+)"/g,function(m,p1){return '<span class="qe'+(qeI++%6)+'">"'+p1+'"</span>'});
+ return '<span class="p-grammar '+cls+'">▸ '+txt+'</span>';
+}
+function lines(a){return a.map(ln).join('<br>')}
+function DICT(w,i){
+ var slug=w.trim().toLowerCase().replace(/\s+/g,'-');
+ return '<a class="d'+(i%4)+'" href="https://dictionary.cambridge.org/vi/dictionary/english/'+slug+'" target="_blank" rel="noopener">🔊 Cambridge · '+w+'</a>';
+}
+function render(q){
+ hxI=0;
+ var shown=MAP[q.id].map(function(w){return q.opts.find(function(o){return o.w===w})});
+ var lab='Nghĩa của 4 phương án:';
+ var html='<div class="vnt">💬 Dịch: '+q.vnt+'</div><ol>'+
+  '<li><b>'+lab+'</b>'+grid2(shown)+'</li>'+
+  '<li><span class="hl-green">✅ TẠI SAO ĐÚNG?</span><br>'+lines(q.why)+'</li>'+
+  '<li><span class="hl-red">❌ TẠI SAO SAI?</span><br>'+lines(q.bad)+'</li></ol>'+
+  '<div class="frame">🔍 <i>'+q.ev+'</i><br>👉 <span class="p-mean">'+q.evvi+'</span></div>';
+ if(q.dict&&q.dict.length){
+  html+='<div class="dk"><b>🔊 Tra từ điển Cambridge:</b><br>Con bấm vào đây để nghe phát âm chuẩn và đọc theo cho hay nhé:'+
+   '<div class="dict">'+q.dict.map(DICT).join('')+'</div>'+
+   '<div class="say">👉 Nếu trang chưa hiện đúng từ, con gõ từ đó vào ô tìm kiếm, bấm loa 🔊 nghe và đọc theo.</div></div>';
+ }
+ return html;
+}
+
+/* ══ câu hỏi ══ */
+var QS=[
+{id:1,part:1,col:'sky',text:`Passage 1 · Is it <b>(1) ______</b> or quiet?`,correct:`noisy`,
+ options:[`noise`,`noisily`,`noisy`,`noised`],
+ opts:[OPT(`noisy`,`adj`,`ˈnɔɪzi`,`ồn ào`,1),OPT(`noise`,`n`,`nɔɪz`,`tiếng ồn`),OPT(`noisily`,`adv`,`ˈnɔɪzɪli`,`một cách ồn ào`),OPT(`noised`,`v`,`nɔɪzd`,`dạng động từ/phân từ hiếm dùng`)],
+ vnt:`"Nó ồn ào hay yên tĩnh?"`,
+ why:[`Sau động từ to-be "is" và trước liên từ "or" nối với tính từ "quiet", chỗ trống cần một tính từ để tạo cặp đối lập "noisy or quiet" (ồn ào hay yên tĩnh).`],
+ bad:[`"noise" là danh từ, không đứng ngay sau to-be và trước "or quiet".`,`"noisily" là trạng từ, chỉ bổ nghĩa cho động từ thường.`,`"noised" là dạng động từ/phân từ hiếm dùng, sai ngữ pháp ở vị trí này.`],
+ ev:`Is it noisy or quiet?`,
+ evvi:`Nó ồn ào hay yên tĩnh?`,
+ dict:[`noisy`,`noise`,`noisily`,`noised`]},
+{id:2,part:1,col:'sky',text:`Passage 1 · I often walk <b>(2) ______</b> the park with my dog.`,correct:`in`,
+ options:[`in`,`on`,`along`,`at`],
+ opts:[OPT(`in`,`prep`,`ɪn`,`trong, ở trong`,1),OPT(`on`,`prep`,`ɒn`,`trên bề mặt`),OPT(`along`,`prep`,`əˈlɒŋ`,`dọc theo`),OPT(`at`,`prep`,`æt`,`tại một điểm`)],
+ vnt:`"Tôi thường đi dạo trong công viên với chú chó của mình."`,
+ why:[`Cụm cố định "walk in the park" (đi dạo trong công viên) dùng giới từ "in" để chỉ hành động xảy ra bên trong không gian công viên.`],
+ bad:[`"on" không dùng với "the park" theo nghĩa này.`,`"along" thường đi với phố/dòng sông (along the street/river).`,`"at" chỉ một điểm cụ thể, không hợp với không gian rộng như công viên.`],
+ ev:`I often walk in the park with my dog.`,
+ evvi:`Tôi thường đi dạo trong công viên với chú chó của mình.`,
+ dict:[`in`,`on`,`along`,`at`]},
+{id:3,part:1,col:'sky',text:`Passage 1 · My neighbourhood is also <b>(3) ______</b> than the city center.`,correct:`better`,
+ options:[`good`,`better`,`best`,`well`],
+ opts:[OPT(`better`,`adj`,`ˈbetər`,`tốt hơn`,1),OPT(`good`,`adj`,`ɡʊd`,`tốt`),OPT(`best`,`adj`,`best`,`tốt nhất`),OPT(`well`,`adv/adj`,`wel`,`tốt, khỏe`)],
+ vnt:`"Khu dân cư của tôi cũng tốt hơn trung tâm thành phố vì nó có một phòng tranh nghệ thuật tuyệt đẹp."`,
+ why:[`Từ "than" theo sau báo hiệu cấu trúc so sánh hơn — "better" là dạng so sánh hơn bất quy tắc của tính từ "good".`],
+ bad:[`"good" là dạng nguyên thể, không đi với "than".`,`"best" là so sánh NHẤT, không đi với "than".`,`"well" là trạng từ/tính từ chỉ sức khỏe, sai cấu trúc so sánh.`],
+ ev:`My neighbourhood is also better than the city center because it has a beautiful art gallery.`,
+ evvi:`Khu dân cư của tôi cũng tốt hơn trung tâm thành phố vì nó có một phòng tranh nghệ thuật tuyệt đẹp.`,
+ dict:[`better`,`good`,`best`,`well`]},
+{id:4,part:1,col:'sky',text:`Passage 1 · My favourite place in the neighbourhood is the <b>(4) ______</b>.`,correct:`art gallery`,
+ options:[`library`,`supermarket`,`cinema`,`art gallery`],
+ opts:[OPT(`art gallery`,`n`,`ɑːt ˈɡæləri`,`phòng tranh nghệ thuật`,1),OPT(`library`,`n`,`ˈlaɪbrəri`,`thư viện`),OPT(`supermarket`,`n`,`ˈsuːpəmɑːkɪt`,`siêu thị`),OPT(`cinema`,`n`,`ˈsɪnəmə`,`rạp chiếu phim`)],
+ vnt:`"Địa điểm yêu thích của tôi trong khu dân cư là phòng tranh nghệ thuật."`,
+ why:[`Câu ngay trước đó vừa nhắc "it has a beautiful art gallery" (khu dân cư có một phòng tranh nghệ thuật tuyệt đẹp) — đây chính là địa điểm yêu thích được nhắc đến.`],
+ bad:[`"library", "supermarket" và "cinema" đều không được nhắc đến ở bất kỳ đâu trong đoạn văn này.`],
+ ev:`My favourite place in the neighbourhood is the art gallery.`,
+ evvi:`Địa điểm yêu thích của tôi trong khu dân cư là phòng tranh nghệ thuật.`,
+ dict:[`gallery`,`library`,`supermarket`,`cinema`]},
+
+{id:5,part:2,col:'mint',text:`Passage 2 · It's very <b>(1) ______</b> for everyone.`,correct:`convenient`,
+ options:[`convenience`,`convenient`,`conveniently`,`inconvenient`],
+ opts:[OPT(`convenient`,`adj`,`kənˈviːniənt`,`thuận tiện`,1),OPT(`convenience`,`n`,`kənˈviːniəns`,`sự thuận tiện`),OPT(`conveniently`,`adv`,`kənˈviːniəntli`,`một cách thuận tiện`),OPT(`inconvenient`,`adj`,`ˌɪnkənˈviːniənt`,`bất tiện`)],
+ vnt:`"Nó rất thuận tiện cho mọi người."`,
+ why:[`Sau to-be "is" và trạng từ nhấn mạnh "very", chỗ trống cần một tính từ — "convenient" đúng cả cấu trúc lẫn nghĩa (khen ngợi cửa hàng).`],
+ bad:[`"convenience" là danh từ, sai từ loại.`,`"conveniently" là trạng từ, sai từ loại.`,`"inconvenient" sai nghĩa vì tác giả đang khen ngợi chứ không chê cửa hàng.`],
+ ev:`Visit our local charity shop! It's very convenient for everyone.`,
+ evvi:`Hãy ghé thăm cửa hàng từ thiện của chúng tôi! Nó rất thuận tiện cho mọi người.`,
+ dict:[`convenient`,`convenience`,`conveniently`,`inconvenient`]},
+{id:6,part:2,col:'mint',text:`Passage 2 · Our shop is <b>(2) ______</b> than a regular shop.`,correct:`cheaper`,
+ options:[`cheap`,`cheaper`,`cheapest`,`more cheap`],
+ opts:[OPT(`cheaper`,`adj`,`ˈtʃiːpər`,`rẻ hơn`,1),OPT(`cheap`,`adj`,`tʃiːp`,`rẻ`),OPT(`cheapest`,`adj`,`ˈtʃiːpɪst`,`rẻ nhất`),OPT(`more cheap`,``,``,`sai ngữ pháp, không tồn tại`)],
+ vnt:`"Cửa hàng của chúng tôi rẻ hơn một cửa hàng thông thường vì giá cả thấp hơn."`,
+ why:[`Có từ "than" chỉ so sánh hơn; "cheap" là tính từ ngắn nên thêm đuôi "-er" để tạo so sánh hơn: "cheaper".`],
+ bad:[`"cheap" là dạng nguyên thể, không đi với "than".`,`"cheapest" là so sánh NHẤT, không đi với "than".`,`"more cheap" sai hoàn toàn vì tính từ ngắn không dùng "more".`],
+ ev:`Our shop is cheaper than a regular shop because prices are lower.`,
+ evvi:`Cửa hàng của chúng tôi rẻ hơn cửa hàng thông thường vì giá cả thấp hơn.`,
+ dict:[`cheaper`,`cheap`,`cheapest`]},
+{id:7,part:2,col:'mint',text:`Passage 2 · You can find unique items <b>(3) ______</b> a good price.`,correct:`at`,
+ options:[`in`,`on`,`at`,`for`],
+ opts:[OPT(`at`,`prep`,`æt`,`với (mức giá)`,1),OPT(`in`,`prep`,`ɪn`,`trong`),OPT(`on`,`prep`,`ɒn`,`trên`),OPT(`for`,`prep`,`fɔːr`,`cho, vì`)],
+ vnt:`"Bạn có thể tìm thấy những món đồ độc đáo với một mức giá tốt."`,
+ why:[`Cụm cố định "at a good/low/high price" nghĩa là "với mức giá tốt/thấp/cao" — đây là collocation chuẩn khi nói về giá cả.`],
+ bad:[`"in", "on" và "for" đều không tạo thành cụm cố định đúng với "price" trong ngữ cảnh này.`],
+ ev:`You can find unique items at a good price.`,
+ evvi:`Bạn có thể tìm thấy những món đồ độc đáo với một mức giá tốt.`,
+ dict:[`price`,`at`,`unique`,`good`]},
+{id:8,part:2,col:'mint',text:`Passage 2 · Come and support our community <b>(4) ______</b>!`,correct:`cause`,
+ options:[`effort`,`initiative`,`cause`,`problem`],
+ opts:[OPT(`cause`,`n`,`kɔːz`,`sự nghiệp, mục đích cao đẹp`,1),OPT(`effort`,`n`,`ˈefərt`,`nỗ lực`),OPT(`initiative`,`n`,`ɪˈnɪʃətɪv`,`sáng kiến`),OPT(`problem`,`n`,`ˈprɒbləm`,`vấn đề`)],
+ vnt:`"Hãy đến và ủng hộ sự nghiệp cao đẹp của cộng đồng chúng ta nhé!"`,
+ why:[`Cụm cố định "support a cause" rất hay dùng để chỉ việc ủng hộ một mục đích tốt đẹp như hoạt động từ thiện.`],
+ bad:[`"effort" và "initiative" không sát nghĩa nhất bằng "cause" trong ngữ cảnh kêu gọi ủng hộ.`,`"problem" (vấn đề) sai nghĩa hoàn toàn.`],
+ ev:`Come and support our community cause!`,
+ evvi:`Hãy đến và ủng hộ sự nghiệp cao đẹp của cộng đồng chúng ta nhé!`,
+ dict:[`cause`,`effort`,`initiative`,`problem`]},
+
+{id:9,part:3,col:'coral',text:`Passage 3 · They make crossing busy streets much <b>(1) ______</b>.`,correct:`easier`,
+ options:[`easy`,`easier`,`easily`,`easiness`],
+ opts:[OPT(`easier`,`adj`,`ˈiːziər`,`dễ dàng hơn`,1),OPT(`easy`,`adj`,`ˈiːzi`,`dễ dàng`),OPT(`easily`,`adv`,`ˈiːzəli`,`một cách dễ dàng`),OPT(`easiness`,`n`,`ˈiːzinəs`,`sự dễ dàng`)],
+ vnt:`"Chúng làm cho việc băng qua những con phố đông đúc trở nên dễ dàng hơn nhiều."`,
+ why:[`Cấu trúc "make + O + adj" (làm cho ai/cái gì trở nên như thế nào) kết hợp với "much" nhấn mạnh mức độ của tính từ so sánh hơn "easier".`],
+ bad:[`"easy" là dạng nguyên thể, không đi với "much" theo nghĩa so sánh.`,`"easily" là trạng từ, sai từ loại.`,`"easiness" là danh từ, sai từ loại.`],
+ ev:`They make crossing busy streets much easier.`,
+ evvi:`Chúng làm cho việc băng qua những con phố đông đúc trở nên dễ dàng hơn nhiều.`,
+ dict:[`easier`,`easy`,`easily`,`easiness`]},
+{id:10,part:3,col:'coral',text:`Passage 3 · It's even <b>(2) ______</b> than the old one downtown.`,correct:`better`,
+ options:[`good`,`better`,`best`,`well`],
+ opts:[OPT(`better`,`adj`,`ˈbetər`,`tốt hơn`,1),OPT(`good`,`adj`,`ɡʊd`,`tốt`),OPT(`best`,`adj`,`best`,`tốt nhất`),OPT(`well`,`adv/adj`,`wel`,`tốt, khỏe`)],
+ vnt:`"Nó thậm chí còn tốt hơn cái cũ ở trung tâm."`,
+ why:[`Từ "even" đứng trước dùng để nhấn mạnh cấu trúc so sánh hơn đi cùng "than" theo sau.`],
+ bad:[`"good" không đi với "than".`,`"best" là so sánh NHẤT.`,`"well" sai cấu trúc so sánh hơn.`],
+ ev:`It's even better than the old one downtown.`,
+ evvi:`Nó thậm chí còn tốt hơn cái cũ ở trung tâm.`,
+ dict:[`better`,`good`,`best`,`well`]},
+{id:11,part:3,col:'coral',text:`Passage 3 · You can find it <b>(3) ______</b> the big supermarket.`,correct:`near`,
+ options:[`on`,`in`,`near`,`to`],
+ opts:[OPT(`near`,`prep`,`nɪər`,`gần`,1),OPT(`on`,`prep`,`ɒn`,`trên`),OPT(`in`,`prep`,`ɪn`,`trong`),OPT(`to`,`prep`,`tuː`,`tới, đến`)],
+ vnt:`"Bạn có thể tìm thấy nó gần siêu thị lớn."`,
+ why:[`"near" đúng nghĩa và logic ngữ cảnh — đường hầm đi bộ nằm ở khu vực gần siêu thị lớn, không phải bên trong hay bên trên nó.`],
+ bad:[`"on" không hợp lý vì đường hầm không nằm "trên" siêu thị.`,`"in" không hợp lý vì đường hầm không nằm trong siêu thị.`,`"to" chỉ đúng nếu ghép thành "next to", không đứng một mình.`],
+ ev:`You can find it near the big supermarket.`,
+ evvi:`Bạn có thể tìm thấy nó gần siêu thị lớn.`,
+ dict:[`near`,`supermarket`,`on`,`in`]},
+{id:12,part:3,col:'coral',text:`Passage 3 · Using these subways is a great example of <b>(4) ______</b> urban planning.`,correct:`modern`,
+ options:[`old`,`new`,`traditional`,`modern`],
+ opts:[OPT(`modern`,`adj`,`ˈmɒdn`,`hiện đại`,1),OPT(`old`,`adj`,`əʊld`,`cũ`),OPT(`new`,`adj`,`njuː`,`mới`),OPT(`traditional`,`adj`,`trəˈdɪʃənl`,`truyền thống`)],
+ vnt:`"Việc sử dụng những đường hầm đi bộ này là một ví dụ tuyệt vời về quy hoạch đô thị hiện đại."`,
+ why:[`Cụm cố định "modern urban planning" (quy hoạch đô thị hiện đại) là collocation rất phổ biến, khớp với việc ca ngợi giải pháp đường hầm đi bộ tiên tiến.`],
+ bad:[`"old" và "traditional" trái nghĩa với ý ca ngợi một giải pháp tiên tiến.`,`"new" đúng nhưng chưa lột tả hết ý nghĩa quy mô quy hoạch đô thị bằng "modern".`],
+ ev:`Using these subways is a great example of modern urban planning.`,
+ evvi:`Việc sử dụng những đường hầm đi bộ này là một ví dụ tuyệt vời về quy hoạch đô thị hiện đại.`,
+ dict:[`modern`,`urban`,`traditional`,`planning`]},
+
+{id:13,part:4,col:'lilac',text:`Exercise 12 · There are a lot of big trees and there aren't many cars so the streets are very <b>(1) ______</b>.`,correct:`clean`,
+ options:[`dirty`,`noisy`,`clean`,`dark`],
+ opts:[OPT(`clean`,`adj`,`kliːn`,`sạch sẽ`,1),OPT(`dirty`,`adj`,`ˈdɜːti`,`bẩn thỉu`),OPT(`noisy`,`adj`,`ˈnɔɪzi`,`ồn ào`),OPT(`dark`,`adj`,`dɑːk`,`tối tăm`)],
+ vnt:`"Không có nhiều ô tô nên đường phố rất sạch sẽ."`,
+ why:[`Có nhiều cây lớn và ít xe cộ dẫn đến hệ quả tự nhiên là đường phố trong lành, sạch sẽ.`],
+ bad:[`"dirty" trái nghĩa với hệ quả của việc ít xe cộ.`,`"noisy" mâu thuẫn với đoạn trước tác giả nói khu này "peaceful and quiet".`,`"dark" không liên quan đến việc ít ô tô.`],
+ ev:`There are a lot of big trees and there aren't many cars so the streets are very clean.`,
+ evvi:`Có nhiều cây lớn và không có nhiều xe cộ nên đường phố rất sạch sẽ.`,
+ dict:[`clean`,`dirty`,`noisy`,`dark`]},
+{id:14,part:4,col:'lilac',text:`Exercise 12 · There's a park <b>(2) ______</b> my neighbourhood.`,correct:`in`,
+ options:[`on`,`in`,`at`,`for`],
+ opts:[OPT(`in`,`prep`,`ɪn`,`bên trong (khu vực)`,1),OPT(`on`,`prep`,`ɒn`,`trên bề mặt`),OPT(`at`,`prep`,`æt`,`tại một điểm`),OPT(`for`,`prep`,`fɔːr`,`cho`)],
+ vnt:`"Có một công viên trong khu dân cư của tôi."`,
+ why:[`Ta dùng giới từ "in" trước các khu vực địa lý có ranh giới rộng như khu dân cư, thành phố, quốc gia (in my neighbourhood).`],
+ bad:[`"on" dùng cho bề mặt, không hợp với khu vực rộng.`,`"at" chỉ một điểm cụ thể.`,`"for" sai nghĩa hoàn toàn ở vị trí này.`],
+ ev:`There's a park in my neighbourhood.`,
+ evvi:`Có một công viên trong khu dân cư của tôi.`,
+ dict:[`in`,`neighbourhood`,`on`,`at`]},
+{id:15,part:4,col:'lilac',text:`Exercise 12 · There aren't any restaurants, bars or cinemas <b>(3) ______</b> my road.`,correct:`on`,
+ options:[`in`,`at`,`on`,`by`],
+ opts:[OPT(`on`,`prep`,`ɒn`,`trên`,1),OPT(`in`,`prep`,`ɪn`,`trong`),OPT(`at`,`prep`,`æt`,`tại`),OPT(`by`,`prep`,`baɪ`,`bởi, cạnh`)],
+ vnt:`"Không có nhà hàng, quán bar hay rạp chiếu phim nào trên con đường của tôi."`,
+ why:[`Đi với danh từ chỉ đường phố (street, road, avenue), tiếng Anh bắt buộc dùng giới từ "on" (on my road, on Main Street).`],
+ bad:[`"in", "at" và "by" đều không phải collocation chuẩn với "road" khi chỉ việc nằm dọc trên con đường.`],
+ ev:`There aren't any restaurants, bars or cinemas on my road.`,
+ evvi:`Không có nhà hàng, quán bar hay rạp chiếu phim nào trên con đường của tôi.`,
+ dict:[`on`,`road`,`in`,`at`]},
+{id:16,part:4,col:'lilac',text:`Exercise 12 · But, if you go to Main Street, you can find a lot of things to <b>(4) ______</b>.`,correct:`do`,
+ options:[`buy`,`see`,`do`,`eat`],
+ opts:[OPT(`do`,`v`,`duː`,`làm`,1),OPT(`buy`,`v`,`baɪ`,`mua`),OPT(`see`,`v`,`siː`,`xem`),OPT(`eat`,`v`,`iːt`,`ăn`)],
+ vnt:`"Nhưng, nếu bạn đi đến Đường Chính, bạn có thể tìm thấy rất nhiều hoạt động để làm."`,
+ why:[`Cụm cố định "things to do" (những việc/hoạt động để làm) là cách diễn đạt phổ biến nhất để chỉ các tiện ích tổng hợp của khu phố (bao gồm cả ăn uống, mua sắm, vui chơi).`],
+ bad:[`"buy", "see" và "eat" tuy đúng ngữ pháp nhưng mỗi từ chỉ nêu MỘT hoạt động cụ thể, thu hẹp ý nghĩa hơn nhiều so với "do" mang nghĩa bao quát.`],
+ ev:`You can find a lot of things to do.`,
+ evvi:`Bạn có thể tìm thấy rất nhiều hoạt động để làm.`,
+ dict:[`do`,`buy`,`see`,`eat`]},
+{id:17,part:4,col:'lilac',text:`Exercise 12 · I like my neighbourhood because it is very safe. There is no <b>(5) ______</b>.`,correct:`crime`,
+ options:[`people`,`crime`,`noise`,`traffic`],
+ opts:[OPT(`crime`,`n`,`kraɪm`,`tội phạm`,1),OPT(`people`,`n`,`ˈpiːpl`,`con người`),OPT(`noise`,`n`,`nɔɪz`,`tiếng ồn`),OPT(`traffic`,`n`,`ˈtræfɪk`,`giao thông`)],
+ vnt:`"Tôi thích khu dân cư của mình vì nó rất an toàn. Không có tội phạm."`,
+ why:[`Câu trước đó vừa nói "it is very safe" (rất an toàn) — lý do trực tiếp nhất khiến một nơi an toàn là vì không có tội phạm.`],
+ bad:[`"people" sai logic vì khu dân cư phải có người ở.`,`"noise" và "traffic" không liên kết chặt chẽ với ý "an toàn (safe)" bằng "crime".`],
+ ev:`I like my neighbourhood because it is very safe. There is no crime and all of my neighbours take care of each other.`,
+ evvi:`Tôi thích khu dân cư của mình vì nó rất an toàn. Không có tội phạm và tất cả hàng xóm của tôi đều chăm sóc lẫn nhau.`,
+ dict:[`crime`,`safe`,`people`,`traffic`]},
+{id:18,part:4,col:'lilac',text:`Exercise 12 · All of my neighbours take care of <b>(6) ______</b>.`,correct:`each other`,
+ options:[`himself`,`herself`,`themselves`,`each other`],
+ opts:[OPT(`each other`,`pron`,`iːtʃ ˈʌðər`,`lẫn nhau`,1),OPT(`himself`,`pron`,`hɪmˈself`,`chính anh ấy`),OPT(`herself`,`pron`,`hɜːˈself`,`chính cô ấy`),OPT(`themselves`,`pron`,`ðəmˈselvz`,`chính họ`)],
+ vnt:`"Tất cả những người hàng xóm của tôi đều chăm sóc lẫn nhau."`,
+ why:[`Cấu trúc "take care of each other" thể hiện sự quan tâm, giúp đỡ QUA LẠI giữa nhiều người hàng xóm với nhau.`],
+ bad:[`"himself"/"herself" sai vì "neighbours" là số nhiều.`,`"themselves" sai nghĩa vì mang ý "tự ai nấy lo", không tạo nên sự gắn kết hàng xóm như "each other".`],
+ ev:`There is no crime and all of my neighbours take care of each other.`,
+ evvi:`Không có tội phạm và tất cả hàng xóm của tôi đều chăm sóc lẫn nhau.`,
+ dict:[`each other`,`neighbour`,`care`,`themselves`]}
+];
+
+/* ══ dựng trang ══ */
+var TOTAL=QS.length,answered=0,score=0,done={},MAP={};
+var TINT={sky:'#F3FAFF',mint:'#F1FCF3',coral:'#FFF7F0',lilac:'#F8F4FF',pink:'#FFF4F8',sun:'#FFFBEB'};
+var SECINFO={
+ 1:{c:'sky',t:'🏘️ Level 1 · My Wonderful Neighbourhood — Câu 1 → 4',s:'Đọc đoạn văn Passage 1 rồi chọn từ đúng điền vào mỗi chỗ trống.'},
+ 2:{c:'mint',t:'🛍️ Level 2 · Neighbourhood Charity Shop — Câu 5 → 8',s:'Đọc đoạn văn Passage 2 rồi chọn từ đúng điền vào mỗi chỗ trống.'},
+ 3:{c:'coral',t:'🚇 Level 3 · The Pedestrian Subway — Câu 9 → 12',s:'Đọc đoạn văn Passage 3 rồi chọn từ đúng điền vào mỗi chỗ trống.'},
+ 4:{c:'lilac',t:'🏡 Level 4 · My Neighbourhood — Câu 13 → 18',s:'Đọc đoạn văn Exercise 12 rồi chọn từ đúng điền vào mỗi chỗ trống.'}};
+var app=document.getElementById('app'),secs={};
+[1,2,3,4].forEach(function(p){var s=document.createElement('div');s.className='sec';s.dataset.part=p;s.style.borderColor='var(--'+SECINFO[p].c+')';
+ s.innerHTML='<div class="sech" style="color:var(--'+SECINFO[p].c+'-d)">'+SECINFO[p].t+'</div><div class="secs">'+SECINFO[p].s+'</div>';
+ secs[p]=s;app.appendChild(s)});
+QS.forEach(function(q){
+ var so=shuffle(q.options);
+ MAP[q.id]=so;
+ var card=document.createElement('div');
+ card.className='q';card.id='c'+q.id;
+ card.style.setProperty('--qc','var(--'+q.col+')');
+ card.style.borderLeftColor='var(--'+q.col+')';
+ card.style.background=TINT[q.col];
+ card.innerHTML='<div class="qt"><span class="qn">'+q.id+'</span>'+q.text+'</div>'+
+  '<div class="og" id="o'+q.id+'">'+so.map(function(o,i){return '<button class="ob" onclick="pick('+q.id+','+i+')">'+String.fromCharCode(65+i)+'. '+o+'</button>'}).join('')+'</div>'+
+  '<div class="ex" id="e'+q.id+'"></div>';
+ secs[q.part].appendChild(card);
+});
+
+function pick(qid,i){
+ if(done[qid])return;done[qid]=true;answered++;
+ var q=QS.find(function(x){return x.id===qid});
+ var so=MAP[qid],bs=document.getElementById('o'+qid).children;
+ var ok=so[i]===q.correct;
+ for(var k=0;k<bs.length;k++){bs[k].classList.add('dn');
+  if(so[k]===q.correct)bs[k].classList.add('ok');else if(k===i)bs[k].classList.add('no')}
+ document.getElementById('e'+qid).innerHTML=render(q);
+ document.getElementById('e'+qid).classList.add('on');
+ if(ok){score++;ding();conf()}
+ else{buzz();var c=document.getElementById('c'+qid);c.classList.add('shk');setTimeout(function(){c.classList.remove('shk')},430)}
+ bump();
+}
+function bump(){document.getElementById('lv').textContent=score+'/'+TOTAL;document.getElementById('sc').textContent=score+'/'+TOTAL}
+
+/* ══ nộp bài ══ */
+function openName(){
+ if(answered<TOTAL){alert('Con ơi, con còn '+(TOTAL-answered)+' câu chưa làm kìa! Hoàn thành hết rồi mới nộp bài nhé!');return;}
+ document.getElementById('ovN').classList.add('on');setTimeout(function(){document.getElementById('nIn').focus()},150);
+}
+document.getElementById('nIn').addEventListener('keydown',function(e){if(e.key==='Enter')showResult()});
+function showResult(){
+ var i=document.getElementById('nIn'),n=i.value.trim();
+ if(!n){document.getElementById('nEm').classList.add('show');i.focus();return}
+ document.getElementById('nEm').classList.remove('show');
+ document.getElementById('ovN').classList.remove('on');
+ var pct=score/TOTAL,ten=(pct*10).toFixed(2),g,m,gif;
+ document.getElementById('rn').textContent='Học viên: '+n;
+ if(score===TOTAL){g='🏆 PHÁ ĐẢO TUYỆT ĐỐI, '+n+'!';m='Con ăn trọn cả '+TOTAL+' đồng xu vàng, không mất mạng nào — đúng chuẩn game thủ nhỏ tuổi xuất sắc của Unit 4! Ms. Chí Nên rất tự hào! 🌟 ☎️ 0852639652.';gif='https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif'}
+ else if(pct>=.8){g='👏 GIỎI LẮM, '+n+'!';m='Con đã qua màn rất đẹp, chỉ cần để ý thêm chút xíu ở các câu dễ nhầm là phá đảo luôn! Con học tốt Unit 4 lắm đó! ☎️ 0852639652.';gif='https://media.giphy.com/media/3o7abGQa0p2EWzchcg/giphy.gif'}
+ else if(pct>=.6){g='💪 KHÁ RỒI ĐẤY, '+n+'!';m='Con đã qua ngưỡng an toàn rồi. Mở lời giải từng câu ra xem lại, lần chơi sau con sẽ lên level nhanh lắm!';gif='https://media.giphy.com/media/3o7abGQa0p2EWzchcg/giphy.gif'}
+ else{g='🌱 CỐ LÊN NHÉ, '+n+'!';m='Đừng buồn con nhé. Game thủ giỏi nào cũng từng thua vài màn — xem lời giải của cô để hồi đầy máu, rồi bấm chơi lại nha, Ms tin con sẽ làm tốt hơn! 💪';gif='https://media.giphy.com/media/l378giAZgxPw3eO52/giphy.gif'}
+ document.getElementById('rSc').textContent=score;
+ document.getElementById('rTt').textContent=TOTAL;
+ document.getElementById('r10').textContent=ten;
+ document.getElementById('rGif').src=gif;
+ document.getElementById('rMs').innerHTML='<b>'+g+'</b><br>'+m;
+ document.getElementById('ovR').classList.add('on');
+ if(pct>=.6){conf();ding()}
+}
+function closeR(){document.getElementById('ovR').classList.remove('on')}
+
+/* ══ lời nhắc — đổi theo phần đang làm ══ */
+var GEN=[
+ '🎮 Lớp 6 mình ơi, sẵn sàng chưa? Pixel Quest Reading có 18 câu (câu 1 → 18) về Unit 4: Neighbourhood — nhặt đủ 18 đồng xu vàng để phá đảo nhé! 🏘️',
+ '🚨 LƯU Ý TỪ Ms. Chí Nên: Các con cuộn tới câu nào thì làm câu đó nhé! Từ nào chưa biết thì tra Google Dịch/Từ điển Cambridge, tuyệt đối KHÔNG chọn bừa. Đọc kỹ phần giải thích và CHÉP TỪ MỚI vào vở mới thực sự giỏi lên con nhé! 📝',
+ '🏠 Unit 4 nói về khu phố nơi mình sống — vừa đọc bài vừa tưởng tượng con đường, công viên, cửa hàng quen thuộc, con sẽ nhớ từ nhanh hơn rất nhiều!',
+ '🔥 COMBO! Đúng liền 3 câu là lửa bùng cháy, đúng liền 10 câu là cực đỉnh — các chiến binh lớp 6 làm được không nào?',
+ '💪 Người chơi giỏi không phải là người không bao giờ sai, mà là người sai rồi vẫn đọc kỹ lời giải và chơi tiếp. Cố lên nhé!',
+ '🦆 Chọn sai thì chú vịt kêu "quạc quạc" cho vui thôi — con cười một cái, đọc giải thích, rồi tiếp tục chinh phục màn chơi nhé!',
+ '🏆 Hoàn thành Unit 4 hôm nay, con sẽ tự tin hơn khi nói về khu nhà mình bằng tiếng Anh — cố gắng lên nào!',
+ '☎️ Đăng ký khoá tiếng Anh lớp 1 → 12 cùng Ms. Chí Nên — 0852639652 — học vui như chơi game, tiến bộ từng ngày!'];
+var PMSG={
+ 1:['🏘️ LEVEL 1 — Passage 1: My Wonderful Neighbourhood! Mục tiêu: ăn trọn 4 đồng xu vàng đầu tiên — đọc kỹ đoạn văn rồi chọn từ nhé! 🔥',
+    '🕵️ Mỗi chỗ trống đều có "dấu vết" ngay trong câu văn — tìm đúng từ loại (danh từ/tính từ/giới từ...) là con chọn trúng ngay!'],
+ 2:['🛍️ LEVEL 2 — Passage 2: Charity Shop! 4 câu về cửa hàng từ thiện đang chờ con — chú ý các cụm từ cố định như "at a good price" nha!',
+    '👛 Đọc kỹ từng câu, so sánh 4 đáp án bằng loại từ (noun/adj/verb...) con sẽ thấy đáp án đúng "lộ" ra ngay!'],
+ 3:['🚇 LEVEL 3 — Passage 3: The Pedestrian Subway! Đường hầm đi bộ an toàn hơn rất nhiều — con nhớ chú ý các giới từ chỉ vị trí nhé!',
+    '🧭 Gần hết nửa chặng đường rồi — giữ vững phong độ, đọc kỹ ngữ cảnh trước khi chọn đáp án nào!'],
+ 4:['🏡 LEVEL 4 — Exercise 12: My Neighbourhood! Chặng cuối có 6 câu — về đích vững vàng để phá đảo toàn bộ Unit 4 nhé!',
+    '👾 Chỉ còn vài câu nữa là hạ gục toàn bộ Unit 4 — cố lên, lá cờ chiến thắng đang vẫy gọi lớp 6 đó!']};
+var curP=0,mk=0,msEl=document.getElementById('msTx');
+function showMsg(t){msEl.style.opacity=0;setTimeout(function(){msEl.innerHTML=t;msEl.style.opacity=1},250)}
+setInterval(function(){var list=(PMSG[curP]||[]).concat(GEN);mk=(mk+1)%list.length;showMsg(list[mk])},5200);
+if('IntersectionObserver' in window){
+ var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var p=+e.target.dataset.part;if(p!==curP){curP=p;mk=0;showMsg(PMSG[p][0])}}})},{threshold:.35});
+ [1,2,3,4].forEach(function(p){io.observe(secs[p])});
+}
+</script>
+<style>/*streak*/
+#stkRow{display:flex;align-items:center;flex:0 0 auto;margin:0 4px}#stkRow.in{align-self:center;margin:0 0 0 8px}#stkRow.in .bar,#stkRow.in .nx,#stkRow.in .lbl{display:none!important}#stkRow.in #stkP{flex-direction:row!important;gap:6px;padding:4px 10px 4px 8px;position:static}#stkRow.in .fl,#stkRow.in .n{position:static;line-height:1}
+#stkRow.fixed{position:fixed;left:10px;bottom:12px;z-index:60}
+#stkP{display:flex;align-items:center;gap:6px;padding:2px 10px 2px 7px;border-radius:999px;background:#FFF7ED;border:2px solid #FDBA74;font-family:'Baloo 2','Nunito',sans-serif;
+ font-weight:700;color:#9A3412;font-size:.92rem;transition:transform .25s;white-space:nowrap}
+#stkP .fl{display:inline-block;position:static;font-size:1.1rem;transition:font-size .3s;transform-origin:50% 90%}
+#stkP.hot .fl{animation:stkFl .5s ease-in-out infinite alternate}@keyframes stkFl{from{transform:scale(1) rotate(-6deg)}to{transform:scale(1.25) rotate(6deg)}}
+#stkP.pop{transform:scale(1.15)}#stkP.cold{filter:grayscale(.6);opacity:.85}
+#stkP .n{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:999px;background:linear-gradient(135deg,#FB923C,#EF4444);color:#fff;font-size:.9rem}
+#stkP .bar{width:54px;height:6px;border-radius:99px;background:#FED7AA;overflow:hidden}#stkP .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#F97316,#EF4444);transition:width .3s}
+#stkP .nx{font-size:.78rem;color:#C2410C}
+#stkToast{position:fixed;left:50%;top:38%;z-index:70;transform:translate(-50%,-50%) scale(.4);opacity:0;pointer-events:none;text-align:center;padding:18px 26px;border-radius:26px;
+ background:linear-gradient(135deg,#FFF7ED,#FEF3C7);border:4px solid #FDBA74;box-shadow:0 18px 40px rgba(0,0,0,.25);font-family:'Baloo 2','Nunito',sans-serif;color:#9A3412;max-width:86vw;transition:all .35s cubic-bezier(.2,1.6,.4,1)}
+#stkToast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}#stkToast b{display:block;font-size:2.3rem;line-height:1.15}#stkToast span{font-weight:700;font-size:1.05rem}
+#stkToast.soft{background:linear-gradient(135deg,#EFF6FF,#F5F3FF);border-color:#93C5FD;color:#1E3A8A}#stkToast.soft b{font-size:1.6rem}
+.stkSpark{position:fixed;z-index:69;pointer-events:none;font-size:26px;animation:stkSp 1.2s ease-out forwards}
+@keyframes stkSp{0%{opacity:1;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(1.3) rotate(240deg)}}
+@media(max-width:700px){#stkP .bar,#stkP .nx,#stkP .lbl{display:none}#stkP{padding:2px 7px 2px 5px}#stkToast b{font-size:1.8rem}}
+@media (prefers-reduced-motion:reduce){#stkP.hot .fl,.stkSpark{animation:none}}
+</style>
+<script>/*streak*/(function(){
+ const $=id=>document.getElementById(id),num=el=>{const m=(el.textContent||'').match(/(\d+)\s*\/\s*(\d+)/);return m?[+m[1],+m[2]]:[0,0]};
+ let get=null,anchor=null,mode='after';const sc=$('scoreChip'),pg=$('progChip');
+ if(sc&&pg){get=()=>{const s=num(sc),a=num(pg);return [a[0],s[0],a[1]]};anchor=sc}
+ else{try{if(typeof answered!=='undefined'&&typeof score!=='undefined'){get=()=>[answered,score,typeof TOTAL!=='undefined'?TOTAL:0];anchor=$('sc')&&$('sc').parentElement}}catch(e){}
+  if(!get)try{if(typeof done==='object'&&done&&$('lv')){get=()=>{const v=Object.values(done);return [v.length,v.filter(x=>x===true).length,typeof QS!=='undefined'?QS.length:0]};anchor=$('lv').closest('.gauge')||$('lv');mode='in'}}catch(e){}}
+ if(!get)return;
+ const row=document.createElement('div');row.id='stkRow';
+ row.innerHTML='<div id="stkP" class="cold" title="Số câu đúng liên tiếp"><span class="fl">🔥</span><span class="lbl">Chuỗi đúng</span><span class="n" id="stkN">0</span><span class="bar"><i id="stkB"></i></span><span class="nx" id="stkX">→ 3</span></div>';
+ if(!anchor){row.className='fixed';document.body.appendChild(row)}else if(mode==='in'){row.className='in';anchor.insertAdjacentElement('afterend',row)}else anchor.insertAdjacentElement('afterend',row);
+ const toast=document.createElement('div');toast.id='stkToast';document.body.appendChild(toast);
+ const P=document.getElementById('stkP'),N=document.getElementById('stkN'),B=document.getElementById('stkB'),X=document.getElementById('stkX');
+ let cur=0,best=0,[lastA,lastS]=get(),tmr=null;
+ const NEXT=n=>n<3?3:n<5?5:n<10?10:(Math.floor(n/5)+1)*5,LOW=n=>n<3?0:n<5?3:n<10?5:Math.floor(n/5)*5;
+ const PRAISE={3:['🔥 3 câu liền!','Con đang vào guồng rồi đó!'],5:['🔥🔥 5 câu liền!','Siêu đỉnh luôn — cô thấy con tập trung lắm!'],10:['🌟 10 câu liền!','Không ai cản nổi con nữa rồi!'],
+  15:['🏆 15 câu liền!','Con là ngôi sao của lớp đó!'],20:['👑 20 câu liền!','Tuyệt vời — cô tự hào về con lắm!']};
+ const OOPS=['Không sao đâu con — mình bắt đầu chuỗi mới nhé! 💪','Đọc lời giải rồi làm tiếp, chuỗi mới đang chờ con! 🌱','Sai một câu là học thêm một điều — cố lên con! 🌈','Hít một hơi thật sâu, câu sau con sẽ làm được! ⭐'];
+ function say(t,sub,soft){toast.className=soft?'soft':'';toast.innerHTML='<b>'+t+'</b><span>'+sub+'</span>';void toast.offsetWidth;toast.classList.add('show');clearTimeout(tmr);tmr=setTimeout(()=>toast.classList.remove('show'),soft?1600:2000)}
+ function burst(){const E=['🔥','⭐','✨','🎉','💛','🌟'];for(let i=0;i<16;i++){const s=document.createElement('div');s.className='stkSpark';s.textContent=E[i%E.length];
+  const a=Math.random()*Math.PI*2,r=120+Math.random()*160;s.style.cssText='left:50%;top:38%;--x:'+Math.cos(a)*r+'px;--y:'+Math.sin(a)*r+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),1300)}}
+ function paint(){N.textContent=cur;const lo=LOW(cur),hi=NEXT(cur);B.style.width=Math.min(100,(cur-lo)/(hi-lo)*100)+'%';X.textContent='→ '+hi;
+  P.classList.toggle('cold',cur===0);P.classList.toggle('hot',cur>=3);P.classList.add('pop');setTimeout(()=>P.classList.remove('pop'),250);
+  P.querySelector('.fl').style.fontSize=(1.1+Math.min(cur,15)*.03)+'rem'}
+ function check(){const [a,s,tot]=get();if(a===lastA)return;const dA=a-lastA,dS=s-lastS;lastA=a;lastS=s;if(dA<=0)return;
+  if(dS>=dA){const before=cur;cur+=dA;best=Math.max(best,cur);paint();
+   const hit=Object.keys(PRAISE).map(Number).filter(m=>before<m&&cur>=m).pop()||(cur>=25&&Math.floor(cur/5)>Math.floor(before/5)?cur-cur%5:0);
+   if(hit){const p=PRAISE[hit]||['🚀 '+hit+' câu liền!','Con đang bay cao lắm rồi!'];say(p[0],p[1]);burst()}}
+  else{const had=cur;cur=0;paint();if(had>=3)say('Chuỗi '+had+' câu — giỏi lắm!',OOPS[Math.floor(Math.random()*OOPS.length)],true)}
+  if(tot&&a>=tot)setTimeout(()=>{say('🏅 Chuỗi dài nhất: '+best+' câu',best>=5?'Con làm bài thật tuyệt vời!':'Lần sau mình thử phá kỷ lục này nhé!');if(best>=5)burst()},2400)}
+ setInterval(check,250);
+})();</script>
+<script>/*devclean*/(function(){
+var ZW=/[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g,
+    SP=/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\t]/g,
+    AP=/[\u2018\u2019\u201A\u201B\u2032\u2035\u02B9\u02BB\u02BC\u02BD\u02C8\u0060\u00B4\uFF07]/g,
+    DQ=/[\u201C\u201D\u201E\u201F\u2033\u2036\u00AB\u00BB\uFF02]/g,
+    DS=/[\u2010\u2011\u2012\u2212\uFE63\uFF0D]/g;
+function clean(v){if(!v)return v;var s=String(v);try{s=s.normalize('NFKC')}catch(e){}
+  return s.replace(ZW,'').replace(SP,' ').replace(AP,"'").replace(DQ,'"').replace(DS,'-').replace(/[\u0300-\u036f]/g,'').replace(/ {2,}/g,' ');}
+window.__devclean=clean;
+function fix(skip){var L=document.querySelectorAll('input:not([type]),input[type=text],input[type=search],textarea');
+  for(var i=0;i<L.length;i++){var el=L[i];if(el===skip||el.readOnly||el.disabled)continue;var v=el.value,c=clean(v);if(c!==v)el.value=c;}}
+['pointerdown','mousedown','touchstart','click','change','focusout'].forEach(function(t){document.addEventListener(t,function(e){fix(t==='focusout'||t==='change'?null:e.target)},true)});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13)fix(null)},true);
+})();</script>
+</body>
+</html>

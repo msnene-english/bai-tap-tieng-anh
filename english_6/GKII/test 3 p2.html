@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bài Tập Tiếng Anh - Gamification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #8854C0;
+            --secondary: #FDCB6E;
+            --tertiary: #00C9A7;
+            --correct: #00D26A;
+            --wrong: #FF4757;
+            --text-color: #2D3436;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        /* DYNAMIC BACKGROUND & ANIMATION */
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body {
+            height: 100vh;
+            overflow: hidden;
+            color: var(--text-color);
+            background: linear-gradient(-45deg, #FF9A9E, #FECFEF, #A18CD1, #FBC2EB, #84FAB0, #8FD3F4);
+            background-size: 400% 400%;
+            animation: gradientMove 15s ease infinite;
+            position: relative;
+        }
+
+        /* AUTO-GENERATED SVG EMOJI BACKGROUND (Floating Pattern) */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><text x="20" y="50" font-size="30" opacity="0.5">⚽</text><text x="150" y="80" font-size="40" opacity="0.3">🏆</text><text x="250" y="40" font-size="25" opacity="0.4">🌟</text><text x="80" y="180" font-size="35" opacity="0.5">📺</text><text x="220" y="220" font-size="30" opacity="0.4">🏀</text><text x="40" y="270" font-size="20" opacity="0.6">🎵</text></svg>');
+            background-repeat: repeat;
+            animation: floatBackground 30s linear infinite;
+        }
+
+        @keyframes floatBackground {
+            from { background-position: 0 0; }
+            to { background-position: 300px 300px; }
+        }
+
+        /* HEADER / CONTROL BAR */
+        .top-bar {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .teacher-info {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #fff;
+            background: rgba(136, 84, 192, 0.8);
+            padding: 5px 15px;
+            border-radius: 20px;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+        }
+
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.3);
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px 15px;
+            border-radius: 10px;
+        }
+
+        .btn-control {
+            cursor: pointer;
+            padding: 8px 15px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--tertiary);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 0 #00A68A;
+            transition: all 0.1s;
+        }
+
+        .btn-control:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #00A68A;
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            box-shadow: 0 4px 0 #5E3A85;
+        }
+        .btn-submit:active { box-shadow: 0 0 0 #5E3A85; }
+
+        /* SPLIT SCREEN LAYOUT */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            position: relative;
+            z-index: 10;
+            padding: 15px;
+            gap: 20px;
+        }
+
+        .pane {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 25px;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* SCROLLBAR STYLING */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+        /* READING PASSAGE (LEFT PANE) */
+        .passage-block {
+            background: rgba(255,255,255,0.7);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 10px rgba(255,255,255,1), 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .passage-title {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            text-align: center;
+            text-transform: uppercase;
+            font-weight: 900;
+        }
+
+        .passage-text {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .btn-translate {
+            background: #FF9F43;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #D47B29;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        .btn-translate:hover { filter: brightness(1.1); }
+        .btn-translate:active { transform: translateY(4px); box-shadow: none; }
+
+        .translation-box {
+            display: none;
+            background: #FFF3E0;
+            padding: 15px;
+            border-left: 5px solid #FF9F43;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #5D4037;
+        }
+
+        /* GLOSSARY TABLE */
+        .glossary-wrapper { margin-top: 15px; }
+        .glossary-title {
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th { background: var(--primary); color: white; font-weight: 700; }
+        tr:last-child td { border-bottom: none; }
+        td:nth-child(1) { font-weight: 800; color: #E84393; }
+        td:nth-child(2) { color: #0984E3; font-style: italic; }
+
+        /* EXERCISES (RIGHT PANE) */
+        .question-card {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.05);
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .question-text {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            color: #2D3436;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: #F1F2F6;
+            border: 2px solid #DFE4EA;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2F3542;
+            cursor: pointer;
+            text-align: left;
+            box-shadow: 0 5px 0 #DFE4EA;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            transform: scale(1.02) translateY(-2px);
+            background: #ECCC68;
+            border-color: #ECCC68;
+            box-shadow: 0 7px 0 #D4B24B;
+        }
+
+        .option-btn:active:not(.disabled) {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 transparent;
+        }
+
+        .option-btn.correct {
+            background: var(--correct);
+            border-color: var(--correct);
+            color: white;
+            box-shadow: 0 5px 0 #00A855;
+        }
+
+        .option-btn.wrong {
+            background: var(--wrong);
+            border-color: var(--wrong);
+            color: white;
+            box-shadow: 0 5px 0 #D93845;
+            animation: shake 0.4s;
+        }
+
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.8; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+        /* EXPLANATION BOX */
+        .explanation-box {
+            display: none;
+            margin-top: 15px;
+            background: #E8F8F5;
+            border: 2px dashed #1ABC9C;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .exp-title { font-weight: 900; color: #16A085; margin-bottom: 8px; font-size: 1.1rem; }
+        .exp-content { color: #2C3E50; }
+        .exp-content b { color: #E74C3C; }
+
+        /* MODAL (RESULT) */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 100;
+        }
+        .result-modal {
+            background: white; padding: 40px; border-radius: 30px;
+            text-align: center; max-width: 500px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .result-score { font-size: 4rem; font-weight: 900; color: var(--primary); margin: 20px 0; }
+        .result-msg { font-size: 1.5rem; font-weight: 700; color: #2D3436; margin-bottom: 20px; }
+        .btn-close {
+            background: var(--tertiary); color: white; border: none; padding: 10px 30px;
+            font-size: 1.2rem; font-weight: 800; border-radius: 15px; cursor: pointer;
+            box-shadow: 0 5px 0 #00A68A;
+        }
+
+        /* CONFETTI CONTAINER */
+        #confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+        .confetti { position: absolute; width: 10px; height: 10px; animation: fall 2s linear forwards; }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+    </style>
+<style>body{overflow:auto!important;}</style></head>
+<body>
+
+    <div class="top-bar">
+        <div class="teacher-info">👩‍🏫 Giáo viên tạo: Ms. Chí Nên</div>
+        <div class="timer-container">
+            <button class="btn-control" id="btn-timer" onclick="toggleTimer()">BẮT ĐẦU TÍNH GIỜ LÀM BÀI</button>
+            <div class="timer-display" id="timer-display">10:00</div>
+        </div>
+        <button class="btn-control btn-submit" onclick="submitQuiz()">NỘP BÀI 🏆</button>
+    </div>
+
+    <div class="main-container">
+        <div class="pane" id="left-pane"></div>
+        
+        <div class="pane" id="right-pane"></div>
+    </div>
+
+    <div class="overlay" id="result-overlay">
+        <div class="result-modal">
+            <h2 style="font-size: 2rem; color: #FF9F43;">KẾT QUẢ CỦA BẠN</h2>
+            <div class="result-score" id="score-text">0/18</div>
+            <div class="result-msg" id="score-msg">Tuyệt vời!</div>
+            <button class="btn-close" onclick="closeModal()">Xem lại bài giải chi tiết</button>
+        </div>
+    </div>
+
+    <div id="confetti-container"></div>
+
+    <script>
+        /* ================= DATA ================= */
+        const quizData = [
+            {
+                title: "PART 1: NEW SPORTS EVENT!",
+                text: "We are excited to inform you about the upcoming <b>City Sports Festival!</b> This event (13) _____ place at Greenfield Stadium next Saturday. Athletes from different schools will (14) _____ in various sports, (15) _____ football, basketball, and swimming. The prizes for the winners are (16) _____, so don't miss this amazing event!",
+                translation: "Chúng tôi rất vui mừng thông báo cho bạn về <b>Lễ hội Thể thao Thành phố</b> sắp tới! Sự kiện này (13) <b>sẽ diễn ra</b> tại Sân vận động Greenfield vào thứ Bảy tuần sau. Các vận động viên từ các trường học khác nhau sẽ (14) <b>thi đấu</b> trong nhiều môn thể thao khác nhau, (15) <b>như là</b> bóng đá, bóng rổ và bơi lội. Giải thưởng dành cho những người chiến thắng rất (16) <b>có giá trị</b>, vì vậy đừng bỏ lỡ sự kiện tuyệt vời này nhé!",
+                glossary: [
+                    { word: "Inform", pos: "Verb (Động từ)", meaning: "Thông báo, báo tin" },
+                    { word: "Upcoming", pos: "Adjective (Tính từ)", meaning: "Sắp tới, sắp diễn ra" },
+                    { word: "Take place", pos: "Phrasal Verb (Cụm ĐT)", meaning: "Diễn ra, tổ chức (sự kiện)" },
+                    { word: "Stadium", pos: "Noun (Danh từ)", meaning: "Sân vận động" },
+                    { word: "Athlete", pos: "Noun (Danh từ)", meaning: "Vận động viên" },
+                    { word: "Compete", pos: "Verb (Động từ)", meaning: "Thi đấu, cạnh tranh" },
+                    { word: "Various", pos: "Adjective (Tính từ)", meaning: "Đa dạng, nhiều loại khác nhau" },
+                    { word: "Prize", pos: "Noun (Danh từ)", meaning: "Giải thưởng" },
+                    { word: "Valuable", pos: "Adjective (Tính từ)", meaning: "Có giá trị lớn, quý giá" },
+                    { word: "Amazing", pos: "Adjective (Tính từ)", meaning: "Tuyệt vời, đáng kinh ngạc" }
+                ],
+                questions: [
+                    {
+                        q: "Question 13: This event (13) _____ place at Greenfield Stadium next Saturday.",
+                        options: ["takes", "take", "taking", "taken"],
+                        correctIndex: 0,
+                        explanation: "<b>Dịch:</b> Sự kiện này diễn ra tại Sân vận động Greenfield.<br><b>Giải thích:</b> Cụm từ cố định <b>'take place'</b> mang nghĩa là <i>diễn ra</i>. Chủ ngữ 'This event' (sự kiện này) là số ít, nên động từ 'take' phải thêm 's' thành <b>takes</b>. Các lựa chọn khác sai ngữ pháp: 'take' (chỉ dùng cho số nhiều), 'taking' (thiếu tobe), 'taken' (phân từ 2)."
+                    },
+                    {
+                        q: "Question 14: Athletes from different schools will (14) _____ in various sports...",
+                        options: ["complete", "compete", "compare", "compass"],
+                        correctIndex: 1,
+                        explanation: "<b>Dịch:</b> Các vận động viên sẽ thi đấu trong nhiều môn thể thao.<br><b>Giải thích:</b> Dựa vào ngữ cảnh thể thao, ta cần từ mang nghĩa thi đấu.<br>- <b>compete (v):</b> thi đấu, cạnh tranh -> ĐÁP ÁN ĐÚNG.<br>- complete (v): hoàn thành<br>- compare (v): so sánh<br>- compass (n): cái la bàn."
+                    },
+                    {
+                        q: "Question 15: ...in various sports, (15) _____ football, basketball, and swimming.",
+                        options: ["or", "so", "but", "such as"],
+                        correctIndex: 3,
+                        explanation: "<b>Dịch:</b> ...nhiều môn thể thao khác nhau, như là bóng đá, bóng rổ và bơi lội.<br><b>Giải thích:</b> Đoạn này đang liệt kê ví dụ cho cụm 'various sports'. Cụm <b>'such as'</b> mang nghĩa 'như là' dùng để liệt kê ví dụ. Các từ khác: 'or' (hoặc), 'so' (vì vậy), 'but' (nhưng) đều không hợp nghĩa."
+                    },
+                    {
+                        q: "Question 16: The prizes for the winners are (16) _____...",
+                        options: ["value", "valueless", "valuable", "values"],
+                        correctIndex: 2,
+                        explanation: "<b>Dịch:</b> Giải thưởng dành cho những người chiến thắng rất có giá trị.<br><b>Giải thích:</b> Sau động từ tobe 'are' ta cần một Tính từ (Adjective) để miêu tả giải thưởng.<br>- value (n/v): giá trị / định giá<br>- valueless (adj): vô giá trị (sai nghĩa)<br>- <b>valuable (adj):</b> có giá trị, quý giá -> ĐÁP ÁN ĐÚNG<br>- values (n): những giá trị (số nhiều)."
+                    }
+                ]
+            },
+            {
+                title: "PART 2: MICHAEL JORDAN",
+                text: "My favorite sports star is Michael Jordan. He (19) _____ a famous basketball player in American National Basketball Association (NBA). He (20) _____ 15 seasons in the NBA, winning 6 championships with the Chicago Bulls. The NBA website writes: “... Michael Jordan is (21) _____ basketball player (22) _____ all time.” The spirit of Michael Jordan (23) _____ that he never gave up. It may be one of the secrets of the success for Michael Jordan. Such a spirit makes a difference in our lives, so we (24) _____ try our best if we want to be successful. He is also a very nice and generous person because he uses his money to help those who need his help.",
+                translation: "Ngôi sao thể thao yêu thích của tôi là Michael Jordan. Anh ấy (19) <b>là</b> một cầu thủ bóng rổ nổi tiếng trong Hiệp hội Bóng rổ Quốc gia Mỹ (NBA). Anh ấy (20) <b>đã chơi</b> 15 mùa giải tại NBA, giành được 6 chức vô địch cùng với đội Chicago Bulls. Trang web của NBA viết: “... Michael Jordan là cầu thủ bóng rổ (21) <b>vĩ đại nhất</b> (22) <b>mọi thời đại</b>.” Tinh thần của Michael Jordan (23) <b>chính là</b> việc anh ấy không bao giờ bỏ cuộc. Đó có thể là một trong những bí quyết thành công của Michael Jordan. Một tinh thần như vậy tạo ra sự khác biệt trong cuộc sống của chúng ta, vì vậy chúng ta (24) <b>nên</b> cố gắng hết sức nếu muốn thành công. Anh ấy cũng là một người rất tử tế và hào phóng vì anh ấy sử dụng tiền của mình để giúp đỡ những người cần sự giúp đỡ.",
+                glossary: [
+                    { word: "Famous", pos: "Adjective (Tính từ)", meaning: "Nổi tiếng" },
+                    { word: "Association", pos: "Noun (Danh từ)", meaning: "Hiệp hội, tổ chức" },
+                    { word: "Season", pos: "Noun (Danh từ)", meaning: "Mùa giải (thể thao)" },
+                    { word: "Championship", pos: "Noun (Danh từ)", meaning: "Chức vô địch, giải vô địch" },
+                    { word: "Greatest", pos: "Adjective (Tính từ)", meaning: "Vĩ đại nhất (so sánh nhất)" },
+                    { word: "Spirit", pos: "Noun (Danh từ)", meaning: "Tinh thần, ý chí" },
+                    { word: "Give up", pos: "Phrasal Verb (Cụm ĐT)", meaning: "Từ bỏ, đầu hàng" },
+                    { word: "Secret", pos: "Noun (Danh từ)", meaning: "Bí mật, bí quyết" },
+                    { word: "Generous", pos: "Adjective (Tính từ)", meaning: "Hào phóng, rộng lượng" },
+                    { word: "Make a difference", pos: "Idiom (Thành ngữ)", meaning: "Tạo ra sự khác biệt/tác động tích cực" }
+                ],
+                questions: [
+                    {
+                        q: "Question 19: He (19) _____ a famous basketball player...",
+                        options: ["is", "has", "was", "be"],
+                        correctIndex: 0,
+                        explanation: "<b>Dịch:</b> Anh ấy là một cầu thủ bóng rổ nổi tiếng.<br><b>Giải thích:</b> Câu văn đang diễn tả một sự thật hiển nhiên ở hiện tại (Michael Jordan là một cầu thủ nổi tiếng). Do đó ta dùng thì Hiện tại đơn, chủ ngữ 'He' đi với tobe là <b>'is'</b>. Loại 'was' vì sự nổi tiếng của anh ấy vẫn còn ở hiện tại."
+                    },
+                    {
+                        q: "Question 20: He (20) _____ 15 seasons in the NBA...",
+                        options: ["played", "did", "took", "take"],
+                        correctIndex: 0,
+                        explanation: "<b>Dịch:</b> Anh ấy đã chơi 15 mùa giải tại NBA.<br><b>Giải thích:</b> Cầu thủ thi đấu thể thao ta dùng động từ 'play'. Hành động chơi 15 mùa giải này đã kết thúc trong quá khứ (anh ấy đã giải nghệ), nên ta dùng thì Quá khứ đơn là <b>'played'</b>."
+                    },
+                    {
+                        q: "Question 21: Michael Jordan is (21) _____ basketball player...",
+                        options: ["greatest", "the greatest", "greater", "great"],
+                        correctIndex: 1,
+                        explanation: "<b>Dịch:</b> ...là cầu thủ bóng rổ vĩ đại nhất.<br><b>Giải thích:</b> Ngữ cảnh ngụ ý so sánh anh ấy với toàn bộ các cầu thủ khác trên thế giới. Ta dùng cấu trúc So sánh nhất của tính từ ngắn (great): <b>the + adj-est</b> -> <b>the greatest</b>. Bắt buộc phải có mạo từ 'the'."
+                    },
+                    {
+                        q: "Question 22: ...basketball player (22) _____ all time.",
+                        options: ["in", "on", "of", "about"],
+                        correctIndex: 2,
+                        explanation: "<b>Dịch:</b> ...cầu thủ bóng rổ vĩ đại nhất mọi thời đại.<br><b>Giải thích:</b> Trong tiếng Anh, cụm từ cố định (collocation) để chỉ 'mọi thời đại' luôn là <b>'of all time'</b>. Đây là cụm học thuộc lòng cực kỳ phổ biến."
+                    },
+                    {
+                        q: "Question 23: The spirit of Michael Jordan (23) _____ that he never gave up.",
+                        options: ["was", "had", "made", "have"],
+                        correctIndex: 0,
+                        explanation: "<b>Dịch:</b> Tinh thần của Michael Jordan (trong quá khứ) chính là việc anh ấy không bao giờ bỏ cuộc.<br><b>Giải thích:</b> Mệnh đề sau dùng 'never gave up' (quá khứ đơn). Cấu trúc: Danh từ + tobe + that + mệnh đề (Tinh thần đó LÀ...). Quá khứ của tobe số ít là <b>'was'</b>."
+                    },
+                    {
+                        q: "Question 24: ...so we (24) _____ try our best if we want to be successful.",
+                        options: ["could", "should", "may", "will"],
+                        correctIndex: 1,
+                        explanation: "<b>Dịch:</b> ...vì vậy chúng ta NÊN cố gắng hết sức nếu muốn thành công.<br><b>Giải thích:</b> Câu văn đưa ra một lời khuyên chân thành dựa trên tấm gương của Michael Jordan. Động từ khuyết thiếu dùng để đưa ra lời khuyên là <b>'should'</b> (nên). Các từ 'could' (có thể), 'may' (có lẽ), 'will' (sẽ) không phản ánh đúng ý khuyên bảo."
+                    }
+                ]
+            },
+            {
+                title: "PART 3: TELEVISION",
+                text: "Television is an <b>important</b> invention of the 20th century. It has been so popular that we can't imagine what life would be like if there were no television. Television is a major means of communication and entertainment. It brings pictures and sound from around the world into millions of homes. Through television, viewers can see and learn about people, places and things in <b>distant</b> lands. Television widens our knowledge by introducing new ideas which may lead us to new hobbies and recreations. In addition to the news, television provides us with a variety of programs that can satisfy every taste. Most people now seem to like spending their evenings watching television than to go out.",
+                translation: "Truyền hình là một phát minh <b>quan trọng</b> của thế kỷ 20. Nó đã trở nên phổ biến đến mức chúng ta không thể tưởng tượng được cuộc sống sẽ ra sao nếu không có tivi. Tivi là một phương tiện truyền thông và giải trí chính. Nó mang hình ảnh và âm thanh từ khắp nơi trên thế giới vào hàng triệu ngôi nhà. Thông qua tivi, người xem có thể nhìn thấy và tìm hiểu về con người, những địa điểm và mọi thứ ở những vùng đất <b>xa xôi</b>. Tivi mở rộng kiến thức của chúng ta bằng cách giới thiệu những ý tưởng mới có thể dẫn chúng ta đến những sở thích và hoạt động giải trí mới. Ngoài tin tức, tivi cung cấp cho chúng ta nhiều chương trình đa dạng có thể thỏa mãn mọi sở thích. Hầu hết mọi người hiện nay dường như thích dành buổi tối để xem tivi hơn là đi chơi bên ngoài.",
+                glossary: [
+                    { word: "Invention", pos: "Noun (Danh từ)", meaning: "Phát minh, sự sáng chế" },
+                    { word: "Imagine", pos: "Verb (Động từ)", meaning: "Tưởng tượng, hình dung" },
+                    { word: "Major", pos: "Adjective (Tính từ)", meaning: "Chính, chủ yếu, quan trọng" },
+                    { word: "Communication", pos: "Noun (Danh từ)", meaning: "Sự giao tiếp, truyền thông" },
+                    { word: "Entertainment", pos: "Noun (Danh từ)", meaning: "Sự giải trí" },
+                    { word: "Distant", pos: "Adjective (Tính từ)", meaning: "Xa xôi, cách xa" },
+                    { word: "Widen", pos: "Verb (Động từ)", meaning: "Mở rộng" },
+                    { word: "Knowledge", pos: "Noun (Danh từ)", meaning: "Kiến thức, sự hiểu biết" },
+                    { word: "Recreation", pos: "Noun (Danh từ)", meaning: "Sự giải trí, tiêu khiển" },
+                    { word: "Variety", pos: "Noun (Danh từ)", meaning: "Sự đa dạng, nhiều loại" },
+                    { word: "Satisfy", pos: "Verb (Động từ)", meaning: "Làm hài lòng, thỏa mãn" }
+                ],
+                questions: [
+                    {
+                        q: "Question 31: What is the main idea of the passage?",
+                        options: [
+                            "Most people like watching TV than going out.",
+                            "People have more new hobbies and recreations.",
+                            "Everyone can be satisfied every taste.",
+                            "The importance of television."
+                        ],
+                        correctIndex: 3,
+                        explanation: "<b>Dịch:</b> Ý chính của đoạn văn là gì?<br><b>Giải thích:</b> Đoạn văn mở đầu bằng câu chủ đề: 'Television is an important invention...' (Truyền hình là một phát minh quan trọng...). Toàn bộ đoạn sau liệt kê các lợi ích của nó (phương tiện giải trí, truyền thông, mở rộng kiến thức...). Vậy ý chính là bao quát nhất: <b>Sự quan trọng của truyền hình (The importance of television)</b>. Các đáp án khác chỉ là chi tiết nhỏ trong bài."
+                    },
+                    {
+                        q: "Question 32: Which of the followings is NOT TRUE according to the passage?",
+                        options: [
+                            "Television is an important means of communication.",
+                            "Television provides us with a variety of programs.",
+                            "Most people don't like watching TV in the evening.",
+                            "People can learn many things through TV."
+                        ],
+                        correctIndex: 2,
+                        explanation: "<b>Dịch:</b> Điều nào sau đây KHÔNG ĐÚNG theo đoạn văn?<br><b>Giải thích:</b> Câu cuối bài đọc viết: 'Most people now seem to <b>like spending</b> their evenings watching television...' (Hầu hết mọi người dường như THÍCH dành buổi tối xem tivi). Do đó, phát biểu 'Most people <b>don't like</b> watching TV in the evening' (không thích) là hoàn toàn <b>SAI (NOT TRUE)</b> so với bài đọc."
+                    },
+                    {
+                        q: "Question 33: Which of the followings is NOT one of benefits of television?",
+                        options: ["Entertainment", "Communication", "Education", "Going out"],
+                        correctIndex: 3,
+                        explanation: "<b>Dịch:</b> Điều nào sau đây KHÔNG PHẢI là một trong những lợi ích của truyền hình?<br><b>Giải thích:</b> Bài đọc liệt kê lợi ích: Entertainment & Communication (câu 3), Education/Knowledge (câu 6). Truyền hình khiến người ta ở nhà xem, chứ không phải mang lại lợi ích 'Going out' (đi chơi ra ngoài). Việc đi ra ngoài còn bị giảm đi do xem tivi."
+                    },
+                    {
+                        q: "Question 34: The word 'distant' is OPPOSITE in meaning to _____.",
+                        options: ["Remote", "far", "near", "rural"],
+                        correctIndex: 2,
+                        explanation: "<b>Dịch:</b> Từ 'distant' (xa xôi) TRÁI NGHĨA với từ nào?<br><b>Giải thích:</b> 'Distant' có nghĩa là xa (về khoảng cách). <br>- Remote, far: đều có nghĩa là 'xa' (Đồng nghĩa).<br>- rural: nông thôn.<br>- <b>near:</b> gần. Đây chính là từ <b>trái nghĩa</b> với xa xôi."
+                    },
+                    {
+                        q: "Question 35: The word 'important' is CLOSEST in meaning to _____.",
+                        options: ["Interesting", "essential", "entertaining", "educational"],
+                        correctIndex: 1,
+                        explanation: "<b>Dịch:</b> Từ 'important' (quan trọng) GẦN NGHĨA NHẤT với từ nào?<br><b>Giải thích:</b> 'Important' mang nghĩa là quan trọng, cần thiết.<br>- Interesting (thú vị), Entertaining (có tính giải trí), Educational (thuộc giáo dục).<br>- <b>essential (adj):</b> thiết yếu, cực kỳ quan trọng. Đây là từ <b>đồng nghĩa</b> hoàn hảo nhất."
+                    },
+                    {
+                        q: "Question 36: What is ONE way television benefits viewers?",
+                        options: [
+                            "It helps people learn about distant places and new ideas.",
+                            "It only entertains people without providing knowledge.",
+                            "It makes people go out more often",
+                            "It has no impact on people's lives."
+                        ],
+                        correctIndex: 0,
+                        explanation: "<b>Dịch:</b> Một trong những cách tivi mang lại lợi ích cho người xem là gì?<br><b>Giải thích:</b> Trong bài có câu: '...viewers can see and learn about people, places and things in distant lands' và 'introducing new ideas'. Do đó, lợi ích đúng được nêu là <b>'Giúp mọi người tìm hiểu về những nơi xa xôi và những ý tưởng mới' (Đáp án A)</b>. Các đáp án B, C, D đều sai bét so với thông tin bài đọc."
+                    }
+                ]
+            },
+            {
+                title: "PART 4: BOB THE BUILDER",
+                text: "Bob the Builder is a British television program for children. (37) _____. It was first broadcast on 13th January 1999. It is developed by Hit Entertainment for BBC Television.<br><br>The show is about the life of a builder named Bob, (38) _____. Bob has a wife named Wendy and a cat named Pilchard. The slogan of the show is \"Can we fix it? Yes, we can!\".<br><br>There are albums of songs from Bob the Builder. Out of these songs, (39) _____, \"Can We Fix It\" and \"Mambo\". (40) _____. He also has some video games which are based on and created by Bob the builder.",
+                translation: "Bob the Builder là một chương trình truyền hình dành cho trẻ em của Anh. (37) <b>Nó được phát sóng trên BBC và trên toàn thế giới.</b> Nó được phát sóng lần đầu tiên vào ngày 13 tháng 1 năm 1999. Nó được phát triển bởi Hit Entertainment cho Đài truyền hình BBC.<br><br>Chương trình kể về cuộc sống của một người thợ xây tên là Bob, (38) <b>và những chiếc xe biết nói giúp anh sửa chữa đồ đạc.</b> Bob có một người vợ tên là Wendy và một con mèo tên là Pilchard. Khẩu hiệu của chương trình là \"Chúng ta có thể sửa nó không? Có, chúng ta có thể!\".<br><br>Có nhiều album bài hát từ Bob the Builder. Trong số các bài hát này, (39) <b>có 2 bản hit đạt vị trí số 1</b>, là \"Can We Fix It\" và \"Mambo\". (40) <b>Ngoài ra còn có bản hit đạt vị trí 81 mang tên \"Big Fish Little Fish\".</b> Anh ấy cũng có một số trò chơi điện tử dựa trên và do Bob the builder tạo ra.",
+                glossary: [
+                    { word: "Broadcast", pos: "Verb/Noun", meaning: "Phát sóng, truyền phát" },
+                    { word: "Develop", pos: "Verb", meaning: "Phát triển, xây dựng" },
+                    { word: "Builder", pos: "Noun", meaning: "Thợ xây, thợ xây dựng" },
+                    { word: "Vehicle", pos: "Noun", meaning: "Xe cộ, phương tiện giao thông" },
+                    { word: "Fix", pos: "Verb", meaning: "Sửa chữa" },
+                    { word: "Slogan", pos: "Noun", meaning: "Khẩu hiệu" },
+                    { word: "Album", pos: "Noun", meaning: "Tuyển tập (nhạc, ảnh)" },
+                    { word: "Hit", pos: "Noun", meaning: "Bản nhạc/phim cực kỳ thành công" },
+                    { word: "Based on", pos: "Phrasal Verb", meaning: "Dựa trên (cái gì đó)" },
+                    { word: "Create", pos: "Verb", meaning: "Tạo ra, sáng tạo" }
+                ],
+                questions: [
+                    {
+                        q: "Question 37: Bob the Builder is a British television program for children. (37) _____.",
+                        options: [
+                            "and his talking vehicles who help him fix things",
+                            "It is broadcast on the BBC and around the world.",
+                            "There is also number 81 hit \"Big Fish Little Fish\"",
+                            "there are 2 number 1 hits"
+                        ],
+                        correctIndex: 1,
+                        explanation: "<b>Dịch:</b> Bob the Builder là chương trình truyền hình thiếu nhi của Anh. <b>Nó được phát sóng trên BBC và trên toàn thế giới.</b><br><b>Giải thích:</b> Chỗ trống (37) nằm ở đầu đoạn văn giới thiệu về chương trình. Lựa chọn hợp lý nhất để tiếp nối thông tin về 'chương trình truyền hình' chính là thông tin về việc nó được phát sóng ở đâu (broadcast on the BBC)."
+                    },
+                    {
+                        q: "Question 38: The show is about the life of a builder named Bob, (38) _____.",
+                        options: [
+                            "and his talking vehicles who help him fix things",
+                            "It is broadcast on the BBC and around the world.",
+                            "There is also number 81 hit \"Big Fish Little Fish\"",
+                            "there are 2 number 1 hits"
+                        ],
+                        correctIndex: 0,
+                        explanation: "<b>Dịch:</b> Chương trình kể về cuộc đời một thợ xây tên Bob <b>và những chiếc xe biết nói giúp anh ấy sửa chữa đồ đạc</b>.<br><b>Giải thích:</b> Chỗ trống (38) bổ sung ý nghĩa cho 'cuộc đời của Bob'. Việc nhắc đến những phương tiện biết nói (talking vehicles) hoàn toàn phù hợp với nội dung của một bộ phim hoạt hình thiếu nhi có thợ xây."
+                    },
+                    {
+                        q: "Question 39: Out of these songs, (39) _____, \"Can We Fix It\" and \"Mambo\".",
+                        options: [
+                            "and his talking vehicles who help him fix things",
+                            "It is broadcast on the BBC and around the world.",
+                            "There is also number 81 hit \"Big Fish Little Fish\"",
+                            "there are 2 number 1 hits"
+                        ],
+                        correctIndex: 3,
+                        explanation: "<b>Dịch:</b> Trong số những bài hát này, <b>có 2 bản hit số 1</b>, đó là \"Can We Fix It\" và \"Mambo\".<br><b>Giải thích:</b> Phía sau chỗ trống (39) liệt kê TÊN CỦA 2 BÀI HÁT. Do đó, chỗ trống phải là một cụm từ giới thiệu 2 bài hát đó -> <b>there are 2 number 1 hits</b> là đáp án duy nhất khớp logic về số lượng và chủ đề âm nhạc."
+                    },
+                    {
+                        q: "Question 40: (40) _____. He also has some video games...",
+                        options: [
+                            "and his talking vehicles who help him fix things",
+                            "It is broadcast on the BBC and around the world.",
+                            "There is also number 81 hit \"Big Fish Little Fish\"",
+                            "there are 2 number 1 hits"
+                        ],
+                        correctIndex: 2,
+                        explanation: "<b>Dịch:</b> <b>Cũng có một bản hit số 81 tên là \"Big Fish Little Fish\".</b><br><b>Giải thích:</b> Chỗ trống (40) vẫn nằm trong đoạn văn nói về mảng âm nhạc (songs, albums) của Bob. Đáp án <b>'There is also number 81 hit...'</b> là câu duy nhất còn lại nói về âm nhạc để khép lại chủ đề này trước khi chuyển sang chủ đề video games ở câu tiếp theo."
+                    }
+                ]
+            }
+        ];
+
+        let totalQuestions = 0;
+        let score = 0;
+        let answeredQuestions = new Set();
+        let timerInterval;
+        let timeLeft = 600; // 10 minutes
+        let isTimerRunning = false;
+
+        /* ================= AUDIO API ================= */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playDing() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function playBuzz() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.1);
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        /* ================= CONFETTI ================= */
+        function triggerConfetti() {
+            const container = document.getElementById('confetti-container');
+            const colors = ['#FF9A9E', '#FDCB6E', '#00C9A7', '#8854C0', '#00D26A'];
+            for(let i=0; i<30; i++) {
+                const conf = document.createElement('div');
+                conf.classList.add('confetti');
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                conf.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                container.appendChild(conf);
+                setTimeout(() => conf.remove(), 2500);
+            }
+        }
+
+        /* ================= CORE LOGIC ================= */
+        function toggleTranslation(id) {
+            const el = document.getElementById(`trans-${id}`);
+            if (el.style.display === 'block') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = 'block';
+            }
+        }
+
+        // Shuffle logic that keeps track of the correct answer
+        function shuffleOptions(options, correctIndex) {
+            let mapped = options.map((opt, i) => ({ text: opt, isCorrect: i === correctIndex }));
+            for (let i = mapped.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [mapped[i], mapped[j]] = [mapped[j], mapped[i]];
+            }
+            return mapped;
+        }
+
+        function buildUI() {
+            const leftPane = document.getElementById('left-pane');
+            const rightPane = document.getElementById('right-pane');
+            let qIdGlobal = 0;
+
+            quizData.forEach((part, partIndex) => {
+                // -- BUILD LEFT PANE --
+                const passageBlock = document.createElement('div');
+                passageBlock.className = 'passage-block';
+                
+                // Title
+                const title = document.createElement('div');
+                title.className = 'passage-title';
+                title.innerHTML = part.title;
+                passageBlock.appendChild(title);
+
+                // Text
+                const text = document.createElement('div');
+                text.className = 'passage-text';
+                text.innerHTML = part.text;
+                passageBlock.appendChild(text);
+
+                // Translate Button & Box
+                const transBtn = document.createElement('button');
+                transBtn.className = 'btn-translate';
+                transBtn.innerHTML = 'Mở dịch đoạn này 🌟';
+                transBtn.onclick = () => toggleTranslation(`part-${partIndex}`);
+                passageBlock.appendChild(transBtn);
+
+                const transBox = document.createElement('div');
+                transBox.id = `trans-part-${partIndex}`;
+                transBox.className = 'translation-box';
+                transBox.innerHTML = part.translation;
+                passageBlock.appendChild(transBox);
+
+                // Glossary
+                if (part.glossary && part.glossary.length > 0) {
+                    const glossWrap = document.createElement('div');
+                    glossWrap.className = 'glossary-wrapper';
+                    const glossTitle = document.createElement('div');
+                    glossTitle.className = 'glossary-title';
+                    glossTitle.innerText = "📚 Bảng Từ Vựng VIP (B1-C2):";
+                    glossWrap.appendChild(glossTitle);
+
+                    const table = document.createElement('table');
+                    const thead = document.createElement('thead');
+                    thead.innerHTML = "<tr><th>Từ vựng</th><th>Loại từ</th><th>Nghĩa Tiếng Việt</th></tr>";
+                    table.appendChild(thead);
+                    
+                    const tbody = document.createElement('tbody');
+                    part.glossary.forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${item.word}</td><td>${item.pos}</td><td>${item.meaning}</td>`;
+                        tbody.appendChild(tr);
+                    });
+                    table.appendChild(tbody);
+                    glossWrap.appendChild(table);
+                    passageBlock.appendChild(glossWrap);
+                }
+                leftPane.appendChild(passageBlock);
+
+                // -- BUILD RIGHT PANE (QUESTIONS) --
+                part.questions.forEach((q) => {
+                    qIdGlobal++;
+                    totalQuestions++;
+                    const currQId = qIdGlobal;
+
+                    const qCard = document.createElement('div');
+                    qCard.className = 'question-card';
+                    qCard.id = `qcard-${currQId}`;
+
+                    const qText = document.createElement('div');
+                    qText.className = 'question-text';
+                    qText.innerHTML = q.q;
+                    qCard.appendChild(qText);
+
+                    const optionsGrid = document.createElement('div');
+                    optionsGrid.className = 'options-grid';
+                    
+                    const shuffled = shuffleOptions(q.options, q.correctIndex);
+                    
+                    shuffled.forEach((optData, optIdx) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'option-btn';
+                        btn.innerHTML = `<b>${String.fromCharCode(65 + optIdx)}.</b>&nbsp; ${optData.text}`;
+                        
+                        btn.onclick = function() {
+                            if (answeredQuestions.has(currQId)) return;
+                            answeredQuestions.add(currQId);
+                            
+                            // Disable all buttons in this question
+                            Array.from(optionsGrid.children).forEach(b => b.classList.add('disabled'));
+
+                            const expBox = document.getElementById(`exp-${currQId}`);
+
+                            if (optData.isCorrect) {
+                                btn.classList.add('correct');
+                                playDing();
+                                triggerConfetti();
+                                score++;
+                                // Still show explanation for correct answer for extra learning
+                                expBox.style.display = 'block';
+                            } else {
+                                btn.classList.add('wrong');
+                                playBuzz();
+                                // Find and highlight correct answer
+                                Array.from(optionsGrid.children).forEach((b, idx) => {
+                                    if (shuffled[idx].isCorrect) {
+                                        b.classList.add('correct');
+                                    }
+                                });
+                                // Show explanation immediately
+                                expBox.style.display = 'block';
+                            }
+                        };
+                        optionsGrid.appendChild(btn);
+                    });
+
+                    qCard.appendChild(optionsGrid);
+
+                    // Explanation Box
+                    const expBox = document.createElement('div');
+                    expBox.id = `exp-${currQId}`;
+                    expBox.className = 'explanation-box';
+                    expBox.innerHTML = `<div class="exp-title">💡 Giải thích chi tiết từ Ms. Chí Nên:</div><div class="exp-content">${q.explanation}</div>`;
+                    qCard.appendChild(expBox);
+
+                    rightPane.appendChild(qCard);
+                });
+            });
+        }
+
+        /* ================= TIMER ================= */
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            document.getElementById('timer-display').innerText = 
+                `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer');
+            if (!isTimerRunning) {
+                if(timeLeft <= 0) return;
+                isTimerRunning = true;
+                btn.innerText = "TẠM DỪNG";
+                btn.style.background = "#FF9F43";
+                btn.style.boxShadow = "0 4px 0 #D47B29";
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        btn.innerText = "HẾT GIỜ";
+                        btn.style.background = "#FF4757";
+                        btn.style.boxShadow = "none";
+                        alert("⏰ Đã hết giờ làm bài! Bạn vẫn có thể tiếp tục làm, nhưng nhớ là trong phòng thi thật, bạn chỉ nên làm một bài như thế này trong 10 phút thôi nha.");
+                    }
+                }, 1000);
+            } else {
+                isTimerRunning = false;
+                clearInterval(timerInterval);
+                btn.innerText = "TIẾP TỤC";
+                btn.style.background = "var(--tertiary)";
+                btn.style.boxShadow = "0 4px 0 #00A68A";
+            }
+        }
+
+        /* ================= SUBMIT & RESULT ================= */
+        function submitQuiz() {
+            clearInterval(timerInterval);
+            const overlay = document.getElementById('result-overlay');
+            const scoreText = document.getElementById('score-text');
+            const scoreMsg = document.getElementById('score-msg');
+            
+            scoreText.innerText = `${score} / ${totalQuestions}`;
+            
+            let percentage = score / totalQuestions;
+            if (percentage === 1) {
+                scoreMsg.innerText = "Thiên tài ngoại ngữ xuất hiện! 🌟 Hoàn hảo tuyệt đối!";
+                triggerConfetti(); triggerConfetti();
+                playDing();
+            } else if (percentage >= 0.8) {
+                scoreMsg.innerText = "Làm tốt lắm! Bạn cực kỳ xuất sắc đấy! 🔥";
+                triggerConfetti();
+                playDing();
+            } else if (percentage >= 0.5) {
+                scoreMsg.innerText = "Cũng khá ghê! Cố gắng luyện tập thêm chút nữa nhé! 💪";
+            } else {
+                scoreMsg.innerText = "Đừng buồn nhé! Xem lại giải thích bên dưới để rút kinh nghiệm nè! ❤️";
+                playBuzz();
+            }
+
+            overlay.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('result-overlay').style.display = 'none';
+        }
+
+        // Initialize
+        window.onload = () => {
+            buildUI();
+            updateTimerDisplay();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học Tiếng Anh cùng Ms. Chí Nên</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-purple: #8854C0;
+            --primary-teal: #00C9A7;
+            --correct-green: #00D26A;
+            --wrong-red: #FF4757;
+            --bg-pastel: #F0F4F8;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-pastel);
+            background-image: radial-gradient(#8854c033 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #2D3436;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .gamified-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 0 #dfe6e9;
+            transition: transform 0.2s ease;
+        }
+
+        .answer-btn {
+            position: relative;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 18px;
+            box-shadow: 0 6px 0 #e2e8f0;
+            transition: all 0.15s active;
+            cursor: pointer;
+            text-align: left;
+            padding: 16px 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #cbd5e1;
+            background-color: #f8fafc;
+            border-color: var(--primary-purple);
+        }
+
+        .answer-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #cbd5e1;
+        }
+
+        .answer-btn.correct {
+            background-color: var(--correct-green) !important;
+            color: white !important;
+            border-color: #00b35a !important;
+            box-shadow: 0 6px 0 #00994d !important;
+        }
+
+        .answer-btn.wrong {
+            background-color: var(--wrong-red) !important;
+            color: white !important;
+            border-color: #e63946 !important;
+            box-shadow: 0 6px 0 #d63031 !important;
+        }
+
+        .explanation-box {
+            display: none;
+            animation: slideUp 0.4s ease-out forwards;
+            border-left: 6px solid var(--primary-purple);
+            background: #fdfaff;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+            100% { transform: translateX(0); }
+        }
+
+        .shake { animation: shake 0.3s ease-in-out; }
+
+        /* Custom UI for Q29, Q30 */
+        .sale-sign {
+            background: #ff7675;
+            color: white;
+            padding: 10px;
+            border: 4px dashed white;
+            transform: rotate(-2deg);
+            display: inline-block;
+            font-weight: 800;
+            margin: 10px 0;
+        }
+
+        .phone-msg {
+            background: #e1ffc7;
+            border-radius: 15px;
+            padding: 12px;
+            max-width: 80%;
+            position: relative;
+            margin: 10px 0;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .glossary-table th {
+            background: var(--primary-purple);
+            color: white;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-purple), var(--primary-teal));
+            transition: width 0.3s ease;
+        }
+    </style>
+<style>body{overflow:auto!important;}</style></head>
+<body class="p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="text-center mb-6">
+        <p class="text-sm font-bold text-purple-600 uppercase tracking-widest">Giáo viên tạo: Ms. Chí Nên</p>
+        <h1 class="text-3xl md:text-4xl font-extrabold mt-2" style="color: var(--primary-purple);">
+            Thử Thách: Hiện Tại Đơn vs Tiếp Diễn 🚀
+        </h1>
+    </header>
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Progress bar -->
+        <div class="mb-8">
+            <div class="flex justify-between items-end mb-2">
+                <span class="font-bold text-gray-500" id="progress-text">Câu hỏi 1/30</span>
+                <span class="font-bold text-emerald-500" id="score-text">Điểm: 0</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 3.33%;"></div>
+            </div>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quiz-content">
+            <!-- Question Card -->
+            <div class="gamified-card p-6 md:p-10 mb-6">
+                <div id="question-area">
+                    <h2 class="text-xl md:text-2xl font-bold mb-6 leading-relaxed" id="question-text">
+                        Listen! Someone ______ at the door.
+                    </h2>
+                    
+                    <div id="special-ui-placeholder"></div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="options-grid">
+                        <!-- Options will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Explanation -->
+                <div id="explanation-container" class="explanation-box mt-8 p-6 rounded-xl">
+                    <h3 class="font-black text-purple-700 mb-3 text-lg">💡 Ms. Chí Nên giải thích:</h3>
+                    <div id="explanation-content" class="space-y-4 text-gray-700">
+                        <!-- Explanation steps will be injected here -->
+                    </div>
+                    <button onclick="nextQuestion()" class="mt-6 w-full py-4 bg-teal-500 hover:bg-teal-600 text-white font-black rounded-2xl shadow-lg transition-all transform hover:scale-105" style="box-shadow: 0 6px 0 #00a88b;">
+                        TIẾP TỤC CÂU TIẾP THEO ➡
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Glossary (Show for relevant context) -->
+        <div class="gamified-card p-6 mt-10">
+            <h3 class="text-xl font-black mb-4 flex items-center">
+                <span class="mr-2">📚</span> Glossary (Bảng từ vựng xịn xò)
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="w-full glossary-table rounded-xl overflow-hidden text-sm md:text-base">
+                    <thead>
+                        <tr>
+                            <th class="p-3 text-left">Từ vựng (Word)</th>
+                            <th class="p-3 text-left">Loại từ</th>
+                            <th class="p-3 text-left">Nghĩa tiếng Việt</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        <tr class="border-b">
+                            <td class="p-3 font-bold">At the moment</td>
+                            <td class="p-3 italic">Phrase</td>
+                            <td class="p-3">Ngay lúc này (Dấu hiệu tiếp diễn)</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="p-3 font-bold">Stative verb</td>
+                            <td class="p-3 italic">Noun</td>
+                            <td class="p-3">Động từ chỉ trạng thái (không chia V-ing)</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="p-3 font-bold">Frequency</td>
+                            <td class="p-3 italic">Noun</td>
+                            <td class="p-3">Tần suất (Usually, Often...)</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="p-3 font-bold">Habitual</td>
+                            <td class="p-3 italic">Adj</td>
+                            <td class="p-3">Thuộc về thói quen</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="p-3 font-bold">Scientific fact</td>
+                            <td class="p-3 italic">Noun</td>
+                            <td class="p-3">Sự thật khoa học hiển nhiên</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- End Game Modal -->
+    <div id="finish-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center transform scale-90 opacity-0 transition-all duration-300" id="modal-card">
+            <div class="text-6xl mb-4">🏆</div>
+            <h2 class="text-3xl font-black mb-2 text-purple-700">Tuyệt vời!</h2>
+            <p class="text-lg text-gray-600 mb-6" id="final-result-text">Bạn đã hoàn thành bài thi với kết quả xuất sắc.</p>
+            <div class="bg-gray-100 rounded-2xl p-4 mb-6">
+                <p class="text-4xl font-black text-teal-500" id="final-score">28/30</p>
+                <p class="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1">Số câu đúng</p>
+            </div>
+            <p class="italic text-purple-500 font-bold mb-8" id="motivation-text">"Sự nỗ lực của em chính là chìa khóa thành công!"</p>
+            <button onclick="location.reload()" class="w-full py-4 bg-purple-600 text-white font-black rounded-2xl shadow-xl hover:bg-purple-700">
+                LÀM LẠI BÀI THI
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="sound-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+    <audio id="sound-wrong" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
+
+    <script>
+        const quizData = [
+            {
+                q: "Listen! Someone ______ at the door.",
+                options: ["knocks", "is knocking", "knock", "are knocking"],
+                correct: 1,
+                hints: {
+                    analysis: ["knocks (v): gõ cửa (chia Hiện tại đơn)", "is knocking (v): đang gõ cửa (Hiện tại tiếp diễn)", "knock (v): gõ cửa (nguyên mẫu)", "are knocking (v): đang gõ cửa (số nhiều)"],
+                    translation: "Nghe kìa! Có ai đó đang gõ cửa.",
+                    whyCorrect: "Dựa vào 'Listen!' (Nghe kìa!) - đây là câu mệnh lệnh dùng để thu hút sự chú ý vào một sự việc ĐANG diễn ra ngay lúc nói -> Chia Hiện tại tiếp diễn. 'Someone' là đại từ bất định số ít nên dùng 'is'.",
+                    whyWrong: "A và C sai thì (Hiện tại đơn dùng cho thói quen). D sai vì 'Someone' không đi với 'are'."
+                }
+            },
+            {
+                q: "My father ______ coffee every morning.",
+                options: ["drink", "is drinking", "drinks", "drinking"],
+                correct: 2,
+                hints: {
+                    analysis: ["drink (v): uống (nguyên mẫu)", "is drinking (v): đang uống", "drinks (v): uống (số ít)", "drinking (v-ing): việc uống"],
+                    translation: "Bố tôi uống cà phê mỗi buổi sáng.",
+                    whyCorrect: "Dựa vào cụm từ 'every morning' (mỗi sáng) -> đây là thói quen lặp đi lặp lại ở hiện tại -> Chia thì Hiện tại đơn. Chủ ngữ 'My father' là số ít nên thêm 's' vào động từ.",
+                    whyWrong: "A sai vì thiếu 's'. B sai thì (tiếp diễn chỉ hành động đang xảy ra). D sai cấu trúc ngữ pháp."
+                }
+            },
+            {
+                q: "Where is Nam? - He ______ in his room.",
+                options: ["reads", "is reading", "read", "are reading"],
+                correct: 1,
+                hints: {
+                    analysis: ["reads (v): đọc (số ít)", "is reading (v): đang đọc", "read (v): đọc (nguyên mẫu)", "are reading (v): đang đọc (số nhiều)"],
+                    translation: "Nam đâu rồi? - Cậu ấy đang đọc sách trong phòng.",
+                    whyCorrect: "Ngữ cảnh hỏi 'Where is Nam?' ngụ ý hành động đang diễn ra tại thời điểm nói -> Chia thì Hiện tại tiếp diễn.",
+                    whyWrong: "A, C sai thì. D sai vì chủ ngữ 'He' phải đi với 'is'."
+                }
+            },
+            {
+                q: "They usually ______ to school by bus.",
+                options: ["go", "are going", "goes", "is going"],
+                correct: 0,
+                hints: {
+                    analysis: ["go (v): đi (nguyên mẫu)", "are going (v): đang đi", "goes (v): đi (số ít)", "is going (v): đang đi (số ít)"],
+                    translation: "Họ thường đi học bằng xe buýt.",
+                    whyCorrect: "Dựa vào trạng từ tần suất 'usually' (thường xuyên) -> Diễn tả thói quen -> Chia Hiện tại đơn. Chủ ngữ 'They' (số nhiều) giữ nguyên động từ.",
+                    whyWrong: "B, D sai thì. C sai vì 'They' không đi với động từ thêm 'es'."
+                }
+            },
+            {
+                q: "Look! The bird ______.",
+                options: ["fly", "flies", "is flying", "are flying"],
+                correct: 2,
+                hints: {
+                    analysis: ["fly (v): bay (số nhiều)", "flies (v): bay (số ít)", "is flying (v): đang bay (số ít)", "are flying (v): đang bay (số nhiều)"],
+                    translation: "Nhìn kìa! Con chim đang bay.",
+                    whyCorrect: "Dấu hiệu 'Look!' (Nhìn kìa!) dùng để chỉ hành động đang diễn ra trước mắt -> Chia Hiện tại tiếp diễn. 'The bird' là danh từ số ít.",
+                    whyWrong: "A, B sai thì. D sai vì chủ ngữ số ít không dùng 'are'."
+                }
+            },
+            {
+                q: "We ______ English at the moment.",
+                options: ["don't learn", "aren't learning", "doesn't learn", "isn't learning"],
+                correct: 1,
+                hints: {
+                    analysis: ["don't learn: không học (Hiện tại đơn)", "aren't learning: đang không học (Hiện tại tiếp diễn số nhiều)", "doesn't learn: không học (số ít)", "isn't learning: đang không học (số ít)"],
+                    translation: "Hiện tại chúng tôi đang không học tiếng Anh.",
+                    whyCorrect: "Dấu hiệu 'at the moment' (ngay bây giờ) -> Chia Hiện tại tiếp diễn. Chủ ngữ 'We' đi với 'are'.",
+                    whyWrong: "A, C sai thì. D sai vì 'We' không đi với 'is'."
+                }
+            },
+            {
+                q: "My sister often ______ her face twice a day.",
+                options: ["washes", "is washing", "wash", "washing"],
+                correct: 0,
+                hints: {
+                    analysis: ["washes (v): rửa (số ít)", "is washing (v): đang rửa", "wash (v): rửa (nguyên mẫu)", "washing (v-ing): việc rửa"],
+                    translation: "Em gái tôi thường rửa mặt 2 lần mỗi ngày.",
+                    whyCorrect: "Dấu hiệu 'often' (thường) và 'twice a day' (2 lần 1 ngày) chỉ tần suất thói quen -> Hiện tại đơn. 'My sister' là số ít nên wash + es = washes.",
+                    whyWrong: "B sai thì. C thiếu 'es'. D sai cấu trúc."
+                }
+            },
+            {
+                q: "Be quiet! The baby ______.",
+                options: ["sleeps", "is sleeping", "are sleeping", "sleep"],
+                correct: 1,
+                hints: {
+                    analysis: ["sleeps (v): ngủ (số ít)", "is sleeping (v): đang ngủ (số ít)", "are sleeping (v): đang ngủ (số nhiều)", "sleep (v): ngủ (nguyên mẫu)"],
+                    translation: "Trật tự nào! Em bé đang ngủ.",
+                    whyCorrect: "Dấu hiệu 'Be quiet!' (Hãy im lặng) báo hiệu hành động đang diễn ra cần sự yên tĩnh -> Hiện tại tiếp diễn. 'The baby' là số ít.",
+                    whyWrong: "A, D sai thì. C sai vì chủ ngữ số ít."
+                }
+            },
+            {
+                q: "______ you ______ spicy food?",
+                options: ["Do / like", "Are / liking", "Does / like", "Do / likes"],
+                correct: 0,
+                hints: {
+                    analysis: ["Do / like: thích (Hiện tại đơn)", "Are / liking: đang thích", "Does / like: thích (số ít)", "Do / likes: sai ngữ pháp"],
+                    translation: "Bạn có thích đồ ăn cay không?",
+                    whyCorrect: "Động từ 'LIKE' là động từ trạng thái (stative verb), không được chia ở thì tiếp diễn. Vì vậy ta dùng Hiện tại đơn để hỏi về sở thích.",
+                    whyWrong: "B sai vì like không chia V-ing. C sai ngôi. D sai vì sau Do + S + V nguyên mẫu."
+                }
+            },
+            {
+                q: "He ______ judo every Tuesday.",
+                options: ["is doing", "does", "do", "doing"],
+                correct: 1,
+                hints: {
+                    analysis: ["is doing (v): đang tập", "does (v): tập (số ít)", "do (v): tập (nguyên mẫu)", "doing (v-ing): việc tập"],
+                    translation: "Anh ấy tập võ judo vào mỗi thứ Ba.",
+                    whyCorrect: "Dấu hiệu 'every Tuesday' (mỗi thứ Ba) chỉ thói quen/lịch trình -> Hiện tại đơn. 'He' số ít dùng 'does'.",
+                    whyWrong: "A sai thì. C sai ngôi. D thiếu trợ động từ/tobe."
+                }
+            },
+            {
+                q: "Right now, I ______ TV with my family.",
+                options: ["watch", "am watching", "watches", "am watch"],
+                correct: 1,
+                hints: {
+                    analysis: ["watch (v): xem", "am watching (v): đang xem", "watches (v): xem (số ít)", "am watch: sai cấu trúc"],
+                    translation: "Ngay lúc này, tôi đang xem TV cùng gia đình.",
+                    whyCorrect: "Dấu hiệu 'Right now' (Ngay bây giờ) -> Hiện tại tiếp diễn. Chủ ngữ 'I' đi với 'am'.",
+                    whyWrong: "A, C sai thì. D thiếu 'ing'."
+                }
+            },
+            {
+                q: "The sun ______ in the East.",
+                options: ["rise", "is rising", "rises", "rising"],
+                correct: 2,
+                hints: {
+                    analysis: ["rise (v): mọc", "is rising (v): đang mọc", "rises (v): mọc (số ít)", "rising (v-ing): việc mọc"],
+                    translation: "Mặt trời mọc ở hướng Đông.",
+                    whyCorrect: "Đây là một sự thật hiển nhiên (scientific fact) -> Luôn chia ở thì Hiện tại đơn. 'The sun' là duy nhất (số ít) nên động từ thêm 's'.",
+                    whyWrong: "A sai ngôi. B sai thì (không phải chỉ đang mọc lúc này mà là quy luật). D sai cấu trúc."
+                }
+            },
+            {
+                q: "Keep silent! The teacher ______.",
+                options: ["is speaking", "speaks", "speak", "are speaking"],
+                correct: 0,
+                hints: {
+                    analysis: ["is speaking (v): đang nói", "speaks (v): nói (số ít)", "speak (v): nói", "are speaking (v): đang nói (số nhiều)"],
+                    translation: "Giữ im lặng nào! Cô giáo đang nói đấy.",
+                    whyCorrect: "Cụm 'Keep silent!' báo hiệu hành động đang xảy ra -> Hiện tại tiếp diễn.",
+                    whyWrong: "B, C sai thì. D sai ngôi."
+                }
+            },
+            {
+                q: "______ Mai ______ to music now?",
+                options: ["Does / listen", "Is / listening", "Do / listen", "Are / listening"],
+                correct: 1,
+                hints: {
+                    analysis: ["Does / listen: nghe (Hiện tại đơn)", "Is / listening: đang nghe", "Do / listen: sai ngôi", "Are / listening: sai ngôi"],
+                    translation: "Bây giờ Mai đang nghe nhạc phải không?",
+                    whyCorrect: "Dấu hiệu 'now' (bây giờ) -> Hiện tại tiếp diễn. 'Mai' là số ít nên mượn 'Is' đưa ra trước.",
+                    whyWrong: "A, C sai thì. D sai vì Mai số ít."
+                }
+            },
+            {
+                q: "My father ______ a doctor. He works in a hospital.",
+                options: ["is", "are", "am", "being"],
+                correct: 0,
+                hints: {
+                    analysis: ["is: là (số ít)", "are: là (số nhiều)", "am: là (đi với I)", "being: đang là"],
+                    translation: "Bố tôi là một bác sĩ. Ông ấy làm việc trong bệnh viện.",
+                    whyCorrect: "Diễn tả nghề nghiệp, trạng thái cố định của một người -> Hiện tại đơn với động từ To-be.",
+                    whyWrong: "B, C sai ngôi. D không dùng trong ngữ cảnh này."
+                }
+            },
+            {
+                q: "Look at the sky! It ______.",
+                options: ["rains", "is raining", "rain", "are raining"],
+                correct: 1,
+                hints: {
+                    analysis: ["rains (v): mưa", "is raining (v): đang mưa", "rain (v): mưa", "are raining (v): đang mưa"],
+                    translation: "Nhìn lên bầu trời kìa! Trời đang mưa đó.",
+                    whyCorrect: "Dấu hiệu 'Look at...!' yêu cầu nhìn vào sự việc đang xảy ra -> Hiện tại tiếp diễn.",
+                    whyWrong: "A, C sai thì. D sai ngôi (It đi với is)."
+                }
+            },
+            {
+                q: "We ______ our grandparents every Sunday.",
+                options: ["are visiting", "visit", "visits", "visiting"],
+                correct: 1,
+                hints: {
+                    analysis: ["are visiting (v): đang thăm", "visit (v): thăm", "visits (v): thăm (số ít)", "visiting (v-ing): việc thăm"],
+                    translation: "Chúng tôi thăm ông bà vào mỗi Chủ nhật.",
+                    whyCorrect: "Dấu hiệu 'every Sunday' chỉ thói quen -> Hiện tại đơn. 'We' số nhiều nên động từ giữ nguyên.",
+                    whyWrong: "A sai thì. C sai ngôi. D thiếu tobe."
+                }
+            },
+            {
+                q: "Sorry, I can't help you. I ______ my homework.",
+                options: ["do", "am doing", "does", "doing"],
+                correct: 1,
+                hints: {
+                    analysis: ["do (v): làm", "am doing (v): đang làm", "does (v): làm (số ít)", "doing (v-ing): việc làm"],
+                    translation: "Xin lỗi, tớ không giúp cậu được. Tớ đang làm bài tập về nhà.",
+                    whyCorrect: "Ngữ cảnh từ chối vì đang bận làm việc gì đó ngay lúc này -> Hiện tại tiếp diễn.",
+                    whyWrong: "A, C sai thì. D thiếu tobe."
+                }
+            },
+            {
+                q: "______ your brother ______ football on weekends?",
+                options: ["Does / play", "Is / playing", "Do / play", "Does / playing"],
+                correct: 0,
+                hints: {
+                    analysis: ["Does / play: chơi (Hiện tại đơn)", "Is / playing: đang chơi", "Do / play: sai ngôi", "Does / playing: sai cấu trúc"],
+                    translation: "Anh trai bạn có chơi bóng đá vào cuối tuần không?",
+                    whyCorrect: "Dấu hiệu 'on weekends' (vào những ngày cuối tuần) chỉ thói quen -> Hiện tại đơn. 'Your brother' là số ít nên dùng trợ động từ Does.",
+                    whyWrong: "B sai thì. C sai ngôi. D sai cấu trúc (sau trợ động từ dùng V nguyên mẫu)."
+                }
+            },
+            {
+                q: "Please be careful! The bus ______.",
+                options: ["comes", "is coming", "coming", "are coming"],
+                correct: 1,
+                hints: {
+                    analysis: ["comes (v): đến", "is coming (v): đang đến (số ít)", "coming (v-ing): đang đến", "are coming (v): đang đến (số nhiều)"],
+                    translation: "Làm ơn cẩn thận! Xe buýt đang lao tới kìa.",
+                    whyCorrect: "Câu cảnh báo 'Please be careful!' dùng cho sự việc đang xảy ra đe dọa ngay lúc đó -> Hiện tại tiếp diễn.",
+                    whyWrong: "A sai thì. C thiếu tobe. D sai ngôi."
+                }
+            },
+            {
+                q: "She never ______ up late.",
+                options: ["get", "gets", "is getting", "getting"],
+                correct: 1,
+                hints: {
+                    analysis: ["get (v): thức dậy", "gets (v): thức dậy (số ít)", "is getting (v): đang dậy", "getting (v-ing): việc dậy"],
+                    translation: "Cô ấy không bao giờ thức dậy muộn.",
+                    whyCorrect: "Dấu hiệu 'never' (không bao giờ) là trạng từ tần suất chỉ thói quen -> Hiện tại đơn. 'She' số ít nên động từ thêm 's'.",
+                    whyWrong: "A sai ngôi. C sai thì. D thiếu tobe."
+                }
+            },
+            {
+                q: "They ______ lunch in the canteen at present.",
+                options: ["have", "are having", "having", "are haveing"],
+                correct: 1,
+                hints: {
+                    analysis: ["have (v): ăn", "are having (v): đang ăn", "having: đang ăn", "are haveing: sai chính tả"],
+                    translation: "Hiện tại họ đang ăn trưa ở căng tin.",
+                    whyCorrect: "Dấu hiệu 'at present' = 'now' (hiện tại) -> Hiện tại tiếp diễn. 'They' đi với 'are'.",
+                    whyWrong: "A sai thì. C thiếu tobe. D viết sai chính tả động từ 'having' (bỏ e thêm ing)."
+                }
+            },
+            {
+                q: "I ______ how to speak English.",
+                options: ["know", "am knowing", "knows", "knowing"],
+                correct: 0,
+                hints: {
+                    analysis: ["know (v): biết", "am knowing (v): đang biết", "knows (v): biết (số ít)", "knowing (v-ing): đang biết"],
+                    translation: "Tôi biết cách nói tiếng Anh.",
+                    whyCorrect: "Động từ 'KNOW' là động từ nhận thức/trạng thái (stative verb), không bao giờ dùng ở dạng tiếp diễn. Do đó chỉ dùng Hiện tại đơn.",
+                    whyWrong: "B và D sai vì know không dùng ing. C sai ngôi 'I'."
+                }
+            },
+            {
+                q: "Don't make noise! My mother ______.",
+                options: ["works", "is working", "working", "are working"],
+                correct: 1,
+                hints: {
+                    analysis: ["works (v): làm việc", "is working (v): đang làm việc", "working (v-ing): đang làm", "are working (v): đang làm (số nhiều)"],
+                    translation: "Đừng làm ồn! Mẹ tớ đang làm việc.",
+                    whyCorrect: "Dấu hiệu 'Don't make noise!' (Đừng làm ồn) báo hiệu hành động đang cần không gian yên tĩnh -> Hiện tại tiếp diễn.",
+                    whyWrong: "A sai thì. C thiếu tobe. D sai ngôi."
+                }
+            },
+            {
+                q: "What ______ you ______? - I'm a student.",
+                options: ["do / do", "are / doing", "does / do", "do / doing"],
+                correct: 0,
+                hints: {
+                    analysis: ["do / do: làm nghề gì", "are / doing: đang làm gì", "does / do: sai ngôi", "do / doing: sai cấu trúc"],
+                    translation: "Bạn làm nghề gì? - Tôi là học sinh.",
+                    whyCorrect: "Câu trả lời 'I'm a student' cho thấy đây là câu hỏi về nghề nghiệp, vị trí cố định -> Hiện tại đơn: What + do + you + do?",
+                    whyWrong: "B là hỏi về hành động đang làm. C sai ngôi. D sai ngữ pháp."
+                }
+            },
+            {
+                q: "They ______ to the library twice a week.",
+                options: ["goes", "go", "are going", "going"],
+                correct: 1,
+                hints: {
+                    analysis: ["goes (v): đi (số ít)", "go (v): đi", "are going (v): đang đi", "going (v-ing): việc đi"],
+                    translation: "Họ đến thư viện 2 lần một tuần.",
+                    whyCorrect: "Dấu hiệu 'twice a week' (2 lần một tuần) chỉ tần suất thói quen -> Hiện tại đơn. 'They' đi với động từ nguyên mẫu.",
+                    whyWrong: "A sai ngôi. C sai thì. D thiếu tobe."
+                }
+            },
+            {
+                q: "______ Lan ______ her homework now?",
+                options: ["Is / doing", "Does / do", "Is / do", "Are / doing"],
+                correct: 0,
+                hints: {
+                    analysis: ["Is / doing: đang làm", "Does / do: có làm không", "Is / do: sai cấu trúc", "Are / doing: sai ngôi"],
+                    translation: "Lan đang làm bài tập về nhà bây giờ phải không?",
+                    whyCorrect: "Dấu hiệu 'now' (bây giờ) -> Hiện tại tiếp diễn. Lan số ít dùng 'Is'.",
+                    whyWrong: "B sai thì. C thiếu 'ing'. D sai ngôi."
+                }
+            },
+            {
+                q: "Water ______ at 100 degrees Celsius.",
+                options: ["boil", "boils", "is boiling", "boiling"],
+                correct: 1,
+                hints: {
+                    analysis: ["boil (v): sôi", "boils (v): sôi (số ít)", "is boiling (v): đang sôi", "boiling (v-ing): việc sôi"],
+                    translation: "Nước sôi ở nhiệt độ 100 độ C.",
+                    whyCorrect: "Đây là sự thật hiển nhiên/chân lý khoa học -> Luôn dùng Hiện tại đơn. Danh từ không đếm được 'Water' được coi là số ít nên động từ thêm 's'.",
+                    whyWrong: "A thiếu 's'. C chỉ hành động đang xảy ra (ví dụ: nhìn ấm nước đang sôi). D thiếu tobe."
+                }
+            },
+            {
+                q: "Look! The boys ______ football in the rain.",
+                options: ["play", "are playing", "is playing", "plays"],
+                correct: 1,
+                hints: {
+                    analysis: ["play (v): chơi", "are playing (v): đang chơi (số nhiều)", "is playing (v): đang chơi (số ít)", "plays (v): chơi (số ít)"],
+                    translation: "Nhìn kìa! Những cậu bé đang đá bóng dưới trời mưa.",
+                    whyCorrect: "Dấu hiệu 'Look!' -> Hiện tại tiếp diễn. 'The boys' là danh từ số nhiều nên dùng 'are playing'.",
+                    whyWrong: "A, D sai thì. C sai ngôi (số nhiều đi với are)."
+                }
+            },
+            {
+                q: "We usually have breakfast at home, but today we ______ out.",
+                options: ["eat", "are eating", "eating", "eats"],
+                correct: 1,
+                hints: {
+                    analysis: ["eat (v): ăn", "are eating (v): đang ăn", "eating (v-ing): việc ăn", "eats (v): ăn (số ít)"],
+                    translation: "Chúng tôi thường ăn sáng ở nhà, nhưng hôm nay chúng tôi đang ăn ở ngoài.",
+                    whyCorrect: "Dấu hiệu 'but today' (nhưng hôm nay) chỉ một sự thay đổi tạm thời, khác với thói quen hằng ngày -> Hiện tại tiếp diễn.",
+                    whyWrong: "A, D là thói quen. C thiếu tobe."
+                }
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let canAnswer = true;
+
+        const questionText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const explanationContainer = document.getElementById('explanation-container');
+        const explanationContent = document.getElementById('explanation-content');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const scoreText = document.getElementById('score-text');
+        const specialUI = document.getElementById('special-ui-placeholder');
+
+        const correctSound = document.getElementById('sound-correct');
+        const wrongSound = document.getElementById('sound-wrong');
+
+        function initQuiz() {
+            showQuestion();
+        }
+
+        function showQuestion() {
+            canAnswer = true;
+            const data = quizData[currentQuestion];
+            
+            // Update progress
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+            progressFill.style.width = `${progress}%`;
+            progressText.innerText = `Câu hỏi ${currentQuestion + 1}/${quizData.length}`;
+            
+            // Reset UI
+            explanationContainer.style.display = 'none';
+            optionsGrid.innerHTML = '';
+            specialUI.innerHTML = '';
+            
+            // Render Special UI for Q29, Q30
+            if (currentQuestion === 28) { // Q29
+                specialUI.innerHTML = `<div class="text-center mb-4"><div class="sale-sign">⚽ RAIN MATCH! ⚽</div></div>`;
+            } else if (currentQuestion === 29) { // Q30
+                specialUI.innerHTML = `<div class="flex justify-center mb-4"><div class="phone-msg">Mom: We are at the restaurant now! Come here!</div></div>`;
+            }
+
+            questionText.innerText = data.q;
+
+            data.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center mr-3 text-sm font-black text-gray-400 uppercase">${String.fromCharCode(65 + index)}</span>
+                        <span>${opt}</span>
+                    </div>
+                `;
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex, btn) {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            const data = quizData[currentQuestion];
+            const isCorrect = selectedIndex === data.correct;
+
+            // Visual feedback
+            const allBtns = optionsGrid.querySelectorAll('button');
+            
+            if (isCorrect) {
+                score++;
+                scoreText.innerText = `Điểm: ${score}`;
+                btn.classList.add('correct');
+                correctSound.play().catch(() => {});
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#8854C0', '#00C9A7', '#00D26A']
+                });
+            } else {
+                btn.classList.add('wrong');
+                btn.classList.add('shake');
+                allBtns[data.correct].classList.add('correct');
+                wrongSound.play().catch(() => {});
+            }
+
+            showExplanation(data);
+        }
+
+        function showExplanation(data) {
+            explanationContent.innerHTML = `
+                <div>
+                    <p class="font-bold text-gray-800">1. Phân tích 4 đáp án:</p>
+                    <ul class="list-disc ml-5 mt-1">
+                        ${data.hints.analysis.map(a => `<li>${a}</li>`).join('')}
+                    </ul>
+                </div>
+                <div>
+                    <p class="font-bold text-gray-800">2. Dịch nghĩa toàn câu:</p>
+                    <p class="italic text-gray-600 bg-gray-50 p-2 rounded-lg border-l-4 border-gray-300">"${data.hints.translation}"</p>
+                </div>
+                <div>
+                    <p class="font-bold text-emerald-600">3. Tại sao chọn đáp án này?</p>
+                    <p>${data.hints.whyCorrect}</p>
+                </div>
+                <div>
+                    <p class="font-bold text-red-500">4. Tại sao các đáp án kia sai?</p>
+                    <p>${data.hints.whyWrong}</p>
+                </div>
+                <div class="pt-2 text-sm font-bold text-purple-600 uppercase">
+                    ⭐ Đáp án đúng: ${String.fromCharCode(65 + data.correct)}
+                </div>
+            `;
+            explanationContainer.style.display = 'block';
+            
+            // Smooth scroll to explanation
+            setTimeout(() => {
+                explanationContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                showQuestion();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                showFinishModal();
+            }
+        }
+
+        function showFinishModal() {
+            const modal = document.getElementById('finish-modal');
+            const card = document.getElementById('modal-card');
+            const finalScore = document.getElementById('final-score');
+            const motivation = document.getElementById('motivation-text');
+
+            finalScore.innerText = `${score}/${quizData.length}`;
+            
+            // dynamic feedback
+            if (score === quizData.length) {
+                motivation.innerText = "Tuyệt đỉnh công phu! Em là thiên tài ngữ pháp!";
+            } else if (score >= 24) {
+                motivation.innerText = "Rất giỏi! Chỉ cần cẩn thận hơn một chút là hoàn hảo!";
+            } else if (score >= 15) {
+                motivation.innerText = "Khá lắm! Hãy ôn tập lại các dấu hiệu nhận biết nhé!";
+            } else {
+                motivation.innerText = "Đừng nản chí! 'Practice makes perfect', cố gắng lên em!";
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                card.classList.remove('scale-90', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            
+            confetti({
+                particleCount: 200,
+                spread: 160,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Run when loaded
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>

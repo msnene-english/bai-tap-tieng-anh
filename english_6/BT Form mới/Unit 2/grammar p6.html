@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌸 Possessive Case — Gamified Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --emerald:#27AE60;--purple:#8E44AD;--amber:#F39C12;--sky:#3498DB;--pink:#E91E8C;
+  --correct:#27AE60;--wrong:#E74C3C;
+  --text:#1a2a1a;--text2:#2c5f2e;
+  --glass:rgba(255,255,255,0.42);--gborder:rgba(39,174,96,0.25);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* === SPRING BACKGROUND === */
+.bg{position:fixed;inset:0;z-index:-4;background:linear-gradient(145deg,#E8F8E8,#F5F0FF,#FFF0F8,#F0F8FF,#FFFAEC,#EDF9F0);background-size:600% 600%;animation:bgS 22s ease infinite}
+@keyframes bgS{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+/* BLOBS */
+.blob{position:fixed;border-radius:50%;filter:blur(85px);opacity:.2;z-index:-3;animation:bM 20s ease-in-out infinite}
+.b1{width:520px;height:520px;background:radial-gradient(circle,#27AE60,#2ECC71);top:-200px;left:-130px;animation-delay:0s}
+.b2{width:450px;height:450px;background:radial-gradient(circle,#9B59B6,#E91E8C);bottom:-130px;right:-120px;animation-delay:5s}
+.b3{width:380px;height:380px;background:radial-gradient(circle,#F39C12,#FFE66D);top:38%;left:58%;animation-delay:10s}
+.b4{width:300px;height:300px;background:radial-gradient(circle,#3498DB,#4ECDC4);bottom:25%;left:5%;animation-delay:15s}
+@keyframes bM{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(22px,-18px) scale(1.04)}66%{transform:translate(-18px,22px) scale(.97)}}
+
+/* FLOATS */
+.floats{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.fi{position:absolute;animation:fU linear infinite;opacity:.16}
+@keyframes fU{0%{transform:translateY(108vh) rotate(0deg);opacity:0}10%{opacity:.16}90%{opacity:.16}100%{transform:translateY(-8vh) rotate(420deg);opacity:0}}
+
+/* HEADER */
+.header{text-align:center;padding:12px 20px 8px;background:rgba(255,255,255,0.72);border-bottom:2px solid rgba(39,174,96,.2);backdrop-filter:blur(18px);position:sticky;top:0;z-index:200;box-shadow:0 2px 22px rgba(39,174,96,.1)}
+.header h1{font-family:'Fredoka One',sans-serif;font-size:1.12rem;background:linear-gradient(90deg,#27AE60,#9B59B6,#E91E8C,#F39C12,#27AE60);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:sh 5s linear infinite;letter-spacing:.5px}
+@keyframes sh{0%{background-position:0%}100%{background-position:300%}}
+.header .sub{font-size:.72rem;color:#5a8a5a;margin-top:2px}
+.header .teacher{font-size:.7rem;color:#8a6a4a}
+.prog-wrap{max-width:960px;margin:7px auto 0;background:rgba(39,174,96,.14);border-radius:10px;height:5px}
+.prog-bar{height:100%;background:linear-gradient(90deg,#27AE60,#9B59B6,#E91E8C);border-radius:10px;width:0%;transition:width .5s ease}
+
+/* SCORE */
+.score-tracker{position:fixed;top:88px;left:14px;background:rgba(255,255,255,.9);backdrop-filter:blur(14px);border:2px solid rgba(39,174,96,.3);border-radius:16px;padding:9px 14px;text-align:center;z-index:199;min-width:72px;box-shadow:0 4px 18px rgba(39,174,96,.15)}
+.score-num{font-family:'Fredoka One',sans-serif;font-size:1.22rem;color:#1e8449}
+.score-lbl{font-size:.57rem;color:#7dbe8a;letter-spacing:.5px}
+
+/* STICKY NOTE */
+.sticky-note{position:fixed;top:88px;right:14px;width:280px;max-width:65vw;background:rgba(255,253,245,0.95);backdrop-filter:blur(12px);border-left:4px solid #F39C12;border-radius:10px;padding:12px;z-index:199;box-shadow:0 6px 20px rgba(243,156,18,.15);font-size:.8rem;line-height:1.6;color:#5a4a3a}
+.sticky-note strong{color:#d35400;display:block;margin-bottom:4px;font-size:.85rem}
+@media(max-width:600px){.sticky-note{display:none;}}
+
+/* CONTAINER & CARDS */
+.container{max-width:960px;margin:0 auto;padding:20px 14px 100px; filter:blur(8px); pointer-events:none; transition:filter 0.5s ease;}
+.container.unlocked{filter:blur(0); pointer-events:auto;}
+.section-card{background:var(--glass);backdrop-filter:blur(20px);border:2px solid var(--gborder);border-radius:26px;padding:24px 22px;margin-bottom:28px;box-shadow:0 8px 32px rgba(39,174,96,.08),inset 0 1px 0 rgba(255,255,255,.8)}
+.sec-label{font-family:'Fredoka One',sans-serif;font-size:.75rem;color:var(--emerald);letter-spacing:1.8px;text-transform:uppercase;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.sec-label::before{content:'';display:inline-block;width:22px;height:3px;background:linear-gradient(90deg,var(--emerald),transparent);border-radius:2px}
+.sec-title{font-size:1.03rem;font-weight:900;color:var(--text);margin-bottom:4px;line-height:1.5}
+.sec-sub{font-size:.82rem;color:#5a8a5a;margin-bottom:16px;font-style:italic}
+
+/* THEORY BOX */
+.theory-box{background:rgba(39,174,96,.06);border:2px solid rgba(39,174,96,.2);border-radius:16px;padding:14px 16px;margin-bottom:20px;font-size:.9rem;line-height:1.85}
+.theory-box h4{font-family:'Fredoka One',sans-serif;color:var(--emerald);font-size:.9rem;margin-bottom:8px}
+.theory-box .rule{margin-bottom:6px}
+.rule-tag{display:inline-block;background:linear-gradient(135deg,#27AE60,#2ECC71);color:white;padding:1px 8px;border-radius:6px;font-size:.7rem;font-weight:800;margin-right:6px}
+.rule-tag.no{background:linear-gradient(135deg,#E74C3C,#c0392b)}
+.example{background:rgba(255,255,255,.5);border-radius:8px;padding:4px 10px;display:inline-block;font-weight:700;color:#1a5c2a;font-size:.88rem;margin-top:2px}
+.example.bad{color:#a0231a;text-decoration:line-through}
+.theory-sub{font-family:'Fredoka One',sans-serif;color:#8E44AD;font-size:.82rem;margin:10px 0 6px}
+
+/* Q ITEMS & MCQ */
+.q-item{margin-bottom:16px;border-radius:18px;background:rgba(255,255,255,.5);border:1.5px solid rgba(39,174,96,.16);padding:15px;transition:border-color .3s}
+.q-item.answered{border-color:rgba(39,174,96,.4)}
+.q-text{font-size:1.06rem;font-weight:700;color:var(--text);margin-bottom:12px;line-height:1.7}
+.q-num{display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#27AE60,#2ECC71);color:white;width:27px;height:27px;border-radius:50%;font-size:.77rem;font-weight:900;margin-right:8px;flex-shrink:0;box-shadow:0 3px 10px rgba(39,174,96,.3)}
+.opts-4{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.bin-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.opts-4, .bin-row{grid-template-columns:1fr}}
+
+.opt-btn{background:rgba(236,255,236,.55);border:2px solid rgba(39,174,96,.25);border-radius:14px;padding:11px 15px;color:#1a3a1a;font-family:'Nunito',sans-serif;font-size:.97rem;font-weight:700;cursor:pointer;text-align:left;transition:all .18s ease;box-shadow:0 3px 12px rgba(39,174,96,.08);line-height:1.4;word-break:break-word}
+.opt-btn:hover:not(:disabled){transform:scale(1.02) translateY(-2px);background:rgba(39,174,96,.18);border-color:var(--emerald);box-shadow:0 7px 20px rgba(39,174,96,.2)}
+.opt-btn.correct{background:rgba(39,174,96,.2);border-color:var(--correct);color:#0a3a0a;box-shadow:0 0 16px rgba(39,174,96,.25)}
+.opt-btn.wrong{background:rgba(231,76,60,.18);border-color:var(--wrong);color:#6a0a0a;animation:shake .42s ease}
+.opt-btn.revealed{background:rgba(39,174,96,.15);border-color:var(--correct);color:#1e6b1e;box-shadow:0 0 12px rgba(39,174,96,.3)}
+.opt-btn.center-text{text-align:center;font-size:1rem}
+.opt-btn:disabled{cursor:not-allowed;}
+
+/* EXPLANATION CSS STANDARDS */
+.expl-box{display:none;background:rgba(250,255,250,.96);border:1.5px solid rgba(39,174,96,.3);border-radius:14px;padding:18px;margin-top:12px;font-size:.92rem;line-height:1.7;animation:sD .35s ease;color:var(--text)}
+.expl-box.visible{display:block}
+@keyframes sD{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.expl-head{color:#1e8449;font-size:.75rem;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;border-bottom:2px solid rgba(39,174,96,.2);padding-bottom:6px;font-weight:900}
+.step-blk{margin-bottom:12px; padding-left:10px; border-left:3px solid rgba(39,174,96,.2);}
+.vi-box{background:rgba(243,156,18,.1);border-left:3px solid #F39C12;border-radius:0 9px 9px 0;padding:10px 14px;color:#7a4a0a;font-style:italic;margin-bottom:12px;font-size:.92rem; font-weight:600;}
+
+/* FORMATTING TAGS */
+span.p-word{color:#0984e3;font-weight:800}
+span.p-phonetic{background:#f3e5f5;color:#8e24aa;padding:2px 5px;border-radius:5px; font-family:sans-serif;}
+span.p-mean{color:#d35400;font-weight:800}
+span.p-grammar{background:linear-gradient(120deg,rgba(243,156,18,.4) 0%,rgba(233,30,140,.28) 100%);color:#7a1a4a;padding:1px 7px;border-radius:6px;font-weight:800;}
+span.hl-green{color:#27ae60;font-weight:900}
+span.hl-red{color:#c0392b;text-decoration:line-through;font-weight:800; opacity:0.8;}
+
+/* WRITING/FILL IN BLANKS */
+.w-item{margin-bottom:14px;background:rgba(255,255,255,.55);border:1.5px solid rgba(39,174,96,.16);border-radius:14px;padding:13px 15px}
+.w-prompt{font-size:.99rem;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.7}
+.w-input{width:calc(100% - 100px);background:rgba(255,255,255,.8);border:2px solid rgba(39,174,96,.28);border-radius:10px;padding:9px 13px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.95rem;transition:border-color .3s; display:inline-block;}
+.w-input:focus{outline:none;border-color:var(--emerald);box-shadow:0 0 10px rgba(39,174,96,.18)}
+.w-input.correct{border-color:var(--correct); background:rgba(39,174,96,.1); color:#0a4a1a;}
+.w-input.wrong{border-color:var(--wrong); background:rgba(231,76,60,.1); color:#6a0a0a; animation:shake .42s ease;}
+.w-input:disabled{pointer-events:none;}
+.w-check-btn{background:linear-gradient(135deg,#3498DB,#2980B9);border:none;border-radius:10px;color:white;font-family:'Nunito',sans-serif;font-size:.88rem;font-weight:800;padding:9px 16px;cursor:pointer;transition:all .2s; margin-left:8px; vertical-align: top;}
+.w-check-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 4px 12px rgba(52,152,219,.4)}
+.w-check-btn:disabled{background:#bdc3c7; cursor:not-allowed; transform:none; box-shadow:none;}
+
+/* MATCHING */
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px; margin-top:10px;}
+@media(max-width:620px){.match-grid{grid-template-columns:1fr}}
+.match-col-title{font-family:'Fredoka One',sans-serif;font-size:.82rem;color:white;padding:7px 14px;border-radius:12px;text-align:center;margin-bottom:10px}
+.match-col-title.colA{background:linear-gradient(135deg,#27AE60,#2ECC71)}
+.match-col-title.colB{background:linear-gradient(135deg,#9B59B6,#E91E8C)}
+.match-q-item,.match-a-item{padding:10px 14px;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;margin-bottom:8px;line-height:1.4;border:2px solid transparent}
+.match-q-item{background:rgba(39,174,96,.12);border-color:rgba(39,174,96,.22);color:#0a3a1a}
+.match-a-item{background:rgba(142,68,173,.1);border-color:rgba(142,68,173,.22);color:#3a0a5a}
+.match-q-item:hover:not(.matched),.match-a-item:hover:not(.matched){transform:scale(1.02);box-shadow:0 4px 14px rgba(39,174,96,.18)}
+.match-q-item.selected{border-color:var(--emerald);background:rgba(39,174,96,.22);box-shadow:0 0 12px rgba(39,174,96,.4)}
+.match-a-item.selected{border-color:var(--purple);background:rgba(142,68,173,.22);box-shadow:0 0 12px rgba(142,68,173,.4)}
+.match-q-item.matched,.match-a-item.matched{border-color:var(--correct);background:rgba(39,174,96,.18);color:#0a4a1a;cursor:default;opacity:0.7}
+.match-q-item.match-wrong,.match-a-item.match-wrong{border-color:var(--wrong);background:rgba(231,76,60,.14);animation:shake .42s ease}
+.match-hint{font-size:.8rem;color:#d35400;text-align:center;margin-bottom:12px;font-weight:800; background:rgba(243,156,18,.15); padding:6px; border-radius:8px;}
+.match-expl-container{margin-top:15px;}
+
+/* MODALS */
+.overlay{position:fixed;inset:0;background:rgba(10,30,10,.78);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.overlay.visible{display:flex}
+.modal-box{background:rgba(250,255,250,.97);border:2px solid rgba(39,174,96,.4);border-radius:26px;padding:32px 28px;max-width:440px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(39,174,96,.35)}
+.modal-box h2{font-family:'Fredoka One',sans-serif;font-size:1.22rem;background:linear-gradient(90deg,#27AE60,#9B59B6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:18px}
+.name-inp{width:100%;background:rgba(255,255,255,.88);border:2px solid rgba(39,174,96,.38);border-radius:12px;padding:12px 15px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.98rem;margin-bottom:13px;transition:border-color .3s}
+.name-inp:focus{outline:none;border-color:var(--emerald)}
+.name-inp.err{border-color:var(--wrong);animation:shake .42s ease}
+.err-msg{color:#e74c3c;font-size:.85rem;margin-bottom:10px;display:none;font-weight:700}
+.err-msg.visible{display:block}
+.confirm-btn{background:linear-gradient(135deg,#27AE60,#2ECC71);border:none;border-radius:20px;color:white;font-family:'Nunito',sans-serif;font-size:.98rem;font-weight:800;padding:12px 28px;cursor:pointer;width:100%;transition:all .2s;box-shadow:0 4px 15px rgba(39,174,96,.3)}
+.confirm-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(39,174,96,.42)}
+.submit-sec{text-align:center;padding:28px 10px}
+.submit-btn{background:linear-gradient(135deg,#27AE60,#9B59B6,#E91E8C);border:none;border-radius:30px;color:white;font-family:'Fredoka One',sans-serif;font-size:1rem;padding:15px 44px;cursor:pointer;box-shadow:0 8px 28px rgba(39,174,96,.42);transition:all .3s;letter-spacing:.5px}
+.submit-btn:hover{transform:translateY(-3px) scale(1.05);box-shadow:0 15px 42px rgba(39,174,96,.58)}
+
+/* RESULT UI */
+.result-box{background:rgba(250,255,250,.98);border:2px solid rgba(39,174,96,.4);border-radius:26px;padding:30px 26px;max-width:480px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(39,174,96,.35);max-height:88vh;overflow-y:auto}
+.greet-text{font-family:'Fredoka One',sans-serif;font-size:1.05rem;color:#1e8449;margin-bottom:8px;line-height:1.4}
+.score-big{font-family:'Fredoka One',sans-serif;font-size:3.5rem;background:linear-gradient(90deg,#27AE60,#9B59B6,#E91E8C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:10px 0 4px}
+.score-ten{font-size:1.2rem;font-weight:900;color:#1e8449;margin:4px 0 8px}
+.score-detail{color:#5a8a5a;font-size:.9rem;margin-bottom:14px;font-weight:700}
+.result-gif{width:160px;height:160px;border-radius:14px;object-fit:cover;margin:12px auto;display:block;border:3px solid rgba(39,174,96,.35)}
+.retry-btn{background:linear-gradient(135deg,#27AE60,#9B59B6);border:none;border-radius:18px;color:white;font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;padding:10px 24px;cursor:pointer;margin-top:12px;transition:all .2s;box-shadow:0 4px 15px rgba(39,174,96,.3)}
+#cc{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+</style>
+<style>body{overflow:auto!important;}</style></head>
+<body>
+
+<!-- START OVERLAY -->
+<div class="overlay visible" id="startOverlay" style="z-index:9999;">
+  <div class="modal-box">
+    <h2>🌸 CHÀO MỪNG CÁC CON</h2>
+    <p style="color:#5a8a5a;font-size:.95rem;margin-bottom:16px;font-weight:700;">Nhấn bắt đầu để nghe lời dặn dò của Ms. Chí Nên trước khi làm bài nhé!</p>
+    <button class="confirm-btn" onclick="startQuiz()">🚀 NGHE LỜI NHẮC & BẮT ĐẦU</button>
+  </div>
+</div>
+
+<div class="bg"></div>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+<div class="floats" id="floats"></div>
+<canvas id="cc"></canvas>
+
+<!-- STICKY REMINDER -->
+<div class="sticky-note">
+  <strong>⚠️ Lời nhắc từ Ms. Chí Nên:</strong>
+  Con là học sinh <span class="p-word">lớp 6</span> nhé — hãy đọc kỹ <span class="p-word">khung lý thuyết</span> ở đầu bài trước khi làm, rồi đọc thật kỹ giải thích sau mỗi câu. Sai không sao đâu, quan trọng là con hiểu tại sao sai! ☎️ <strong>0852639652</strong> — Ms. Chí Nên.
+</div>
+
+<div class="header">
+  <h1>🌸 POSSESSIVE CASE — Gamified Quiz</h1>
+  <div class="sub">Unit 2 · Sở hữu cách ('s / s') · 35 câu</div>
+  <div class="teacher">✨ Giáo viên tạo: Ms. Chí Nên — ULIS &nbsp;·&nbsp; ☎️ 0852639652</div>
+  <div class="prog-wrap"><div class="prog-bar" id="progBar"></div></div>
+</div>
+<div class="score-tracker">
+  <div class="score-num" id="scoreDisplay">0/0</div>
+  <div class="score-lbl">XP ✦ Điểm</div>
+</div>
+
+<div class="container" id="mainApp">
+
+<!-- THEORY -->
+<div class="section-card">
+  <div class="sec-label">Theory</div>
+  <div class="sec-title">📚 SỞ HỮU CÁCH — POSSESSIVE CASE</div>
+  <div class="sec-sub">Đọc kỹ lý thuyết này trước khi làm bài — con có thể quay lại đọc bất cứ lúc nào!</div>
+  <div class="theory-box">
+    <h4>① CÁCH DÙNG — KHI NÀO DÙNG SỞ HỮU CÁCH ('s)?</h4>
+    <div class="rule"><span class="rule-tag">Người &amp; động vật</span> Diễn tả sự sở hữu của <strong>người</strong> hoặc <strong>con vật</strong> (thực thể sống) &nbsp;<span class="example">Paul's bike · the dog's ears</span></div>
+    <div class="rule"><span class="rule-tag">Thời gian</span> Dùng với các cụm từ chỉ <strong>thời gian</strong> &nbsp;<span class="example">a week's time · a month's holiday</span></div>
+    <div class="rule"><span class="rule-tag">Vật duy nhất</span> Dùng với những vật <strong>duy nhất, chỉ có một</strong> trên đời &nbsp;<span class="example">the moon's orbit · the earth's surface</span></div>
+    <div class="rule"><span class="rule-tag no">KHÔNG dùng 's</span> Với <strong>sự vật, sự việc, hiện tượng vô tri</strong> (cái bàn, cái xe, thời tiết...) — ta dùng giới từ <strong>"of"</strong> thay vì 's</div>
+    <div class="rule">✅ <span class="example">the wheels of the car</span> &nbsp;&nbsp; ❌ <span class="example bad">the car's wheels</span></div>
+    <div class="rule">✅ <span class="example">the back of the room</span> &nbsp;&nbsp; ❌ <span class="example bad">the room's back</span></div>
+
+    <div class="theory-sub">② CÁCH VIẾT KÍ HIỆU SỞ HỮU CÁCH</div>
+    <div class="rule"><span class="rule-tag">Quy tắc 1</span> Danh từ số ÍT, danh từ KHÔNG ĐẾM ĐƯỢC, hoặc danh từ số nhiều KHÔNG kết thúc bằng -s → thêm <strong>'s</strong> &nbsp;<span class="example">Jack's shoes · Tim's · the boy's</span></div>
+    <div class="rule"><span class="rule-tag">Quy tắc 2</span> Danh từ số NHIỀU kết thúc bằng -s → chỉ thêm dấu lược <strong>'</strong> &nbsp;<span class="example">boys' · parents' · the teachers'</span></div>
+    <div class="rule"><span class="rule-tag">Quy tắc 3</span> Danh từ số nhiều BẤT QUY TẮC (không kết thúc bằng -s) → vẫn thêm <strong>'s</strong> như số ít &nbsp;<span class="example">children's · men's · women's</span></div>
+    <div class="rule"><span class="rule-tag">Mẹo nhớ</span> Hỏi: "của AI?" (chưa có -s cuối) → thêm <strong>'s</strong> &nbsp;|&nbsp; "của nhiều AI?" (đã có sẵn -s cuối) → chỉ thêm dấu lược <strong>'</strong></div>
+  </div>
+</div>
+
+<!-- EXERCISE 1 (kept, 15 câu) -->
+<div class="section-card">
+  <div class="sec-label">Exercise 1</div>
+  <div class="sec-title">🔑 Choose the Correct Possessive Form</div>
+  <div class="sec-sub">Chọn dạng sở hữu cách đúng trong ngoặc. (Sai không được chọn lại, phải đọc giải thích ngay!) — 15 câu</div>
+  <div id="ex1"></div>
+</div>
+
+<!-- EXERCISE 2 (new, fill-in, 8 câu) -->
+<div class="section-card">
+  <div class="sec-label">Exercise 2</div>
+  <div class="sec-title">✏️ Write the Correct Possessive Form</div>
+  <div class="sec-sub">Gõ dạng sở hữu cách đúng của từ trong ngoặc vào chỗ trống, rồi nhấn "Kiểm tra". (Không phân biệt hoa/thường) — 8 câu</div>
+  <div id="ex2"></div>
+</div>
+
+<!-- EXERCISE 3 (new, MCQ usage, 7 câu) -->
+<div class="section-card">
+  <div class="sec-label">Exercise 3</div>
+  <div class="sec-title">🌟 Choose the Correctly Written Phrase</div>
+  <div class="sec-sub">Chọn cách viết ĐÚNG nhất — chú ý phân biệt khi nào dùng 's và khi nào phải dùng "of"! — 7 câu</div>
+  <div id="ex3"></div>
+</div>
+
+<!-- EXERCISE 4 (new, matching, 5 câu) -->
+<div class="section-card">
+  <div class="sec-label">Exercise 4 — Matching</div>
+  <div class="sec-title">🔗 Match the Vietnamese Meaning with the Correct Phrase</div>
+  <div class="sec-sub">Nối nghĩa tiếng Việt ở cột A với cụm sở hữu cách đúng ở cột B. — 5 câu</div>
+  <div class="match-hint">⚡ Tương tác: Nhấn 1 ô cột A ➔ Rồi nhấn ô cột B tương ứng. Nếu sai sẽ khóa lại ngay!</div>
+  <div class="match-grid">
+    <div>
+      <div class="match-col-title colA">A — Nghĩa tiếng Việt</div>
+      <div id="matchQs4"></div>
+    </div>
+    <div>
+      <div class="match-col-title colB">B — Cụm từ tiếng Anh</div>
+      <div id="matchAs4"></div>
+    </div>
+  </div>
+  <div class="match-expl-container" id="matchExpl4"></div>
+</div>
+
+<div class="submit-sec">
+  <button class="submit-btn" onclick="openSubmit()">🌸 NỘP BÀI &amp; XEM KẾT QUẢ CUỐI CÙNG</button>
+</div>
+</div>
+
+<!-- NAME OVERLAY -->
+<div class="overlay" id="nameOverlay">
+  <div class="modal-box">
+    <h2>🌿 NHẬP TÊN CỦA BẠN</h2>
+    <p style="color:#5a8a5a;font-size:.85rem;margin-bottom:16px; font-weight:700;">Hệ thống sẽ tổng hợp toàn bộ điểm số kinh nghiệm (XP) của bạn!</p>
+    <input class="name-inp" id="nameInp" type="text" placeholder="Ví dụ: Nguyễn Văn A...">
+    <div class="err-msg" id="nameErr">⚠️ Vui lòng nhập tên!</div>
+    <button class="confirm-btn" onclick="showResult()">🚀 XUẤT PHIẾU ĐIỂM</button>
+  </div>
+</div>
+
+<!-- RESULT OVERLAY -->
+<div class="overlay" id="resultOverlay">
+  <div class="result-box">
+    <div class="greet-text" id="greetText"></div>
+    <div class="score-big" id="scoreBig"></div>
+    <div class="score-ten" id="scoreTen"></div>
+    <div class="score-detail" id="scoreDetail"></div>
+    <img class="result-gif" id="resultGif" src="" alt="">
+    <button class="retry-btn" onclick="location.reload()">🔄 Làm lại từ đầu</button>
+  </div>
+</div>
+
+<script>
+// === AUDIO SYSTEM ===
+$1'https://msnene-english.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/super_mario_bros.mp3');//hoctienganhcungcomaianulis.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_7wcKV5pKUrQYWyi7XgktJM.mp3');
+$1'https://msnene-english.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/Am_thanh_meme_Oi_doi_oi_huan_hoa_hong-www_tiengdong_com.mp3');//hoctienganhcungcomaianulis.github.io/homework/%E1%BA%A2nh_File%20nghe/File%20nghe%20Ket%20A2/huh_sound_effect-www_tiengdong_com.mp3');
+
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+function playOk(){
+  if(AC.state==='suspended') AC.resume();
+  const t=AC.currentTime;
+  [523,659,784,1047].forEach((f,i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.connect(g);g.connect(AC.destination);
+    o.frequency.value=f;o.type='sine';
+    g.gain.setValueAtTime(0,t+i*.1);
+    g.gain.linearRampToValueAtTime(.2,t+i*.1+.03);
+    g.gain.exponentialRampToValueAtTime(.001,t+i*.1+.3);
+    o.start(t+i*.1);o.stop(t+i*.1+.35);
+  });
+}
+function playNo(){
+  wrongAudio.currentTime = 0;
+  wrongAudio.play().catch(e => console.log("Audio play failed:", e));
+}
+
+// === START LOGIC ===
+function startQuiz() {
+  document.getElementById('startOverlay').classList.remove('visible');
+  document.getElementById('mainApp').classList.add('unlocked');
+  introAudio.play().catch(e => console.log("Intro audio play failed:", e));
+  if(AC.state==='suspended') AC.resume();
+}
+
+// === FLOATS ANIMATION (tăng số lượng cho đỡ trống trải) ===
+const icons=['🌸','🌿','🌼','🦋','🌺','🌱','🌻','🍀','🌷','🌾','🍃','🌈','✨','🌙','🐝','🌹'];
+(function(){
+  const w=document.getElementById('floats');
+  for(let i=0;i<36;i++){
+    const d=document.createElement('div');d.className='fi';
+    d.textContent=icons[i%icons.length];
+    const dur=8+Math.random()*15,delay=Math.random()*22,left=Math.random()*100;
+    d.style.cssText=`left:${left}%;animation-duration:${dur}s;animation-delay:${delay}s;font-size:${1+Math.random()*1.4}rem`;
+    w.appendChild(d);
+  }
+})();
+
+// === CONFETTI ===
+const cvs=document.getElementById('cc');const cx=cvs.getContext('2d');let cp=[];
+function launchConfetti(){cvs.width=innerWidth;cvs.height=innerHeight;for(let i=0;i<75;i++) cp.push({x:Math.random()*cvs.width,y:-10,vx:(Math.random()-.5)*6,vy:Math.random()*4+2,color:`hsl(${Math.random()*360},85%,60%)`,size:Math.random()*7+3,rot:Math.random()*360,rs:(Math.random()-.5)*8,life:1});animC();}
+function animC(){cx.clearRect(0,0,cvs.width,cvs.height);cp=cp.filter(p=>p.life>0);cp.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.rot+=p.rs;p.life-=.013;cx.save();cx.globalAlpha=p.life;cx.fillStyle=p.color;cx.translate(p.x,p.y);cx.rotate(p.rot*Math.PI/180);cx.fillRect(-p.size/2,-p.size/4,p.size,p.size/2);cx.restore();});if(cp.length) requestAnimationFrame(animC);else cx.clearRect(0,0,cvs.width,cvs.height);}
+
+// === GLOBAL SCORE SYSTEM ===
+let totalMaxScore = 35;
+let currentScore = 0;
+
+function initScoreDisplay(){
+  document.getElementById('scoreDisplay').textContent = `0/${totalMaxScore}`;
+  document.getElementById('progBar').style.width = '0%';
+}
+function addScore(){
+  currentScore++;
+  document.getElementById('scoreDisplay').textContent = `${currentScore}/${totalMaxScore}`;
+  document.getElementById('progBar').style.width = (currentScore/totalMaxScore*100)+'%';
+}
+function shuffleArr(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+
+// ============================================================
+// MCQ ENGINE (NO RETRY) — dùng cho quyết định gọi try/catch để không chặn giải thích
+// ============================================================
+function renderMCQ(cid,data,startN,gridClass='opts-4'){
+  const c=document.getElementById(cid);
+  data.forEach((q,qi)=>{
+    const sh=shuffleArr(q.options.map(o=>({...o})));
+    const el=document.createElement('div');el.className='q-item';el.id=`q_${cid}_${qi}`;
+    let oH=`<div class="${gridClass}">`;
+    sh.forEach(op=>{
+      oH+=`<button class="opt-btn${gridClass==='bin-row'?' center-text':''}" data-correct="${op.correct}" data-qid="q_${cid}_${qi}" onclick="handleMCQ(this,'q_${cid}_${qi}',${qi},'${cid}')">${op.text}</button>`;
+    });
+    oH+='</div>';
+    el.innerHTML=`<div class="q-text"><span class="q-num">${startN+qi}</span>${q.text}</div>${oH}<div class="expl-box" id="expl_${cid}_${qi}">${q.explanation}</div>`;
+    c.appendChild(el);
+  });
+}
+
+function handleMCQ(btn,qid,qi,cid){
+  const el=document.getElementById(qid);
+  if(el.classList.contains('answered')) return;
+
+  el.classList.add('answered');
+  const isOk = btn.dataset.correct === 'true';
+
+  el.querySelectorAll('.opt-btn').forEach(b=>{
+    b.disabled = true;
+    if(b.dataset.correct === 'true') {
+      b.classList.add(isOk && b === btn ? 'correct' : 'revealed');
+    }
+  });
+  if(!isOk) btn.classList.add('wrong');
+  document.getElementById(`expl_${cid}_${qi}`).classList.add('visible');
+  if(isOk) addScore();
+  try{ if(isOk){playOk(); launchConfetti();} else {playNo();} }catch(e){}
+}
+
+// === EXERCISE 1 DATA (giữ nguyên 15 câu gốc — Exercise 10) ===
+const ex1Data=[
+  {text:"1. There are three bathrooms in (Tim's / Tims') house.",
+   options:[{text:"Tim's",correct:true},{text:"Tims'",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Có ba phòng tắm trong nhà của Tim."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>Tim's</span>: <span class='p-mean'>Của Tim</span> (Sở hữu cách của danh từ số ít).<br>
+   - <span class='p-word'>Tims'</span>: <span class='hl-red'>Sai</span> (Không tồn tại dạng số nhiều thêm s' đối với tên riêng số ít trong trường hợp này).</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Theo <span class='p-grammar'>Quy tắc sở hữu cách</span>, "Tim" là danh từ số ÍT, nên ta phải thêm đuôi 's để chỉ sự sở hữu. Do đó chọn <span class='hl-green'>Tim's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>Tims'</span> là sai ngữ pháp vì dấu phẩy (') chỉ đứng sau chữ "s" khi đó là danh từ số nhiều kết thúc bằng "s" (ví dụ: the boys').</div>`},
+  {text:"2. Her (sisters' / sister's) room is next to the living room.",
+   options:[{text:"sisters'",correct:false},{text:"sister's",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Phòng của chị/em gái cô ấy ở cạnh phòng khách."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>sister's</span>: <span class='p-mean'>Của chị/em gái</span> (1 người).<br>
+   - <span class='p-word'>sisters'</span>: <span class='p-mean'>Của các chị/em gái</span> (nhiều người).</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Đại từ "Her" kết hợp với ngữ cảnh thường ngầm định là 1 người chị/em gái (danh từ số ÍT), nên ta dùng <span class='hl-green'>sister's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>sisters'</span> mang nghĩa số nhiều, ít phù hợp và không tự nhiên bằng dạng số ít trong câu này.</div>`},
+  {text:"3. It's the (boy's / boy') toy.",
+   options:[{text:"boy's",correct:true},{text:"boy'",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Đó là đồ chơi của cậu bé."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>boy's</span>: <span class='p-mean'>Của cậu bé</span>.<br>
+   - <span class='p-word'>boy'</span>: <span class='hl-red'>Lỗi sai chính tả</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   <span class='p-word'>boy</span> (cậu bé) là danh từ số ÍT. Cấu trúc <span class='p-grammar'>Sở hữu cách với danh từ số ít</span> luôn bắt buộc phải thêm <strong>'s</strong>. Chọn <span class='hl-green'>boy's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>boy'</span> là sai hoàn toàn, tiếng Anh không tồn tại cách viết này.</div>`},
+  {text:"4. These are the (boys's / boys') pencils.",
+   options:[{text:"boys's",correct:false},{text:"boys'",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Đây là những cây bút chì của các cậu bé."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>boys's</span>: <span class='hl-red'>Lỗi sai chính tả</span>.<br>
+   - <span class='p-word'>boys'</span>: <span class='p-mean'>Của các cậu bé</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   <span class='p-word'>boys</span> là danh từ số NHIỀU, đã kết thúc bằng chữ "s". Theo <span class='p-grammar'>Quy tắc sở hữu cách</span>, ta chỉ cần thêm dấu phẩy ('). Chọn <span class='hl-green'>boys'</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>boys's</span>: KHÔNG BAO GIỜ thêm 's sau một danh từ số nhiều đã có sẵn s ở cuối.</div>`},
+  {text:"5. They're (Tom' / Tom's) shorts.",
+   options:[{text:"Tom'",correct:false},{text:"Tom's",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Chúng là quần short của Tom."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>Tom's</span>: <span class='p-mean'>Của Tom</span>.<br>
+   - <span class='p-word'>Tom'</span>: <span class='hl-red'>Lỗi sai</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Tên riêng <span class='p-word'>Tom</span> là danh từ số ÍT, do đó phải tuân theo quy tắc thêm <strong>'s</strong>. Chọn <span class='hl-green'>Tom's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>Tom'</span> bị thiếu chữ "s" sau dấu phẩy, đây là bẫy ngữ pháp.</div>`},
+  {text:"6. My (parents' / parents's) car was not expensive.",
+   options:[{text:"parents'",correct:true},{text:"parents's",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Chiếc xe ô tô của bố mẹ tôi không đắt."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>parents'</span>: <span class='p-mean'>Của bố mẹ</span> (số nhiều).<br>
+   - <span class='p-word'>parents's</span>: <span class='hl-red'>Lỗi sai</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   <span class='p-word'>parents</span> (bố mẹ) là danh từ số NHIỀU có "s" ở cuối. Chỉ cần thêm dấu phẩy ('). Chọn <span class='hl-green'>parents'</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>parents's</span> sai vì lặp lại âm "s" không cần thiết và sai quy tắc sở hữu cách số nhiều.</div>`},
+  {text:"7. This is my (brother / brother's) book.",
+   options:[{text:"brother",correct:false},{text:"brother's",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Đây là quyển sách của anh/em trai tôi."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>brother</span>: <span class='p-mean'>Anh/em trai</span>.<br>
+   - <span class='p-word'>brother's</span>: <span class='p-mean'>Của anh/em trai</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Danh từ "book" đứng ngay sau, do đó ta cần hình thức <span class='p-grammar'>Sở hữu cách</span>. Chọn <span class='hl-green'>brother's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>brother</span> sai vì không thể ghép trực tiếp 2 danh từ như vậy.</div>`},
+  {text:"8. My (sister / sister's) bedroom is next to the living room.",
+   options:[{text:"sister",correct:false},{text:"sister's",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Phòng ngủ của chị/em gái tôi nằm cạnh phòng khách."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>sister</span>: <span class='p-mean'>Chị/em gái</span>.<br>
+   - <span class='p-word'>sister's</span>: <span class='p-mean'>Của chị/em gái</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Tương tự câu trên, cần một từ chỉ sở hữu phía trước "bedroom". Chọn <span class='hl-green'>sister's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>sister bedroom</span> sai hoàn toàn về mặt ngữ pháp.</div>`},
+  {text:"9. This is my (brother's / brothers) bike.",
+   options:[{text:"brother's",correct:true},{text:"brothers",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Đây là xe đạp của anh/em trai tôi."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>brother's</span>: <span class='p-mean'>Của anh/em trai</span> (sở hữu cách số ít).<br>
+   - <span class='p-word'>brothers</span>: <span class='p-mean'>Các anh/em trai</span> (danh từ số nhiều).</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Cần tính từ sở hữu đứng trước danh từ "bike". Chọn <span class='hl-green'>brother's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>brothers</span> chỉ là danh từ số nhiều, không mang nghĩa sở hữu.</div>`},
+  {text:"10. The (children / children's) room is upstairs.",
+   options:[{text:"children",correct:false},{text:"children's",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Phòng của những đứa trẻ ở trên lầu."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>children</span>: <span class='p-mean'>Những đứa trẻ</span>.<br>
+   - <span class='p-word'>children's</span>: <span class='p-mean'>Của những đứa trẻ</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Từ <span class='p-word'>children</span> là <span class='p-grammar'>Danh từ số nhiều BẤT QUY TẮC</span> (không kết thúc bằng "s"). Ta phải thêm đầy đủ <strong>'s</strong>. Chọn <span class='hl-green'>children's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>children room</span> thiếu sở hữu cách.</div>`},
+  {text:"11. There is a TV in (Elena / Elena's) bedroom.",
+   options:[{text:"Elena",correct:false},{text:"Elena's",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Có một chiếc TV trong phòng ngủ của Elena."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>Elena</span>: Tên người.<br>
+   - <span class='p-word'>Elena's</span>: <span class='p-mean'>Của Elena</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Để biểu thị phòng ngủ thuộc về Elena, ta cần sở hữu cách. Chọn <span class='hl-green'>Elena's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>Elena bedroom</span> sai cấu trúc.</div>`},
+  {text:"12. (Mr Green's / Mr Greens') boat house looks very strange.",
+   options:[{text:"Mr Green's",correct:true},{text:"Mr Greens'",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Ngôi nhà thuyền của ông Green trông rất kỳ lạ."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>Mr Green's</span>: <span class='p-mean'>Của ông Green</span> (1 người).<br>
+   - <span class='p-word'>Mr Greens'</span>: <span class='hl-red'>Sai cấu trúc</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   <span class='p-word'>Mr Green</span> là danh từ số ÍT. Áp dụng quy tắc số ít → thêm <strong>'s</strong>. Chọn <span class='hl-green'>Mr Green's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>Mr Greens'</span>: Không thể dùng "Mr" đi kèm với họ "Greens" (số nhiều) rồi thêm sở hữu cách số nhiều.</div>`},
+  {text:"13. My (grandparents' / grandparents) garden is full of beautiful flowers.",
+   options:[{text:"grandparents'",correct:true},{text:"grandparents",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Khu vườn của ông bà tôi đầy hoa đẹp."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>grandparents'</span>: <span class='p-mean'>Của ông bà</span> (sở hữu cách số nhiều).<br>
+   - <span class='p-word'>grandparents</span>: <span class='p-mean'>Ông bà</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   "grandparents" kết thúc bằng "s", nên chỉ thêm dấu phẩy. Chọn <span class='hl-green'>grandparents'</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>grandparents</span> (không dấu phẩy) thiếu chức năng sở hữu.</div>`},
+  {text:"14. Where is (Nam / Nam's) laptop?",
+   options:[{text:"Nam",correct:false},{text:"Nam's",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Laptop của Nam ở đâu?"</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>Nam</span>: Tên người.<br>
+   - <span class='p-word'>Nam's</span>: <span class='p-mean'>Của Nam</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Câu hỏi cần sở hữu cách để xác định laptop thuộc về ai. Chọn <span class='hl-green'>Nam's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>Nam laptop</span> là sai ngữ pháp.</div>`},
+  {text:"15. (Mai' / Mai's) house is big.",
+   options:[{text:"Mai'",correct:false},{text:"Mai's",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Nhà của Mai rộng lớn."</div>
+   <div class="step-blk"><strong>1. Phân tích các lựa chọn:</strong><br>
+   - <span class='p-word'>Mai'</span>: <span class='hl-red'>Lỗi sai ngữ pháp</span>.<br>
+   - <span class='p-word'>Mai's</span>: <span class='p-mean'>Của Mai</span>.</div>
+   <div class="step-blk"><strong>2. Tại sao chọn đáp án này?</strong><br>
+   Tên riêng "Mai" là số ÍT, bắt buộc thêm đầy đủ <strong>'s</strong>. Chọn <span class='hl-green'>Mai's</span>.</div>
+   <div class="step-blk"><strong>3. Tại sao đáp án khác sai?</strong><br>
+   <span class='hl-red'>Mai'</span> bị thiếu mất chữ "s" sau dấu phẩy.</div>`}
+];
+
+// === EXERCISE 2 DATA (mới, fill-in, 8 câu) ===
+const ex2Data=[
+  {prompt:"1. This is _______ pen. (Peter)", ansExact:["peter's"],
+   note:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Đây là bút của Peter."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>Peter</span> là tên riêng, danh từ số ÍT → thêm <strong>'s</strong>: <span class='hl-green'>Peter's</span>.</div>
+   <div class="step-blk"><strong>Bẫy lỗi sai:</strong><br>Quên thêm 's thành <span class='hl-red'>Peter</span>, hoặc viết thiếu s thành <span class='hl-red'>Peter'</span>.</div>`},
+  {prompt:"2. The _______ meeting starts at 9 a.m. (women)", ansExact:["women's"],
+   note:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Buổi họp của các quý cô bắt đầu lúc 9 giờ sáng."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>women</span> là danh từ số nhiều <span class='p-grammar'>BẤT QUY TẮC</span> (không tận cùng -s) → vẫn thêm <strong>'s</strong>: <span class='hl-green'>women's</span>.</div>
+   <div class="step-blk"><strong>Bẫy lỗi sai:</strong><br>Viết sai chính tả thành <span class='hl-red'>womens'</span> hay <span class='hl-red'>womens</span> (không có từ "womens" trong tiếng Anh).</div>`},
+  {prompt:"3. I like the _______ laughter. (children)", ansExact:["children's"],
+   note:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Tôi thích tiếng cười của các em nhỏ."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>children</span> là danh từ số nhiều bất quy tắc của "child" → thêm <strong>'s</strong>: <span class='hl-green'>children's</span>.</div>
+   <div class="step-blk"><strong>Bẫy lỗi sai:</strong><br><span class='hl-red'>childrens'</span> sai vì "childrens" không tồn tại (children đã là số nhiều).</div>`},
+  {prompt:"4. These are the _______ books. (teachers — nhiều người)", ansExact:["teachers'"],
+   note:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Đây là sách của các thầy cô."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>teachers</span> là số nhiều, đã tận cùng -s → chỉ thêm dấu lược <strong>'</strong>: <span class='hl-green'>teachers'</span>.</div>
+   <div class="step-blk"><strong>Bẫy lỗi sai:</strong><br><span class='hl-red'>teacher's</span> chỉ dùng cho MỘT thầy/cô, sai vì đề có nhiều người.</div>`},
+  {prompt:"5. That is my _______ car. (parents)", ansExact:["parents'"],
+   note:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Đó là xe ô tô của bố mẹ tôi."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>parents</span> là số nhiều tận cùng -s → chỉ thêm <strong>'</strong>: <span class='hl-green'>parents'</span>.</div>
+   <div class="step-blk"><strong>Bẫy lỗi sai:</strong><br><span class='hl-red'>parent's</span> chỉ dùng cho MỘT phụ huynh, sai vì "parents" luôn chỉ cả bố và mẹ.</div>`},
+  {prompt:"6. It's the _______ tail. (the cat)", ansExact:["cat's"],
+   note:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Đó là cái đuôi của con mèo."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br>Chỉ có MỘT con mèo → danh từ số ÍT + <strong>'s</strong>: <span class='hl-green'>cat's</span>.</div>
+   <div class="step-blk"><strong>Bẫy lỗi sai:</strong><br><span class='hl-red'>cats'</span> ngụ ý nhiều con mèo, sai vì đề chỉ có 1 con.</div>`},
+  {prompt:"7. This is _______ new bike. (James)", ansExact:["james's","james'"],
+   note:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Đây là xe đạp mới của James."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br>Tên riêng <span class='p-word'>James</span> tận cùng bằng -s VẪN được thêm <strong>'s</strong> bình thường: <span class='hl-green'>James's</span> (một số sách cũng chấp nhận chỉ thêm <strong>'</strong>: James').</div>
+   <div class="step-blk"><strong>Bẫy lỗi sai:</strong><br><span class='hl-red'>James</span> (thiếu dấu sở hữu) hay <span class='hl-red'>Jamess'</span> (sai chính tả) đều không đúng.</div>`},
+  {prompt:"8. Look at _______ paws. (the dogs — nhiều con)", ansExact:["dogs'"],
+   note:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Nhìn những cái chân (bàn chân) của các con chó kìa."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>dogs</span> là số nhiều tận cùng -s → chỉ thêm <strong>'</strong>: <span class='hl-green'>dogs'</span>.</div>
+   <div class="step-blk"><strong>Bẫy lỗi sai:</strong><br><span class='hl-red'>dog's</span> chỉ dùng cho MỘT con chó, sai vì đề có nhiều con.</div>`}
+];
+
+// === EXERCISE 3 DATA (mới, MCQ 4-option — usage: 's vs of / time / unique things, 7 câu) ===
+const ex3Data=[
+  {text:"1. Choose the correct one:",
+   options:[
+     {text:"the door of the car",correct:true},
+     {text:"the car's door",correct:false},
+     {text:"the door's car",correct:false},
+     {text:"the car door's",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Cánh cửa của chiếc xe ô tô."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>car</span> (xe ô tô) là <span class='p-grammar'>vật vô tri</span>, KHÔNG có sự sống → KHÔNG dùng 's, mà phải dùng giới từ <strong>"of"</strong>: <span class='hl-green'>the door of the car</span>.</div>
+   <div class="step-blk"><strong>Tại sao các đáp án khác sai?</strong><br><span class='hl-red'>the car's door</span> sai vì xe hơi là vật vô tri; <span class='hl-red'>the door's car / the car door's</span> đều sai trật tự từ.</div>`},
+  {text:"2. Choose the correct one:",
+   options:[
+     {text:"I'll see you in a week time.",correct:false},
+     {text:"I'll see you in a week's time.",correct:true},
+     {text:"I'll see you in the time of a week.",correct:false},
+     {text:"I'll see you in a of week time.",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Tôi sẽ gặp lại bạn sau một tuần nữa."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>week</span> (tuần) là cụm từ chỉ <span class='p-grammar'>thời gian</span> → dùng sở hữu cách: <span class='hl-green'>a week's time</span>.</div>
+   <div class="step-blk"><strong>Tại sao các đáp án khác sai?</strong><br><span class='hl-red'>a week time</span> thiếu dấu 's; <span class='hl-red'>the time of a week / a of week time</span> đều sai cấu trúc, không tự nhiên.</div>`},
+  {text:"3. Choose the correct one:",
+   options:[
+     {text:"the surface of earth's",correct:false},
+     {text:"the surface's earth",correct:false},
+     {text:"the earth's surface",correct:true},
+     {text:"earth surface's",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Bề mặt của Trái Đất."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>the earth</span> (Trái Đất) là <span class='p-grammar'>vật duy nhất</span>, chỉ có một → dùng sở hữu cách: <span class='hl-green'>the earth's surface</span>.</div>
+   <div class="step-blk"><strong>Tại sao các đáp án khác sai?</strong><br>Các lựa chọn còn lại đều sai vị trí đặt dấu 's hoặc sai trật tự từ.</div>`},
+  {text:"4. Choose the correct one (theo đúng quy tắc được học trong bài):",
+   options:[
+     {text:"the title of the book",correct:true},
+     {text:"the book's title",correct:false},
+     {text:"the title's book",correct:false},
+     {text:"book title's",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Tựa đề của cuốn sách."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>book</span> (cuốn sách) là <span class='p-grammar'>vật vô tri</span> → theo đúng quy tắc trong bài, KHÔNG dùng 's mà dùng <strong>"of"</strong>: <span class='hl-green'>the title of the book</span>.</div>
+   <div class="step-blk"><strong>Lưu ý:</strong><br>Trong tiếng Anh đời thường, đôi khi người bản xứ vẫn nói <span class='hl-red'>the book's title</span>, nhưng theo QUY TẮC CHUẨN được học ở bài này (vật vô tri → dùng "of"), đáp án đúng vẫn là <span class='hl-green'>the title of the book</span>.</div>`},
+  {text:"5. Choose the correct one:",
+   options:[
+     {text:"the car of my brother",correct:false},
+     {text:"my brother car",correct:false},
+     {text:"my brother' car",correct:false},
+     {text:"my brother's car",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Xe ô tô của anh/em trai tôi."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>my brother</span> là NGƯỜI (thực thể sống), số ÍT → dùng <strong>'s</strong>: <span class='hl-green'>my brother's car</span>.</div>
+   <div class="step-blk"><strong>Tại sao các đáp án khác sai?</strong><br><span class='hl-red'>the car of my brother</span> không sai hẳn nhưng KHÔNG tự nhiên vì "brother" là người, nên dùng 's mới đúng chuẩn; <span class='hl-red'>my brother car / my brother' car</span> đều sai chính tả sở hữu cách.</div>`},
+  {text:"6. Choose the correct one:",
+   options:[
+     {text:"a holiday of month",correct:false},
+     {text:"a month holiday's",correct:false},
+     {text:"the holiday's month",correct:false},
+     {text:"a month's holiday",correct:true}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Một kỳ nghỉ một tháng."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>month</span> (tháng) là cụm từ chỉ <span class='p-grammar'>thời gian</span> → dùng sở hữu cách: <span class='hl-green'>a month's holiday</span>.</div>
+   <div class="step-blk"><strong>Tại sao các đáp án khác sai?</strong><br>Các lựa chọn còn lại đều sai vị trí đặt dấu 's hoặc sai trật tự từ, không phải cách diễn đạt tự nhiên.</div>`},
+  {text:"7. Choose the correct one:",
+   options:[
+     {text:"the wall's colour",correct:false},
+     {text:"the colour of the wall",correct:true},
+     {text:"the colour's wall",correct:false},
+     {text:"wall colour's",correct:false}],
+   explanation:`<div class="expl-head">⭐ GIẢI THÍCH CHI TIẾT</div>
+   <div class="vi-box">Dịch nghĩa: "Màu sắc của bức tường."</div>
+   <div class="step-blk"><strong>Phân tích:</strong><br><span class='p-word'>wall</span> (bức tường) là <span class='p-grammar'>vật vô tri</span> → KHÔNG dùng 's, phải dùng <strong>"of"</strong>: <span class='hl-green'>the colour of the wall</span>.</div>
+   <div class="step-blk"><strong>Tại sao các đáp án khác sai?</strong><br><span class='hl-red'>the wall's colour</span> sai vì tường là vật vô tri; các lựa chọn còn lại sai trật tự từ.</div>`}
+];
+
+function checkAutoGrade(qid, i, cid){
+  const inp = document.getElementById(qid);
+  const btn = document.getElementById(`btn_${qid}`);
+  if(inp.disabled) return;
+
+  const item = ex2Data[i];
+
+  const val = inp.value.trim().toLowerCase().replace(/\s+/g,' ').replace(/’/g,"'").replace(/\.$/, '');
+
+  if(!val){
+     inp.classList.add('wrong');
+     try{playNo()}catch(e){}
+     setTimeout(()=>inp.classList.remove('wrong'), 400);
+     return;
+  }
+
+  inp.disabled = true;
+  btn.disabled = true;
+
+  if(item.ansExact.includes(val)){
+     inp.classList.remove('wrong'); inp.classList.add('correct');
+     document.getElementById(`expl_${qid}`).innerHTML = `<strong style="color:#27AE60; font-size:1.1rem;">✅ Chính xác!</strong><br><br>${item.note}`;
+     document.getElementById(`expl_${qid}`).classList.add('visible');
+     addScore();
+     try{playOk(); launchConfetti();}catch(e){}
+  } else {
+     inp.classList.add('wrong');
+     let displayAns = item.ansExact[0];
+     document.getElementById(`expl_${qid}`).innerHTML = `<strong style="color:#E74C3C; font-size:1.1rem;">❌ Rất tiếc, sai rồi! Đáp án đúng là: <span style="color:#27AE60;text-decoration:underline;">${displayAns}</span></strong><br><br>${item.note}`;
+     document.getElementById(`expl_${qid}`).classList.add('visible');
+     try{playNo()}catch(e){}
+  }
+}
+
+function renderAutoGrade(cid, data){
+  const c = document.getElementById(cid);
+  data.forEach((item, i) => {
+    const div = document.createElement('div'); div.className = 'w-item';
+    let inner = `<div class="w-prompt"><span class="q-num">${i+1}</span>${item.prompt}</div>`;
+    const qid = `ag_${cid}_${i}`;
+    inner += `<input class="w-input" id="${qid}" type="text" placeholder="Gõ đáp án vào đây..." autocomplete="off">
+              <button class="w-check-btn" id="btn_${qid}" onclick="checkAutoGrade('${qid}', ${i}, '${cid}')">Kiểm tra</button>
+              <div class="expl-box" id="expl_${qid}"></div>`;
+    div.innerHTML = inner;
+    c.appendChild(div);
+    document.getElementById(qid).addEventListener('keydown', e => {
+      if(e.key === 'Enter') checkAutoGrade(qid, i, cid);
+    });
+  });
+}
+
+// ============================================================
+// EXERCISE 4: INTERACTIVE MATCHING (NO RETRY, 5 pairs)
+// ============================================================
+const matchQs4=[
+  {id:1,text:"Xe đạp của Paul đẹp quá."},
+  {id:2,text:"Đôi tai của con chó."},
+  {id:3,text:"Ta sẽ gặp nhau sau một tuần nữa."},
+  {id:4,text:"Quỹ đạo của mặt trăng."},
+  {id:5,text:"Những chiếc bánh xe của ô tô."}
+];
+const matchAs4=[
+  {id:'a',text:"the wheels of the car"},
+  {id:'b',text:"the dog's ears"},
+  {id:'c',text:"a week's time"},
+  {id:'d',text:"Paul's bike is nice."},
+  {id:'e',text:"the moon's orbit"}
+];
+const correctMatch4={1:'d',2:'b',3:'c',4:'e',5:'a'};
+const matchExplData4 = {
+  1: "<div class='step-blk'><strong>Phân tích:</strong> <span class='p-word'>Paul</span> là NGƯỜI, số ÍT → thêm <strong>'s</strong>: <span class='hl-green'>Paul's bike is nice.</span></div>",
+  2: "<div class='step-blk'><strong>Phân tích:</strong> <span class='p-word'>dog</span> là ĐỘNG VẬT (thực thể sống), số ÍT → thêm <strong>'s</strong>: <span class='hl-green'>the dog's ears</span>.</div>",
+  3: "<div class='step-blk'><strong>Phân tích:</strong> <span class='p-word'>week</span> là cụm từ chỉ <span class='p-grammar'>thời gian</span> → dùng sở hữu cách: <span class='hl-green'>a week's time</span>.</div>",
+  4: "<div class='step-blk'><strong>Phân tích:</strong> <span class='p-word'>the moon</span> là <span class='p-grammar'>vật duy nhất</span> → dùng sở hữu cách: <span class='hl-green'>the moon's orbit</span>.</div>",
+  5: "<div class='step-blk'><strong>Phân tích:</strong> <span class='p-word'>car</span> là <span class='p-grammar'>vật vô tri</span> → KHÔNG dùng 's, phải dùng <strong>of</strong>: <span class='hl-green'>the wheels of the car</span>.</div>"
+};
+
+let selQ4=null;
+
+function initMatch4(){
+  const shuffledAs4=[...matchAs4].sort(()=>Math.random()-.5);
+  const qc=document.getElementById('matchQs4');
+  const ac=document.getElementById('matchAs4');
+
+  matchQs4.forEach(q=>{
+    const d=document.createElement('div');d.className='match-q-item';d.id=`mq4_${q.id}`;
+    d.innerHTML=`<strong>${q.id}.</strong> ${q.text}`;
+    d.onclick=()=>{
+      if(d.classList.contains('matched')) return;
+      document.querySelectorAll('.match-q-item:not(.matched)').forEach(e=>e.classList.remove('selected'));
+      d.classList.add('selected'); selQ4=q.id;
+    };
+    qc.appendChild(d);
+  });
+  shuffledAs4.forEach(a=>{
+    const d=document.createElement('div');d.className='match-a-item';d.id=`ma4_${a.id}`;
+    d.innerHTML=`<strong>${a.id}.</strong> ${a.text}`;
+    d.onclick=()=>{
+      if(d.classList.contains('matched') || !selQ4) return;
+      evalMatch4(selQ4, a.id, d);
+    };
+    ac.appendChild(d);
+  });
+}
+
+function evalMatch4(qId, aId, aEl){
+  const qEl = document.getElementById(`mq4_${qId}`);
+  const correctAId = correctMatch4[qId];
+  const correctAEl = document.getElementById(`ma4_${correctAId}`);
+
+  if(correctAId === aId){
+    qEl.classList.remove('selected'); qEl.classList.add('matched');
+    aEl.classList.add('matched');
+    qEl.innerHTML = `<strong>${qId} ➔ ${aId}</strong> (Đã nối)`;
+
+    const explBox = document.createElement('div');
+    explBox.className = 'expl-box visible';
+    explBox.style.marginTop = '8px';
+    explBox.innerHTML = `<span style="color:#27AE60; font-size:1.1rem; font-weight:900;">✅ Chính xác: Cặp ${qId} - ${aId}</span><br><br>${matchExplData4[qId]}`;
+    document.getElementById('matchExpl4').appendChild(explBox);
+
+    addScore();
+    try{playOk(); launchConfetti();}catch(e){}
+    selQ4 = null;
+  } else {
+    qEl.classList.remove('selected');
+    qEl.classList.add('matched');
+    qEl.style.borderColor = 'var(--wrong)';
+    qEl.style.background = 'rgba(231,76,60,.1)';
+    qEl.innerHTML = `<strong>${qId} ➔ ${correctAId}</strong> <span style="color:#E74C3C;font-size:0.8rem;font-weight:900;">(❌ Sai)</span>`;
+
+    correctAEl.classList.add('matched');
+
+    const explBox = document.createElement('div');
+    explBox.className = 'expl-box visible';
+    explBox.style.marginTop = '8px';
+    explBox.style.borderColor = 'var(--wrong)';
+    explBox.innerHTML = `<span style="color:#E74C3C;font-weight:900; font-size:1.1rem;">❌ Sai! Cặp đúng phải là ${qId} - ${correctAId}.</span><br><br>${matchExplData4[qId]}`;
+    document.getElementById('matchExpl4').appendChild(explBox);
+
+    try{playNo()}catch(e){}
+    selQ4 = null;
+  }
+}
+
+// ============================================================
+// BOOTSTRAP
+// ============================================================
+initScoreDisplay();
+renderMCQ('ex1',ex1Data,1,'bin-row');
+renderAutoGrade('ex2',ex2Data);
+renderMCQ('ex3',ex3Data,1,'opts-4');
+initMatch4();
+
+// === SUBMIT & RESULT ===
+function openSubmit(){
+  document.getElementById('nameOverlay').classList.add('visible');
+  document.getElementById('nameInp').focus();
+}
+document.getElementById('nameInp').addEventListener('keydown',e=>{if(e.key==='Enter') showResult()});
+
+function showResult(){
+  const name=document.getElementById('nameInp').value.trim();
+  if(!name){
+    document.getElementById('nameInp').classList.add('err');
+    document.getElementById('nameErr').classList.add('visible');
+    setTimeout(()=>document.getElementById('nameInp').classList.remove('err'),500);
+    return;
+  }
+  document.getElementById('nameInp').classList.remove('err');
+  document.getElementById('nameErr').classList.remove('visible');
+  document.getElementById('nameOverlay').classList.remove('visible');
+
+  const pct = currentScore / totalMaxScore;
+  const ten = (pct * 10).toFixed(1);
+  let greet, gif;
+
+  if(pct >= 1){greet=`🏆 HOÀN HẢO! ${name} đạt 100%!`; gif='https://media.giphy.com/media/g9582DNuQppxC/giphy.gif';}
+  else if(pct >= .7){greet=`🌸 TUYỆT VỜI! ${name} làm rất tốt!`; gif='https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif';}
+  else{greet=`🌱 CỐ LÊN! ${name} cần đọc kỹ giải thích hơn nhé!`; gif='https://media.giphy.com/media/d2lcHJTG5Tscg/giphy.gif';}
+
+  document.getElementById('greetText').textContent = greet;
+  document.getElementById('scoreBig').textContent = `${currentScore}/${totalMaxScore} XP`;
+  document.getElementById('scoreTen').innerHTML = `⭐ Điểm quy đổi: <strong>${ten}/10</strong>`;
+  document.getElementById('scoreDetail').innerHTML = `Hoàn thành: ${Math.round(pct*100)}% toàn bộ hoạt động học tập.`;
+  document.getElementById('resultGif').src = gif;
+  document.getElementById('resultOverlay').classList.add('visible');
+  if(pct >= .6) launchConfetti();
+}
+</script>
+<script>/*devclean*/(function(){
+var ZW=/[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g,
+    SP=/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\t]/g,
+    AP=/[\u2018\u2019\u201A\u201B\u2032\u2035\u02B9\u02BB\u02BC\u02BD\u02C8\u0060\u00B4\uFF07]/g,
+    DQ=/[\u201C\u201D\u201E\u201F\u2033\u2036\u00AB\u00BB\uFF02]/g,
+    DS=/[\u2010\u2011\u2012\u2212\uFE63\uFF0D]/g;
+function clean(v){if(!v)return v;var s=String(v);try{s=s.normalize('NFKC')}catch(e){}
+  return s.replace(ZW,'').replace(SP,' ').replace(AP,"'").replace(DQ,'"').replace(DS,'-').replace(/[\u0300-\u036f]/g,'').replace(/ {2,}/g,' ');}
+window.__devclean=clean;
+function fix(skip){var L=document.querySelectorAll('input:not([type]),input[type=text],input[type=search],textarea');
+  for(var i=0;i<L.length;i++){var el=L[i];if(el===skip||el.readOnly||el.disabled)continue;var v=el.value,c=clean(v);if(c!==v)el.value=c;}}
+['pointerdown','mousedown','touchstart','click','change','focusout'].forEach(function(t){document.addEventListener(t,function(e){fix(t==='focusout'||t==='change'?null:e.target)},true)});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13)fix(null)},true);
+})();</script>
+</body>
+</html>

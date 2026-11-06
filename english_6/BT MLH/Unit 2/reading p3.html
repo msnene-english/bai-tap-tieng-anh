@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ms. Chí Nên - Reading Practice</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* CSS Variables cho Gradient và Glassmorphism */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --primary-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--primary-font);
+            color: #333;
+            overflow: hidden; /* Prevent body scroll, use panel scroll */
+            background: linear-gradient(-45deg, #ffb6c1, #a8e6cf, #dcd0ff, #ffd3b6);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Floating SVG Background */
+        .floating-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 60%);
+        }
+        .emoji-float {
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.3;
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #555;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 10;
+        }
+
+        /* Sticky Note */
+        .sticky-note {
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            width: 300px;
+            background: rgba(255, 243, 205, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid #ffeeba;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            font-size: 0.85rem;
+            color: #856404;
+            transition: transform 0.3s ease;
+        }
+        .sticky-note:hover {
+            transform: scale(1.05);
+        }
+        .sticky-note h4 { margin-bottom: 5px; color: #d39e00; }
+
+        /* Split Screen Container */
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            padding-top: 10px;
+            height: calc(100vh - 40px);
+            z-index: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Glass Panels */
+        .panel {
+            flex: 1;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Scrollbar styles */
+        .panel::-webkit-scrollbar { width: 8px; }
+        .panel::-webkit-scrollbar-track { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(150,150,150,0.5); border-radius: 10px; }
+
+        h2 { color: #444; margin-bottom: 15px; font-size: 1.5rem; text-align: center; }
+
+        /* Reading Content */
+        .passage {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+        .passage-gap { font-weight: bold; color: #d32f2f; }
+
+        .btn-translate {
+            background: linear-gradient(135deg, #a8e6cf, #dcd0ff);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #444;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+        .btn-translate:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .translation {
+            display: none;
+            background: rgba(255, 240, 245, 0.7);
+            padding: 15px;
+            border-left: 4px solid #ffb6c1;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        /* Glossary Table */
+        .glossary-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .glossary-table th, .glossary-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .glossary-table th { background: rgba(168, 230, 207, 0.6); font-weight: bold; }
+        .glossary-table tr:last-child td { border-bottom: none; }
+
+        /* Questions */
+        .question-card {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .question-card:hover { transform: translateY(-3px); }
+        .question-text { font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .option-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #ddd;
+            padding: 12px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            transition: all 0.2s;
+            text-align: center;
+            white-space: normal; /* Không cắt chữ */
+        }
+        .option-btn:hover { background: #f0f8ff; border-color: #a8e6cf; }
+        .option-btn.correct { background: #a8e6cf; border-color: #2e7d32; color: #1b5e20; }
+        .option-btn.wrong { background: #ffcccb; border-color: #c62828; color: #b71c1c; }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* Explanations (Master Class) */
+        .explanation {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(245, 245, 245, 0.9);
+            border-radius: 10px;
+            border-left: 5px solid #ffb6c1;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        /* Custom Requirement Colors */
+        .p-word { color: #0056b3; font-weight: bold; }
+        .p-mean { color: #cc4a33; font-style: italic; }
+        .p-grammar { text-decoration: underline; text-decoration-color: red; color: #d32f2f; font-weight: bold; }
+        .hl-green { color: #2e7d32; font-weight: bold; }
+        .hl-red { color: #c62828; text-decoration: line-through; }
+
+        /* Submit Area */
+        .submit-area { text-align: center; margin-top: 20px; padding-bottom: 20px; }
+        .btn-submit {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #d32f2f;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 154, 158, 0.4);
+            transition: all 0.3s;
+        }
+        .btn-submit:hover { transform: scale(1.05); box-shadow: 0 8px 20px rgba(255, 154, 158, 0.6); }
+
+        /* Overlays */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: var(--glass-bg); backdrop-filter: blur(15px);
+            padding: 30px; border-radius: 20px; text-align: center;
+            max-width: 400px; width: 90%;
+            border: var(--glass-border); box-shadow: var(--glass-shadow);
+        }
+        .modal input {
+            width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px;
+            border: 1px solid #ccc; font-size: 1rem;
+        }
+        .modal button {
+            background: #a8e6cf; border: none; padding: 10px 20px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; font-size: 1rem;
+        }
+        .scorecard { text-align: center; }
+        .scorecard img { max-width: 100%; border-radius: 15px; margin-top: 15px; }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; overflow-y: auto; height: auto; }
+            body { overflow: auto; }
+            .panel { overflow-y: visible; }
+            .sticky-note { position: static; width: 100%; margin-bottom: 10px; }
+        }
+    </style>
+<style>body{overflow:auto!important;}</style></head>
+<body>
+
+    <audio id="audioIntro" src="https://hoctienganhcungcomaianulis.github.io/homework/%E1%BA%A2nh_File%20nghe/Sound/export_dcyCDfhAokgnwEKEgvFUkr.mp3" preload="auto"></audio>
+    <audio id="audioCorrect" src="https://www.myinstants.com/media/sounds/correct-answer-sound-effect.mp3" preload="auto"></audio>
+    <audio id="audioWrong" src="https://hoctienganhcungcomaianulis.github.io/homework/%E1%BA%A2nh_File%20nghe/File%20nghe%20Ket%20A2/huh_sound_effect-www_tiengdong_com.mp3" preload="auto"></audio>
+
+    <div id="startOverlay" class="overlay">
+        <div class="modal">
+            <h2>Chào mừng em đến với Lớp học của Ms. Chí Nên!</h2>
+            <p>Hãy bật âm thanh để nghe cô dặn dò trước khi làm bài nhé!</p>
+            <button onclick="startApp()">Bắt đầu làm bài 🚀</button>
+        </div>
+    </div>
+
+    <div class="floating-bg">
+        <div class="emoji-float" style="top: 10%; left: 10%; animation-delay: 0s;">🏠</div>
+        <div class="emoji-float" style="top: 70%; left: 5%; animation-delay: 2s;">🛋️</div>
+        <div class="emoji-float" style="top: 40%; left: 80%; animation-delay: 1s;">🌺</div>
+        <div class="emoji-float" style="top: 80%; left: 90%; animation-delay: 3s;">🪴</div>
+        <div class="emoji-float" style="top: 20%; left: 60%; animation-delay: 1.5s;">🛏️</div>
+    </div>
+
+    <header>Giáo viên tạo: Ms. Chí Nên</header>
+
+    <div class="sticky-note">
+        <h4>📌 GHI CHÚ TỪ Ms. Chí Nên</h4>
+        <p>Tự giác tra cứu từ mới bằng Google Dịch/AI, tra phát âm bằng từ điển Cambridge. <b>Không được chọn bừa!</b> Đọc thật kỹ phần giải thích và ghi lại từ/cấu trúc mới vào vở thì mới tiến bộ được nhé.</p>
+    </div>
+
+    <div class="container">
+        <div class="panel" id="readingPanel">
+            <h2>📖 READING PASSAGE</h2>
+            
+            <div class="passage-container">
+                <h3>Part I: Fill in the gap</h3>
+                <div class="passage">
+                    My (1) <span class="passage-gap">________</span> room is our living room. It is rather big and warm. There is a big window with lots of pot plants and green and yellow (2) <span class="passage-gap">________</span>. In our living room, (3) <span class="passage-gap">________</span> is a green sofa and two green armchairs. There is a big yellow (4) <span class="passage-gap">________</span> on the floor. A modern floor lamp (5) <span class="passage-gap">________</span> in the right corner of the room. (6) <span class="passage-gap">________</span> to the sofa there is a small coffee table with a vase of flowers. By the wall there is a big table with six brown chairs. We have a television and a (7) <span class="passage-gap">________</span> with a lot of books and pictures. We also have a CD player on the shelf. I often watch TV, listen to (8) <span class="passage-gap">________</span> or read books there. I really like my living room.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslate('trans1')">Mở dịch đoạn này 🌟</button>
+                <div class="translation" id="trans1">
+                    Căn phòng yêu thích nhất của tôi là phòng khách của chúng tôi. Nó khá lớn và ấm áp. Có một cửa sổ lớn với nhiều chậu cây và rèm cửa màu xanh lá cây và màu vàng. Trong phòng khách của chúng tôi, có một chiếc ghế sofa màu xanh lá cây và hai chiếc ghế bành màu xanh lá cây. Có một tấm thảm lớn màu vàng trên sàn nhà. Một cây đèn cây hiện đại đứng ở góc phải của căn phòng. Bên cạnh ghế sofa có một bàn cà phê nhỏ với một lọ hoa. Cạnh bức tường có một cái bàn lớn với sáu cái ghế màu nâu. Chúng tôi có một cái tivi và một giá sách với rất nhiều sách và tranh ảnh. Chúng tôi cũng có một máy phát nhạc CD trên kệ. Tôi thường xem TV, nghe nhạc hoặc đọc sách ở đó. Tôi thực sự thích phòng khách của mình.
+                </div>
+            </div>
+
+            <hr style="border: 1px dashed rgba(0,0,0,0.1);">
+
+            <div class="passage-container">
+                <h3>Part II: True or False Passage</h3>
+                <div class="passage">
+                    I live in a house near the sea. It’s an old house, about 100 years old, and it’s very small. There are two bedrooms upstairs but no bathroom. The bathroom is downstairs next to the kitchen and there’s a living room where there’s a lovely old fireplace. There’s a garden in front of the house. The garden goes down to the beach and in spring and summer there are flowers everywhere. I live with my parents, and we have a lot of visitors. My city friends often stay with me. I love my house for many reasons: the garden, the flowers in summer, the fire in winter, but the best thing is the view from my bedroom window.
+                </div>
+                <button class="btn-translate" onclick="toggleTranslate('trans2')">Mở dịch đoạn này 🌟</button>
+                <div class="translation" id="trans2">
+                    Tôi sống trong một ngôi nhà gần biển. Đó là một ngôi nhà cũ, khoảng 100 năm tuổi, và nó rất nhỏ. Có hai phòng ngủ ở tầng trên nhưng không có phòng tắm. Phòng tắm ở tầng dưới cạnh nhà bếp và có một phòng khách nơi có một lò sưởi cũ xinh xắn. Có một khu vườn trước nhà. Khu vườn trải dài xuống bãi biển và vào mùa xuân và mùa hè có hoa ở khắp mọi nơi. Tôi sống với bố mẹ, và chúng tôi có rất nhiều khách đến thăm. Những người bạn ở thành phố của tôi thường xuyên ở lại với tôi. Tôi yêu ngôi nhà của mình vì nhiều lý do: khu vườn, hoa vào mùa hè, ngọn lửa vào mùa đông, nhưng điều tuyệt vời nhất là khung cảnh nhìn từ cửa sổ phòng ngủ của tôi.
+                </div>
+            </div>
+
+            <h3>📚 Glossary (Bảng Từ Vựng Khó)</h3>
+            <table class="glossary-table">
+                <tr><th>Word</th><th>Type</th><th>Meaning</th></tr>
+                <tr><td><span class="p-word">favourite</span></td><td>adj</td><td><span class="p-mean">được yêu thích nhất</span></td></tr>
+                <tr><td><span class="p-word">curtains</span></td><td>n</td><td><span class="p-mean">rèm cửa</span></td></tr>
+                <tr><td><span class="p-word">armchair</span></td><td>n</td><td><span class="p-mean">ghế bành</span></td></tr>
+                <tr><td><span class="p-word">fireplace</span></td><td>n</td><td><span class="p-mean">lò sưởi</span></td></tr>
+                <tr><td><span class="p-word">everywhere</span></td><td>adv</td><td><span class="p-mean">khắp mọi nơi</span></td></tr>
+                <tr><td><span class="p-word">visitor</span></td><td>n</td><td><span class="p-mean">khách đến thăm</span></td></tr>
+                <tr><td><span class="p-word">seaside</span></td><td>n</td><td><span class="p-mean">bờ biển</span></td></tr>
+                <tr><td><span class="p-word">upstairs</span></td><td>adv/n</td><td><span class="p-mean">tầng trên, gác</span></td></tr>
+                <tr><td><span class="p-word">downstairs</span></td><td>adv/n</td><td><span class="p-mean">tầng dưới</span></td></tr>
+                <tr><td><span class="p-word">bookshelf</span></td><td>n</td><td><span class="p-mean">giá sách</span></td></tr>
+            </table>
+        </div>
+
+        <div class="panel" id="exercisePanel">
+            <h2>🎯 EXERCISES</h2>
+            <div id="quizContainer"></div>
+            
+            <div class="submit-area">
+                <button class="btn-submit" onclick="showSubmitModal()">🎯 NỘP BÀI TÍNH ĐIỂM & XEM KẾT QUẢ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="submitModal" class="overlay" style="display: none;">
+        <div class="modal">
+            <h2>Nhập tên của em nhé!</h2>
+            <input type="text" id="studentName" placeholder="Ví dụ: Nguyễn Văn A">
+            <button onclick="calculateScore()">Xem Điểm</button>
+        </div>
+    </div>
+
+    <div id="resultModal" class="overlay" style="display: none;">
+        <div class="modal scorecard">
+            <h2>Bảng Điểm Của Ms. Chí Nên</h2>
+            <h3 id="resName">Tên: </h3>
+            <h1 style="color: #d32f2f; margin: 10px 0;" id="resScoreText">0/14</h1>
+            <h3 style="color: #2e7d32;" id="res10Point">Quy đổi: 0/10 điểm</h3>
+            <p id="resComment" style="font-weight: bold; margin-top: 10px;"></p>
+            <img id="resGif" src="" alt="Result GIF">
+            <button style="margin-top: 20px;" onclick="closeAll()">Xem lại bài</button>
+        </div>
+    </div>
+
+<script>
+    // Audio elements
+    const audioIntro = document.getElementById('audioIntro');
+    const audioCorrect = document.getElementById('audioCorrect');
+    const audioWrong = document.getElementById('audioWrong');
+
+    function startApp() {
+        document.getElementById('startOverlay').style.display = 'none';
+        audioIntro.play();
+    }
+
+    function toggleTranslate(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Quiz Data Array
+    const questions = [
+        {
+            id: 1, type: "fill",
+            text: "My (1) _________ room is our living room.",
+            options: ["favourite", "next", "stands", "rug"],
+            correct: "favourite",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Phòng _____ của tôi là phòng khách của chúng tôi.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>next (adj/adv)</span>: ❌ Sai vì "next room" nghĩa là phòng tiếp theo, không ghép hợp lý với "is our living room" mang tính giới thiệu sự yêu thích ở câu sau.</li>
+                    <li><span class='hl-red'>stands (v)</span>: ❌ Sai vì đứng ở đây không hợp ngữ pháp.</li>
+                    <li><span class='hl-red'>rug (n)</span>: ❌ Sai vì "rug room" vô nghĩa.</li>
+                    <li><span class='hl-green'>favourite (adj)</span>: ✅ Đúng vì nó tạo thành cụm danh từ "phòng yêu thích nhất".</li>
+                </ul>
+                <p><span class='p-grammar'>Cấu trúc ngữ pháp:</span> Tính từ (favourite) đứng trước danh từ (room) để bổ nghĩa.</p>
+                <p>🔍 <strong>Dẫn chứng:</strong> "My <strong>favourite</strong> room is our living room. I really like my living room" (ở cuối bài).</p>
+                <p>👉 <strong>Dịch:</strong> "<span class='hl-green'>Phòng yêu thích nhất</span> của tôi là phòng khách. Tôi thực sự thích phòng khách của mình."</p>
+                <p>Từ vựng: <span class='p-word'>favourite</span> (adj) - <span class='p-mean'>được yêu thích nhất</span></p>
+            `
+        },
+        {
+            id: 2, type: "fill",
+            text: "There is a big window with lots of pot plants and green and yellow (2) _________ .",
+            options: ["curtains", "music", "bookshelf", "there"],
+            correct: "curtains",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Có một cửa sổ lớn với nhiều chậu cây và _____ màu xanh lá cây và màu vàng.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>curtains (n)</span>: ✅ Đúng vì rèm cửa đi liền với cửa sổ (window).</li>
+                    <li><span class='hl-red'>music (n)</span>: ❌ Sai vì âm nhạc không thể có màu xanh vàng.</li>
+                    <li><span class='hl-red'>bookshelf (n)</span>: ❌ Sai vì giá sách thường không treo ở cửa sổ.</li>
+                    <li><span class='hl-red'>there (adv)</span>: ❌ Sai ngữ pháp.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> "...big window with lots of pot plants and green and yellow <strong>curtains</strong>."</p>
+                <p>👉 <strong>Dịch:</strong> "...cửa sổ lớn với nhiều chậu cây và <span class='hl-green'>rèm cửa</span> màu xanh lá cây và màu vàng."</p>
+                <p>Từ vựng: <span class='p-word'>curtains</span> (n) - <span class='p-mean'>rèm cửa</span></p>
+            `
+        },
+        {
+            id: 3, type: "fill",
+            text: "In our living room, (3) _________ is a green sofa and two green armchairs.",
+            options: ["there", "stands", "next", "rug"],
+            correct: "there",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Trong phòng khách của chúng tôi, _____ có một chiếc ghế sofa màu xanh lá cây...</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>there (adv)</span>: ✅ Đúng vì tạo thành cấu trúc "There is..." chỉ sự tồn tại.</li>
+                    <li><span class='hl-red'>stands (v)</span>: ❌ Sai vì thiếu chủ ngữ nếu dùng động từ ở đây.</li>
+                    <li>Các đáp án khác không hợp cấu trúc.</li>
+                </ul>
+                <p><span class='p-grammar'>Cấu trúc ngữ pháp:</span> There is + Noun (số ít) dùng để chỉ sự tồn tại của một vật thể.</p>
+                <p>🔍 <strong>Dẫn chứng:</strong> "In our living room, <strong>there</strong> is a green sofa..."</p>
+                <p>👉 <strong>Dịch:</strong> "Trong phòng khách của chúng tôi, <span class='hl-green'>có</span> một chiếc ghế sofa màu xanh lá..."</p>
+            `
+        },
+        {
+            id: 4, type: "fill",
+            text: "There is a big yellow (4) _________ on the floor.",
+            options: ["rug", "curtains", "next", "bookshelf"],
+            correct: "rug",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Có một _____ lớn màu vàng trên sàn nhà.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>rug (n)</span>: ✅ Đúng vì tấm thảm là vật dụng trải trên sàn nhà (on the floor).</li>
+                    <li><span class='hl-red'>curtains (n)</span>: ❌ Sai vì rèm treo trên cửa sổ.</li>
+                    <li><span class='hl-red'>bookshelf (n)</span>: ❌ Sai vì giá sách thường dựa vào tường chứ không nằm sát nệm trên sàn giống thảm.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> "There is a big yellow <strong>rug</strong> on the floor."</p>
+                <p>👉 <strong>Dịch:</strong> "Có một <span class='hl-green'>tấm thảm</span> lớn màu vàng trên sàn nhà."</p>
+                <p>Từ vựng: <span class='p-word'>rug</span> (n) - <span class='p-mean'>tấm thảm nhỏ</span></p>
+            `
+        },
+        {
+            id: 5, type: "fill",
+            text: "A modern floor lamp (5) _________ in the right corner of the room.",
+            options: ["stands", "next", "music", "there"],
+            correct: "stands",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Một cây đèn cây hiện đại _____ ở góc phải của căn phòng.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>stands (v)</span>: ✅ Đúng vì vị trí này cần một động từ chỉ trạng thái đứng/đặt của đồ vật.</li>
+                    <li><span class='hl-red'>next (adj/adv)</span>: ❌ Sai ngữ pháp vì thiếu động từ to-be.</li>
+                </ul>
+                <p><span class='p-grammar'>Cấu trúc ngữ pháp:</span> S + V + trạng ngữ chỉ nơi chốn. "Lamp" số ít nên dùng "stands".</p>
+                <p>🔍 <strong>Dẫn chứng:</strong> "A modern floor lamp <strong>stands</strong> in the right corner..."</p>
+                <p>👉 <strong>Dịch:</strong> "Một cây đèn cây hiện đại <span class='hl-green'>đứng</span> ở góc phải..."</p>
+            `
+        },
+        {
+            id: 6, type: "fill",
+            text: "(6) _________ to the sofa there is a small coffee table...",
+            options: ["Next", "There", "Stands", "Favourite"],
+            correct: "Next",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> _____ cạnh ghế sofa có một bàn cà phê nhỏ...</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>Next (prep)</span>: ✅ Đúng vì đi liền với giới từ "to" tạo thành cụm "next to" (bên cạnh).</li>
+                    <li><span class='hl-red'>There/Stands</span>: ❌ Sai ngữ pháp vì không đi với "to" trong ngữ cảnh này.</li>
+                </ul>
+                <p><span class='p-grammar'>Cấu trúc ngữ pháp:</span> Next to + Noun: Kế bên, bên cạnh cái gì đó.</p>
+                <p>🔍 <strong>Dẫn chứng:</strong> "<strong>Next</strong> to the sofa there is a small coffee table..."</p>
+                <p>👉 <strong>Dịch:</strong> "<span class='hl-green'>Bên cạnh</span> ghế sofa có một bàn cà phê nhỏ..."</p>
+            `
+        },
+        {
+            id: 7, type: "fill",
+            text: "We have a television and a (7) _________ with a lot of books and pictures.",
+            options: ["bookshelf", "curtains", "music", "rug"],
+            correct: "bookshelf",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Chúng tôi có một cái tivi và một _____ với rất nhiều sách và tranh ảnh.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>bookshelf (n)</span>: ✅ Đúng vì kệ sách là nơi chứa sách (books).</li>
+                    <li><span class='hl-red'>curtains/rug</span>: ❌ Sai vì thảm và rèm không thể chứa sách.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> "...a <strong>bookshelf</strong> with a lot of books and pictures."</p>
+                <p>👉 <strong>Dịch:</strong> "...một <span class='hl-green'>giá sách</span> với rất nhiều sách và tranh ảnh."</p>
+                <p>Từ vựng: <span class='p-word'>bookshelf</span> (n) - <span class='p-mean'>giá sách, kệ sách</span></p>
+            `
+        },
+        {
+            id: 8, type: "fill",
+            text: "I often watch TV, listen to (8) _________ or read books there.",
+            options: ["music", "curtains", "bookshelf", "favourite"],
+            correct: "music",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Tôi thường xem TV, nghe _____ hoặc đọc sách ở đó.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>music (n)</span>: ✅ Đúng vì động từ "listen to" (nghe) đi với âm nhạc.</li>
+                    <li><span class='hl-red'>Các từ khác</span>: ❌ Sai vì không thể nghe rèm cửa hay giá sách.</li>
+                </ul>
+                <p><span class='p-grammar'>Cấu trúc ngữ pháp:</span> Listen to + Noun (nghe cái gì đó).</p>
+                <p>🔍 <strong>Dẫn chứng:</strong> "...listen to <strong>music</strong> or read books there."</p>
+                <p>👉 <strong>Dịch:</strong> "...nghe <span class='hl-green'>nhạc</span> hoặc đọc sách ở đó."</p>
+            `
+        },
+        {
+            id: 9, type: "tf",
+            text: "1. The writer lives by the seaside.",
+            options: ["True", "False"],
+            correct: "True",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Tác giả sống ở cạnh bờ biển.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>True</span>: ✅ Đúng vì bài đọc nói rõ nhà ở gần biển và vườn trải dài xuống bãi biển.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> "I live in a house <strong>near the sea</strong>... The garden goes down to the <strong>beach</strong>"</p>
+                <p>👉 <strong>Dịch:</strong> "Tôi sống trong một ngôi nhà <span class='hl-green'>gần biển</span>... Khu vườn trải dài xuống <span class='hl-green'>bãi biển</span>."</p>
+                <p>Từ vựng: <span class='p-word'>seaside</span> (n) - <span class='p-mean'>bờ biển</span> (đồng nghĩa với near the sea / beach).</p>
+            `
+        },
+        {
+            id: 10, type: "tf",
+            text: "2. There is no bathroom in her house.",
+            options: ["True", "False"],
+            correct: "False",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Không có phòng tắm nào trong nhà của cô ấy.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>False</span>: ✅ Đúng là câu phát biểu bị Sai. Thực tế là <strong>có</strong> phòng tắm, nhưng nó nằm ở tầng dưới, không phải tầng trên.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> "There are two bedrooms upstairs but no bathroom. <strong>The bathroom is downstairs</strong> next to the kitchen..."</p>
+                <p>👉 <strong>Dịch:</strong> "Có hai phòng ngủ ở tầng trên nhưng không có phòng tắm. <span class='hl-green'>Phòng tắm ở tầng dưới</span> cạnh nhà bếp..."</p>
+            `
+        },
+        {
+            id: 11, type: "tf",
+            text: "3. The house has got two floors and four rooms.",
+            options: ["True", "False"],
+            correct: "False",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Ngôi nhà có hai tầng và bốn phòng.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>False</span>: ✅ Đúng là câu phát biểu bị Sai. Nhà có 2 tầng (upstairs & downstairs), nhưng đếm số phòng: 2 phòng ngủ + 1 phòng tắm + 1 phòng bếp + 1 phòng khách = <strong>5 phòng</strong>, không phải 4.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> "...<strong>two bedrooms</strong> upstairs... The <strong>bathroom</strong> is downstairs next to the <strong>kitchen</strong> and there’s a <strong>living room</strong>..."</p>
+                <p>👉 <strong>Dịch:</strong> "...<span class='hl-green'>hai phòng ngủ</span> ở tầng trên... <span class='hl-green'>Phòng tắm</span> ở tầng dưới cạnh <span class='hl-green'>nhà bếp</span> và có một <span class='hl-green'>phòng khách</span>..."</p>
+            `
+        },
+        {
+            id: 12, type: "tf",
+            text: "4. There are flowers in the garden in front of the house.",
+            options: ["True", "False"],
+            correct: "True",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Có những bông hoa trong khu vườn ở phía trước nhà.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>True</span>: ✅ Đúng vì bài đọc nhắc tới khu vườn trước nhà và có hoa vào mùa xuân hè.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> "There’s a <strong>garden in front of the house</strong>. [...] in spring and summer there are <strong>flowers everywhere</strong>."</p>
+                <p>👉 <strong>Dịch:</strong> "Có một <span class='hl-green'>khu vườn trước nhà</span>. [...] vào mùa xuân và mùa hè có <span class='hl-green'>hoa ở khắp mọi nơi</span>."</p>
+            `
+        },
+        {
+            id: 13, type: "tf",
+            text: "5. Her family rarely has visitors.",
+            options: ["True", "False"],
+            correct: "False",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Gia đình cô ấy hiếm khi có khách đến thăm.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-red'>False</span>: ✅ Đúng là câu phát biểu bị Sai. Chữ <span class='hl-red'>rarely (hiếm khi)</span> trái nghĩa hoàn toàn với thông tin trong bài là <span class='hl-green'>a lot of (rất nhiều)</span>.</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> "...we have <strong>a lot of visitors</strong>. My city friends <strong>often</strong> stay with me."</p>
+                <p>👉 <strong>Dịch:</strong> "...chúng tôi có <span class='hl-green'>rất nhiều khách</span>. Bạn bè thành phố của tôi <span class='hl-green'>thường xuyên</span> ở lại cùng tôi."</p>
+                <p>Từ vựng: <span class='p-word'>rarely</span> (adv) - <span class='p-mean'>hiếm khi</span> ><span class='p-word'> a lot of / often</span>.</p>
+            `
+        },
+        {
+            id: 14, type: "tf",
+            text: "6. The writer likes her bedroom's window view best.",
+            options: ["True", "False"],
+            correct: "True",
+            explanation: `
+                <p><strong>Dịch câu hỏi:</strong> Tác giả thích khung cảnh nhìn từ cửa sổ phòng ngủ của cô ấy nhất.</p>
+                <p><strong>Phân tích:</strong></p>
+                <ul>
+                    <li><span class='hl-green'>True</span>: ✅ Đúng vì chữ "likes ... best" đồng nghĩa với "the best thing is...".</li>
+                </ul>
+                <p>🔍 <strong>Dẫn chứng:</strong> "...but <strong>the best thing</strong> is the view from my bedroom window."</p>
+                <p>👉 <strong>Dịch:</strong> "...nhưng <span class='hl-green'>điều tuyệt vời nhất</span> là khung cảnh nhìn từ cửa sổ phòng ngủ của tôi."</p>
+            `
+        }
+    ];
+
+    // State
+    let userAnswers = {};
+
+    // Shuffle Array Function
+    function shuffle(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    // Render Quiz
+    function renderQuiz() {
+        const container = document.getElementById('quizContainer');
+        questions.forEach((q, index) => {
+            let optionsHtml = '';
+            let shuffledOptions = shuffle([...q.options]);
+
+            shuffledOptions.forEach(opt => {
+                optionsHtml += `<button class="option-btn" id="btn-${q.id}-${opt}" onclick="selectAnswer(${q.id}, '${opt}', this)">${opt}</button>`;
+            });
+
+            const html = `
+                <div class="question-card" id="qcard-${q.id}">
+                    <div class="question-text">Câu ${index + 1}: ${q.text}</div>
+                    <div class="options-grid">
+                        ${optionsHtml}
+                    </div>
+                    <div class="explanation" id="exp-${q.id}">
+                        ${q.explanation}
+                    </div>
+                </div>
+            `;
+            container.innerHTML += html;
+        });
+    }
+
+    // Handle Selection
+    function selectAnswer(qId, selectedOpt, btnElement) {
+        if(userAnswers[qId]) return; // Đã chọn rồi thì không cho chọn lại
+
+        const question = questions.find(q => q.id === qId);
+        userAnswers[qId] = selectedOpt;
+        
+        // Disable all buttons in this question
+        const card = document.getElementById(`qcard-${qId}`);
+        const buttons = card.querySelectorAll('.option-btn');
+        buttons.forEach(b => b.disabled = true);
+
+        if (selectedOpt === question.correct) {
+            // ĐÚNG
+            btnElement.classList.add('correct');
+            audioCorrect.currentTime = 0;
+            audioCorrect.play();
+            fireConfetti();
+        } else {
+            // SAI
+            btnElement.classList.add('wrong');
+            btnElement.classList.add('shake');
+            audioWrong.currentTime = 0;
+            audioWrong.play();
+            
+            // Highlight đáp án đúng
+            const correctBtn = document.getElementById(`btn-${qId}-${question.correct}`);
+            if(correctBtn) correctBtn.classList.add('correct');
+        }
+
+        // Hiện giải thích
+        document.getElementById(`exp-${qId}`).style.display = 'block';
+    }
+
+    // Confetti Effect
+    function fireConfetti() {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#a8e6cf', '#ffb6c1', '#ffd3b6']
+        });
+    }
+
+    function showSubmitModal() {
+        if(Object.keys(userAnswers).length < questions.length) {
+            alert("Em phải làm hết tất cả các câu hỏi rồi mới được nộp bài nhé!");
+            return;
+        }
+        document.getElementById('submitModal').style.display = 'flex';
+    }
+
+    function calculateScore() {
+        const name = document.getElementById('studentName').value.trim();
+        if(!name) {
+            alert("Vui lòng nhập tên của em!");
+            return;
+        }
+
+        let score = 0;
+        questions.forEach(q => {
+            if(userAnswers[q.id] === q.correct) score++;
+        });
+
+        const total = questions.length;
+        const percent = score / total;
+        const score10 = ((score / total) * 10).toFixed(1);
+
+        document.getElementById('submitModal').style.display = 'none';
+        document.getElementById('resultModal').style.display = 'flex';
+        
+        document.getElementById('resName').innerText = "Học sinh: " + name;
+        document.getElementById('resScoreText').innerText = `${score} / ${total}`;
+        document.getElementById('res10Point').innerText = `Quy đổi: ${score10} / 10 điểm`;
+
+        let comment = "";
+        let gifSrc = "";
+
+        if (percent === 1) {
+            comment = "Thiên tài xuất hiện! Em làm bài quá xuất sắc, Ms. Chí Nên rất tự hào về em! 🎉";
+            gifSrc = "https://media.giphy.com/media/11sBLVxNs7v6WA/giphy.gif"; // Celebrate
+        } else if (percent >= 0.6) {
+            comment = "Rất tốt! Em đã nắm vững phần lớn bài học. Hãy đọc lại kỹ giải thích những câu sai nhé! 👍";
+            gifSrc = "https://media.giphy.com/media/3o72FcJmLzIdYJiyT6/giphy.gif"; // High five
+        } else {
+            comment = "Cố lên em! Lần này có chút khó khăn, nhưng chỉ cần em chăm chỉ đọc lại giải thích, cô tin lần sau em sẽ làm tốt hơn! 💪";
+            gifSrc = "https://media.giphy.com/media/OPU6wzx8JrHna/giphy.gif"; // Crying/Cute
+        }
+
+        document.getElementById('resComment').innerText = comment;
+        document.getElementById('resGif').src = gifSrc;
+    }
+
+    function closeAll() {
+        document.getElementById('resultModal').style.display = 'none';
+    }
+
+    // Init
+    window.onload = renderQuiz;
+
+</script>
+<script>/*devclean*/(function(){
+var ZW=/[\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g,
+    SP=/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\t]/g,
+    AP=/[\u2018\u2019\u201A\u201B\u2032\u2035\u02B9\u02BB\u02BC\u02BD\u02C8\u0060\u00B4\uFF07]/g,
+    DQ=/[\u201C\u201D\u201E\u201F\u2033\u2036\u00AB\u00BB\uFF02]/g,
+    DS=/[\u2010\u2011\u2012\u2212\uFE63\uFF0D]/g;
+function clean(v){if(!v)return v;var s=String(v);try{s=s.normalize('NFKC')}catch(e){}
+  return s.replace(ZW,'').replace(SP,' ').replace(AP,"'").replace(DQ,'"').replace(DS,'-').replace(/[\u0300-\u036f]/g,'').replace(/ {2,}/g,' ');}
+window.__devclean=clean;
+function fix(skip){var L=document.querySelectorAll('input:not([type]),input[type=text],input[type=search],textarea');
+  for(var i=0;i<L.length;i++){var el=L[i];if(el===skip||el.readOnly||el.disabled)continue;var v=el.value,c=clean(v);if(c!==v)el.value=c;}}
+['pointerdown','mousedown','touchstart','click','change','focusout'].forEach(function(t){document.addEventListener(t,function(e){fix(t==='focusout'||t==='change'?null:e.target)},true)});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13)fix(null)},true);
+})();</script>
+</body>
+</html>
